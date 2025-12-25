@@ -454,7 +454,7 @@ async function submit() {
     /* ---------- JOB ---------- */
     console.group('💼 Job')
 
-    logStep('Mode', isEdit.value ? 'UPDATE' : 'CREATE')
+  logStep('Mode', isEdit.value ? 'UPDATE' : 'CREATE')
 
   const jobPayload = {
     client_id: form.client_id,

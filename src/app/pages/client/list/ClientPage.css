@@ -1,0 +1,75 @@
+.clients-page {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* Header */
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.page-header-left {
+  max-width: 520px;
+}
+
+.page-header p {
+  max-width: 480px;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.text-right {
+  text-align: right;
+}
+
+/* KPI Grid */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.25rem;
+}
+
+.kpi-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem;
+}
+
+.kpi-icon {
+  font-size: 2rem;
+  color: var(--pc-primary);
+  flex-shrink: 0;
+}
+
+.kpi-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.kpi-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--pc-text-muted);
+}
+
+.kpi-value {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--pc-heading-color);
+}
+
+@media (max-width: 1024px) {
+  .kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

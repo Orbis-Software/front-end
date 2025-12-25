@@ -22,6 +22,7 @@
     <!-- Navigation -->
     <nav class="sidebar-menu">
       <ul class="menu-list">
+        <!-- Dashboard -->
         <li class="menu-item">
           <button
             class="menu-link"
@@ -33,6 +34,7 @@
           </button>
         </li>
 
+        <!-- Jobs -->
         <li class="menu-item">
           <button
             class="menu-link"
@@ -44,13 +46,19 @@
           </button>
         </li>
 
+        <!-- Clients (NOW ENABLED) -->
         <li class="menu-item">
-          <button class="menu-link" disabled>
+          <button
+            class="menu-link"
+            :class="{ active: isActive('/clients') }"
+            @click="go('/clients')"
+          >
             <i class="pi pi-users menu-icon" />
             <span class="menu-text">Clients</span>
           </button>
         </li>
 
+        <!-- Reports (still disabled) -->
         <li class="menu-item">
           <button class="menu-link" disabled>
             <i class="pi pi-chart-line menu-icon" />
@@ -113,13 +121,12 @@ async function logout() {
 const userName = computed(() => authStore.user?.name ?? 'User')
 
 const initials = computed(() => {
-  const name = userName.value.split(' ')
-  return name.length >= 2
-    ? `${name[0][0]}${name[1][0]}`
-    : name[0][0]
+  const parts = userName.value.split(' ')
+  return parts.length >= 2
+    ? `${parts[0][0]}${parts[1][0]}`
+    : parts[0][0]
 })
 </script>
-
 
 <style scoped>
 /* Root sidebar */
@@ -134,9 +141,8 @@ const initials = computed(() => {
   border-right: 1px solid var(--pc-border);
   background-color: var(--pc-bg-sidebar);
 
-  z-index: 100; /* ensure it stays above content */
+  z-index: 100;
 }
-
 
 /* Container */
 .sidebar-container {
@@ -200,14 +206,14 @@ const initials = computed(() => {
   align-items: center;
   gap: 1rem;
 
-  padding: 0.9rem 1rem; /* 🔑 BIGGER */
+  padding: 0.9rem 1rem;
 
   background: transparent;
   border: none;
   border-radius: 10px;
 
   color: var(--pc-text-main);
-  font-size: 1rem; /* 🔑 BIGGER TEXT */
+  font-size: 1rem;
   font-weight: 600;
   text-align: left;
 
@@ -225,8 +231,10 @@ const initials = computed(() => {
   background-color: var(--pc-surface-2);
 }
 
-/* Active */
-.menu-link.active
+/* Active (FIXED) */
+.menu-link.active {
+  background-color: var(--pc-surface-2);
+}
 
 .menu-link.active .menu-icon {
   opacity: 1;
@@ -236,6 +244,11 @@ const initials = computed(() => {
 .menu-link:disabled {
   opacity: 0.45;
   cursor: not-allowed;
+}
+
+/* Spacer */
+.menu-spacer {
+  flex: 1;
 }
 
 /* ===============================

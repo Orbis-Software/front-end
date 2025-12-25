@@ -16,6 +16,7 @@ import LoginPage from '@/app/pages/auth/loginPage/loginPage.vue'
 ========================= */
 import DashboardHome from '@/app/pages/dashboard/DashboardHome.vue'
 import JobsPage from '@/app/pages/job/list/jobPage.vue'
+import ClientsPage from '@/app/pages/client/list/ClientsPage.vue'
 import JobFormPage from '@/app/pages/job/jobForm/JobFormPage.vue'
 
 /* =========================
@@ -107,6 +108,11 @@ export const routes: RouteRecordRaw[] = [
         name: 'jobs.edit',
         component: JobFormPage,
         props: true,
+      },
+      {
+        path: 'clients',
+        name: 'clients',
+        component: ClientsPage,
       },
     ],
   },
