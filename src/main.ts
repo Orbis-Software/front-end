@@ -32,6 +32,7 @@ import ConfirmationService from 'primevue/confirmationservice'
 import ConfirmDialog from 'primevue/confirmdialog'
 import Dialog from 'primevue/dialog'
 import Password from 'primevue/password'
+import "./assets/tailwind.css";
 
 /* =========================
    App Init

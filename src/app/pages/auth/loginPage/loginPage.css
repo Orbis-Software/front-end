@@ -1,30 +1,234 @@
-.auth-card {
+/* =========================================================
+   Exact Descartes-style Card + Spacing
+   Palette: #ffffff #ffd7b5 #ffb38a #ff9248 #ff6700
+   ========================================================= */
+
+.auth-card--enterprise {
   width: 100%;
-  max-width: 380px;
+  max-width: 620px; /* similar to reference panel width */
 }
 
-/* Form group spacing */
+/* Card surface (square edges) */
+:deep(.auth-card--enterprise.p-card) {
+  background: #ffffff;
+  border: 1px solid #ffb38a;
+  border-radius: 0 !important;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.18);
+}
+
+/* Card content padding (reference-like) */
+:deep(.auth-card--enterprise .p-card-content) {
+  padding: 40px 52px;
+}
+
+@media (max-width: 720px) {
+  :deep(.auth-card--enterprise .p-card-content) {
+    padding: 26px 22px;
+  }
+}
+
+/* Header spacing like reference */
+.auth-enterprise-header {
+  margin-bottom: 22px;
+}
+
+.auth-enterprise-logo {
+  height: 54px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+  margin-bottom: 18px;
+}
+
+.auth-enterprise-title {
+  margin: 0;
+  font-size: 34px;
+  font-weight: 500;
+  letter-spacing: 0.2px;
+  color: #ff6700; /* palette primary */
+}
+
+/* Form layout */
+.auth-enterprise-form {
+  margin-top: 8px;
+}
+
+/* Field spacing (tight but enterprise) */
 .form-group {
   display: flex;
   flex-direction: column;
-  margin-bottom: 1.75rem; /* <-- this is the spacing you want */
+  margin-bottom: 18px;
 }
 
-/* Labels */
 .form-label {
-  font-weight: 500;
-  margin-bottom: 0.5rem;
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(15, 23, 42, 0.70);
+  margin-bottom: 8px;
 }
 
-/* Normalize ALL PrimeVue inputs */
-.form-group :deep(.p-inputtext),
-.form-group :deep(.p-password),
-.form-group :deep(.p-password-input) {
+/* required star */
+.form-label.required::before {
+  content: '* ';
+  color: #ff6700;
+  font-weight: 800;
+}
+
+/* Shell for warning icon alignment */
+.input-shell {
+  position: relative;
   width: 100%;
-  display: block;
 }
 
-/* Make password wrapper behave like input */
-.form-group :deep(.p-password) {
-  display: block;
+/* Warning icon on the right like reference */
+.input-warning {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 14px;
+  color: #ff6700;
+  pointer-events: none;
+}
+
+/* meta row below input (error left, hint right) */
+.field-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 6px;
+  min-height: 16px;
+}
+
+.field-error {
+  font-size: 12px;
+  color: #ff6700;
+  font-weight: 600;
+}
+
+.field-hint {
+  font-size: 12px;
+  color: rgba(15, 23, 42, 0.55);
+  margin-left: auto;
+  text-align: right;
+}
+
+/* ===========================
+   Inputs (square, exact feel)
+   =========================== */
+
+/* Input height */
+.auth-enterprise-input {
+  height: 42px;
+}
+
+/* InputText */
+:deep(.auth-enterprise-input.p-inputtext) {
+  width: 100%;
+  border-radius: 0 !important;
+  border: 1px solid rgba(15, 23, 42, 0.22);
+  background: #ffffff;
+  padding: 10px 34px 10px 12px; /* right padding for warning icon */
+  box-shadow: none;
+}
+
+/* Focus */
+:deep(.auth-enterprise-input.p-inputtext:focus) {
+  border-color: #ff6700;
+  box-shadow: 0 0 0 3px rgba(255, 103, 0, 0.22);
+}
+
+/* Password wrapper full width + square */
+:deep(.auth-enterprise-password.p-password) {
+  width: 100% !important;
+  display: block !important;
+}
+
+/* Password input itself */
+:deep(.auth-enterprise-password .p-password-input) {
+  width: 100% !important;
+  height: 42px;
+  border-radius: 0 !important;
+  border: 1px solid rgba(15, 23, 42, 0.22);
+  background: #ffffff;
+  padding: 10px 34px 10px 12px; /* space for icon */
+  box-shadow: none;
+}
+
+/* Password focus */
+:deep(.auth-enterprise-password .p-password-input:focus) {
+  border-color: #ff6700;
+  box-shadow: 0 0 0 3px rgba(255, 103, 0, 0.22);
+}
+
+/* Ensure wrapper span doesn’t shrink */
+:deep(.auth-enterprise-password .p-inputtext) {
+  width: 100% !important;
+}
+
+/* ===========================
+   Actions (right aligned)
+   =========================== */
+
+.auth-enterprise-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 14px;
+  margin-top: 10px;
+}
+
+/* Back link/button like reference */
+.auth-enterprise-back {
+  border: none;
+  background: transparent;
+  padding: 8px 6px;
+  font-weight: 700;
+  cursor: pointer;
+  color: rgba(15, 23, 42, 0.65);
+}
+
+.auth-enterprise-back:hover {
+  color: rgba(15, 23, 42, 0.85);
+}
+
+.auth-enterprise-back:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* PrimeVue button (square, same size feel) */
+:deep(.auth-enterprise-btn.p-button) {
+  min-width: 140px;
+  height: 42px;
+  border-radius: 0 !important;
+  font-weight: 700;
+
+  background: #ff6700;
+  border: 1px solid #ff6700;
+  color: #ffffff;
+}
+
+/* Hover */
+:deep(.auth-enterprise-btn.p-button:hover) {
+  background: #ff9248;
+  border-color: #ff9248;
+}
+
+/* Focus */
+:deep(.auth-enterprise-btn.p-button:focus) {
+  box-shadow: 0 0 0 3px rgba(255, 103, 0, 0.22);
+}
+
+/* Footer link bottom-left */
+.auth-enterprise-footer {
+  margin-top: 22px;
+}
+
+.auth-enterprise-link {
+  font-size: 12px;
+  color: #ff6700;
+  text-decoration: underline;
+  font-weight: 600;
 }

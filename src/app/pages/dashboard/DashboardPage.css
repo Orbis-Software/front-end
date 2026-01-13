@@ -1,0 +1,430 @@
+/* Page padding inside main area */
+.dash {
+  padding: 18px 22px 40px;
+  width: 100%;
+  max-width: none; /* IMPORTANT */
+}
+
+/* Top bar */
+.dash-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 8px 18px;
+}
+
+.dash-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 320px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+}
+
+.brand-text {
+  font-size: 16px;
+}
+
+.crumb {
+  color: #666;
+  font-size: 14px;
+}
+
+.dash-center {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  justify-content: center;
+}
+
+.search {
+  width: 420px;
+}
+
+.search-input {
+  width: 100%;
+}
+
+.dash-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Buttons */
+.icon-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid #e5e5e5;
+  background: #fff;
+  cursor: pointer;
+}
+
+.icon-btn:hover {
+  background: #f3f3f3;
+}
+
+.btn {
+  border-radius: 10px;
+}
+
+/* Card */
+.card {
+  background: #fff;
+  border: 1px solid #e8e8e8;
+  border-radius: 14px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+/* Filters row */
+.dash-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+}
+
+.filters-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 360px;
+}
+
+.filters-label {
+  color: #666;
+  font-size: 14px;
+}
+
+.filters-input {
+  width: 240px;
+}
+
+.tabs {
+  display: flex;
+  gap: 8px;
+}
+
+.tab {
+  border: 1px solid transparent;
+  background: transparent;
+  padding: 8px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  color: #333;
+}
+
+.tab:hover {
+  background: #f3f3f3;
+}
+
+.tab.active {
+  background: #fff;
+  border-color: #e5e5e5;
+}
+
+/* KPIs */
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.kpi {
+  padding: 14px 16px;
+}
+
+.kpi-label {
+  color: #666;
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+
+.kpi-value {
+  font-size: 26px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pill {
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid #e5e5e5;
+}
+
+.pill.up {
+  color: #118a3b;
+  background: #eefaf1;
+  border-color: #cfeeda;
+}
+
+.pill.down {
+  color: #b42318;
+  background: #fdecec;
+  border-color: #f7caca;
+}
+
+/* Main grid */
+.grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 16px 16px 10px;
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.card-sub {
+  font-size: 13px;
+  color: #666;
+  margin-top: 2px;
+}
+
+.card-actions {
+  display: flex;
+  gap: 10px;
+}
+
+/* Map */
+.map-box {
+  margin: 0 16px 16px;
+  height: 360px;
+  border: 1px dashed #d8d8d8;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  color: #777;
+}
+
+/* Kanban */
+.kanban {
+  padding: 0 16px 16px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+.lane {
+  border: 1px solid #ededed;
+  border-radius: 12px;
+  padding: 12px;
+  background: #fafafa;
+}
+
+.lane-title {
+  font-weight: 800;
+  margin-bottom: 10px;
+}
+
+.tile {
+  background: #fff;
+  border: 1px solid #e8e8e8;
+  border-radius: 12px;
+  padding: 10px 10px;
+  margin-bottom: 10px;
+  font-weight: 800;
+  font-size: 13px;
+}
+
+.tile span {
+  font-weight: 500;
+  color: #666;
+}
+
+/* Bottom cards */
+.bottom {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.bottom-card {
+  padding: 16px;
+  min-height: 150px;
+}
+
+.muted {
+  color: #777;
+  margin-top: 8px;
+}
+/* REQUIRED for PrimeVue input icons */
+.p-input-icon-left {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: 100%;
+}
+
+.p-input-icon-left > i {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 1;
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+/* Input padding so text doesn't overlap icon */
+.p-input-icon-left .p-inputtext {
+  padding-left: 36px;
+}
+
+/* Make Export CSV and New Job same width */
+.btn-eq {
+  min-width: 140px; /* adjust if you want bigger */
+  justify-content: center;
+}
+
+/* Force equal sizing for PrimeVue buttons */
+.btn-eq.p-button {
+  min-width: 150px;      /* same width */
+  height: 44px;          /* same height (pick the number you like) */
+  padding: 0 16px;       /* consistent padding */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;   /* ✅ prevents Export ↵ CSV wrapping */
+}
+
+/* Ensure label doesn’t wrap (PrimeVue label span) */
+.btn-eq.p-button .p-button-label {
+  white-space: nowrap;
+}
+
+/* Make icons align perfectly */
+.btn-eq.p-button .p-button-icon,
+.btn-eq.p-button i {
+  line-height: 1;
+}
+
+
+/* Ensure search wrapper behaves nicely in center area */
+.search {
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Activity row (Timeline + Exceptions) */
+.activity {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 16px;
+  margin-top: 16px;
+  margin-bottom: 16px;
+}
+
+.activity-card {
+  padding: 16px;
+}
+
+.timeline {
+  margin-top: 10px;
+  display: grid;
+  gap: 10px;
+}
+
+.timeline-row {
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  gap: 12px;
+  align-items: center;
+}
+
+.timeline-time {
+  font-size: 12px;
+  color: #666;
+}
+
+.timeline-box {
+  border: 1px solid #ededed;
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: #fff;
+}
+
+/* Exceptions list */
+.exceptions {
+  margin-top: 10px;
+  display: grid;
+  gap: 12px;
+}
+
+.exception-row {
+  display: grid;
+  grid-template-columns: 34px 1fr;
+  gap: 12px;
+  align-items: start;
+}
+
+.exception-icon {
+  width: 34px;
+  height: 34px;
+  border: 1px solid #ededed;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  color: #444;
+  background: #fff;
+}
+
+.exception-ref {
+  font-weight: 800;
+}
+
+.exception-desc {
+  color: #444;
+  font-size: 13px;
+  margin-top: 2px;
+}
+
+.exception-time {
+  color: #777;
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+/* Quick Actions */
+.quick {
+  padding: 16px;
+}
+
+.quick-grid {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 10px;
+}
+
+.quick-btn {
+  width: 100%;
+  justify-content: center;
+  border-radius: 10px;
+}

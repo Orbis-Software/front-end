@@ -114,8 +114,7 @@ body,
 
 /* Remove Vite demo centering */
 body {
-  display: block;
-  min-width: 320px;
+  overflow-x: hidden;
 }
 
 /* =========================================================

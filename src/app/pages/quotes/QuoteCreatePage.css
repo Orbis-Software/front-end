@@ -1,0 +1,305 @@
+/* Page wrapper */
+.quote-page {
+  padding: 18px 22px 40px;
+  width: 100%;
+  max-width: none;
+}
+
+/* Header row */
+.quote-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 6px 4px 14px;
+  margin-bottom: 10px;
+}
+
+.qh-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.qh-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 800;
+  font-size: 22px;
+}
+
+.title-text {
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.draft-pill {
+  font-size: 12px;
+  font-weight: 700;
+  color: #333;
+  background: #f3f3f3;
+  border: 1px solid #e5e5e5;
+  padding: 4px 10px;
+  border-radius: 999px;
+  margin-left: 8px;
+}
+
+.qh-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Base card */
+.card {
+  background: #fff;
+  border: 1px solid #e8e8e8;
+  border-radius: 14px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.section {
+  padding: 16px;
+  margin-bottom: 14px;
+}
+
+.section-title {
+  font-size: 15px;
+  font-weight: 800;
+  margin-bottom: 12px;
+}
+
+/* Fields */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #111;
+}
+
+/* PrimeVue input sizing */
+.control {
+  width: 100%;
+}
+
+.textarea.p-inputtext {
+  min-height: 80px;
+}
+
+/* Layout grids */
+.grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+
+.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
+
+/* Hazard row */
+.hazard {
+  justify-content: flex-end;
+}
+
+.hazard-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 40px;
+}
+
+.hazard-text {
+  font-weight: 700;
+  color: #111;
+}
+
+/* Attachments */
+.attach-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.attach-box {
+  flex: 1;
+  height: 44px;
+  border: 1px solid #ededed;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 12px;
+  background: #fafafa;
+  color: #555;
+}
+
+/* Buttons */
+.btn.p-button {
+  border-radius: 10px;
+  min-width: 140px;
+  justify-content: center;
+}
+
+.btn-primary.p-button {
+  background: #16a34a;
+  border-color: #16a34a;
+}
+
+.btn-primary.p-button:hover {
+  background: #12833d;
+  border-color: #12833d;
+}
+
+.muted {
+  color: #777;
+  margin-top: 6px;
+  font-size: 13px;
+}
+
+/* Shipment Summary */
+.ss-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.ss-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+  align-items: center;
+}
+
+.ss-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ss-label {
+  font-size: 12px;
+  color: #666;
+}
+
+.ss-value {
+  font-weight: 800;
+  color: #111;
+}
+
+.ss-unit {
+  font-weight: 600;
+  color: #111;
+  margin-left: 4px;
+}
+
+/* Shipment summary button sits right like screenshot */
+.ss-head .btn.p-button {
+  min-width: 160px;
+}
+
+/* Charges */
+.charges-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.charges-controls {
+  display: grid;
+  grid-template-columns: 180px 180px 180px 1fr;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+
+.charges-add-row {
+  display: grid;
+  grid-template-columns: 1fr 140px;
+  gap: 10px;
+  align-items: center;
+}
+
+.charges-table {
+  border: 1px solid #ededed;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.ct-head {
+  display: grid;
+  grid-template-columns: 2fr 0.7fr 0.7fr 0.9fr 0.9fr 0.9fr 1fr;
+  gap: 10px;
+  padding: 12px 12px;
+  font-weight: 800;
+  background: #fafafa;
+  border-bottom: 1px solid #ededed;
+}
+
+.ct-empty {
+  padding: 18px 12px;
+  color: #777;
+  text-align: center;
+}
+
+.ct-body {
+  display: grid;
+}
+
+.ct-row {
+  display: grid;
+  grid-template-columns: 2fr 0.7fr 0.7fr 0.9fr 0.9fr 0.9fr 1fr;
+  gap: 10px;
+  padding: 12px 12px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.ta-right {
+  text-align: right;
+}
+
+/* bottom a*
+
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .grid-4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .quote-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .qh-right {
+    width: 100%;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+  .grid-3,
+  .grid-2,
+  .grid-4 {
+    grid-template-columns: 1fr;
+  }
+}

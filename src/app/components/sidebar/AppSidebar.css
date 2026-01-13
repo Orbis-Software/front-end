@@ -1,0 +1,256 @@
+/* Root sidebar */
+.pc-sidebar {
+  width: 280px;
+  height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  border-right: 1px solid var(--pc-border);
+  background-color: var(--pc-bg-sidebar);
+  z-index: 100;
+}
+
+/* Container */
+.sidebar-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background-color: var(--pc-bg-sidebar);
+  color: var(--pc-text-main);
+}
+
+/* Header / Brand */
+.sidebar-header {
+  padding: 1.25rem 1rem;
+  border-bottom: 1px solid var(--pc-border);
+}
+
+.brand-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.brand-logo {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+}
+
+.brand-text {
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+}
+
+/* Menu */
+.sidebar-menu {
+  flex: 1;
+  overflow-y: auto;
+  padding-top: 0.5rem;
+}
+
+.menu-list {
+  list-style: none;
+  margin: 0;
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.menu-item {
+  margin-bottom: 0.5rem;
+}
+
+.menu-link {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.9rem 1rem;
+  background: transparent;
+  border: none;
+  border-radius: 10px;
+  color: var(--pc-text-main);
+  font-size: 1rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.menu-icon {
+  font-size: 1.1rem;
+  opacity: 0.85;
+}
+
+.menu-icon-spacer {
+  width: 1.1rem;
+}
+
+/* Hover */
+.menu-link:hover:not(:disabled) {
+  background-color: var(--pc-surface-2);
+}
+
+/* Active */
+.menu-link.active {
+  background-color: var(--pc-surface-2);
+}
+
+.menu-link.active .menu-icon {
+  opacity: 1;
+}
+
+/* Disabled */
+.menu-link:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Spacer pushes logout to bottom */
+.menu-spacer {
+  flex: 1;
+}
+
+/* Group header (TMS/WMS/Management) */
+.group-title {
+  margin: 0.75rem 0 0.35rem;
+}
+
+.group-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 0.35rem 0.25rem;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--pc-text-muted);
+}
+
+.group-toggle i {
+  font-size: 0.75rem;
+  transition: transform 0.15s ease;
+}
+
+.group-toggle i.rotated {
+  transform: rotate(-90deg);
+}
+
+/* Submenu (Contacts) */
+.submenu-trigger {
+  justify-content: space-between;
+}
+
+.submenu-chevron {
+  margin-left: auto;
+  font-size: 0.95rem;
+  opacity: 0.7;
+  transition: transform 0.15s ease;
+}
+
+.submenu-chevron.open {
+  transform: rotate(90deg);
+}
+
+.submenu-list {
+  list-style: none;
+  margin: 0.35rem 0 0.5rem;
+  padding: 0 0 0 1.25rem;
+}
+
+.submenu-item {
+  margin: 0.25rem 0;
+}
+
+.submenu-link {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  padding: 0.6rem 0.75rem;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+
+  cursor: pointer;
+  text-align: left;
+  color: var(--pc-text-main);
+  font-weight: 600;
+}
+
+.submenu-link:hover:not(:disabled) {
+  background-color: var(--pc-surface-2);
+}
+
+.submenu-link.active {
+  background-color: var(--pc-surface-2);
+}
+
+.submenu-bullet {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--pc-text-muted);
+  opacity: 0.7;
+}
+
+.submenu-text {
+  font-size: 0.95rem;
+}
+
+/* Logout emphasis */
+.logout-link {
+  color: #b42318;
+}
+
+.logout-link:hover:not(:disabled) {
+  background-color: rgba(180, 35, 24, 0.08);
+}
+
+/* Footer */
+.sidebar-footer {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-top: 1px solid var(--pc-border);
+}
+
+.user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: var(--pc-primary);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+
+.user-name {
+  font-weight: 600;
+}
+
+.user-role {
+  font-size: 0.75rem;
+  color: var(--pc-text-muted);
+}
+

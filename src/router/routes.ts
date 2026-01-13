@@ -1,30 +1,19 @@
-import type { RouteRecordRaw } from 'vue-router'
+import type { RouteRecordRaw } from "vue-router";
 
 /* =========================
    Layouts
 ========================= */
-import DefaultLayout from '@/app/layouts/DefaultLayout.vue'
-import AuthLayout from '@/app/layouts/AuthLayout/AuthLayout.vue'
+const DefaultLayout = () => import("@/app/layouts/DefaultLayout.vue");
+const AuthLayout = () => import("@/app/layouts/AuthLayout/AuthLayout.vue");
 
 /* =========================
-   Auth Pages
+   Pages
 ========================= */
-import LoginPage from '@/app/pages/auth/loginPage/loginPage.vue'
-
-/* =========================
-   Protected Pages
-========================= */
-import DashboardHome from '@/app/pages/dashboard/DashboardHome.vue'
-import JobsPage from '@/app/pages/job/list/jobPage.vue'
-import ClientsPage from '@/app/pages/client/list/ClientsPage.vue'
-import JobFormPage from '@/app/pages/job/jobForm/JobFormPage.vue'
-
-/* =========================
-   Public Pages
-========================= */
-import PublicJobSearch from '@/app/pages/public/JobSearch/JobSearch.vue'
-import PublicJobView from '@/app/pages/public/JobView/JobView.vue'
-import PublicJobPayment from '@/app/pages/public/JobPayment/JobPayment.vue'
+const LoginPage = () => import("@/app/pages/auth/loginPage/loginPage.vue");
+const DashboardPage = () => import("@/app/pages/dashboard/DashboardPage.vue");
+const PlaceholderPage = () => import("@/app/pages/default/PlaceholderPage.vue");
+const QuoteCreatePage = () => import("@/app/pages/quotes/QuoteCreatePage.vue");
+const JobPage = () => import("@/app/pages/jobs/JobPage.vue");
 
 export const routes: RouteRecordRaw[] = [
   /**
@@ -33,13 +22,13 @@ export const routes: RouteRecordRaw[] = [
    * ============================
    */
   {
-    path: '/login',
+    path: "/login",
     component: AuthLayout,
     meta: { guestOnly: true },
     children: [
       {
-        path: '',
-        name: 'login',
+        path: "",
+        name: "login",
         component: LoginPage,
       },
     ],
@@ -47,73 +36,114 @@ export const routes: RouteRecordRaw[] = [
 
   /**
    * ============================
-   * Public Routes (NO AUTH)
-   * ============================
-   */
-  {
-    path: '/public/jobs',
-    meta: { public: true },
-    children: [
-      {
-        path: '',
-        name: 'public.jobs.search',
-        component: PublicJobSearch,
-      },
-      {
-        path: ':reference',
-        name: 'public.jobs.view',
-        component: PublicJobView,
-        props: true,
-      },
-      {
-        path: ':reference/pay',
-        name: 'public.jobs.pay',
-        component: PublicJobPayment,
-        props: true,
-      },
-    ],
-  },
-
-  /**
-   * ============================
    * Protected App Routes
+   * (Uses NEW layout with sidebar)
    * ============================
    */
   {
-    path: '/',
-    component: DefaultLayout,
+    path: "/",
+    component: DefaultLayout, // ✅ layout that includes AppSidebar
     meta: { requiresAuth: true },
     children: [
       {
-        path: '',
-        redirect: '/dashboard',
+        path: "",
+        redirect: "/dashboard",
       },
       {
-        path: 'dashboard',
-        name: 'dashboard',
-        component: DashboardHome,
+        path: "dashboard",
+        name: "dashboard",
+        component: DashboardPage,
       },
       {
-        path: 'jobs',
-        name: 'jobs',
-        component: JobsPage,
+        path: "jobs",
+        name: "jobs",
+        component: JobPage,
+        meta: { title: "Jobs" },
       },
       {
-        path: 'jobs/create',
-        name: 'jobs.create',
-        component: JobFormPage,
+        path: "quotes",
+        name: "quotes",
+        component: QuoteCreatePage,
+        meta: { title: "Quotes" },
       },
       {
-        path: 'jobs/:id/edit',
-        name: 'jobs.edit',
-        component: JobFormPage,
-        props: true,
+        path: "contacts/customers",
+        name: "contacts.customers",
+        component: PlaceholderPage,
+        meta: { title: "Contacts • Customers" },
       },
       {
-        path: 'clients',
-        name: 'clients',
-        component: ClientsPage,
+        path: "contacts/suppliers",
+        name: "contacts.suppliers",
+        component: PlaceholderPage,
+        meta: { title: "Contacts • Suppliers" },
+      },
+      {
+        path: "contacts/road-hauliers",
+        name: "contacts.road_hauliers",
+        component: PlaceholderPage,
+        meta: { title: "Contacts • Road Hauliers" },
+      },
+      {
+        path: "contacts/airlines",
+        name: "contacts.airlines",
+        component: PlaceholderPage,
+        meta: { title: "Contacts • Airlines" },
+      },
+      {
+        path: "contacts/rail-operators",
+        name: "contacts.rail_operators",
+        component: PlaceholderPage,
+        meta: { title: "Contacts • Rail Operators" },
+      },
+      {
+        path: "contacts/shipping-lines",
+        name: "contacts.shipping_lines",
+        component: PlaceholderPage,
+        meta: { title: "Contacts • Shipping Lines" },
+      },
+      {
+        path: "invoices",
+        name: "invoices",
+        component: PlaceholderPage,
+        meta: { title: "Invoices" },
+      },
+      {
+        path: "reports",
+        name: "reports",
+        component: PlaceholderPage,
+        meta: { title: "Reports" },
+      },
+      {
+        path: "warehouse",
+        name: "warehouse",
+        component: PlaceholderPage,
+        meta: { title: "Warehouse" },
+      },
+      {
+        path: "inventory",
+        name: "inventory",
+        component: PlaceholderPage,
+        meta: { title: "Inventory" },
+      },
+      {
+        path: "accounts",
+        name: "accounts",
+        component: PlaceholderPage,
+        meta: { title: "Accounts" },
+      },
+      {
+        path: "employees",
+        name: "employees",
+        component: PlaceholderPage,
+        meta: { title: "Employees (Logins & Roles)" },
+      },
+      {
+        path: "settings",
+        name: "settings",
+        component: PlaceholderPage,
+        meta: { title: "Settings" },
       },
     ],
   },
-]
+];
