@@ -75,12 +75,6 @@
         @create="onCreateJob"
         />
 
-          <MultiModalJobForm
-    v-if="selectedJobType === 'multi_modal' && selectedMode === 'multi_modal'"
-    @cancel="onCancel"
-    @create="onCreateJob"
-  />
-
         <div v-else class="mode-placeholder">
         <div class="mp-title">Form for {{ modeLabel }} not added yet.</div>
         <div class="mp-sub">Next: you’ll send the {{ modeLabel }} layout and we’ll plug it in.</div>
@@ -111,7 +105,7 @@ import AirJobForm from "@/app/components/jobs/AirJobForm.vue";
 import RailJobForm from "@/app/components/jobs/RailJobForm.vue";
 import RoadJobForm from "@/app/components/jobs/RoadJobForm.vue";
 import SeaJobForm from "@/app/components/jobs/SeaJobForm.vue";
-import MultiModalJobForm from "@/app/components/jobs/MultiModalJobForm.vue";
+// import MultiModalJobForm from "@/app/components/jobs/MultiModalJobForm.vue";
 
 import {
   JOB_TYPES,
