@@ -146,4 +146,4 @@ const {
 } = useLoginPage()
 </script>
 
-<style scoped src="./LoginPage.css"></style>
+<style scoped src="./loginPage.css"></style>
