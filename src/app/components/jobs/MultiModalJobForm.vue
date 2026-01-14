@@ -135,12 +135,13 @@
                          - v-model="seg."
                          - OR :modelValue + @update:modelValue
                     -->
-                    <component
-                      :is="modeComponent(seg.mode)"
-                      v-model="seg."
-                      :segment="seg"
-                      :segment-index="idx"
-                    />
+                  <component
+                    :is="modeComponent(seg.mode)"
+                    v-model="seg.data"
+                    :segment="seg"
+                    :segment-index="idx"
+                  />
+
                   </template>
 
                   <template v-else>
@@ -275,8 +276,9 @@ type Segment = {
   eta: string;
 
   // ✅ mode-specific fields live here
-  : Record<string, any>;
+  data: Record<string, any>;
 };
+
 
 const segmentModes = ref([
   { label: "Air", value: "air" },
@@ -293,7 +295,7 @@ const segments = ref<Segment[]>([
     destination: "",
     etd: "",
     eta: "",
-    : {},
+    data: {},
   },
 ]);
 
@@ -327,27 +329,41 @@ function modeLabel(mode: SegmentMode) {
  * - destination change cascades forward
  */
 function cascadeOriginsFrom(index: number) {
-  for (let i = index + 1; i < segments.value.length; i++) {
-    segments.value[i].origin = segments.value[i - 1].destination || "";
+  const list = segments.value;
+
+  for (let i = index + 1; i < list.length; i++) {
+    const prev = list[i - 1];
+    const cur = list[i];
+
+    if (!prev || !cur) continue;
+
+    cur.origin = prev.destination || "";
   }
 }
+
 
 function onDestinationChange(index: number) {
   cascadeOriginsFrom(index);
 }
 
 function addSegment() {
-  const last = segments.value[segments.value.length - 1];
-  segments.value.push({
+  const list = segments.value;
+  const last = list.length > 0 ? list[list.length - 1] : undefined;
+
+
+  list.push({
     id: crypto.randomUUID(),
     mode: "",
-    origin: last.destination || "", // ✅ auto-linked
+    origin: last?.destination || "",
     destination: "",
     etd: "",
     eta: "",
-    : {},
+    data: {},
   });
 }
+
+
+
 
 function removeSegment(index: number) {
   segments.value.splice(index, 1);
@@ -362,8 +378,11 @@ function removeSegment(index: number) {
  * If mode changes, optionally reset  so you don't keep wrong-mode fields.
  */
 function onModeChange(index: number) {
-  segments.value[index]. = {};
+  const seg = segments.value[index];
+  if (!seg) return;
+  seg.data = {};
 }
+
 
 /**
  * Create payload (dummy for now)

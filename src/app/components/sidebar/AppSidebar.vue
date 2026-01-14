@@ -154,10 +154,16 @@ async function logout() {
 const userName = computed(() => authStore.user?.name ?? "User");
 
 const initials = computed(() => {
-  const parts = userName.value.trim().split(/\s+/);
-  if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
-  return (parts[0]?.[0] ?? "U").toUpperCase();
+  const parts = userName.value.trim().split(/\s+/).filter(Boolean);
+
+  const first = parts[0]?.charAt(0) ?? "";
+  const second = parts[1]?.charAt(0) ?? "";
+
+  if (first && second) return (first + second).toUpperCase();
+  if (first) return first.toUpperCase();
+  return "U";
 });
+
 </script>
 
 
