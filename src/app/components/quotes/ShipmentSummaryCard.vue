@@ -3,7 +3,7 @@
     <div class="ss-head">
       <div class="section-title" style="margin:0">Shipment Summary</div>
 
-      <Button class="btn" outlined type="button" @click="$emit('edit-dimensions')">
+      <Button class="btn orbis-primary" outlined type="button" @click="$emit('edit-dimensions')">
         Edit Dimensions
       </Button>
     </div>

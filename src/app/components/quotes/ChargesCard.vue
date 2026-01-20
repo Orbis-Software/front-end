@@ -4,7 +4,7 @@
     <div class="charges-head">
       <div class="section-title">Charges</div>
 
-      <Button class="btn" outlined type="button" @click="$emit('clear')">
+      <Button class="btn orbis-primary" outlined type="button" @click="$emit('clear')">
         <i class="pi pi-trash" style="margin-right: 8px" />
         Clear
       </Button>
@@ -45,7 +45,7 @@
       </div>
 
       <div class="charges-add">
-        <Button class="btn" outlined type="button" @click="onAddLine">
+        <Button class="btn orbis-primary" outlined type="button" @click="onAddLine">
           <i class="pi pi-plus" style="margin-right: 8px" />
           Add line
         </Button>

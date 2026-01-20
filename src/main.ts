@@ -32,6 +32,11 @@ import ConfirmationService from 'primevue/confirmationservice'
 import ConfirmDialog from 'primevue/confirmdialog'
 import Dialog from 'primevue/dialog'
 import Password from 'primevue/password'
+import "@fontsource/inter/latin-400.css";
+
+import "@fontsource/ibm-plex-sans/latin-500.css";
+import "@fontsource/ibm-plex-sans/latin-600.css";
+
 import "./assets/tailwind.css";
 
 /* =========================

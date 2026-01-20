@@ -1,3 +1,101 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* =========================
+   ORBIS DESIGN TOKENS
+   ========================= */
+:root {
+  /* Typography */
+  --font-body: "Inter";
+  --font-accent: "IBM Plex Sans";
+
+  /* Colour Palette */
+  --primary: #ec691a;
+  --primary-hover: #d85f17;
+
+  --bg-page: #fafafa;
+  --bg-card: #ffffff;
+
+  --border: #e5e5e5;
+
+  --text: #262626;
+  --text-muted: #737373;
+
+  --tab-active: #d4d4d4;
+  --tab-inactive: #f5f5f5;
+}
+
+/* Base document styles */
+html,
+body {
+  font-family: var(--font-body);
+  font-weight: 400;
+  background: var(--bg-page);
+  color: var(--text);
+}
+
+/* =========================
+   PRIMEVUE — UNIVERSAL BUTTONS
+   ========================= */
+@layer components {
+  /* Base PrimeVue button */
+  .p-button {
+    border-radius: 6px;
+    font-family: var(--font-body);
+    font-weight: 500;
+    box-shadow: none;
+  }
+
+  /* Default buttons = neutral */
+  .p-button:not(.p-button-outlined):not(.orbis-primary) {
+    background: #f4f4f5;
+    border-color: var(--border);
+    color: var(--text);
+  }
+
+  .p-button:not(.p-button-outlined):not(.orbis-primary):hover:not(:disabled) {
+    background: #e4e4e7;
+  }
+
+  /* Outlined buttons = neutral */
+  .p-button.p-button-outlined:not(.orbis-primary) {
+    background: transparent;
+    border-color: var(--border);
+    color: var(--text);
+  }
+
+  .p-button.p-button-outlined:not(.orbis-primary):hover:not(:disabled) {
+    background: var(--tab-inactive);
+  }
+
+  /* Disabled state */
+  .p-button:disabled {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+
+    /* Force ORBIS primary to win even if outlined */
+    .p-button.orbis-primary {
+    background: var(--primary) !important;
+    border-color: var(--primary) !important;
+    color: #ffffff !important;
+    }
+
+    .p-button.orbis-primary:hover:not(:disabled) {
+    background: var(--primary-hover) !important;
+    border-color: var(--primary-hover) !important;
+    }
+
+    /* If outlined + orbis-primary is used, decide behavior (orange outline) */
+    .p-button.p-button-outlined.orbis-primary {
+    background: transparent !important;
+    color: var(--primary) !important;
+    border-color: var(--primary) !important;
+    }
+
+    .p-button.p-button-outlined.orbis-primary:hover:not(:disabled) {
+    background: var(--bg-page) !important; /* stays neutral */
+    }
+
+}
