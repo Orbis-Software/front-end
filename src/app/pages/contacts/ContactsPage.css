@@ -75,3 +75,44 @@
   gap: 6px;
   justify-content: flex-end;
 }
+/* ✅ Remove grey overlay mask while loading */
+.contacts-loading-mask {
+  background: transparent !important;
+}
+
+/* Optional nicer loading */
+.loading-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px;
+  color: var(--text-muted);
+}
+
+/* Primary contact person display */
+.primary-person {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pp-name {
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.pp-sub {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.muted {
+  color: var(--text-muted);
+}
+
+.dot {
+  opacity: 0.6;
+}

@@ -14,7 +14,7 @@ export const JOB_TYPES: CardItem<JobTypeKey>[] = [
   { key: "export", title: "Export", subtitle: "Create an Export job" },
   { key: "domestic", title: "Domestic", subtitle: "Create a Domestic job" },
   { key: "cross_trade", title: "Cross-trade", subtitle: "Create a Cross-trade job" },
-  { key: "multi_modal", title: "Multi-Modal", subtitle: "Create a Multi-Modal job" },
+  // { key: "multi_modal", title: "Multi-Modal", subtitle: "Create a Multi-Modal job" },
 ];
 
 export const MODES: CardItem<ModeKey>[] = [

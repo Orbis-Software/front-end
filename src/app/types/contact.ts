@@ -1,3 +1,5 @@
+import type { ContactPerson } from '@/app/types/contact-person'
+
 export type ContactType =
   | 'customer'
   | 'supplier'
@@ -16,6 +18,7 @@ export interface Contact {
   credit_limit: number | null
   currency_preference: string | null
   status: string
+  people: ContactPerson[]  
   created_at: string
   updated_at: string
 }
