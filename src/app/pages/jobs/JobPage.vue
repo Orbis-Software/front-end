@@ -7,11 +7,11 @@
       </div>
 
       <div class="job-actions">
-        <Button class="btn" outlined type="button">
+        <Button class="btn orbis-primary" outlined type="button">
           <i class="pi pi-folder-open" style="margin-right: 8px" />
           Browse Jobs
         </Button>
-        <Button class="btn" outlined type="button">
+        <Button class="btn orbis-primary" type="button">
           <i class="pi pi-search" style="margin-right: 8px" />
           Find Job
         </Button>

@@ -14,6 +14,7 @@ const DashboardPage = () => import("@/app/pages/dashboard/DashboardPage.vue");
 const PlaceholderPage = () => import("@/app/pages/default/PlaceholderPage.vue");
 const QuoteCreatePage = () => import("@/app/pages/quotes/QuoteCreatePage.vue");
 const JobPage = () => import("@/app/pages/jobs/JobPage.vue");
+const ContactsPage = () => import("@/app/pages/contacts/ContactsPage.vue");
 
 export const routes: RouteRecordRaw[] = [
   /**
@@ -42,7 +43,7 @@ export const routes: RouteRecordRaw[] = [
    */
   {
     path: "/",
-    component: DefaultLayout, // ✅ layout that includes AppSidebar
+    component: DefaultLayout,
     meta: { requiresAuth: true },
     children: [
       {
@@ -66,42 +67,49 @@ export const routes: RouteRecordRaw[] = [
         component: QuoteCreatePage,
         meta: { title: "Quotes" },
       },
+
+      /**
+       * ============================
+       * Contacts (One dynamic page)
+       * ============================
+       */
       {
         path: "contacts/customers",
         name: "contacts.customers",
-        component: PlaceholderPage,
-        meta: { title: "Contacts • Customers" },
+        component: ContactsPage,
+        meta: { title: "Contacts • Customers", contactType: "customer" },
       },
       {
         path: "contacts/suppliers",
         name: "contacts.suppliers",
-        component: PlaceholderPage,
-        meta: { title: "Contacts • Suppliers" },
+        component: ContactsPage,
+        meta: { title: "Contacts • Suppliers", contactType: "supplier" },
       },
       {
         path: "contacts/road-hauliers",
         name: "contacts.road_hauliers",
-        component: PlaceholderPage,
-        meta: { title: "Contacts • Road Hauliers" },
+        component: ContactsPage,
+        meta: { title: "Contacts • Road Hauliers", contactType: "road_haulier" },
       },
       {
         path: "contacts/airlines",
         name: "contacts.airlines",
-        component: PlaceholderPage,
-        meta: { title: "Contacts • Airlines" },
+        component: ContactsPage,
+        meta: { title: "Contacts • Airlines", contactType: "airline" },
       },
       {
         path: "contacts/rail-operators",
         name: "contacts.rail_operators",
-        component: PlaceholderPage,
-        meta: { title: "Contacts • Rail Operators" },
+        component: ContactsPage,
+        meta: { title: "Contacts • Rail Operators", contactType: "rail_operator" },
       },
       {
         path: "contacts/shipping-lines",
         name: "contacts.shipping_lines",
-        component: PlaceholderPage,
-        meta: { title: "Contacts • Shipping Lines" },
+        component: ContactsPage,
+        meta: { title: "Contacts • Shipping Lines", contactType: "shipping_line" },
       },
+
       {
         path: "invoices",
         name: "invoices",

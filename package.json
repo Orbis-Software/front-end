@@ -9,6 +9,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@fontsource/ibm-plex-sans": "^5.2.8",
+    "@fontsource/inter": "^5.2.8",
     "@iconify/vue": "^5.0.0",
     "@primevue/themes": "^4.5.4",
     "axios": "^1.13.2",

@@ -180,7 +180,7 @@
 
         <!-- Create/Cancel -->
         <div class="card inner actions">
-          <Button class="create-btn" outlined type="button" @click="create">
+          <Button class="create-btn orbis-primary" type="button" @click="create">
             <i class="pi pi-file" style="margin-right: 8px" />
             Create Job
           </Button>

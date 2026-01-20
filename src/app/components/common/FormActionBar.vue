@@ -2,7 +2,7 @@
   <div class="fab">
     <div class="fab-inner">
       <Button
-        class="fab-btn"
+        class="fab-btn orbis-primary"
         outlined
         type="button"
         :disabled="cancelDisabled || loading || loadingPrimary"
@@ -13,7 +13,7 @@
       </Button>
 
       <Button
-        class="fab-btn"
+        class="fab-btn orbis-primary"
         outlined
         type="button"
         :loading="loading"
@@ -25,7 +25,7 @@
       </Button>
 
       <Button
-        class="fab-btn fab-primary"
+        class="fab-btn fab-primary orbis-primary"
         type="button"
         :loading="loadingPrimary"
         :disabled="sendDisabled || loading"

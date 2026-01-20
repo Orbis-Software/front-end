@@ -9,23 +9,6 @@
           <span class="draft-pill">Draft</span>
         </div>
       </div>
-
-      <div class="qh-right">
-        <Button class="btn" outlined type="button" @click="onCancel">
-          <i class="pi pi-times" style="margin-right: 8px"></i>
-          Cancel
-        </Button>
-
-        <Button class="btn" outlined type="button" :loading="saving" @click="onSave">
-          <i class="pi pi-save" style="margin-right: 8px"></i>
-          Save Quote
-        </Button>
-
-        <Button class="btn btn-primary" type="button" :loading="sending" @click="onSend">
-          <i class="pi pi-send" style="margin-right: 8px"></i>
-          Send to Customer
-        </Button>
-      </div>
     </header>
 
     <!-- Top meta row -->
@@ -192,7 +175,7 @@
           <span>Attach service tariffs, terms, or rate sheets</span>
         </div>
 
-        <Button class="btn" outlined type="button" @click="onUpload">
+        <Button class="btn orbis-primary" outlined type="button" @click="onUpload">
           Upload File
         </Button>
       </div>
