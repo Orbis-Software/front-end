@@ -1,4 +1,5 @@
 import type { Contact } from '@/app/types/contact'
+import contactPersonTransformer from '@/app/transformers/contact-person'
 
 const contactTransformer = {
   fetch(raw: any): Contact {
@@ -15,6 +16,7 @@ const contactTransformer = {
           : Number(raw.credit_limit),
       currency_preference: raw.currency_preference ?? null,
       status: raw.status ?? 'active',
+      people: contactPersonTransformer.fetchCollection(raw.people), 
       created_at: raw.created_at,
       updated_at: raw.updated_at,
     }
