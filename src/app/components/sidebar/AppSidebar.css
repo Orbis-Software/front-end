@@ -1,4 +1,5 @@
 /* Root sidebar */
+/* Default: mobile overlay */
 .pc-sidebar {
   width: 280px;
   height: 100vh;
@@ -8,7 +9,19 @@
   border-right: 1px solid var(--pc-border);
   background-color: var(--pc-bg-sidebar);
   z-index: 100;
+  transition: width 0.18s ease;
 }
+
+/* ✅ When embedded in desktop column: sidebar should behave like normal flex child */
+.pc-sidebar.embedded {
+  position: relative;
+  top: auto;
+  left: auto;
+  height: 100%;
+  width: 100%;
+  border-right: none; /* column already has it */
+}
+
 
 /* Container */
 .sidebar-container {
@@ -252,5 +265,89 @@
 .user-role {
   font-size: 0.75rem;
   color: var(--pc-text-muted);
+}
+
+/* Smooth width transition */
+.pc-sidebar {
+  transition: width 0.18s ease;
+}
+
+/* Collapsed state */
+.pc-sidebar.collapsed {
+  width: 76px; /* icon-only rail width */
+}
+
+/* Header: put toggle on the right */
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.collapse-toggle {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid var(--pc-border);
+  background: transparent;
+  color: var(--pc-text-main);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.collapse-toggle:hover {
+  background-color: var(--pc-surface-2);
+}
+
+/* Center icons when collapsed */
+.pc-sidebar.collapsed .menu-link {
+  justify-content: center;
+  padding: 0.9rem 0;
+  gap: 0;
+}
+
+.pc-sidebar.collapsed .menu-icon {
+  font-size: 1.15rem;
+  opacity: 0.9;
+}
+
+.pc-sidebar.collapsed .menu-icon-spacer {
+  width: 0;
+}
+
+/* Remove submenu indent when collapsed (since hidden anyway) */
+.pc-sidebar.collapsed .submenu-list {
+  display: none !important;
+}
+
+/* Footer compact when collapsed */
+.pc-sidebar.collapsed .sidebar-footer {
+  justify-content: center;
+}
+
+.pc-sidebar.collapsed .user-avatar {
+  margin: 0;
+}
+
+/* Sidebar defines the left column */
+.sidebar-column {
+  width: 280px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--pc-border);
+  background-color: var(--pc-bg-sidebar);
+  transition: width 0.18s ease;
+
+  height: 100vh;        /* ✅ important */
+  position: sticky;     /* ✅ optional but recommended */
+  top: 0;               /* ✅ keeps it pinned */
+  overflow: hidden;     /* ✅ prevents double scrollbars */
+}
+
+.sidebar-column.collapsed {
+  width: 76px;
 }
 

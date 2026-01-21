@@ -42,6 +42,7 @@ export const SIDEBAR_GROUPS: SidebarGroup[] = [
           { type: "leaf", label: "Shipping Lines", to: "/contacts/shipping-lines" },
         ],
       },
+      { type: "leaf", label: "Consolidation", to: "/consolidations", icon: "pi pi-sitemap" },
       { type: "leaf", label: "Invoices", to: "/invoices", icon: "pi pi-receipt" },
       { type: "leaf", label: "Reports", to: "/reports", icon: "pi pi-chart-line" },
     ],

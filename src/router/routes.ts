@@ -16,6 +16,7 @@ const QuoteCreatePage = () => import("@/app/pages/quotes/QuoteCreatePage.vue");
 const JobPage = () => import("@/app/pages/jobs/JobPage.vue");
 const ContactsPage = () => import("@/app/pages/contacts/ContactsPage.vue");
 const ContactCreatePage = () => import("@/app/pages/contacts/create/ContactCreatePage.vue");
+const ConsolidationPage  = () => import("@/app/pages/consolidations/ConsolidationPage.vue");
 
 export const routes: RouteRecordRaw[] = [
   /**
@@ -194,8 +195,12 @@ export const routes: RouteRecordRaw[] = [
         component: ContactCreatePage,
         meta: { title: "Contacts • Edit • Shipping Lines", contactType: "shipping_line" },
       },
-
-
+      {
+        path: "consolidations",
+        name: "tms.consolidations.show",
+        component: ConsolidationPage,
+        meta: { title: "Consolidation" },
+      },
       {
         path: "invoices",
         name: "invoices",

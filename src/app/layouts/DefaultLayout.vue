@@ -1,19 +1,23 @@
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from 'vue'
-import AppSidebar from '@/app/components/sidebar/AppSidebar.vue'
+import { ref, onMounted, onBeforeUnmount } from "vue";
+import AppSidebar from "@/app/components/sidebar/AppSidebar.vue";
 
-const sidebarVisible = ref(true)
-const isDesktop = ref(window.innerWidth >= 1024)
+const sidebarVisible = ref(true);
+const sidebarCollapsed = ref(false); // ✅ NEW
+const isDesktop = ref(window.innerWidth >= 1024);
 
 function onResize() {
-  isDesktop.value = window.innerWidth >= 1024
+  isDesktop.value = window.innerWidth >= 1024;
   if (!isDesktop.value) {
-    sidebarVisible.value = false
+    sidebarVisible.value = false;
+    sidebarCollapsed.value = false; // reset when leaving desktop
+  } else {
+    sidebarVisible.value = true;
   }
 }
 
-onMounted(() => window.addEventListener('resize', onResize))
-onBeforeUnmount(() => window.removeEventListener('resize', onResize))
+onMounted(() => window.addEventListener("resize", onResize));
+onBeforeUnmount(() => window.removeEventListener("resize", onResize));
 </script>
 
 <template>
@@ -22,9 +26,11 @@ onBeforeUnmount(() => window.removeEventListener('resize', onResize))
     <aside
       v-if="isDesktop"
       class="sidebar-column"
+      :class="{ collapsed: sidebarCollapsed }"
     >
       <AppSidebar
         v-model:visible="sidebarVisible"
+        v-model:collapsed="sidebarCollapsed"
         :embedded="true"
       />
     </aside>
@@ -36,7 +42,6 @@ onBeforeUnmount(() => window.removeEventListener('resize', onResize))
       :embedded="false"
     />
 
-    <!-- CONTENT ALWAYS STARTS AT TOP -->
     <main class="content">
       <router-view />
     </main>
@@ -48,27 +53,27 @@ onBeforeUnmount(() => window.removeEventListener('resize', onResize))
   display: flex;
   min-height: 100vh;
   width: 100%;
-
-  /* 🔑 THIS LINE FIXES IT */
   background-color: var(--pc-bg-page);
 }
 
 /* Sidebar defines the left column */
 .sidebar-column {
-  width: 260px;
+  width: 280px;
   flex-shrink: 0;
-
-  /* 👇 THIS is the separator line */
   border-right: 1px solid var(--pc-border);
   background-color: var(--pc-bg-sidebar);
+  transition: width 0.18s ease;
+}
+
+/* ✅ Collapsed width */
+.sidebar-column.collapsed {
+  width: 76px;
 }
 
 /* Page content */
 .content {
   flex: 1;
   padding: 2rem;
-
   background-color: var(--pc-bg-page);
 }
-
 </style>

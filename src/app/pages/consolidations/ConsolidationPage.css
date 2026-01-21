@@ -1,0 +1,468 @@
+.con-page {
+  padding: 18px 18px 40px;
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+.muted {
+  color: rgba(0, 0, 0, 0.55);
+  font-size: 13px;
+}
+
+.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+.h2 {
+  font-weight: 650;
+  font-size: 16px;
+  margin-bottom: 2px;
+}
+
+.w-full {
+  width: 100%;
+}
+
+/* Topbar */
+.topbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.crumbline {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.link-icon {
+  margin-top: 3px;
+  opacity: 0.7;
+}
+
+.titlewrap {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.top-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 650;
+  font-size: 14px;
+}
+
+.status-tag {
+  transform: translateY(1px);
+}
+
+.top-sub {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.sep {
+  opacity: 0.35;
+}
+
+.arrow {
+  opacity: 0.6;
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* Panels / Cards */
+.panel :deep(.p-card-body) {
+  padding: 18px;
+}
+
+.panel {
+  border-radius: 14px;
+  box-shadow: 0 1px 0 rgba(0,0,0,0.03);
+  margin-bottom: 14px;
+}
+
+.panel-head,
+.summary-head,
+.section-head {
+  display: flex;
+  align-items: flex-start;         /* same feel as Summary */
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.panel-actions,
+.inv-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;                /* spacing between buttons */
+  flex-wrap: nowrap;        /* ❗ keep buttons on one row */
+}
+.inv-actions .p-button {
+  white-space: nowrap;
+}
+
+
+/* Form grid */
+.formgrid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 12px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field label {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(0,0,0,0.6);
+}
+
+.span-2 {
+  grid-column: span 2;
+}
+
+/* Summary tiles */
+.warn-tag {
+  border-radius: 999px;
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.tile {
+  border: 1px solid rgba(0,0,0,0.08);
+  border-radius: 14px;
+  padding: 14px;
+  background: #fff;
+}
+
+.tile .k {
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  color: rgba(0,0,0,0.55);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.tile .v {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.tile .v.money {
+  font-size: 18px;
+}
+
+.unit {
+  font-size: 13px;
+  font-weight: 600;
+  opacity: 0.6;
+  margin-left: 4px;
+}
+
+/* Tabs (lightweight, like screenshot) */
+.tabs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid rgba(0,0,0,0.08);
+  border-radius: 999px;
+  background: #fff;
+  margin-bottom: 14px;
+  overflow-x: auto;
+}
+
+.tab {
+  border: 0;
+  background: transparent;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-weight: 650;
+  font-size: 13px;
+  color: rgba(0,0,0,0.65);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.tab:hover {
+  background: rgba(0,0,0,0.04);
+}
+
+.tab.active {
+  background: rgba(0,0,0,0.06);
+  color: rgba(0,0,0,0.85);
+}
+
+/* Datatable */
+.datatable :deep(.p-datatable-thead > tr > th) {
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(0,0,0,0.65);
+  background: rgba(0,0,0,0.015);
+}
+
+.datatable :deep(.p-datatable-tbody > tr > td) {
+  font-size: 13px;
+}
+
+.datatable :deep(.p-tag) {
+  border-radius: 999px;
+}
+
+/* Invoices */
+.invoice-toprow {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-end;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.currency-switch .label {
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(0,0,0,0.55);
+  margin-bottom: 6px;
+  letter-spacing: 0.02em;
+}
+
+/* ✅ make CurrencyPills styles work even with <style scoped> */
+:deep(.pills) {
+  display: inline-flex;
+  gap: 6px;
+  padding: 6px;
+  border: 1px solid rgba(0,0,0,0.08);
+  border-radius: 999px;
+  background: #fff;
+}
+
+:deep(.pill) {
+  border: 0;
+  outline: none;
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: transparent;
+  font-weight: 650;
+  font-size: 12px;
+  cursor: pointer;
+  color: rgba(0,0,0,0.65);
+  line-height: 1;
+}
+
+:deep(.pill:hover) {
+  background: rgba(0,0,0,0.04);
+}
+
+:deep(.pill.active) {
+  background: rgba(0,0,0,0.06);
+  color: rgba(0,0,0,0.85);
+}
+
+
+.totals-mini {
+  text-align: right;
+  font-size: 13px;
+  display: grid;
+  gap: 4px;
+}
+
+.invoice-box {
+  border: 1px solid rgba(0,0,0,0.08);
+  border-radius: 14px;
+  padding: 12px;
+  background: #fff;
+  margin-bottom: 12px;
+}
+
+.subhead {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: rgba(0,0,0,0.55);
+  margin-bottom: 8px;
+}
+
+.totals-row {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.totchip {
+  font-size: 13px;
+}
+
+.chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(0,0,0,0.08);
+  background: rgba(0,0,0,0.02);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.invoice-foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-end;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.tip {
+  max-width: 520px;
+}
+
+.base-total {
+  border: 1px solid rgba(0,0,0,0.08);
+  border-radius: 14px;
+  padding: 12px 14px;
+  min-width: 260px;
+  text-align: right;
+  background: #fff;
+}
+
+.bt-label {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: rgba(0,0,0,0.55);
+  margin-bottom: 6px;
+}
+
+.bt-value {
+  font-size: 22px;
+  font-weight: 800;
+}
+
+/* Placeholder */
+.placeholder {
+  border: 1px dashed rgba(0,0,0,0.18);
+  border-radius: 14px;
+  padding: 16px;
+  display: inline-flex;
+  gap: 10px;
+  align-items: center;
+  color: rgba(0,0,0,0.6);
+}
+
+.status-text {
+  font-weight: 650;
+  color: rgba(0, 0, 0, 0.7);
+}
+
+/* --- add these at the end of your existing ConsolidationPage.css --- */
+
+/* Keeps supplier pill-like chip in table, like your screenshot */
+.chip-inline {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(0,0,0,0.08);
+  background: rgba(0,0,0,0.02);
+  font-size: 12px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+/* Optional: make invoice actions align tighter like your screenshot */
+.inv-actions {
+  gap: 12px;
+}
+
+/* If you want the Import to look like a filled primary later,
+   keep class orbis-primary on Button and style it in your global theme */
+.chip-inline {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(0,0,0,0.08);
+  background: rgba(0,0,0,0.02);
+  font-size: 12px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+/* Make SectionHead text block match Summary’s text block */
+.section-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;                /* same vertical spacing as summary */
+}
+
+/* Ensure the whole header aligns like Summary */
+.section-head {
+  display: flex;
+  align-items: flex-start; /* title+subtitle top aligned */
+  justify-content: space-between;
+  gap: 16px;
+}
+
+/* Keep actions visible + aligned */
+.panel-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: nowrap;
+}
+
+.panel-actions .p-button {
+  white-space: nowrap;
+}
+
+
+/* Responsive */
+@media (max-width: 1020px) {
+  .formgrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .span-2 {
+    grid-column: span 2;
+  }
+  .tiles {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 560px) {
+  .tiles {
+    grid-template-columns: 1fr;
+  }
+}
