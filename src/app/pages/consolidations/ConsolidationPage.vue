@@ -341,7 +341,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed, reactive, ref } from 'vue'
 import SectionHead from '@/app/components/consolidations/SectionHead.vue'
 import CurrencyPills from '@/app/components/consolidations/CurrencyPills.vue'

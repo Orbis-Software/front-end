@@ -13,7 +13,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 defineProps({
   modelValue: { type: String, required: true },
   options: { type: Array, required: true }, // ['GBP','USD','EUR']
