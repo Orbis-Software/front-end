@@ -8,7 +8,11 @@
           <div class="titlewrap">
             <div class="top-title">
               Master Consol Ref <span class="mono">{{ consolidation.masterRef }}</span>
-              <Tag :value="consolidation.status" :severity="statusSeverity(consolidation.status)" class="status-tag" />
+              <Tag
+                :value="consolidation.status"
+                :severity="statusSeverity(consolidation.status)"
+                class="status-tag"
+              />
             </div>
             <div class="top-sub">
               <span class="muted">{{ consolidation.customer }}</span>
@@ -330,7 +334,9 @@
         </DataTable>
 
         <div class="invoice-foot">
-          <div class="tip muted">Tip: Shipping Label lines are what you'll print/store; invoices pull from these plus customs fields.</div>
+          <div class="tip muted">
+            Tip: Shipping Label lines are what you'll print/store; invoices pull from these plus customs fields.
+          </div>
           <div class="base-total">
             <div class="bt-label">ACTIVE INVOICE BASE TOTAL</div>
             <div class="bt-value">£{{ fmt(activeCurrencyBaseTotalGbp) }}</div>
@@ -342,33 +348,61 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref } from 'vue'
-import SectionHead from '@/app/components/consolidations/SectionHead.vue'
-import CurrencyPills from '@/app/components/consolidations/CurrencyPills.vue'
+import { computed, reactive, ref } from "vue";
+import SectionHead from "@/app/components/consolidations/SectionHead.vue";
+import CurrencyPills from "@/app/components/consolidations/CurrencyPills.vue";
 
-const statusOptions = [
-  { label: 'Open', value: 'Open' },
-  { label: 'Locked', value: 'Locked' },
-  { label: 'Closed', value: 'Closed' },
-]
+/* =========================
+   Types
+========================= */
+type Currency = "GBP" | "USD" | "EUR";
+type ConsolidationStatus = "Open" | "Locked" | "Closed";
+type Mode = "Air" | "Sea" | "Road";
 
-const modeOptions = [
-  { label: 'Air', value: 'Air' },
-  { label: 'Sea', value: 'Sea' },
-  { label: 'Road', value: 'Road' },
-]
+type InvoiceLine = {
+  shippingLabel: string;
+  description: string;
+  qty: number;
+  uom: string;
+  coo: string;
+  hsCode: string;
+  unitValue: number;
+  totalValue: number;
+  currency: Currency;
+  supplier?: string;
+  grn?: string;
+  fxToGbp?: number;
+};
 
+/* =========================
+   Options
+========================= */
+const statusOptions: Array<{ label: string; value: ConsolidationStatus }> = [
+  { label: "Open", value: "Open" },
+  { label: "Locked", value: "Locked" },
+  { label: "Closed", value: "Closed" },
+];
+
+const modeOptions: Array<{ label: string; value: Mode }> = [
+  { label: "Air", value: "Air" },
+  { label: "Sea", value: "Sea" },
+  { label: "Road", value: "Road" },
+];
+
+/* =========================
+   State
+========================= */
 const consolidation = reactive({
-  masterRef: 'CON-PE-000245',
-  status: 'Open',
-  mode: 'Air',
-  customer: 'Far East Trading (HK)',
-  route: 'LHR → LIS → HKG',
-  baseCurrency: 'GBP',
-  origin: 'Far East Trading (HK)',
-  hub1: 'LHR',
-  hub2: 'LIS',
-})
+  masterRef: "CON-PE-000245",
+  status: "Open" as ConsolidationStatus,
+  mode: "Air" as Mode,
+  customer: "Far East Trading (HK)",
+  route: "LHR → LIS → HKG",
+  baseCurrency: "GBP" as Currency,
+  origin: "Far East Trading (HK)",
+  hub1: "LHR",
+  hub2: "LIS",
+});
 
 const summary = reactive({
   supplierOrdersLinked: 3,
@@ -379,108 +413,162 @@ const summary = reactive({
   costBaseGbp: 2503.38,
   marginBaseGbp: 973.54,
   marginPct: 0.28,
-})
+});
 
-const activeTab = ref('inv')
+const activeTab = ref<"goodsin" | "co" | "so" | "inv">("inv");
 
+/* Goods-in / CO / SO are mock lists; typing not required for build errors */
 const goodsInRows = ref([
-  { grn: 'GRN-8812', supplier: 'Shenzhen ABC Components Co., Ltd.', supplierInv: 'INV-SZ-10441', poRef: 'PO-PE245-01', partNo: 'IC-74HC595', description: 'Integrated Circuits', pcs: 3000, weight: '45 kg', cbm: 0.18, location: 'RACK A2', status: 'Received' },
-  { grn: 'GRN-8831', supplier: 'Guangzhou DEF Plastics Ltd.', supplierInv: 'INV-GZ-88912', poRef: 'PO-PE246-02', partNo: 'PL-AB-12', description: 'Plastic Housings', pcs: 1200, weight: '62 kg', cbm: 0.26, location: 'RACK B1', status: 'Received' },
-  { grn: 'GRN-8879', supplier: 'Ningbo GHI Metals', supplierInv: 'INV-NB-55301', poRef: 'PO-PE247-01', partNo: 'AL-BKT-9', description: 'Aluminium Brackets', pcs: 500, weight: '78 kg', cbm: 0.31, location: 'BULK 03', status: 'Received' },
-])
+  {
+    grn: "GRN-8812",
+    supplier: "Shenzhen ABC Components Co., Ltd.",
+    supplierInv: "INV-SZ-10441",
+    poRef: "PO-PE245-01",
+    partNo: "IC-74HC595",
+    description: "Integrated Circuits",
+    pcs: 3000,
+    weight: "45 kg",
+    cbm: 0.18,
+    location: "RACK A2",
+    status: "Received",
+  },
+  {
+    grn: "GRN-8831",
+    supplier: "Guangzhou DEF Plastics Ltd.",
+    supplierInv: "INV-GZ-88912",
+    poRef: "PO-PE246-02",
+    partNo: "PL-AB-12",
+    description: "Plastic Housings",
+    pcs: 1200,
+    weight: "62 kg",
+    cbm: 0.26,
+    location: "RACK B1",
+    status: "Received",
+  },
+  {
+    grn: "GRN-8879",
+    supplier: "Ningbo GHI Metals",
+    supplierInv: "INV-NB-55301",
+    poRef: "PO-PE247-01",
+    partNo: "AL-BKT-9",
+    description: "Aluminium Brackets",
+    pcs: 500,
+    weight: "78 kg",
+    cbm: 0.31,
+    location: "BULK 03",
+    status: "Received",
+  },
+]);
 
 const collectionOrders = ref([
-  { ref: 'CO-771', supplier: 'DHL', pickupDate: '12/03/26', pickupTime: '09:30', vehicle: '7.5t', pieces: 0, weight: '800 kg', status: 'Booked' },
-  { ref: 'CO-812', supplier: 'Kuehne+Nagel', pickupDate: '12/03/26', pickupTime: '14:00', vehicle: 'Van', pieces: 0, weight: '120 kg', status: 'Pending' },
-])
+  { ref: "CO-771", supplier: "DHL", pickupDate: "12/03/26", pickupTime: "09:30", vehicle: "7.5t", pieces: 0, weight: "800 kg", status: "Booked" },
+  { ref: "CO-812", supplier: "Kuehne+Nagel", pickupDate: "12/03/26", pickupTime: "14:00", vehicle: "Van", pieces: 0, weight: "120 kg", status: "Pending" },
+]);
 
 const supplierOrders = ref([
-  { orderRef: 'PE245', supplier: 'Shenzhen ABC Components Co., Ltd.', customer: 'Far East Trading (HK)', pcs: 3000, weight: '45 kg', cbm: 0.18, currency: 'USD', locked: false },
-  { orderRef: 'PE246', supplier: 'Guangzhou DEF Plastics Ltd.', customer: 'Far East Trading (HK)', pcs: 1200, weight: '62 kg', cbm: 0.26, currency: 'USD', locked: true },
-  { orderRef: 'PE247', supplier: 'Ningbo GHI Metals', customer: 'Far East Trading (HK)', pcs: 500, weight: '78 kg', cbm: 0.31, currency: 'USD', locked: false },
-])
+  { orderRef: "PE245", supplier: "Shenzhen ABC Components Co., Ltd.", customer: "Far East Trading (HK)", pcs: 3000, weight: "45 kg", cbm: 0.18, currency: "USD", locked: false },
+  { orderRef: "PE246", supplier: "Guangzhou DEF Plastics Ltd.", customer: "Far East Trading (HK)", pcs: 1200, weight: "62 kg", cbm: 0.26, currency: "USD", locked: true },
+  { orderRef: "PE247", supplier: "Ningbo GHI Metals", customer: "Far East Trading (HK)", pcs: 500, weight: "78 kg", cbm: 0.31, currency: "USD", locked: false },
+]);
 
-/* ===== Invoices ===== */
-const invoiceCurrencies = ['GBP', 'USD', 'EUR']
-const invoiceCurrency = ref('USD')
+/* =========================
+   Invoices
+========================= */
+const invoiceCurrencies = ["GBP", "USD", "EUR"] as const;
+const invoiceCurrency = ref<Currency>("USD");
 
-const invoiceLines = ref([
+const invoiceLines = ref<InvoiceLine[]>([
   // USD
-  { shippingLabel: 'LBL-USD-0001', description: 'Integrated Circuits (IC-74HC595)', qty: 3000, uom: 'PCS', coo: 'CN', hsCode: '8542.31', unitValue: 0.42, totalValue: 1260.0, currency: 'USD', supplier: 'Shenzhen ABC Components Co., Ltd.', grn: 'GRN-8812', fxToGbp: 0.79 },
-  { shippingLabel: 'LBL-USD-0002', description: 'Plastic Housings (PL-AB-12)', qty: 1200, uom: 'PCS', coo: 'CN', hsCode: '3926.90', unitValue: 0.85, totalValue: 1020.0, currency: 'USD', supplier: 'Guangzhou DEF Plastics Ltd.', grn: 'GRN-8831', fxToGbp: 0.79 },
-  { shippingLabel: 'LBL-USD-0003', description: 'Aluminium Brackets (AL-BKT-9)', qty: 500, uom: 'PCS', coo: 'CN', hsCode: '7616.99', unitValue: 1.6, totalValue: 800.0, currency: 'USD', supplier: 'Ningbo GHI Metals', grn: 'GRN-8879', fxToGbp: 0.79 },
+  { shippingLabel: "LBL-USD-0001", description: "Integrated Circuits (IC-74HC595)", qty: 3000, uom: "PCS", coo: "CN", hsCode: "8542.31", unitValue: 0.42, totalValue: 1260.0, currency: "USD", supplier: "Shenzhen ABC Components Co., Ltd.", grn: "GRN-8812", fxToGbp: 0.79 },
+  { shippingLabel: "LBL-USD-0002", description: "Plastic Housings (PL-AB-12)", qty: 1200, uom: "PCS", coo: "CN", hsCode: "3926.90", unitValue: 0.85, totalValue: 1020.0, currency: "USD", supplier: "Guangzhou DEF Plastics Ltd.", grn: "GRN-8831", fxToGbp: 0.79 },
+  { shippingLabel: "LBL-USD-0003", description: "Aluminium Brackets (AL-BKT-9)", qty: 500, uom: "PCS", coo: "CN", hsCode: "7616.99", unitValue: 1.6, totalValue: 800.0, currency: "USD", supplier: "Ningbo GHI Metals", grn: "GRN-8879", fxToGbp: 0.79 },
 
   // GBP
-  { shippingLabel: 'LBL-GBP-SERV', description: 'Handling & Storage (consolidation period)', qty: 1, uom: 'PCS', coo: 'GB', hsCode: '–', unitValue: 180.0, totalValue: 180.0, currency: 'GBP', supplier: '', grn: '', fxToGbp: 1 },
-  { shippingLabel: 'LBL-GBP-SERV', description: 'Export documentation', qty: 1, uom: 'PCS', coo: 'GB', hsCode: '–', unitValue: 45.0, totalValue: 45.0, currency: 'GBP', supplier: '', grn: '', fxToGbp: 1 },
+  { shippingLabel: "LBL-GBP-SERV", description: "Handling & Storage (consolidation period)", qty: 1, uom: "PCS", coo: "GB", hsCode: "–", unitValue: 180.0, totalValue: 180.0, currency: "GBP", supplier: "", grn: "", fxToGbp: 1 },
+  { shippingLabel: "LBL-GBP-SERV", description: "Export documentation", qty: 1, uom: "PCS", coo: "GB", hsCode: "–", unitValue: 45.0, totalValue: 45.0, currency: "GBP", supplier: "", grn: "", fxToGbp: 1 },
 
   // EUR
-  { shippingLabel: 'LBL-EUR-0001', description: 'EU-sourced Components (assorted)', qty: 850, uom: 'PCS', coo: 'NL', hsCode: '8536.90', unitValue: 1.12, totalValue: 952.0, currency: 'EUR', supplier: 'Rotterdam Parts BV', grn: 'GRN-8902', fxToGbp: 0.86 },
-])
+  { shippingLabel: "LBL-EUR-0001", description: "EU-sourced Components (assorted)", qty: 850, uom: "PCS", coo: "NL", hsCode: "8536.90", unitValue: 1.12, totalValue: 952.0, currency: "EUR", supplier: "Rotterdam Parts BV", grn: "GRN-8902", fxToGbp: 0.86 },
+]);
 
-const invoiceLinesFiltered = computed(() => invoiceLines.value.filter((l) => l.currency === invoiceCurrency.value))
+const invoiceLinesFiltered = computed<InvoiceLine[]>(() =>
+  invoiceLines.value.filter((l) => l.currency === invoiceCurrency.value)
+);
 
-function lineBaseTotalGbp(line) {
-  const total = Number(line.totalValue || 0)
-  if (line.currency === 'GBP') return total
-  return total * Number(line.fxToGbp || 0)
+function lineBaseTotalGbp(line: InvoiceLine): number {
+  const total = Number(line.totalValue || 0);
+  if (line.currency === "GBP") return total;
+  return total * Number(line.fxToGbp || 0);
 }
 
-const activeCurrencyBaseTotalGbp = computed(() => invoiceLinesFiltered.value.reduce((acc, l) => acc + lineBaseTotalGbp(l), 0))
+const activeCurrencyBaseTotalGbp = computed<number>(() =>
+  invoiceLinesFiltered.value.reduce((acc, l) => acc + lineBaseTotalGbp(l), 0)
+);
 
-const activeCurrencyTotalLabel = computed(() => {
-  const total = invoiceLinesFiltered.value.reduce((acc, l) => acc + Number(l.totalValue || 0), 0)
-  return money(invoiceCurrency.value, total)
-})
+const activeCurrencyTotalLabel = computed<string>(() => {
+  const total = invoiceLinesFiltered.value.reduce((acc, l) => acc + Number(l.totalValue || 0), 0);
+  return money(invoiceCurrency.value, total);
+});
 
-const totalsByCurrency = computed(() => {
-  const map = new Map()
+const totalsByCurrency = computed<Array<{ currency: Currency; totalLabel: string }>>(() => {
+  const map = new Map<Currency, number>();
   invoiceLines.value.forEach((l) => {
-    map.set(l.currency, (map.get(l.currency) || 0) + Number(l.totalValue || 0))
-  })
+    map.set(l.currency, (map.get(l.currency) || 0) + Number(l.totalValue || 0));
+  });
+
   return invoiceCurrencies
     .filter((c) => map.has(c))
-    .map((c) => ({ currency: c, totalLabel: money(c, map.get(c) || 0) }))
-})
+    .map((c) => ({ currency: c, totalLabel: money(c, map.get(c) || 0) }));
+});
 
-const supplierBreakdown = computed(() => {
-  const group = new Map()
+const supplierBreakdown = computed<Array<{ supplier: string; total: number; totalLabel: string }>>(() => {
+  const group = new Map<string, number>();
+
   invoiceLinesFiltered.value.forEach((l) => {
-    const s = (l.supplier || '').trim()
-    if (!s) return
-    group.set(s, (group.get(s) || 0) + Number(l.totalValue || 0))
-  })
+    const s = (l.supplier || "").trim();
+    if (!s) return;
+    group.set(s, (group.get(s) || 0) + Number(l.totalValue || 0));
+  });
+
   return Array.from(group.entries())
     .map(([supplier, total]) => ({ supplier, total, totalLabel: money(invoiceCurrency.value, total) }))
-    .sort((a, b) => b.total - a.total)
-})
+    .sort((a, b) => b.total - a.total);
+});
 
-/* ===== helpers ===== */
-function fmt(n) {
-  return Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+/* =========================
+   Helpers
+========================= */
+function fmt(n: number): string {
+  return Number(n || 0).toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 }
 
-function fmtPct(n) {
-  return `${(Number(n || 0) * 100).toFixed(1)}%`
+function fmtPct(n: number): string {
+  return `${(Number(n || 0) * 100).toFixed(1)}%`;
 }
 
-function money(ccy, n) {
-  const map = { USD: '$', EUR: '€', GBP: '£' }
-  const v = Number(n || 0)
-  return `${map[ccy] || ''}${v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+function money(ccy: Currency, n: number): string {
+  const map: Record<Currency, string> = { USD: "$", EUR: "€", GBP: "£" };
+  const v = Number(n || 0);
+  return `${map[ccy]}${v.toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
 }
 
-function statusSeverity(s) {
-  if (s === 'Open') return 'success'
-  if (s === 'Locked') return 'warning'
-  if (s === 'Closed') return 'secondary'
-  return 'secondary'
+function statusSeverity(s: ConsolidationStatus) {
+  if (s === "Open") return "success";
+  if (s === "Locked") return "warning";
+  if (s === "Closed") return "secondary";
+  return "secondary";
 }
 
-function coSeverity(s) {
-  if (s === 'Booked') return 'success'
-  if (s === 'Pending') return 'warning'
-  return 'secondary'
+function coSeverity(s: string) {
+  if (s === "Booked") return "success";
+  if (s === "Pending") return "warning";
+  return "secondary";
 }
 </script>
 
