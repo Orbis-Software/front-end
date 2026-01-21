@@ -333,6 +333,29 @@
   margin: 0;
 }
 
+/* --- Fix: collapse toggle getting clipped in collapsed rail --- */
+.pc-sidebar.collapsed .sidebar-header {
+  padding: 0.70rem 0.5rem;     /* smaller padding so button fits */
+  justify-content: center;      /* keep it centered */
+}
+
+/* keep logo centered and prevent squeeze */
+.pc-sidebar.collapsed .brand-wrapper {
+  justify-content: center;
+  width: 100%;
+}
+
+/* make sure the toggle never overflows */
+.collapse-toggle {
+  flex: 0 0 auto;
+}
+
+/* optional: when collapsed, place the toggle consistently */
+.pc-sidebar.collapsed .collapse-toggle {
+  margin-left: 0;
+}
+
+
 /* Sidebar defines the left column */
 .sidebar-column {
   width: 280px;
