@@ -1,42 +1,62 @@
 <template>
-  <aside class="pc-sidebar sidebar-container" role="navigation" aria-label="Main navigation">
+  <aside
+    class="pc-sidebar sidebar-container"
+    :class="[{ embedded }, { collapsed: collapsedLocal }]"
+    role="navigation"
+    aria-label="Main navigation"
+  >
     <!-- Header -->
     <header class="sidebar-header">
       <div class="brand-wrapper">
         <div class="brand-logo-wrapper">
           <img src="/orbis-logo.png" alt="PC Cargo" class="brand-logo" />
         </div>
-        <span class="brand-text">Transport Programme</span>
+
+        <!-- Hide text when collapsed -->
+        <span v-if="!collapsedLocal" class="brand-text">Transport Programme</span>
       </div>
+
+      <!-- Collapse toggle (desktop rail behavior) -->
+      <button
+        v-if="embedded"
+        class="collapse-toggle"
+        type="button"
+        :aria-label="collapsedLocal ? 'Expand sidebar' : 'Collapse sidebar'"
+        @click="toggleCollapsed"
+      >
+        <i class="pi" :class="collapsedLocal ? 'pi-angle-double-right' : 'pi-angle-double-left'"></i>
+      </button>
     </header>
 
     <!-- Navigation -->
     <nav class="sidebar-menu">
       <ul class="menu-list">
         <template v-for="group in groups" :key="group.key">
-          <!-- Group header -->
-          <li class="group-title">
+          <!-- Group header (hide on collapsed) -->
+          <li v-if="!collapsedLocal" class="group-title">
             <button class="group-toggle" type="button" @click="toggleGroup(group.key)">
               <span>{{ group.label }}</span>
               <i class="pi pi-chevron-down" :class="{ rotated: !groupOpen[group.key] }" />
             </button>
           </li>
 
-          <!-- Group items -->
-          <template v-if="groupOpen[group.key]">
+          <!-- If collapsed, we still render items but always "open" groups -->
+          <template v-if="collapsedLocal || groupOpen[group.key]">
             <template v-for="item in group.items" :key="itemKey(group.key, item)">
               <!-- Leaf -->
               <li v-if="item.type === 'leaf'" class="menu-item">
                 <button
                   class="menu-link"
-                  :class="{ active: isActive(item.to) }"
+                  :class="{ active: isActive(item.to), collapsed: collapsedLocal }"
                   :disabled="!!item.disabled"
                   type="button"
                   @click="go(item.to)"
+                  :title="collapsedLocal ? item.label : undefined"
                 >
                   <i v-if="item.icon" :class="[item.icon, 'menu-icon']" />
                   <span v-else class="menu-icon-spacer" />
-                  <span class="menu-text">{{ item.label }}</span>
+
+                  <span v-if="!collapsedLocal" class="menu-text">{{ item.label }}</span>
                 </button>
               </li>
 
@@ -44,18 +64,25 @@
               <li v-else class="menu-item">
                 <button
                   class="menu-link submenu-trigger"
-                  :class="{ active: isActiveSubmenu(item) }"
+                  :class="{ active: isActiveSubmenu(item), collapsed: collapsedLocal }"
                   type="button"
-                  @click="toggleSubmenu(item.key)"
+                  @click="onSubmenuClick(item.key)"
+                  :title="collapsedLocal ? item.label : undefined"
                 >
                   <i v-if="item.icon" :class="[item.icon, 'menu-icon']" />
                   <span v-else class="menu-icon-spacer" />
-                  <span class="menu-text">{{ item.label }}</span>
 
-                  <i class="pi pi-angle-right submenu-chevron" :class="{ open: submenuOpen[item.key] }" />
+                  <span v-if="!collapsedLocal" class="menu-text">{{ item.label }}</span>
+
+                  <i
+                    v-if="!collapsedLocal"
+                    class="pi pi-angle-right submenu-chevron"
+                    :class="{ open: submenuOpen[item.key] }"
+                  />
                 </button>
 
-                <ul v-show="submenuOpen[item.key]" class="submenu-list">
+                <!-- Only show children when expanded -->
+                <ul v-show="!collapsedLocal && submenuOpen[item.key]" class="submenu-list">
                   <li v-for="child in item.children" :key="child.to" class="submenu-item">
                     <button
                       class="submenu-link"
@@ -79,18 +106,25 @@
 
         <!-- Logout -->
         <li class="menu-item">
-          <button class="menu-link logout-link" type="button" @click="logout">
+          <button
+            class="menu-link logout-link"
+            :class="{ collapsed: collapsedLocal }"
+            type="button"
+            @click="logout"
+            :title="collapsedLocal ? 'Logout' : undefined"
+          >
             <i class="pi pi-sign-out menu-icon" />
-            <span class="menu-text">Logout</span>
+            <span v-if="!collapsedLocal" class="menu-text">Logout</span>
           </button>
         </li>
       </ul>
     </nav>
 
-    <!-- Footer -->
+    <!-- Footer (hide info when collapsed) -->
     <footer class="sidebar-footer">
       <div class="user-avatar">{{ initials }}</div>
-      <div class="user-info">
+
+      <div v-if="!collapsedLocal" class="user-info">
         <span class="user-name">{{ userName }}</span>
         <span class="user-role">Administrator</span>
       </div>
@@ -99,17 +133,52 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive } from "vue";
+import { computed, reactive, ref, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useAuthStore } from "@/app/stores/auth";
 import { SIDEBAR_GROUPS, type SidebarGroup, type SidebarLeaf, type SidebarSubmenu } from "./routes";
 import "./AppSidebar.css";
+
+type Props = {
+  embedded?: boolean;
+  visible?: boolean;     // your existing mobile overlay control
+  collapsed?: boolean;   // NEW: desktop collapse rail
+};
+
+const props = withDefaults(defineProps<Props>(), {
+  embedded: false,
+  visible: true,
+  collapsed: false,
+});
+
+const emit = defineEmits<{
+  (e: "update:visible", value: boolean): void;
+  (e: "update:collapsed", value: boolean): void;
+}>();
 
 const router = useRouter();
 const route = useRoute();
 const authStore = useAuthStore();
 
 const groups = computed<SidebarGroup[]>(() => SIDEBAR_GROUPS);
+
+// local collapsed state (sync with v-model)
+const collapsedLocal = ref<boolean>(props.collapsed);
+
+watch(
+  () => props.collapsed,
+  (v) => (collapsedLocal.value = v),
+);
+
+function toggleCollapsed() {
+  collapsedLocal.value = !collapsedLocal.value;
+  emit("update:collapsed", collapsedLocal.value);
+
+  // when collapsing, close submenus (optional but nice)
+  if (collapsedLocal.value) {
+    Object.keys(submenuOpen).forEach((k) => (submenuOpen[k] = false));
+  }
+}
 
 // open state
 const groupOpen = reactive<Record<string, boolean>>({
@@ -126,7 +195,12 @@ function toggleGroup(key: string) {
   groupOpen[key] = !groupOpen[key];
 }
 
-function toggleSubmenu(key: string) {
+function onSubmenuClick(key: string) {
+  // If collapsed, expand first (so user can see submenu items)
+  if (collapsedLocal.value) {
+    collapsedLocal.value = false;
+    emit("update:collapsed", false);
+  }
   submenuOpen[key] = !submenuOpen[key];
 }
 
@@ -163,7 +237,4 @@ const initials = computed(() => {
   if (first) return first.toUpperCase();
   return "U";
 });
-
 </script>
-
-
