@@ -17,7 +17,8 @@ import 'primeicons/primeicons.css'
 ========================= */
 import Button from 'primevue/button'
 import Card from 'primevue/card'
-import Dropdown from 'primevue/dropdown'
+import Select from 'primevue/select' // ✅ NEW (replaces Dropdown)
+import Dropdown from 'primevue/dropdown' // ✅ NEW (replaces Dropdown)
 import InputText from 'primevue/inputtext'
 import InputNumber from 'primevue/inputnumber'
 import Divider from 'primevue/divider'
@@ -33,12 +34,13 @@ import ConfirmDialog from 'primevue/confirmdialog'
 import Dialog from 'primevue/dialog'
 import Password from 'primevue/password'
 import Checkbox from 'primevue/checkbox'
-import "@fontsource/inter/latin-400.css";
+import Textarea from 'primevue/textarea' // ✅ ensure global
+import FileUpload from 'primevue/fileupload' // ✅ NEW
 
-import "@fontsource/ibm-plex-sans/latin-500.css";
-import "@fontsource/ibm-plex-sans/latin-600.css";
-
-import "./assets/tailwind.css";
+import "@fontsource/inter/latin-400.css"
+import "@fontsource/ibm-plex-sans/latin-500.css"
+import "@fontsource/ibm-plex-sans/latin-600.css"
+import "./assets/tailwind.css"
 
 /* =========================
    App Init
@@ -69,7 +71,10 @@ app.component('ConfirmDialog', ConfirmDialog)
 app.component('Tag', Tag)
 app.component('Checkbox', Checkbox)
 app.component('Card', Card)
-app.component('Dropdown', Dropdown)
+
+app.component('Select', Select)         // ✅ NEW
+app.component('Dropdown', Dropdown)  
+
 app.component('InputText', InputText)
 app.component('InputNumber', InputNumber)
 app.component('Divider', Divider)
@@ -77,5 +82,7 @@ app.component('Fieldset', Fieldset)
 app.component('Steps', Steps)
 app.component('ProgressSpinner', ProgressSpinner)
 app.component('Toast', Toast)
+app.component('Textarea', Textarea)     // ✅
+app.component('FileUpload', FileUpload) // ✅ NEW
 
 app.mount('#app')

@@ -17,6 +17,7 @@ const JobPage = () => import("@/app/pages/jobs/JobPage.vue");
 const ContactsPage = () => import("@/app/pages/contacts/ContactsPage.vue");
 const ContactCreatePage = () => import("@/app/pages/contacts/create/ContactCreatePage.vue");
 const ConsolidationPage  = () => import("@/app/pages/consolidations/ConsolidationPage.vue");
+const SettingsPage = () => import("@/app/pages/settings/SettingsPage.vue");
 
 export const routes: RouteRecordRaw[] = [
   /**
@@ -240,7 +241,7 @@ export const routes: RouteRecordRaw[] = [
       {
         path: "settings",
         name: "settings",
-        component: PlaceholderPage,
+        component: SettingsPage,
         meta: { title: "Settings" },
       },
     ],

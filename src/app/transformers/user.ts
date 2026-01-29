@@ -1,4 +1,5 @@
 import type { User } from '@/app/types/user'
+import companyTransformer from '@/app/transformers/company'
 
 export default {
   /**
@@ -9,6 +10,10 @@ export default {
       id: data.id,
       name: data.name,
       email: data.email,
+
+      // ✅ new
+      company: data.company ? companyTransformer.fetch(data.company) : null,
+
       created_at: data.created_at,
       updated_at: data.updated_at,
     }
@@ -18,6 +23,6 @@ export default {
    * Transform a collection of users
    */
   fetchCollection(data: any[]): User[] {
-    return data.map(this.fetch)
+    return (data ?? []).map((row: any) => this.fetch(row))
   },
 }

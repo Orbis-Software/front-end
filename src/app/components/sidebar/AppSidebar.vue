@@ -10,11 +10,13 @@
     <header class="sidebar-header" :class="{ collapsed: collapsedLocal }">
       <div class="brand-wrapper">
         <div class="brand-logo-wrapper">
-          <img src="/orbis-logo.png" alt="PC Cargo" class="brand-logo" />
+          <img :src="companyLogoSrc" :alt="companyName" class="brand-logo" />
         </div>
 
         <!-- Hide text when collapsed -->
-        <span v-if="!collapsedLocal" class="brand-text">Transport Programme</span>
+        <span v-if="!collapsedLocal" class="brand-text">
+          {{ companyName }}
+        </span>
       </div>
 
       <!-- Expanded: toggle on the right -->
@@ -249,5 +251,18 @@ const initials = computed(() => {
   if (first && second) return (first + second).toUpperCase();
   if (first) return first.toUpperCase();
   return "U";
+});
+
+/**
+ * ✅ Company branding (from auth user.company)
+ * Prefer logo_url (if backend provides), else logo string, else fallback image
+ */
+const companyName = computed(() => {
+  return authStore.user?.company?.legal_name ?? "Transport Programme";
+});
+
+const companyLogoSrc = computed(() => {
+  const c: any = authStore.user?.company;
+  return c?.logo_url ?? c?.logo ?? "/orbis-logo.png";
 });
 </script>
