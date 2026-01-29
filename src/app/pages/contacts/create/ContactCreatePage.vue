@@ -4,7 +4,9 @@
     <div class="header">
       <div class="left">
         <h1 class="title">{{ isEdit ? "Edit Contact" : "Create Contact" }}</h1>
-        <p class="subtitle">{{ isEdit ? "Edit a contact and at least 1 contact person." : "Create a contact and at least 1 contact person." }}</p>
+        <p class="subtitle">
+          {{ isEdit ? "Edit a contact and at least 1 contact person." : "Create a contact and at least 1 contact person." }}
+        </p>
       </div>
 
       <div class="right">
@@ -21,22 +23,34 @@
     </div>
 
     <div class="grid">
-      <!-- Contact details -->
       <div class="card">
         <div class="card-title">Contact Details</div>
 
         <div class="form">
           <div class="field">
-            <label>Contact Type</label>
-            <Dropdown
-              v-model="form.contact_type"
-              :options="contactTypeOptions"
-              optionLabel="label"
-              optionValue="value"
-              class="w-full"
-              :disabled="typeLocked"
-            />
-            <small v-if="errors.contact_type" class="error">{{ errors.contact_type }}</small>
+            <label>Contact Types</label>
+
+            <div class="type-checkboxes">
+                <div
+                v-for="opt in contactTypeOptions"
+                :key="opt.value"
+                class="type-option"
+                >
+                <Checkbox
+                    v-model="form.contact_types"
+                    :inputId="`ct-${opt.value}`"
+                    :value="opt.value"
+                    :binary="false"
+                />
+                <label :for="`ct-${opt.value}`">{{ opt.label }}</label>
+                </div>
+            </div>
+
+            <small v-if="errors.contact_types" class="error">
+                {{ errors.contact_types }}
+            </small>
+
+            <small v-if="errors.contact_types" class="error">{{ errors.contact_types }}</small>
           </div>
 
           <div class="field">
@@ -75,7 +89,7 @@
         </div>
       </div>
 
-      <!-- Contact people -->
+      <!-- people card unchanged -->
       <div class="card">
         <div class="card-title people-header">
           <span>Contact People</span>
@@ -135,7 +149,6 @@
 <script setup lang="ts">
 import "./ContactCreatePage.css"
 import { useContactCreatePage } from "./ContactCreatePage"
-
 const {
   form,
   people,
@@ -145,7 +158,6 @@ const {
   canSubmit,
   contactTypeOptions,
   statusOptions,
-  typeLocked,
   addPerson,
   removePerson,
   submit,

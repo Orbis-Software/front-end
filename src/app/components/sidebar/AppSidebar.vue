@@ -1,3 +1,4 @@
+<!-- AppSidebar.vue -->
 <template>
   <aside
     class="pc-sidebar sidebar-container"
@@ -6,26 +7,40 @@
     aria-label="Main navigation"
   >
     <!-- Header -->
-    <header class="sidebar-header">
+    <header class="sidebar-header" :class="{ collapsed: collapsedLocal }">
       <div class="brand-wrapper">
         <div class="brand-logo-wrapper">
-          <img src="/orbis-logo.png" alt="PC Cargo" class="brand-logo" />
+          <img :src="companyLogoSrc" :alt="companyName" class="brand-logo" />
         </div>
 
         <!-- Hide text when collapsed -->
-        <span v-if="!collapsedLocal" class="brand-text">Transport Programme</span>
+        <span v-if="!collapsedLocal" class="brand-text">
+          {{ companyName }}
+        </span>
       </div>
 
-      <!-- Collapse toggle (desktop rail behavior) -->
+      <!-- Expanded: toggle on the right -->
       <button
-        v-if="embedded"
+        v-if="embedded && !collapsedLocal"
         class="collapse-toggle"
         type="button"
-        :aria-label="collapsedLocal ? 'Expand sidebar' : 'Collapse sidebar'"
+        aria-label="Collapse sidebar"
         @click="toggleCollapsed"
       >
-        <i class="pi" :class="collapsedLocal ? 'pi-angle-double-right' : 'pi-angle-double-left'"></i>
+        <i class="pi pi-angle-double-left"></i>
       </button>
+
+      <!-- Collapsed: toggle on its own row (no gap) -->
+      <div v-if="embedded && collapsedLocal" class="collapsed-controls">
+        <button
+          class="collapse-toggle"
+          type="button"
+          aria-label="Expand sidebar"
+          @click="toggleCollapsed"
+        >
+          <i class="pi pi-angle-double-right"></i>
+        </button>
+      </div>
     </header>
 
     <!-- Navigation -->
@@ -55,7 +70,6 @@
                 >
                   <i v-if="item.icon" :class="[item.icon, 'menu-icon']" />
                   <span v-else class="menu-icon-spacer" />
-
                   <span v-if="!collapsedLocal" class="menu-text">{{ item.label }}</span>
                 </button>
               </li>
@@ -136,13 +150,18 @@
 import { computed, reactive, ref, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useAuthStore } from "@/app/stores/auth";
-import { SIDEBAR_GROUPS, type SidebarGroup, type SidebarLeaf, type SidebarSubmenu } from "./routes";
+import {
+  SIDEBAR_GROUPS,
+  type SidebarGroup,
+  type SidebarLeaf,
+  type SidebarSubmenu,
+} from "./routes";
 import "./AppSidebar.css";
 
 type Props = {
   embedded?: boolean;
-  visible?: boolean;     // your existing mobile overlay control
-  collapsed?: boolean;   // NEW: desktop collapse rail
+  visible?: boolean;
+  collapsed?: boolean;
 };
 
 const props = withDefaults(defineProps<Props>(), {
@@ -162,7 +181,6 @@ const authStore = useAuthStore();
 
 const groups = computed<SidebarGroup[]>(() => SIDEBAR_GROUPS);
 
-// local collapsed state (sync with v-model)
 const collapsedLocal = ref<boolean>(props.collapsed);
 
 watch(
@@ -174,13 +192,11 @@ function toggleCollapsed() {
   collapsedLocal.value = !collapsedLocal.value;
   emit("update:collapsed", collapsedLocal.value);
 
-  // when collapsing, close submenus (optional but nice)
   if (collapsedLocal.value) {
     Object.keys(submenuOpen).forEach((k) => (submenuOpen[k] = false));
   }
 }
 
-// open state
 const groupOpen = reactive<Record<string, boolean>>({
   tms: true,
   wms: true,
@@ -196,7 +212,6 @@ function toggleGroup(key: string) {
 }
 
 function onSubmenuClick(key: string) {
-  // If collapsed, expand first (so user can see submenu items)
   if (collapsedLocal.value) {
     collapsedLocal.value = false;
     emit("update:collapsed", false);
@@ -217,7 +232,9 @@ function isActiveSubmenu(item: SidebarSubmenu) {
 }
 
 function itemKey(groupKey: string, item: SidebarLeaf | SidebarSubmenu) {
-  return item.type === "leaf" ? `${groupKey}:${item.to}` : `${groupKey}:submenu:${item.key}`;
+  return item.type === "leaf"
+    ? `${groupKey}:${item.to}`
+    : `${groupKey}:submenu:${item.key}`;
 }
 
 async function logout() {
@@ -229,12 +246,23 @@ const userName = computed(() => authStore.user?.name ?? "User");
 
 const initials = computed(() => {
   const parts = userName.value.trim().split(/\s+/).filter(Boolean);
-
   const first = parts[0]?.charAt(0) ?? "";
   const second = parts[1]?.charAt(0) ?? "";
-
   if (first && second) return (first + second).toUpperCase();
   if (first) return first.toUpperCase();
   return "U";
+});
+
+/**
+ * ✅ Company branding (from auth user.company)
+ * Prefer logo_url (if backend provides), else logo string, else fallback image
+ */
+const companyName = computed(() => {
+  return authStore.user?.company?.legal_name ?? "Transport Programme";
+});
+
+const companyLogoSrc = computed(() => {
+  const c: any = authStore.user?.company;
+  return c?.logo_url ?? c?.logo ?? "/orbis-logo.png";
 });
 </script>

@@ -25,12 +25,16 @@
   gap: 10px;
 }
 
+.btn {
+  border-radius: 10px;
+}
+
 /* Shared page look */
 .card {
   background: #fff;
   border: 1px solid #e8e8e8;
   border-radius: 14px;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .section {
@@ -38,73 +42,94 @@
   margin-bottom: 14px;
 }
 
-.btn {
-  border-radius: 10px;
+/* Meta section */
+.meta-title {
+  font-weight: 800;
+  font-size: 16px;
+  margin-bottom: 12px;
 }
 
-.job-page {
-  padding: 18px 22px 40px;
+/* fields */
+.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.label {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.control {
   width: 100%;
 }
 
-.job-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+.textarea {
+  min-height: 110px;
+}
+
+/* ✅ TWO COLUMN ROW (Docs left, Actions right) */
+.two-col {
+  display: grid;
+  grid-template-columns: 1.4fr 0.9fr;
   gap: 14px;
-  margin-bottom: 14px;
+  align-items: start;
 }
 
-.job-title {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-weight: 800;
-}
-
-.job-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.card {
-  background: #fff;
-  border: 1px solid #e8e8e8;
-  border-radius: 14px;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-}
-
-.section {
-  padding: 16px;
-  margin-bottom: 14px;
-}
-
-.btn {
-  border-radius: 10px;
-}
-
-.mode-placeholder {
+/* Docs layout inside left card */
+.docs-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
   margin-top: 12px;
-  padding: 14px;
-  border: 1px solid #ededed;
+}
+
+.drop-box {
+  height: 140px;
+  border: 1px dashed #d8d8d8;
   border-radius: 12px;
+  display: grid;
+  place-items: center;
   background: #fafafa;
+  color: #777;
 }
 
-.mp-title {
-  font-weight: 800;
-}
-
-.mp-sub {
-  margin-top: 6px;
-  color: #666;
-  font-size: 13px;
-}
-
-.mp-actions {
-  margin-top: 12px;
-  display: flex;
+/* Right actions card (like old design) */
+.actions {
+  display: grid;
   gap: 10px;
+  align-content: start;
+}
+
+/* Big orange button full width */
+.create-btn {
+  width: 100%;
+  justify-content: center;
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+
+/* Cancel link centered under button */
+.cancel-link {
+  border: none;
+  background: transparent;
+  color: #b42318;
+  cursor: pointer;
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
+  padding: 10px;
+  border-radius: 10px;
+  width: 100%;
+}
+
+.cancel-link:hover {
+  background: #fdecec;
 }

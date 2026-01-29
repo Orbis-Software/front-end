@@ -1,5 +1,6 @@
 <template>
   <div class="job-page">
+    <!-- HEADER -->
     <div class="job-top">
       <div class="job-title">
         <i class="pi pi-briefcase" />
@@ -25,7 +26,11 @@
         badge="NEW JOBS"
         subtitle="Choose what you want to create"
       />
-      <JobTypeSelector :items="JOB_TYPES" :selected="jobType" @select="selectJobType" />
+      <JobTypeSelector
+        :items="JOB_TYPES"
+        :selected="jobType"
+        @select="selectJobType"
+      />
     </section>
 
     <!-- STEP 2 -->
@@ -34,78 +39,123 @@
         :title="`Mode of Transport for ${jobTypeLabel}`"
         subtitle="Choose the transport mode"
       />
-      <ModeSelector :items="MODES" :selected="mode" @select="selectMode" />
+      <ModeSelector
+        :items="MODES"
+        :selected="mode"
+        @select="selectMode"
+      />
     </section>
 
-    <!-- STEP 3 -->
+    <!-- META SECTION -->
     <section v-if="jobType && mode" class="card section">
-        <AirJobForm
-        v-if="mode === 'air'"
-        :job-type="jobType"
-        :job-type-label="jobTypeLabel"
-        mode-label="Air"
-        @cancel="resetAll"
-        @create="onCreateJob"
-        />
+      <div class="meta-title">{{ `New ${jobTypeLabel} Job — ${modeLabel}` }}</div>
 
-        <RailJobForm
-        v-else-if="mode === 'rail'"
-        :job-type="jobType"
-        :job-type-label="jobTypeLabel"
-        mode-label="Rail"
-        @cancel="resetAll"
-        @create="onCreateJob"
-        />
-
-        <RoadJobForm
-        v-else-if="mode === 'road'"
-        :job-type="jobType"
-        :job-type-label="jobTypeLabel"
-        mode-label="Road"
-        @cancel="resetAll"
-        @create="onCreateJob"
-        />
-
-        <SeaJobForm
-        v-else-if="mode === 'sea'"
-        :job-type="jobType"
-        :job-type-label="jobTypeLabel"
-        mode-label="Sea"
-        @cancel="resetAll"
-        @create="onCreateJob"
-        />
-
-        <div v-else class="mode-placeholder">
-        <div class="mp-title">Form for {{ modeLabel }} not added yet.</div>
-        <div class="mp-sub">Next: you’ll send the {{ modeLabel }} layout and we’ll plug it in.</div>
-
-        <div class="mp-actions">
-            <Button class="btn" outlined type="button" @click="resetMode">
-            <i class="pi pi-arrow-left" style="margin-right: 8px" />
-            Change Mode
-            </Button>
-            <Button class="btn" outlined type="button" @click="resetAll">
-            <i class="pi pi-refresh" style="margin-right: 8px" />
-            Change Job Type
-            </Button>
+      <div class="grid-3">
+        <div class="field">
+          <label class="label">Customer Name</label>
+          <InputText
+            v-model="meta.customerName"
+            class="control"
+            placeholder="Start typing... (select from CRM)"
+          />
         </div>
+
+        <div class="field">
+          <label class="label">Account Number</label>
+          <InputText v-model="meta.accountNumber" class="control" />
         </div>
+
+        <div class="field">
+          <label class="label">Customer Quote Ref</label>
+          <InputText
+            v-model="meta.customerQuoteRef"
+            class="control"
+            placeholder="Optional"
+          />
+        </div>
+      </div>
+
+      <div class="grid-3" style="margin-top: 12px">
+        <div class="field">
+          <label class="label">Job Number</label>
+          <InputText v-model="meta.jobNumber" class="control" />
+        </div>
+
+        <div class="field">
+          <label class="label">Job Date</label>
+          <InputText
+            v-model="meta.jobDate"
+            class="control"
+            placeholder="dd/mm/yyyy"
+          />
+        </div>
+
+        <div class="field">
+          <label class="label">Mode of Transport</label>
+          <InputText :modelValue="modeLabel" class="control" readonly />
+        </div>
+      </div>
     </section>
+
+    <!-- ✅ FINAL ROW (same as 2nd image): Docs/Notes LEFT, Actions RIGHT -->
+    <div v-if="jobType && mode" class="two-col">
+      <!-- LEFT: Documents & Notes -->
+      <section class="card section">
+        <JobStepHeader
+          title="Documents & Notes"
+          subtitle="Optional attachments and internal notes"
+        />
+
+        <div class="docs-grid">
+          <!-- Documents -->
+          <div class="drop-box">
+            Drag &amp; drop documents
+          </div>
+
+          <!-- Notes -->
+          <div class="field">
+            <label class="label">Internal Notes</label>
+            <Textarea
+              v-model="internalNotes"
+              class="control textarea"
+              placeholder="Operational notes, special handling, etc."
+              autoResize
+            />
+          </div>
+        </div>
+      </section>
+
+      <!-- RIGHT: Create/Cancel actions card -->
+      <section class="card section actions">
+        <Button
+          class="create-btn orbis-primary"
+          type="button"
+          @click="createJob"
+        >
+          <i class="pi pi-file" style="margin-right: 8px" />
+          Create Job
+        </Button>
+
+        <button class="cancel-link" type="button" @click="onCancel">
+          <i class="pi pi-times" style="margin-right: 6px" />
+          Cancel
+        </button>
+      </section>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { reactive, ref } from "vue";
 import Button from "primevue/button";
+import Textarea from "primevue/textarea";
+import InputText from "primevue/inputtext";
+
 import "@/app/pages/jobs/JobPage.css";
 
 import JobStepHeader from "@/app/components/jobs/JobStepHeader.vue";
 import JobTypeSelector from "@/app/components/jobs/JobTypeSelector.vue";
 import ModeSelector from "@/app/components/jobs/ModeSelector.vue";
-import AirJobForm from "@/app/components/jobs/AirJobForm.vue";
-import RailJobForm from "@/app/components/jobs/RailJobForm.vue";
-import RoadJobForm from "@/app/components/jobs/RoadJobForm.vue";
-import SeaJobForm from "@/app/components/jobs/SeaJobForm.vue";
-// import MultiModalJobForm from "@/app/components/jobs/MultiModalJobForm.vue";
 
 import {
   JOB_TYPES,
@@ -116,12 +166,40 @@ import {
   modeLabel,
   selectJobType,
   selectMode,
-  resetMode,
   resetAll,
 } from "@/app/pages/jobs/JobPage.logic";
 
-function onCreateJob(payload: any) {
-  // dummy handler (wire to API/store later)
+const internalNotes = ref("");
+
+const meta = reactive({
+  customerName: "",
+  accountNumber: "ACC000000001",
+  customerQuoteRef: "",
+  jobNumber: "JOB000000001",
+  jobDate: "",
+});
+
+function createJob() {
+  const payload = {
+    jobType: jobType.value,
+    mode: mode.value,
+    meta: { ...meta },
+    internalNotes: internalNotes.value,
+  };
+
   console.log("CREATE JOB", payload);
+}
+
+function onCancel() {
+  // reset local fields
+  internalNotes.value = "";
+  meta.customerName = "";
+  meta.accountNumber = "ACC000000001";
+  meta.customerQuoteRef = "";
+  meta.jobNumber = "JOB000000001";
+  meta.jobDate = "";
+
+  // reset selections
+  resetAll();
 }
 </script>
