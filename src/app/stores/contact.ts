@@ -25,7 +25,6 @@ export const useContactStore = defineStore('contact', () => {
 
       items.value = res.data
 
-      // If your API includes meta, update pagination state
       if (res.meta) {
         page.value = res.meta.current_page
         perPage.value = res.meta.per_page
@@ -62,7 +61,6 @@ export const useContactStore = defineStore('contact', () => {
     await fetch()
   }
 
-  // Optional helpers
   function setPage(nextPage: number) {
     page.value = nextPage
     return fetch()

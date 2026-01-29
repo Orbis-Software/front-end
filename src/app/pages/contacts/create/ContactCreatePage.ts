@@ -30,11 +30,10 @@ const LIST_ROUTES: Record<ContactType, string> = {
 export function useContactCreatePage() {
   const router = useRouter()
   const route = useRoute()
+  const confirm = useConfirm()
 
   const saving = ref(false)
   const loading = ref(false)
-
-  const confirm = useConfirm()
 
   const contactId = computed(() => {
     const v = route.params.id
@@ -46,10 +45,9 @@ export function useContactCreatePage() {
   const isEdit = computed(() => !!contactId.value)
 
   const routeContactType = computed(() => route.meta.contactType as ContactType | undefined)
-  const typeLocked = computed(() => true) // always locked (since you want based on where they click)
 
   const form = reactive<ContactCreatePayload>({
-    contact_type: "customer",
+    contact_types: [], // ✅ NEW
     address: null,
     country: null,
     eori: null,
@@ -66,20 +64,30 @@ export function useContactCreatePage() {
   const personErrors = ref<Array<Record<string, string>>>(people.value.map(() => ({})))
 
   const contactTypeOptions: Array<{ label: string; value: ContactType }> = [
-    { label: "Customers", value: "customer" },
-    { label: "Suppliers", value: "supplier" },
-    { label: "Road Hauliers", value: "road_haulier" },
-    { label: "Airlines", value: "airline" },
-    { label: "Rail Operators", value: "rail_operator" },
-    { label: "Shipping Lines", value: "shipping_line" },
+    { label: "Customer", value: "customer" },
+    { label: "Supplier", value: "supplier" },
+    { label: "Road Haulier", value: "road_haulier" },
+    { label: "Airline", value: "airline" },
+    { label: "Rail Operator", value: "rail_operator" },
+    { label: "Shipping Line", value: "shipping_line" },
   ]
 
   const statusOptions = ["active", "inactive"]
 
-  // ✅ auto-set type from route meta
-  watchEffect(() => {
-    if (routeContactType.value) form.contact_type = routeContactType.value
-  })
+const initializedTypes = ref(false)
+
+watchEffect(() => {
+  if (initializedTypes.value) return
+
+  const t = routeContactType.value
+  if (!t) return
+
+  if (!form.contact_types.includes(t)) {
+    form.contact_types.push(t)
+  }
+
+  initializedTypes.value = true
+})
 
   async function loadForEdit() {
     if (!contactId.value) return
@@ -87,8 +95,13 @@ export function useContactCreatePage() {
     try {
       const c: Contact = await contacts.show(contactId.value)
 
-      // enforce type from route; ignore backend type if different
-      form.contact_type = routeContactType.value ?? c.contact_type
+      form.contact_types = (c.contact_types ?? []).slice()
+
+      // ensure route type is included if present
+      if (routeContactType.value && !form.contact_types.includes(routeContactType.value)) {
+        form.contact_types.push(routeContactType.value)
+      }
+
       form.address = c.address
       form.country = c.country
       form.eori = c.eori
@@ -104,10 +117,10 @@ export function useContactCreatePage() {
         phone: p.phone,
       }))
 
-      // must have at least 1
       people.value = existingPeople.length
         ? existingPeople
         : [{ _key: uid(), name: "", email: null, phone: null }]
+
       personErrors.value = people.value.map(() => ({}))
     } finally {
       loading.value = false
@@ -129,34 +142,30 @@ export function useContactCreatePage() {
     const person = people.value[index]
     if (!person) return
 
-    // ✅ If not saved yet (no id), just remove locally
     if (!person.id) {
-        people.value.splice(index, 1)
-        personErrors.value.splice(index, 1)
-        return
+      people.value.splice(index, 1)
+      personErrors.value.splice(index, 1)
+      return
     }
 
-    // ✅ If saved, delete from backend first
     confirm.require({
-        header: "Remove Contact Person",
-        message: `Remove "${person.name}" from this contact?`,
-        icon: "pi pi-exclamation-triangle",
-        acceptLabel: "Remove",
-        rejectLabel: "Cancel",
-        acceptClass: "p-button-danger",
-        accept: async () => {
+      header: "Remove Contact Person",
+      message: `Remove "${person.name}" from this contact?`,
+      icon: "pi pi-exclamation-triangle",
+      acceptLabel: "Remove",
+      rejectLabel: "Cancel",
+      acceptClass: "p-button-danger",
+      accept: async () => {
         await contactPeople.remove(person.id!)
 
-        // remove locally after success
         people.value.splice(index, 1)
         personErrors.value.splice(index, 1)
 
-        // still enforce minimum 1
         if (people.value.length === 0) {
-            people.value.push({ _key: uid(), name: "", email: null, phone: null })
-            personErrors.value.push({})
+          people.value.push({ _key: uid(), name: "", email: null, phone: null })
+          personErrors.value.push({})
         }
-        },
+      },
     })
   }
 
@@ -168,7 +177,10 @@ export function useContactCreatePage() {
   function validate(): boolean {
     clearErrors()
 
-    if (!form.contact_type) errors.contact_type = "Contact type is required."
+    if (!form.contact_types || form.contact_types.length < 1) {
+      errors.contact_types = "Select at least 1 contact type."
+    }
+
     if (people.value.length < 1) errors.people = "At least 1 contact person is required."
 
     people.value.forEach((p, idx) => {
@@ -185,6 +197,7 @@ export function useContactCreatePage() {
 
   const canSubmit = computed(() => {
     if (saving.value || loading.value) return false
+    if (!form.contact_types?.length) return false
     if (people.value.length < 1) return false
     return people.value.every((p) => (p.name ?? "").trim().length >= 2)
   })
@@ -194,18 +207,16 @@ export function useContactCreatePage() {
     saving.value = true
 
     try {
-      // ✅ create or update contact
       let contact: Contact
+
       if (isEdit.value && contactId.value) {
-        contact = await contacts.update(contactId.value, form) as unknown as Contact
+        contact = (await contacts.update(contactId.value, form)) as unknown as Contact
       } else {
-        contact = await contacts.create(form) as unknown as Contact
+        contact = (await contacts.create(form)) as unknown as Contact
       }
 
-      // ✅ create people (for now only supports create new)
-      // If you want full edit support (update/delete people) tell me and I’ll extend backend + frontend.
       const toCreate: ContactPersonCreatePayload[] = people.value
-        .filter((p) => !p.id) // only those without id
+        .filter((p) => !p.id)
         .map((p) => ({
           contact_id: contact.id,
           name: p.name.trim(),
@@ -217,7 +228,9 @@ export function useContactCreatePage() {
         await contactPeople.create(payload)
       }
 
-      await router.push(LIST_ROUTES[contact.contact_type] ?? "/contacts/customers")
+      // ✅ Go back to the list page of the route you came from
+      const backType = routeContactType.value ?? contact.contact_types?.[0] ?? "customer"
+      await router.push(LIST_ROUTES[backType])
     } catch (e: any) {
       errors.submit = e?.response?.data?.message ?? "Failed to save contact."
     } finally {
@@ -239,7 +252,6 @@ export function useContactCreatePage() {
     canSubmit,
     contactTypeOptions,
     statusOptions,
-    typeLocked,
     isEdit,
     addPerson,
     removePerson,

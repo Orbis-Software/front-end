@@ -32,6 +32,7 @@ import ConfirmationService from 'primevue/confirmationservice'
 import ConfirmDialog from 'primevue/confirmdialog'
 import Dialog from 'primevue/dialog'
 import Password from 'primevue/password'
+import Checkbox from 'primevue/checkbox'
 import "@fontsource/inter/latin-400.css";
 
 import "@fontsource/ibm-plex-sans/latin-500.css";
@@ -66,6 +67,7 @@ app.component('DataTable', DataTable)
 app.component('Column', Column)
 app.component('ConfirmDialog', ConfirmDialog)
 app.component('Tag', Tag)
+app.component('Checkbox', Checkbox)
 app.component('Card', Card)
 app.component('Dropdown', Dropdown)
 app.component('InputText', InputText)

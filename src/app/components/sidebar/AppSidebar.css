@@ -1,47 +1,79 @@
-/* Root sidebar */
-/* Default: mobile overlay */
+/* AppSidebar.css */
+
+/* Root sidebar (mobile overlay default) */
 .pc-sidebar {
   width: 280px;
-  height: 100vh;
+  height: 100vh;                 /* ✅ must be 100vh */
   position: fixed;
   top: 0;
   left: 0;
-  border-right: 1px solid var(--pc-border);
-  background-color: var(--pc-bg-sidebar);
   z-index: 100;
-  transition: width 0.18s ease;
+
+  background-color: #f7f8fa;
+  border-right: 1px solid rgba(0, 0, 0, 0.12);
+
+  display: flex;                 /* ✅ make it a flex column container */
+  flex-direction: column;        /* ✅ */
 }
 
-/* ✅ When embedded in desktop column: sidebar should behave like normal flex child */
+/* Embedded desktop sidebar */
 .pc-sidebar.embedded {
-  position: relative;
-  top: auto;
-  left: auto;
-  height: 100%;
+  position: sticky;              /* ✅ so it doesn't move with page */
+  top: 0;
+  height: 100vh;                 /* ✅ keep full height */
   width: 100%;
-  border-right: none; /* column already has it */
-}
 
+  border-right: 1px solid rgba(0, 0, 0, 0.12);
+}
 
 /* Container */
 .sidebar-container {
+  height: 100%;
   display: flex;
   flex-direction: column;
-  height: 100%;
-  background-color: var(--pc-bg-sidebar);
-  color: var(--pc-text-main);
+  min-height: 0;                 /* ✅ important for flex + overflow children */
 }
 
-/* Header / Brand */
+
+/* Collapsed state */
+.pc-sidebar.collapsed {
+  width: 76px;
+}
+
+/* Header */
 .sidebar-header {
   padding: 1.25rem 1rem;
   border-bottom: 1px solid var(--pc-border);
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
 }
 
+.sidebar-header.collapsed {
+  padding: 0.65rem 0.35rem; /* ✅ compact to remove big gap */
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.35rem;
+}
+
+.collapsed-controls {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+/* Brand */
 .brand-wrapper {
   display: flex;
   align-items: center;
   gap: 0.75rem;
+}
+
+.sidebar-header.collapsed .brand-wrapper {
+  width: 100%;
+  justify-content: center;
 }
 
 .brand-logo {
@@ -50,26 +82,53 @@
   object-fit: contain;
 }
 
+.sidebar-header.collapsed .brand-logo {
+  width: 28px;
+  height: 28px;
+}
+
 .brand-text {
   font-size: 1.2rem;
   font-weight: 700;
   letter-spacing: 0.4px;
 }
 
+/* Toggle button */
+.collapse-toggle {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid var(--pc-border);
+  background: transparent;
+  color: var(--pc-text-main);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.collapse-toggle:hover {
+  background-color: var(--pc-surface-2);
+}
+
 /* Menu */
 .sidebar-menu {
   flex: 1;
+  min-height: 0;                 /* ✅ crucial: allows internal scrolling */
   overflow-y: auto;
   padding-top: 0.5rem;
 }
 
+/* Menu list layout */
 .menu-list {
   list-style: none;
   margin: 0;
   padding: 0.75rem;
+
   display: flex;
   flex-direction: column;
-  height: 100%;
+  min-height: 100%;              /* ✅ ensures spacer can push footer */
 }
 
 .menu-item {
@@ -109,7 +168,7 @@
 
 /* Active */
 .menu-link.active {
-  background-color: var(--pc-surface-2);
+  background-color: #eef1f5;
 }
 
 .menu-link.active .menu-icon {
@@ -122,9 +181,20 @@
   cursor: not-allowed;
 }
 
-/* Spacer pushes logout to bottom */
-.menu-spacer {
-  flex: 1;
+/* Collapsed: center icons */
+.pc-sidebar.collapsed .menu-link {
+  justify-content: center;
+  padding: 0.9rem 0;
+  gap: 0;
+}
+
+.pc-sidebar.collapsed .menu-icon {
+  font-size: 1.15rem;
+  opacity: 0.9;
+}
+
+.pc-sidebar.collapsed .menu-icon-spacer {
+  width: 0;
 }
 
 /* Group header (TMS/WMS/Management) */
@@ -159,7 +229,7 @@
   transform: rotate(-90deg);
 }
 
-/* Submenu (Contacts) */
+/* Submenu */
 .submenu-trigger {
   justify-content: space-between;
 }
@@ -222,6 +292,16 @@
   font-size: 0.95rem;
 }
 
+/* Hide submenu when collapsed */
+.pc-sidebar.collapsed .submenu-list {
+  display: none !important;
+}
+
+/* Spacer pushes logout to bottom */
+.menu-spacer {
+  flex: 1;
+}
+
 /* Logout emphasis */
 .logout-link {
   color: #b42318;
@@ -233,11 +313,16 @@
 
 /* Footer */
 .sidebar-footer {
+  flex-shrink: 0;                /* ✅ prevents footer from shrinking away */
   display: flex;
   align-items: center;
   gap: 0.75rem;
   padding: 1rem;
   border-top: 1px solid var(--pc-border);
+}
+
+.pc-sidebar.collapsed .sidebar-footer {
+  justify-content: center;
 }
 
 .user-avatar {
@@ -250,6 +335,10 @@
   align-items: center;
   justify-content: center;
   font-weight: 700;
+}
+
+.pc-sidebar.collapsed .user-avatar {
+  margin: 0;
 }
 
 .user-info {
@@ -266,111 +355,3 @@
   font-size: 0.75rem;
   color: var(--pc-text-muted);
 }
-
-/* Smooth width transition */
-.pc-sidebar {
-  transition: width 0.18s ease;
-}
-
-/* Collapsed state */
-.pc-sidebar.collapsed {
-  width: 76px; /* icon-only rail width */
-}
-
-/* Header: put toggle on the right */
-.sidebar-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-}
-
-.collapse-toggle {
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  border: 1px solid var(--pc-border);
-  background: transparent;
-  color: var(--pc-text-main);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: background-color 0.15s ease;
-}
-
-.collapse-toggle:hover {
-  background-color: var(--pc-surface-2);
-}
-
-/* Center icons when collapsed */
-.pc-sidebar.collapsed .menu-link {
-  justify-content: center;
-  padding: 0.9rem 0;
-  gap: 0;
-}
-
-.pc-sidebar.collapsed .menu-icon {
-  font-size: 1.15rem;
-  opacity: 0.9;
-}
-
-.pc-sidebar.collapsed .menu-icon-spacer {
-  width: 0;
-}
-
-/* Remove submenu indent when collapsed (since hidden anyway) */
-.pc-sidebar.collapsed .submenu-list {
-  display: none !important;
-}
-
-/* Footer compact when collapsed */
-.pc-sidebar.collapsed .sidebar-footer {
-  justify-content: center;
-}
-
-.pc-sidebar.collapsed .user-avatar {
-  margin: 0;
-}
-
-/* --- Fix: collapse toggle getting clipped in collapsed rail --- */
-.pc-sidebar.collapsed .sidebar-header {
-  padding: 0.70rem 0.5rem;     /* smaller padding so button fits */
-  justify-content: center;      /* keep it centered */
-}
-
-/* keep logo centered and prevent squeeze */
-.pc-sidebar.collapsed .brand-wrapper {
-  justify-content: center;
-  width: 100%;
-}
-
-/* make sure the toggle never overflows */
-.collapse-toggle {
-  flex: 0 0 auto;
-}
-
-/* optional: when collapsed, place the toggle consistently */
-.pc-sidebar.collapsed .collapse-toggle {
-  margin-left: 0;
-}
-
-
-/* Sidebar defines the left column */
-.sidebar-column {
-  width: 280px;
-  flex-shrink: 0;
-  border-right: 1px solid var(--pc-border);
-  background-color: var(--pc-bg-sidebar);
-  transition: width 0.18s ease;
-
-  height: 100vh;        /* ✅ important */
-  position: sticky;     /* ✅ optional but recommended */
-  top: 0;               /* ✅ keeps it pinned */
-  overflow: hidden;     /* ✅ prevents double scrollbars */
-}
-
-.sidebar-column.collapsed {
-  width: 76px;
-}
-

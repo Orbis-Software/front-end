@@ -4,13 +4,22 @@ import { useConfirm } from "primevue/useconfirm";
 import { useContactStore } from "@/app/stores/contact";
 import type { Contact, ContactType } from "@/app/types/contact";
 
-const LABELS: Record<ContactType, string> = {
+const HEADER_LABELS: Record<ContactType, string> = {
   customer: "Customers",
   supplier: "Suppliers",
   road_haulier: "Road Hauliers",
   airline: "Airlines",
   rail_operator: "Rail Operators",
   shipping_line: "Shipping Lines",
+};
+
+const TYPE_LABELS: Record<ContactType, string> = {
+  customer: "Customer",
+  supplier: "Supplier",
+  road_haulier: "Road Haulier",
+  airline: "Airline",
+  rail_operator: "Rail Operator",
+  shipping_line: "Shipping Line",
 };
 
 export function useContactsPage() {
@@ -22,7 +31,7 @@ export function useContactsPage() {
   const search = ref("");
 
   const contactType = computed(() => route.meta.contactType as ContactType);
-  const headerTitle = computed(() => LABELS[contactType.value] ?? "Contacts");
+  const headerTitle = computed(() => HEADER_LABELS[contactType.value] ?? "Contacts");
 
   watchEffect(async () => {
     if (!contactType.value) return;
@@ -35,11 +44,12 @@ export function useContactsPage() {
 
     return store.items.filter((c) => {
       const p0 = c.people?.[0];
+      const typesText = (c.contact_types ?? []).join(" ");
       return (
         (c.address ?? "").toLowerCase().includes(q) ||
         (c.country ?? "").toLowerCase().includes(q) ||
         (c.eori ?? "").toLowerCase().includes(q) ||
-        (c.contact_type ?? "").toLowerCase().includes(q) ||
+        typesText.toLowerCase().includes(q) ||
         (p0?.name ?? "").toLowerCase().includes(q) ||
         (p0?.email ?? "").toLowerCase().includes(q) ||
         (p0?.phone ?? "").toLowerCase().includes(q)
@@ -47,8 +57,13 @@ export function useContactsPage() {
     });
   });
 
-  function prettyType(type: string) {
-    return LABELS[type as ContactType] ?? type;
+  function prettyType(type: ContactType) {
+    return TYPE_LABELS[type] ?? type;
+  }
+
+  function prettyTypeList(types: ContactType[]) {
+    if (!types?.length) return "—";
+    return types.map((t) => prettyType(t)).join(", ");
   }
 
   function primaryPerson(contact: Contact) {
@@ -65,7 +80,6 @@ export function useContactsPage() {
   }
 
   function onEdit(id: number) {
-    // ✅ edit uses CreatePage (reused)
     router.push(`${route.path}/edit/${id}`);
   }
 
@@ -92,6 +106,7 @@ export function useContactsPage() {
     filteredItems,
     headerTitle,
     prettyType,
+    prettyTypeList,
     primaryPerson,
     onCreate,
     onEdit,

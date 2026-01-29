@@ -1,6 +1,5 @@
 <template>
   <div class="contacts-page">
-    <!-- required once on the page -->
     <ConfirmDialog />
 
     <div class="contacts-header">
@@ -26,17 +25,23 @@
         dataKey="id"
         responsiveLayout="scroll"
         class="contacts-table"
-        :pt="{
-          mask: { class: 'contacts-loading-mask' }
-        }"
+        :pt="{ mask: { class: 'contacts-loading-mask' } }"
       >
-        <Column header="Type" style="width: 180px">
+        <Column header="Type" style="width: 220px">
           <template #body="{ data }">
-            <span class="badge">{{ prettyType(data.contact_type) }}</span>
+            <div class="type-badges">
+              <span
+                v-for="t in (data.contact_types || [])"
+                :key="t"
+                class="badge"
+              >
+                {{ prettyType(t) }}
+              </span>
+              <span v-if="!(data.contact_types || []).length" class="badge muted">—</span>
+            </div>
           </template>
         </Column>
 
-        <!-- ✅ NEW: Primary Person -->
         <Column header="Primary Contact" style="width: 260px">
           <template #body="{ data }">
             <div class="primary-person">
@@ -81,7 +86,6 @@
           </template>
         </Column>
 
-        <!-- ✅ Optional: custom loading content -->
         <template #loading>
           <div class="loading-wrap">
             <i class="pi pi-spin pi-spinner" />
@@ -103,6 +107,7 @@ const {
   filteredItems,
   headerTitle,
   prettyType,
+  prettyTypeList,
   primaryPerson,
   onCreate,
   onEdit,
