@@ -17,8 +17,9 @@ import 'primeicons/primeicons.css'
 ========================= */
 import Button from 'primevue/button'
 import Card from 'primevue/card'
-import Select from 'primevue/select' // ✅ NEW (replaces Dropdown)
-import Dropdown from 'primevue/dropdown' // ✅ NEW (replaces Dropdown)
+import Select from 'primevue/select' 
+import Dropdown from 'primevue/dropdown' 
+import Calendar from 'primevue/calendar';
 import InputText from 'primevue/inputtext'
 import InputNumber from 'primevue/inputnumber'
 import Divider from 'primevue/divider'
@@ -34,8 +35,9 @@ import ConfirmDialog from 'primevue/confirmdialog'
 import Dialog from 'primevue/dialog'
 import Password from 'primevue/password'
 import Checkbox from 'primevue/checkbox'
-import Textarea from 'primevue/textarea' // ✅ ensure global
-import FileUpload from 'primevue/fileupload' // ✅ NEW
+import Textarea from 'primevue/textarea' 
+import FileUpload from 'primevue/fileupload' 
+import AutoComplete from 'primevue/autocomplete'
 
 import "@fontsource/inter/latin-400.css"
 import "@fontsource/ibm-plex-sans/latin-500.css"
@@ -62,6 +64,7 @@ app.use(ToastService)
 /* =========================
    Global Component Registration
 ========================= */
+app.component('AutoComplete', AutoComplete)
 app.component('Dialog', Dialog)
 app.component('Password', Password)
 app.component('Button', Button)
@@ -71,8 +74,9 @@ app.component('ConfirmDialog', ConfirmDialog)
 app.component('Tag', Tag)
 app.component('Checkbox', Checkbox)
 app.component('Card', Card)
+app.component('Calendar', Calendar)
 
-app.component('Select', Select)         // ✅ NEW
+app.component('Select', Select)       
 app.component('Dropdown', Dropdown)  
 
 app.component('InputText', InputText)
@@ -82,7 +86,7 @@ app.component('Fieldset', Fieldset)
 app.component('Steps', Steps)
 app.component('ProgressSpinner', ProgressSpinner)
 app.component('Toast', Toast)
-app.component('Textarea', Textarea)     // ✅
-app.component('FileUpload', FileUpload) // ✅ NEW
+app.component('Textarea', Textarea)     
+app.component('FileUpload', FileUpload) 
 
 app.mount('#app')

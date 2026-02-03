@@ -1,79 +1,67 @@
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from "vue";
-import AppSidebar from "@/app/components/sidebar/AppSidebar.vue";
+import { onMounted, onBeforeUnmount } from "vue";
+import AppHeader from "@/app/components/header/AppHeader.vue";
+import AppTopNav from "@/app/components/nav/AppTopNav.vue";
+import { useUiStore } from "@/app/stores/ui";
 
-const sidebarVisible = ref(true);
-const sidebarCollapsed = ref(false); // ✅ NEW
-const isDesktop = ref(window.innerWidth >= 1024);
+const ui = useUiStore();
 
 function onResize() {
-  isDesktop.value = window.innerWidth >= 1024;
-  if (!isDesktop.value) {
-    sidebarVisible.value = false;
-    sidebarCollapsed.value = false; // reset when leaving desktop
-  } else {
-    sidebarVisible.value = true;
-  }
+  ui.setDesktop(window.innerWidth >= 1024);
+  if (window.innerWidth >= 1024) ui.mobileNavOpen = false;
 }
 
-onMounted(() => window.addEventListener("resize", onResize));
+onMounted(() => {
+  ui.setDesktop(window.innerWidth >= 1024);
+  window.addEventListener("resize", onResize);
+});
+
 onBeforeUnmount(() => window.removeEventListener("resize", onResize));
 </script>
 
 <template>
-  <div class="layout">
-    <!-- REAL sidebar column on desktop -->
-    <aside
-      v-if="isDesktop"
-      class="sidebar-column"
-      :class="{ collapsed: sidebarCollapsed }"
-    >
-      <AppSidebar
-        v-model:visible="sidebarVisible"
-        v-model:collapsed="sidebarCollapsed"
-        :embedded="true"
-      />
-    </aside>
-
-    <!-- Overlay sidebar on mobile -->
-    <AppSidebar
-      v-else
-      v-model:visible="sidebarVisible"
-      :embedded="false"
+  <div class="app-shell">
+    <AppHeader
+      :area="ui.area"
+      :management-mode="ui.managementMode"
+      @switch-area="ui.setArea"
+      @toggle-management="ui.toggleManagementMode"
+      @toggle-mobile-nav="ui.toggleMobileNav"
     />
 
-    <main class="content">
+    <AppTopNav
+      :area="ui.area"
+      :management-mode="ui.managementMode"
+      :mobile-open="ui.mobileNavOpen"
+      @close-mobile="ui.mobileNavOpen = false"
+    />
+
+    <main class="app-content">
       <router-view />
     </main>
   </div>
 </template>
 
 <style scoped>
-.layout {
-  display: flex;
+.app-shell {
   min-height: 100vh;
+  background: var(--pc-bg-page);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Centered container like TransportPro */
+.app-content {
   width: 100%;
-  background-color: var(--pc-bg-page);
-}
-
-/* Sidebar defines the left column */
-.sidebar-column {
-  width: 280px;
-  flex-shrink: 0;
-  border-right: 1px solid var(--pc-border);
-  background-color: var(--pc-bg-sidebar);
-  transition: width 0.18s ease;
-}
-
-/* ✅ Collapsed width */
-.sidebar-column.collapsed {
-  width: 76px;
-}
-
-/* Page content */
-.content {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 28px 32px;
   flex: 1;
-  padding: 2rem;
-  background-color: var(--pc-bg-page);
+}
+
+@media (max-width: 1200px) {
+  .app-content {
+    padding: 22px 20px;
+  }
 }
 </style>

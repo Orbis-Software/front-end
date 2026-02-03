@@ -1,115 +1,80 @@
-import { computed, ref, watchEffect } from "vue";
-import { useRoute, useRouter } from "vue-router";
-import { useConfirm } from "primevue/useconfirm";
-import { useContactStore } from "@/app/stores/contact";
-import type { Contact, ContactType } from "@/app/types/contact";
+import { computed, onMounted, ref } from 'vue'
+import { useConfirm } from 'primevue/useconfirm'
+import { useRouter } from 'vue-router'
+import { useContactStore } from '@/app/stores/contact'
 
-const HEADER_LABELS: Record<ContactType, string> = {
-  customer: "Customers",
-  supplier: "Suppliers",
-  road_haulier: "Road Hauliers",
-  airline: "Airlines",
-  rail_operator: "Rail Operators",
-  shipping_line: "Shipping Lines",
-};
-
-const TYPE_LABELS: Record<ContactType, string> = {
-  customer: "Customer",
-  supplier: "Supplier",
-  road_haulier: "Road Haulier",
-  airline: "Airline",
-  rail_operator: "Rail Operator",
-  shipping_line: "Shipping Line",
-};
+/** tiny debounce (no extra deps) */
+function debounce<T extends (...args: any[]) => void>(fn: T, wait = 350) {
+  let t: number | undefined
+  return (...args: Parameters<T>) => {
+    if (t) window.clearTimeout(t)
+    t = window.setTimeout(() => fn(...args), wait)
+  }
+}
 
 export function useContactsPage() {
-  const store = useContactStore();
-  const route = useRoute();
-  const router = useRouter();
-  const confirm = useConfirm();
+  const store = useContactStore()
+  const confirm = useConfirm()
+  const router = useRouter()
 
-  const search = ref("");
+  const search = ref(store.search ?? '')
 
-  const contactType = computed(() => route.meta.contactType as ContactType);
-  const headerTitle = computed(() => HEADER_LABELS[contactType.value] ?? "Contacts");
+  const headerTitle = computed(() => {
+    if (store.activeTypeId === null) return 'Contacts'
+    const t = store.types.find((x) => x.id === store.activeTypeId)
+    return t?.name ?? 'Contacts'
+  })
 
-  watchEffect(async () => {
-    if (!contactType.value) return;
-    await store.setType(contactType.value);
-  });
+  onMounted(async () => {
+    // load types first, then contacts
+    await store.fetchTypes()
+    await store.fetch()
+  })
 
-  const filteredItems = computed(() => {
-    const q = search.value.trim().toLowerCase();
-    if (!q) return store.items;
-
-    return store.items.filter((c) => {
-      const p0 = c.people?.[0];
-      const typesText = (c.contact_types ?? []).join(" ");
-      return (
-        (c.address ?? "").toLowerCase().includes(q) ||
-        (c.country ?? "").toLowerCase().includes(q) ||
-        (c.eori ?? "").toLowerCase().includes(q) ||
-        typesText.toLowerCase().includes(q) ||
-        (p0?.name ?? "").toLowerCase().includes(q) ||
-        (p0?.email ?? "").toLowerCase().includes(q) ||
-        (p0?.phone ?? "").toLowerCase().includes(q)
-      );
-    });
-  });
-
-  function prettyType(type: ContactType) {
-    return TYPE_LABELS[type] ?? type;
+  async function setTypeId(id: number | null) {
+    await store.setTypeId(id)
   }
 
-  function prettyTypeList(types: ContactType[]) {
-    if (!types?.length) return "—";
-    return types.map((t) => prettyType(t)).join(", ");
-  }
+  const applySearch = debounce(async (q: string) => {
+    await store.setSearch(q)
+  }, 350)
 
-  function primaryPerson(contact: Contact) {
-    const p = contact.people?.[0];
-    return {
-      name: p?.name ?? "",
-      email: p?.email ?? "",
-      phone: p?.phone ?? "",
-    };
+  function onSearchInput(v: string) {
+    search.value = v ?? ""
+    applySearch(v)
   }
 
   function onCreate() {
-    router.push(`${route.path}/create`);
+    router.push('/contacts/new')
   }
 
   function onEdit(id: number) {
-    router.push(`${route.path}/edit/${id}`);
+    router.push(`/contacts/${id}/edit`)
   }
 
-  function onDelete(contact: Contact) {
-    const p0 = contact.people?.[0];
-    const label = p0?.name ? ` (${p0.name})` : "";
 
+  function onDelete(contactId: number) {
     confirm.require({
-      header: "Delete Contact",
-      message: `Are you sure you want to delete this contact${label}?`,
-      icon: "pi pi-exclamation-triangle",
-      acceptLabel: "Delete",
-      rejectLabel: "Cancel",
-      acceptClass: "p-button-danger",
+      header: 'Delete Contact',
+      message: 'Are you sure you want to delete this contact?',
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Delete',
+      rejectLabel: 'Cancel',
+      acceptClass: 'p-button-danger',
       accept: async () => {
-        await store.remove(contact.id);
+        await store.remove(contactId)
       },
-    });
+    })
   }
 
   return {
     store,
     search,
-    filteredItems,
     headerTitle,
-    prettyType,
-    prettyTypeList,
-    primaryPerson,
+    onSearchInput,
+    setTypeId,
     onCreate,
     onEdit,
     onDelete,
-  };
+  }
 }

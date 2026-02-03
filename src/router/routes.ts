@@ -16,15 +16,10 @@ const QuoteCreatePage = () => import("@/app/pages/quotes/QuoteCreatePage.vue");
 const JobPage = () => import("@/app/pages/jobs/JobPage.vue");
 const ContactsPage = () => import("@/app/pages/contacts/ContactsPage.vue");
 const ContactCreatePage = () => import("@/app/pages/contacts/create/ContactCreatePage.vue");
-const ConsolidationPage  = () => import("@/app/pages/consolidations/ConsolidationPage.vue");
+const ConsolidationPage = () => import("@/app/pages/consolidations/ConsolidationPage.vue");
 const SettingsPage = () => import("@/app/pages/settings/SettingsPage.vue");
 
 export const routes: RouteRecordRaw[] = [
-  /**
-   * ============================
-   * Auth Routes (Guest only)
-   * ============================
-   */
   {
     path: "/login",
     component: AuthLayout,
@@ -32,215 +27,116 @@ export const routes: RouteRecordRaw[] = [
     children: [
       {
         path: "",
-        name: "login",
+        name: "auth.login",
         component: LoginPage,
       },
     ],
   },
 
-  /**
-   * ============================
-   * Protected App Routes
-   * (Uses NEW layout with sidebar)
-   * ============================
-   */
   {
     path: "/",
     component: DefaultLayout,
     meta: { requiresAuth: true },
     children: [
-      {
-        path: "",
-        redirect: "/dashboard",
-      },
+      { path: "", redirect: "/dashboard" },
+
       {
         path: "dashboard",
-        name: "dashboard",
+        name: "app.dashboard",
         component: DashboardPage,
+        meta: { title: "Dashboard" },
       },
+
       {
         path: "jobs",
-        name: "jobs",
+        name: "tms.jobs.index",
         component: JobPage,
         meta: { title: "Jobs" },
       },
       {
+        path: "jobs/new",
+        name: "tms.jobs.create",
+        component: JobPage,
+        meta: { title: "Jobs • New" },
+      },
+
+      {
         path: "quotes",
-        name: "quotes",
+        name: "tms.quotes.index",
         component: QuoteCreatePage,
         meta: { title: "Quotes" },
       },
 
       /**
        * ============================
-       * Contacts (List + Create + Edit per type)
+       * Contacts
        * ============================
        */
-
-      // Customers
       {
-        path: "contacts/customers",
-        name: "contacts.customers",
+        path: "contacts",
+        name: "crm.contacts.index",
         component: ContactsPage,
-        meta: { title: "Contacts • Customers", contactType: "customer" },
+        meta: { title: "Contacts" },
       },
       {
-        path: "contacts/customers/create",
-        name: "contacts.customers.create",
+        path: "contacts/new",
+        name: "crm.contacts.create",
         component: ContactCreatePage,
-        meta: { title: "Contacts • Create • Customers", contactType: "customer" },
+        meta: { title: "Contacts • New" },
       },
       {
-        path: "contacts/customers/edit/:id",
-        name: "contacts.customers.edit",
+        path: "contacts/:id/edit",
+        name: "crm.contacts.edit",
         component: ContactCreatePage,
-        meta: { title: "Contacts • Edit • Customers", contactType: "customer" },
+        meta: { title: "Contacts • Edit" },
       },
 
-      // Suppliers
-      {
-        path: "contacts/suppliers",
-        name: "contacts.suppliers",
-        component: ContactsPage,
-        meta: { title: "Contacts • Suppliers", contactType: "supplier" },
-      },
-      {
-        path: "contacts/suppliers/create",
-        name: "contacts.suppliers.create",
-        component: ContactCreatePage,
-        meta: { title: "Contacts • Create • Suppliers", contactType: "supplier" },
-      },
-      {
-        path: "contacts/suppliers/edit/:id",
-        name: "contacts.suppliers.edit",
-        component: ContactCreatePage,
-        meta: { title: "Contacts • Edit • Suppliers", contactType: "supplier" },
-      },
-
-      // Road Hauliers
-      {
-        path: "contacts/road-hauliers",
-        name: "contacts.road_hauliers",
-        component: ContactsPage,
-        meta: { title: "Contacts • Road Hauliers", contactType: "road_haulier" },
-      },
-      {
-        path: "contacts/road-hauliers/create",
-        name: "contacts.road_hauliers.create",
-        component: ContactCreatePage,
-        meta: { title: "Contacts • Create • Road Hauliers", contactType: "road_haulier" },
-      },
-      {
-        path: "contacts/road-hauliers/edit/:id",
-        name: "contacts.road_hauliers.edit",
-        component: ContactCreatePage,
-        meta: { title: "Contacts • Edit • Road Hauliers", contactType: "road_haulier" },
-      },
-
-      // Airlines
-      {
-        path: "contacts/airlines",
-        name: "contacts.airlines",
-        component: ContactsPage,
-        meta: { title: "Contacts • Airlines", contactType: "airline" },
-      },
-      {
-        path: "contacts/airlines/create",
-        name: "contacts.airlines.create",
-        component: ContactCreatePage,
-        meta: { title: "Contacts • Create • Airlines", contactType: "airline" },
-      },
-      {
-        path: "contacts/airlines/edit/:id",
-        name: "contacts.airlines.edit",
-        component: ContactCreatePage,
-        meta: { title: "Contacts • Edit • Airlines", contactType: "airline" },
-      },
-
-      // Rail Operators
-      {
-        path: "contacts/rail-operators",
-        name: "contacts.rail_operators",
-        component: ContactsPage,
-        meta: { title: "Contacts • Rail Operators", contactType: "rail_operator" },
-      },
-      {
-        path: "contacts/rail-operators/create",
-        name: "contacts.rail_operators.create",
-        component: ContactCreatePage,
-        meta: { title: "Contacts • Create • Rail Operators", contactType: "rail_operator" },
-      },
-      {
-        path: "contacts/rail-operators/edit/:id",
-        name: "contacts.rail_operators.edit",
-        component: ContactCreatePage,
-        meta: { title: "Contacts • Edit • Rail Operators", contactType: "rail_operator" },
-      },
-
-      // Shipping Lines
-      {
-        path: "contacts/shipping-lines",
-        name: "contacts.shipping_lines",
-        component: ContactsPage,
-        meta: { title: "Contacts • Shipping Lines", contactType: "shipping_line" },
-      },
-      {
-        path: "contacts/shipping-lines/create",
-        name: "contacts.shipping_lines.create",
-        component: ContactCreatePage,
-        meta: { title: "Contacts • Create • Shipping Lines", contactType: "shipping_line" },
-      },
-      {
-        path: "contacts/shipping-lines/edit/:id",
-        name: "contacts.shipping_lines.edit",
-        component: ContactCreatePage,
-        meta: { title: "Contacts • Edit • Shipping Lines", contactType: "shipping_line" },
-      },
       {
         path: "consolidations",
         name: "tms.consolidations.show",
         component: ConsolidationPage,
         meta: { title: "Consolidation" },
       },
+
       {
         path: "invoices",
-        name: "invoices",
+        name: "acc.invoices",
         component: PlaceholderPage,
         meta: { title: "Invoices" },
       },
       {
         path: "reports",
-        name: "reports",
+        name: "mgmt.reports",
         component: PlaceholderPage,
         meta: { title: "Reports" },
       },
       {
         path: "warehouse",
-        name: "warehouse",
+        name: "wms.warehouse",
         component: PlaceholderPage,
         meta: { title: "Warehouse" },
       },
       {
         path: "inventory",
-        name: "inventory",
+        name: "wms.inventory",
         component: PlaceholderPage,
         meta: { title: "Inventory" },
       },
       {
         path: "accounts",
-        name: "accounts",
+        name: "acc.accounts",
         component: PlaceholderPage,
         meta: { title: "Accounts" },
       },
       {
         path: "employees",
-        name: "employees",
+        name: "mgmt.employees",
         component: PlaceholderPage,
         meta: { title: "Employees (Logins & Roles)" },
       },
       {
         path: "settings",
-        name: "settings",
+        name: "app.settings",
         component: SettingsPage,
         meta: { title: "Settings" },
       },
