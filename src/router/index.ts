@@ -26,12 +26,12 @@ router.beforeEach(async (to) => {
 
   // Auth required
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
-    return { name: 'login' }
+    return { name: "auth.login" };
   }
 
   // Guest only
   if (to.meta.guestOnly && authStore.isAuthenticated) {
-    return { name: 'dashboard' }
+    return { name: "app.dashboard" };
   }
 })
 
