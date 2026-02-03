@@ -21,20 +21,23 @@ onBeforeUnmount(() => window.removeEventListener("resize", onResize));
 
 <template>
   <div class="app-shell">
-    <AppHeader
-      :area="ui.area"
-      :management-mode="ui.managementMode"
-      @switch-area="ui.setArea"
-      @toggle-management="ui.toggleManagementMode"
-      @toggle-mobile-nav="ui.toggleMobileNav"
-    />
+    <!-- ✅ Sticky group (Header + TopNav) -->
+    <div class="sticky-chrome">
+      <AppHeader
+        :area="ui.area"
+        :management-mode="ui.managementMode"
+        @switch-area="ui.setArea"
+        @toggle-management="ui.toggleManagementMode"
+        @toggle-mobile-nav="ui.toggleMobileNav"
+      />
 
-    <AppTopNav
-      :area="ui.area"
-      :management-mode="ui.managementMode"
-      :mobile-open="ui.mobileNavOpen"
-      @close-mobile="ui.mobileNavOpen = false"
-    />
+      <AppTopNav
+        :area="ui.area"
+        :management-mode="ui.managementMode"
+        :mobile-open="ui.mobileNavOpen"
+        @close-mobile="ui.mobileNavOpen = false"
+      />
+    </div>
 
     <main class="app-content">
       <router-view />
@@ -45,9 +48,17 @@ onBeforeUnmount(() => window.removeEventListener("resize", onResize));
 <style scoped>
 .app-shell {
   min-height: 100vh;
-  background: var(--pc-bg-page);
+  background: var(--bg-page);
   display: flex;
   flex-direction: column;
+}
+
+/* ✅ Both stay intact on scroll */
+.sticky-chrome {
+  position: sticky;
+  top: 0;
+  z-index: 300;
+  background: #fff; /* important so content won't show through */
 }
 
 /* Centered container like TransportPro */
