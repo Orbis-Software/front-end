@@ -132,7 +132,7 @@ onBeforeUnmount(() => document.removeEventListener("click", handleClickOutside))
   top: 0;
   z-index: 50;
   background: var(--pc-bg-card, #fff);
-  border-bottom: 1px solid var(--pc-border);
+  /* border-bottom: 1px solid var(--pc-border); */
 }
 
 /* subtle second line = more “structure” */
@@ -140,7 +140,7 @@ onBeforeUnmount(() => document.removeEventListener("click", handleClickOutside))
   content: "";
   display: block;
   height: 1px;
-  background: rgba(0, 0, 0, 0.04);
+  /* background: rgba(0, 0, 0, 0.04); */
 }
 
 .header-inner {
