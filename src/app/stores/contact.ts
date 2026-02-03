@@ -1,27 +1,52 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
-import type { Contact, ContactType, PaginatedResponse } from '@/app/types/contact'
+import { computed, ref } from 'vue'
+import type { Contact, PaginatedResponse } from '@/app/types/contact'
 import contacts from '@/app/services/contacts'
+import { useContactTypeStore } from '@/app/stores/contact-type'
 
 export const useContactStore = defineStore('contact', () => {
   const items = ref<Contact[]>([])
   const loading = ref(false)
 
-  const activeType = ref<ContactType>('customer')
+  // ✅ single source of truth for types
+  const typeStore = useContactTypeStore()
+  const types = computed(() => typeStore.items)
+  const typesLoading = computed(() => typeStore.loading)
+
+  const activeTypeId = ref<number | null>(null)
+  const search = ref('')
 
   const page = ref(1)
   const perPage = ref(15)
   const total = ref(0)
   const lastPage = ref(1)
 
+  async function ensureTypesLoaded() {
+    if (!typeStore.items.length) {
+      await typeStore.fetch()
+    }
+
+    // ❌ IMPORTANT: do NOT auto set first type here,
+    // because ALL uses activeTypeId = null
+  }
+
   async function fetch() {
     loading.value = true
     try {
-      const res: PaginatedResponse<Contact> = await contacts.list({
+      await ensureTypesLoaded()
+
+      const params: any = {
         page: page.value,
         per_page: perPage.value,
-        contact_type: activeType.value,
-      })
+        q: search.value.trim() || undefined,
+      }
+
+      // ✅ only send filter when not ALL
+      if (activeTypeId.value !== null) {
+        params.contact_type_id = activeTypeId.value
+      }
+
+      const res: PaginatedResponse<Contact> = await contacts.list(params)
 
       items.value = res.data
 
@@ -38,10 +63,25 @@ export const useContactStore = defineStore('contact', () => {
     }
   }
 
-  async function setType(type: ContactType) {
-    activeType.value = type
+  async function fetchTypes() {
+    await ensureTypesLoaded()
+    return typeStore.items
+  }
+
+  async function setTypeId(typeId: number | null) {
+    activeTypeId.value = typeId
     page.value = 1
     return fetch()
+  }
+
+  async function setSearch(q: string) {
+    search.value = q
+    page.value = 1
+    return fetch()
+  }
+
+  async function find(id: number) {
+    return contacts.show(id)
   }
 
   async function create(payload: any) {
@@ -75,7 +115,13 @@ export const useContactStore = defineStore('contact', () => {
   return {
     items,
     loading,
-    activeType,
+
+    types,
+    typesLoading,
+    fetchTypes,
+
+    activeTypeId,
+    search,
 
     page,
     perPage,
@@ -83,10 +129,12 @@ export const useContactStore = defineStore('contact', () => {
     lastPage,
 
     fetch,
-    setType,
+    setTypeId,
+    setSearch,
     setPage,
     setPerPage,
 
+    find,
     create,
     update,
     remove,

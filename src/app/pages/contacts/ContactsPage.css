@@ -7,12 +7,12 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
 }
 
 .contacts-header .title {
   font-size: 18px;
-  font-weight: 600;
+  font-weight: 700;
   margin: 0;
 }
 
@@ -29,7 +29,7 @@
 }
 
 .search {
-  width: 260px;
+  width: 280px;
 }
 
 .btn-primary {
@@ -37,11 +37,74 @@
   border: 1px solid var(--primary) !important;
 }
 
+/* =========================
+   Type pills
+========================= */
+.type-switch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 6px 0 12px;
+}
+
+.type-btn {
+  border: 1px solid var(--border);
+  background: #fff;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.type-btn:hover {
+  background: rgba(236, 105, 26, 0.06);
+  border-color: rgba(236, 105, 26, 0.35);
+  color: var(--primary);
+}
+
+.type-btn.active {
+  background: rgba(236, 105, 26, 0.10);
+  border-color: rgba(236, 105, 26, 0.60);
+  color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(236, 105, 26, 0.12);
+}
+
+.type-skeleton {
+  width: 110px;
+  height: 30px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: linear-gradient(90deg, #f2f2f2, #fafafa, #f2f2f2);
+  background-size: 300% 100%;
+  animation: shimmer 1.2s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: 0% 0; }
+  100% { background-position: 100% 0; }
+}
+
+/* =========================
+   Panel + table
+========================= */
 .contacts-panel {
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 10px;
   padding: 10px;
+}
+
+.contacts-table :deep(.p-datatable-thead > tr > th) {
+  font-weight: 700;
+}
+
+.type-badges {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
 }
 
 .badge {
@@ -50,8 +113,12 @@
   padding: 4px 10px;
   border-radius: 999px;
   font-size: 12px;
-  background: #f5f5f5;
+  background: #f6f6f6;
   border: 1px solid var(--border);
+}
+
+.badge.muted {
+  opacity: 0.6;
 }
 
 .status {
@@ -75,44 +142,25 @@
   gap: 6px;
   justify-content: flex-end;
 }
-/* ✅ Remove grey overlay mask while loading */
-.contacts-loading-mask {
-  background: transparent !important;
-}
 
-/* Optional nicer loading */
-.loading-wrap {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 14px;
-  color: var(--text-muted);
-}
-
-/* Primary contact person display */
-.primary-person {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.pp-name {
-  font-weight: 600;
-  font-size: 13px;
-}
-
-.pp-sub {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+.subline {
   font-size: 12px;
-  color: var(--text-muted);
+  margin-top: 3px;
 }
 
 .muted {
   color: var(--text-muted);
 }
 
-.dot {
-  opacity: 0.6;
+/* ✅ Remove grey overlay mask while loading */
+.contacts-loading-mask {
+  background: transparent !important;
+}
+
+.loading-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px;
+  color: var(--text-muted);
 }

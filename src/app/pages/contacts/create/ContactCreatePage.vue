@@ -1,167 +1,293 @@
 <template>
   <div class="contact-create-page">
-    <ConfirmDialog />
-    <div class="header">
-      <div class="left">
-        <h1 class="title">{{ isEdit ? "Edit Contact" : "Create Contact" }}</h1>
-        <p class="subtitle">
-          {{ isEdit ? "Edit a contact and at least 1 contact person." : "Create a contact and at least 1 contact person." }}
-        </p>
+    <header class="page-header">
+      <h1 class="page-title">{{ isEdit ? 'Edit Contact' : 'Contact Details' }}</h1>
+      <p class="page-subtitle">
+        Please fill in the contact details below. Fields marked with * are required.
+      </p>
+    </header>
+
+    <section class="card">
+      <div v-if="loadingContact" class="loading-wrap" style="padding: 18px; display:flex; gap:10px; align-items:center;">
+        <i class="pi pi-spin pi-spinner"></i>
+        <span>Loading contact…</span>
       </div>
 
-      <div class="right">
-        <Button outlined class="orbis-primary" icon="pi pi-arrow-left" label="Back" @click="goBack" />
-        <Button
-          class="btn-primary"
-          icon="pi pi-save"
-          label="Save Contact"
-          :loading="saving"
-          :disabled="!canSubmit"
-          @click="submit"
-        />
-      </div>
-    </div>
-
-    <div class="grid">
-      <div class="card">
-        <div class="card-title">Contact Details</div>
-
-        <div class="form">
-          <div class="field">
-            <label>Contact Types</label>
-
-            <div class="type-checkboxes">
-                <div
-                v-for="opt in contactTypeOptions"
-                :key="opt.value"
-                class="type-option"
-                >
-                <Checkbox
-                    v-model="form.contact_types"
-                    :inputId="`ct-${opt.value}`"
-                    :value="opt.value"
-                    :binary="false"
-                />
-                <label :for="`ct-${opt.value}`">{{ opt.label }}</label>
-                </div>
-            </div>
-
-            <small v-if="errors.contact_types" class="error">
-                {{ errors.contact_types }}
-            </small>
-
-            <small v-if="errors.contact_types" class="error">{{ errors.contact_types }}</small>
+      <template v-else>
+        <!-- CONTACT TYPE -->
+        <div class="section">
+          <div class="section-head">
+            <i class="pi pi-users"></i>
+            <h2>Contact Type</h2>
           </div>
 
-          <div class="field">
-            <label>Address</label>
-            <InputText v-model="form.address" class="w-full" placeholder="e.g. London, UK" />
+          <div class="type-grid">
+            <label
+              v-for="t in store.types"
+              :key="t.id"
+              class="type-pill"
+              :class="{ checked: form.contact_type_ids.includes(t.id) }"
+            >
+              <input
+                type="checkbox"
+                :checked="form.contact_type_ids.includes(t.id)"
+                @change="toggleType(t.id)"
+              />
+              <span>{{ t.name }}</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- COMPANY DETAILS -->
+        <div class="divider"></div>
+
+        <div class="section">
+          <div class="section-head">
+            <i class="pi pi-building"></i>
+            <h2>Company Details</h2>
           </div>
 
-          <div class="row">
+          <div class="grid cols-4">
             <div class="field">
-              <label>Country (2-letter)</label>
-              <InputText v-model="form.country" class="w-full" placeholder="GB" maxlength="2" />
+              <label class="required">Company Name</label>
+              <input v-model="form.company_name" type="text" placeholder="Enter company name" />
             </div>
 
             <div class="field">
-              <label>Currency (3-letter)</label>
-              <InputText v-model="form.currency_preference" class="w-full" placeholder="GBP" maxlength="3" />
-            </div>
-          </div>
-
-          <div class="row">
-            <div class="field">
-              <label>EORI</label>
-              <InputText v-model="form.eori" class="w-full" placeholder="Optional" />
+              <label>Account Number</label>
+              <input :value="accountNumberPreview" type="text" class="readonly" readonly />
+              <div class="hint">
+                <i class="pi pi-bolt"></i>
+                Will be auto-generated upon save
+              </div>
             </div>
 
             <div class="field">
               <label>Credit Limit</label>
-              <InputNumber v-model="form.credit_limit" class="w-full" :min="0" :useGrouping="true" />
+              <input v-model="creditLimitText" type="text" placeholder="Enter credit limit" />
+              <div class="hint">(Management approval required)</div>
             </div>
-          </div>
 
-          <div class="field">
-            <label>Status</label>
-            <Dropdown v-model="form.status" :options="statusOptions" class="w-full" />
-          </div>
-        </div>
-      </div>
-
-      <!-- people card unchanged -->
-      <div class="card">
-        <div class="card-title people-header">
-          <span>Contact People</span>
-          <Button text icon="pi pi-plus" class="orbis-primary" label="Add Person" @click="addPerson" />
-        </div>
-
-        <div v-if="errors.people" class="people-error">
-          {{ errors.people }}
-        </div>
-
-        <div class="people">
-          <div v-for="(p, idx) in people" :key="p._key" class="person">
-            <div class="person-top">
-              <strong>Person {{ idx + 1 }}</strong>
-
-              <Button
-                text
-                severity="danger"
-                icon="pi pi-trash"
-                label="Remove"
-                :disabled="people.length <= 1"
-                @click="removePerson(idx)"
+            <div class="field">
+              <label>Currency</label>
+              <input
+                v-model="form.currency_preference"
+                type="text"
+                placeholder="e.g. USD, EUR, GBP"
+                @blur="onCurrencyBlur"
               />
-            </div>
-
-            <div class="form">
-              <div class="field">
-                <label>Name *</label>
-                <InputText v-model="p.name" class="w-full" placeholder="Full name" />
-                <small v-if="personErrors[idx]?.name" class="error">{{ personErrors[idx].name }}</small>
-              </div>
-
-              <div class="row">
-                <div class="field">
-                  <label>Email</label>
-                  <InputText v-model="p.email" class="w-full" placeholder="Optional" />
-                  <small v-if="personErrors[idx]?.email" class="error">{{ personErrors[idx].email }}</small>
-                </div>
-
-                <div class="field">
-                  <label>Phone</label>
-                  <InputText v-model="p.phone" class="w-full" placeholder="Optional" />
-                </div>
-              </div>
+              <div class="hint">(Leave blank for Multi-currency)</div>
             </div>
           </div>
         </div>
 
-        <div class="hint">
-          Minimum of <strong>1</strong> contact person is required.
+        <!-- REGISTRATION DETAILS -->
+        <div class="divider"></div>
+
+        <div class="section">
+          <div class="section-head">
+            <i class="pi pi-file"></i>
+            <h2>Registration Details</h2>
+          </div>
+
+          <div class="grid cols-3">
+            <div class="field">
+              <label>Registration Number</label>
+              <input v-model="form.registration_number" type="text" placeholder="Company registration number" />
+            </div>
+
+            <div class="field">
+              <label>VAT Number</label>
+              <input v-model="form.vat_number" type="text" placeholder="VAT identification number" />
+            </div>
+
+            <div class="field">
+              <label>EORI Number</label>
+              <input v-model="form.eori" type="text" placeholder="Economic Operators Registration ID" />
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
+
+        <!-- ADDRESS & CONTACT DETAILS -->
+        <div class="divider"></div>
+
+        <div class="section">
+          <div class="section-head">
+            <i class="pi pi-map-marker"></i>
+            <h2>Address & Contact Details</h2>
+          </div>
+
+          <div class="grid cols-4">
+            <div class="field">
+              <label class="required">Address Line 1</label>
+              <input v-model="form.address_line_1" type="text" placeholder="Street address, P.O. box" />
+            </div>
+
+            <div class="field">
+              <label>Address Line 2</label>
+              <input v-model="form.address_line_2" type="text" placeholder="Apartment, suite, unit, building, floor" />
+            </div>
+
+            <div class="field">
+              <label>Address Line 3</label>
+              <input v-model="form.address_line_3" type="text" placeholder="Additional address information" />
+            </div>
+
+            <div class="field">
+              <label class="required">City</label>
+              <input v-model="form.city" type="text" placeholder="Enter city" />
+            </div>
+          </div>
+
+          <div class="grid cols-4">
+            <div class="field">
+              <label>County/State</label>
+              <input v-model="form.county_state" type="text" placeholder="County or state" />
+            </div>
+
+            <div class="field">
+              <label class="required">Postcode/ZIP</label>
+              <input v-model="form.postal_code" type="text" placeholder="Postal or ZIP code" />
+            </div>
+
+            <div class="field">
+              <label class="required">Country</label>
+
+              <AutoComplete
+                v-model="selectedCountry"
+                :suggestions="countrySuggestions"
+                optionLabel="name"
+                :forceSelection="true"
+                :dropdown="true"
+                :loading="countrySearching"
+                placeholder="Search country (e.g. United Kingdom, GB, +44)"
+                @complete="(e) => searchCountries(e.query)"
+                @item-select="(e) => onCountrySelect(e.value)"
+                @clear="() => onCountrySelect(null)"
+              >
+                <template #option="{ option }">
+                  <div style="display:flex; justify-content:space-between; gap:12px;">
+                    <span>{{ option.name }}</span>
+                    <span style="opacity:.7;">{{ option.alpha_2 }} • {{ option.dial_code }}</span>
+                  </div>
+                </template>
+              </AutoComplete>
+
+              <div class="hint">Selecting a country will auto-fill the phone dial code.</div>
+            </div>
+
+            <div class="field">
+              <label>&nbsp;</label>
+              <div class="empty-slot"></div>
+            </div>
+          </div>
+
+          <div class="grid cols-3">
+            <div class="field">
+              <label class="required">Phone Number</label>
+              <div class="phone">
+                <input
+                  v-model="phoneCountryCodeText"
+                  type="text"
+                  placeholder="+44"
+                  style="width: 120px;"
+                />
+                <input v-model="form.phone" type="tel" placeholder="(234) 567-8900" />
+              </div>
+              <div class="hint">Dial code is auto-set from Country (you can edit it if needed).</div>
+            </div>
+
+            <div class="field">
+              <label class="required">Email Address</label>
+              <input v-model="form.email" type="email" placeholder="contact@example.com" />
+            </div>
+
+            <div class="field">
+              <label>Website</label>
+              <input v-model="form.website" type="url" placeholder="https://www.example.com" />
+            </div>
+          </div>
+
+          <div class="usage">
+            <div class="usage-title">
+              <i class="pi pi-tags"></i>
+              Address Usage
+            </div>
+
+            <div class="usage-row">
+              <label class="usage-pill" :class="{ checked: form.address_usage.delivery }">
+                <input type="checkbox" :checked="form.address_usage.delivery" @change="toggleUsage('delivery')" />
+                <span>Delivery Address</span>
+              </label>
+
+              <label class="usage-pill" :class="{ checked: form.address_usage.collection }">
+                <input type="checkbox" :checked="form.address_usage.collection" @change="toggleUsage('collection')" />
+                <span>Collection Address</span>
+              </label>
+
+              <label class="usage-pill" :class="{ checked: form.address_usage.consignee }">
+                <input type="checkbox" :checked="form.address_usage.consignee" @change="toggleUsage('consignee')" />
+                <span>Consignee Address</span>
+              </label>
+
+              <label class="usage-pill" :class="{ checked: form.address_usage.accounts }">
+                <input type="checkbox" :checked="form.address_usage.accounts" @change="toggleUsage('accounts')" />
+                <span>Accounts Address</span>
+              </label>
+
+              <label class="usage-pill" :class="{ checked: form.address_usage.headoffice }">
+                <input type="checkbox" :checked="form.address_usage.headoffice" @change="toggleUsage('headoffice')" />
+                <span>Head Office Address</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- ACTIONS -->
+        <div class="actions">
+          <button class="btn ghost" type="button" @click="onClear">Clear All</button>
+          <button class="btn ghost" type="button" @click="onCancel">Cancel</button>
+          <button class="btn primary" type="button" :disabled="saving" @click="onSave">
+            {{ isEdit ? 'Update Contact' : 'Save Contact' }}
+          </button>
+        </div>
+      </template>
+    </section>
+
+    <footer class="footer">
+      © 2026 Contact Management System. All rights reserved.
+    </footer>
   </div>
 </template>
 
 <script setup lang="ts">
-import "./ContactCreatePage.css"
-import { useContactCreatePage } from "./ContactCreatePage"
+import './ContactCreatePage.css'
+import AutoComplete from 'primevue/autocomplete'
+import { useContactCreatePage } from './ContactCreatePage'
+
 const {
+  store,
   form,
-  people,
-  errors,
-  personErrors,
   saving,
-  canSubmit,
-  contactTypeOptions,
-  statusOptions,
-  addPerson,
-  removePerson,
-  submit,
-  goBack,
+  loadingContact,
   isEdit,
+
+  accountNumberPreview,
+  creditLimitText,
+
+  selectedCountry,
+  countrySuggestions,
+  countrySearching,
+  searchCountries,
+  onCountrySelect,
+
+  phoneCountryCodeText,
+
+  toggleType,
+  toggleUsage,
+  onClear,
+  onCancel,
+  onSave,
+  onCurrencyBlur,
 } = useContactCreatePage()
 </script>
