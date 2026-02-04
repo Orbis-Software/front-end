@@ -14,6 +14,7 @@ const DashboardPage = () => import("@/app/pages/dashboard/DashboardPage.vue");
 const PlaceholderPage = () => import("@/app/pages/default/PlaceholderPage.vue");
 const QuoteCreatePage = () => import("@/app/pages/quotes/QuoteCreatePage.vue");
 const JobPage = () => import("@/app/pages/jobs/JobPage.vue");
+const JobsListPage = () => import("@/app/pages/jobs/list/JobsListPage.vue");
 const ContactsPage = () => import("@/app/pages/contacts/ContactsPage.vue");
 const ContactCreatePage = () => import("@/app/pages/contacts/create/ContactCreatePage.vue");
 const ConsolidationPage = () => import("@/app/pages/consolidations/ConsolidationPage.vue");
@@ -50,7 +51,7 @@ export const routes: RouteRecordRaw[] = [
       {
         path: "jobs",
         name: "tms.jobs.index",
-        component: JobPage,
+        component: JobsListPage,
         meta: { title: "Jobs" },
       },
       {
