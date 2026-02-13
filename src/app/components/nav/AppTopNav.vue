@@ -2,11 +2,11 @@
 import { computed, reactive, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import type { AppArea } from "@/app/stores/ui";
+import { useUiStore } from "@/app/stores/ui";
 import { useTopNavItems, type NavItem } from "./topNavItems";
 
 type Props = {
   area: AppArea;
-  managementMode: boolean;
   mobileOpen: boolean;
 };
 
@@ -16,11 +16,12 @@ const emit = defineEmits<{ (e: "close-mobile"): void }>();
 const router = useRouter();
 const route = useRoute();
 
+const ui = useUiStore();
 const items = useTopNavItems();
 
 const menu = computed(() => {
-  if (props.managementMode) return items.management;
-  return props.area === "tms" ? items.tms : items.wms;
+  const base = props.area === "tms" ? items.tms : items.wms;
+  return ui.canSeeManagement ? [...base, ...items.management] : base;
 });
 
 const openMobile = reactive<Record<string, boolean>>({});
@@ -127,9 +128,7 @@ function toggleMobileDropdown(id: string) {
 </template>
 
 <style scoped>
-/* =========================
-   TransportPro tab bar style
-   ========================= */
+/* (keep your exact existing CSS as-is) */
 .top-nav {
   background: #fff;
   border-bottom: 1px solid rgba(0, 0, 0, 0.10);
@@ -147,14 +146,16 @@ function toggleMobileDropdown(id: string) {
   margin: 0;
   padding: 0;
   gap: 0;
-  flex-wrap: wrap;
+
+  flex-wrap: nowrap;      /* stay in one line */
+  overflow: hidden;       /* hide overflow */
+  white-space: nowrap;    /* prevent wrapping */
 }
 
 .nav-item {
   position: relative;
 }
 
-/* optional separators */
 .nav-item + .nav-item::before {
   content: "";
   position: absolute;
@@ -166,7 +167,6 @@ function toggleMobileDropdown(id: string) {
   pointer-events: none;
 }
 
-/* ✅ Tab button */
 .nav-link {
   position: relative;
   display: flex;
@@ -205,7 +205,6 @@ function toggleMobileDropdown(id: string) {
   color: var(--primary);
 }
 
-/* ✅ active underline like TransportPro */
 .nav-link.active {
   background: rgba(0, 0, 0, 0.04);
   color: var(--primary);
@@ -222,9 +221,6 @@ function toggleMobileDropdown(id: string) {
   border-radius: 2px;
 }
 
-/* =========================
-   Dropdown hover fix
-   ========================= */
 .dropdown {
   position: absolute;
   top: 100%;
@@ -256,7 +252,6 @@ function toggleMobileDropdown(id: string) {
   display: block;
 }
 
-/* Dropdown items */
 .dropdown-link {
   width: 100%;
   border: none;
@@ -280,15 +275,11 @@ function toggleMobileDropdown(id: string) {
   color: var(--primary);
 }
 
-/* ✅ Only the selected child will be active (via best-match logic) */
 .dropdown-link.active {
   background: rgba(236, 105, 26, 0.10);
   color: var(--primary);
 }
 
-/* =========================
-   Mobile dropdown behavior
-   ========================= */
 @media (max-width: 1200px) {
   .nav-inner {
     padding: 0 20px;

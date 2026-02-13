@@ -102,6 +102,9 @@ export function useTopNavItems(): {
           { id: "company", label: "Company Details", icon: "pi pi-building", to: "/settings/company" },
           { id: "branding", label: "Logos & Branding", icon: "pi pi-palette", to: "/settings/branding" },
           { id: "shortcuts", label: "System Shortcuts", icon: "pi pi-bolt", to: "/settings/shortcuts" },
+
+          // ✅ NEW
+          { id: "master-settings", label: "Master Settings", icon: "pi pi-sliders-h", to: "/settings/master" },
         ],
       },
     ],

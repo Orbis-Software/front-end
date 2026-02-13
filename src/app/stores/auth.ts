@@ -5,25 +5,59 @@ import AuthService from '@/app/services/auth'
 const TOKEN_KEY = 'auth_token'
 
 export const useAuthStore = defineStore('auth', {
-  /**
-   * State
-   */
+  /*
+  |--------------------------------------------------------------------------
+  | State
+  |--------------------------------------------------------------------------
+  */
   state: () => ({
     user: null as User | null,
     token: localStorage.getItem(TOKEN_KEY),
     ready: false,
   }),
 
-  /**
-   * Getters
-   */
+  /*
+  |--------------------------------------------------------------------------
+  | Getters
+  |--------------------------------------------------------------------------
+  */
   getters: {
+    /**
+     * Basic Auth State
+     */
     isAuthenticated: (state) => !!state.user && !!state.token,
+
+    /**
+     * Role helpers
+     */
+    roles: (state) => state.user?.roles ?? [],
+    permissions: (state) => state.user?.permissions ?? [],
+
+    isAdmin: (state) => state.user?.is_admin ?? false,
+    isDev: (state) => state.user?.is_dev ?? false,
+
+    /**
+     * Dynamic Role Checker
+     */
+    hasRole: (state) => {
+      return (role: string): boolean =>
+        state.user?.roles.includes(role) ?? false
+    },
+
+    /**
+     * Dynamic Permission Checker
+     */
+    hasPermission: (state) => {
+      return (permission: string): boolean =>
+        state.user?.permissions.includes(permission) ?? false
+    },
   },
 
-  /**
-   * Actions
-   */
+  /*
+  |--------------------------------------------------------------------------
+  | Actions
+  |--------------------------------------------------------------------------
+  */
   actions: {
     /**
      * Replace user explicitly
@@ -41,11 +75,11 @@ export const useAuthStore = defineStore('auth', {
       localStorage.removeItem(TOKEN_KEY)
     },
 
-    /**
-     * ============================
-     * Auth Actions (Store → Service)
-     * ============================
-     */
+    /*
+    |--------------------------------------------------------------------------
+    | Auth Actions (Store → Service)
+    |--------------------------------------------------------------------------
+    */
 
     async login(email: string, password: string) {
       const result = await AuthService.login({ email, password })
@@ -56,6 +90,9 @@ export const useAuthStore = defineStore('auth', {
       localStorage.setItem(TOKEN_KEY, result.token)
     },
 
+    /**
+     * Hydrate user on app reload
+     */
     async hydrate() {
       if (!this.token) {
         this.ready = true
@@ -72,6 +109,9 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
+    /**
+     * Logout current device
+     */
     async logout() {
       try {
         await AuthService.logout()
