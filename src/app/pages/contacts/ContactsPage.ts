@@ -12,6 +12,13 @@ function debounce<T extends (...args: any[]) => void>(fn: T, wait = 350) {
   }
 }
 
+type DataTablePageEvent = {
+  first: number
+  rows: number
+  page: number // 0-based
+  pageCount: number
+}
+
 export function useContactsPage() {
   const store = useContactStore()
   const confirm = useConfirm()
@@ -25,8 +32,10 @@ export function useContactsPage() {
     return t?.name ?? 'Contacts'
   })
 
+  // PrimeVue paginator "first" (0-based index)
+  const firstRow = computed(() => (store.page - 1) * store.perPage)
+
   onMounted(async () => {
-    // load types first, then contacts
     await store.fetchTypes()
     await store.fetch()
   })
@@ -40,8 +49,8 @@ export function useContactsPage() {
   }, 350)
 
   function onSearchInput(v: string) {
-    search.value = v ?? ""
-    applySearch(v)
+    search.value = v ?? ''
+    applySearch(search.value)
   }
 
   function onCreate() {
@@ -51,7 +60,6 @@ export function useContactsPage() {
   function onEdit(id: number) {
     router.push(`/contacts/${id}/edit`)
   }
-
 
   function onDelete(contactId: number) {
     confirm.require({
@@ -67,10 +75,24 @@ export function useContactsPage() {
     })
   }
 
+  async function onPage(e: DataTablePageEvent) {
+    const nextPerPage = e.rows
+    const nextPage = e.page + 1 // convert to 1-based
+
+    if (nextPerPage !== store.perPage) {
+      await store.setPerPage(nextPerPage)
+      return
+    }
+
+    await store.setPage(nextPage)
+  }
+
   return {
     store,
     search,
     headerTitle,
+    firstRow,
+    onPage,
     onSearchInput,
     setTypeId,
     onCreate,

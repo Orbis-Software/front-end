@@ -19,6 +19,8 @@ const ContactsPage = () => import("@/app/pages/contacts/ContactsPage.vue");
 const ContactCreatePage = () => import("@/app/pages/contacts/create/ContactCreatePage.vue");
 const ConsolidationPage = () => import("@/app/pages/consolidations/ConsolidationPage.vue");
 const SettingsPage = () => import("@/app/pages/settings/SettingsPage.vue");
+const MasterSettingsPage = () => import("@/app/pages/settings/masterSettings/MasterSettingsPage.vue");
+const ContactsImportPage = () => import('@/app/pages/contacts/import/ContactsImportPage.vue')
 
 export const routes: RouteRecordRaw[] = [
   {
@@ -141,6 +143,17 @@ export const routes: RouteRecordRaw[] = [
         component: SettingsPage,
         meta: { title: "Settings" },
       },
+      {
+        path: "/settings/master",
+        name: "settings.master",
+        component: MasterSettingsPage,
+        meta: { title: "Master Settings" },
+      },
+      {
+        path: '/contacts/import',
+        name: 'contacts.import',
+        component: ContactsImportPage,
+      }
     ],
   },
 ];

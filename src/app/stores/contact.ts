@@ -25,9 +25,6 @@ export const useContactStore = defineStore('contact', () => {
     if (!typeStore.items.length) {
       await typeStore.fetch()
     }
-
-    // ❌ IMPORTANT: do NOT auto set first type here,
-    // because ALL uses activeTypeId = null
   }
 
   async function fetch() {
@@ -48,14 +45,18 @@ export const useContactStore = defineStore('contact', () => {
 
       const res: PaginatedResponse<Contact> = await contacts.list(params)
 
-      items.value = res.data
+      // ✅ data
+      items.value = res.data ?? []
 
-      if (res.meta) {
-        page.value = res.meta.current_page
-        perPage.value = res.meta.per_page
-        total.value = res.meta.total
-        lastPage.value = res.meta.last_page
-      }
+      // ✅ support BOTH shapes:
+      // A) { data, meta: { current_page, per_page, total, last_page } }
+      // B) Laravel default paginator: { data, current_page, per_page, total, last_page }
+      const meta: any = (res as any).meta ?? (res as any)
+
+      page.value = Number(meta.current_page ?? page.value)
+      perPage.value = Number(meta.per_page ?? perPage.value)
+      total.value = Number(meta.total ?? total.value)
+      lastPage.value = Number(meta.last_page ?? lastPage.value)
 
       return res
     } finally {

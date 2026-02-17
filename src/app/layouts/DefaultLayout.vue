@@ -49,6 +49,7 @@ onBeforeUnmount(() => window.removeEventListener("resize", onResize));
   flex-direction: column;
 }
 
+/* ✅ Header + Nav sticky */
 .sticky-chrome {
   position: sticky;
   top: 0;
@@ -56,6 +57,7 @@ onBeforeUnmount(() => window.removeEventListener("resize", onResize));
   background: #fff;
 }
 
+/* Centered container like TransportPro */
 .app-content {
   width: 100%;
   max-width: 1400px;

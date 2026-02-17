@@ -6,28 +6,29 @@ import type { AppArea } from "@/app/stores/ui";
 
 type Props = {
   area: AppArea;
-  managementMode: boolean;
 };
 
 defineProps<Props>();
 
 const emit = defineEmits<{
   (e: "switch-area", v: AppArea): void;
-  (e: "toggle-management"): void;
   (e: "toggle-mobile-nav"): void;
 }>();
 
 const auth = useAuthStore();
 const userDropdownOpen = ref(false);
 
-const userName = computed(() => auth.user?.name ?? "Admin User");
-const userRole = computed(() => (auth.user?.role ?? "Non-Management User"));
+const userName = computed(() => auth.user?.name ?? "User");
+const userRole = computed(() => {
+  const roles = (auth.user as any)?.roles as string[] | undefined;
+  if (roles?.length) return roles.join(", ");
+  return "User";
+});
 
 const companyLogoSrc = computed(() => {
   const c: any = auth.user?.company;
   return c?.logo_url ?? c?.logo ?? "/orbis-logo.png";
 });
-
 
 const initials = computed(() => {
   const parts = userName.value.trim().split(/\s+/).filter(Boolean);
@@ -60,15 +61,10 @@ onBeforeUnmount(() => document.removeEventListener("click", handleClickOutside))
   <header class="app-header">
     <div class="header-inner">
       <!-- Brand -->
-        <div class="brand">
-        <img
-            class="brand-logo"
-            :src="companyLogoSrc"
-            alt="Company logo"
-        />
+      <div class="brand">
+        <img class="brand-logo" :src="companyLogoSrc" alt="Company logo" />
         <div class="brand-text">{{ companyName }}</div>
-        </div>
-
+      </div>
 
       <!-- Right controls -->
       <div class="controls">
@@ -91,17 +87,6 @@ onBeforeUnmount(() => document.removeEventListener("click", handleClickOutside))
             WMS
           </button>
         </div>
-
-        <!-- ✅ Management toggle (no roles yet) -->
-        <button
-          class="management-toggle"
-          type="button"
-          :class="{ active: managementMode }"
-          @click="emit('toggle-management')"
-        >
-          <i class="pi pi-shield" />
-          <span>Management</span>
-        </button>
 
         <!-- User -->
         <div class="user-profile-container">
@@ -132,15 +117,6 @@ onBeforeUnmount(() => document.removeEventListener("click", handleClickOutside))
   top: 0;
   z-index: 50;
   background: var(--pc-bg-card, #fff);
-  /* border-bottom: 1px solid var(--pc-border); */
-}
-
-/* subtle second line = more “structure” */
-.app-header::after {
-  content: "";
-  display: block;
-  height: 1px;
-  /* background: rgba(0, 0, 0, 0.04); */
 }
 
 .header-inner {
@@ -156,12 +132,20 @@ onBeforeUnmount(() => document.removeEventListener("click", handleClickOutside))
 .brand {
   display: flex;
   align-items: center;
+  gap: 12px;
+}
+
+.brand-logo {
+  height: 36px;
+  max-width: 120px;
+  object-fit: contain;
 }
 
 .brand-text {
   font-weight: 900;
   font-size: 1.15rem;
   color: var(--pc-text-main);
+  white-space: nowrap;
 }
 
 .controls {
@@ -200,33 +184,6 @@ onBeforeUnmount(() => document.removeEventListener("click", handleClickOutside))
   background: #fff;
   border-color: rgba(0,0,0,0.12);
   color: var(--pc-text-main);
-}
-
-/* Management toggle */
-.management-toggle {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 14px;
-  border-radius: 12px;
-  border: 1px solid rgba(0,0,0,0.10);
-  background: #fff;
-  font-weight: 900;
-  cursor: pointer;
-  color: var(--pc-text-muted);
-  transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease;
-}
-
-.management-toggle:hover {
-  background: rgba(236, 105, 26, 0.08);
-  border-color: rgba(236, 105, 26, 0.25);
-  color: var(--pc-primary);
-}
-
-.management-toggle.active {
-  background: var(--pc-primary);
-  border-color: var(--pc-primary);
-  color: #fff;
 }
 
 /* User */
@@ -297,26 +254,6 @@ onBeforeUnmount(() => document.removeEventListener("click", handleClickOutside))
 .mobile-toggle:hover {
   background: rgba(0,0,0,0.03);
 }
-
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.brand-logo {
-  height: 36px;          /* TransportPro size */
-  max-width: 120px;
-  object-fit: contain;
-}
-
-.brand-text {
-  font-weight: 900;
-  font-size: 1.15rem;
-  color: var(--pc-text-main);
-  white-space: nowrap;
-}
-
 
 @media (max-width: 1200px) {
   .header-inner {
