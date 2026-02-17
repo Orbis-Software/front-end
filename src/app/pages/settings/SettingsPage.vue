@@ -1,3 +1,4 @@
+<!-- src/app/pages/settings/SettingsPage.vue -->
 <template>
   <div class="settings-page">
     <div class="page-head">
@@ -52,7 +53,6 @@
 
           <div class="field">
             <label>Status</label>
-            <!-- ✅ PrimeVue v4: Select (Dropdown is deprecated) -->
             <Select
               v-model="form.status"
               :options="statusOptions"
@@ -63,18 +63,23 @@
 
           <div class="field col-span-2">
             <label>Registered Address</label>
-            <Textarea v-model="form.registered_address" autoResize rows="3" />
+            <Textarea v-model="registeredAddressText" autoResize rows="3" />
+            <small class="hint">
+              Lines: building, address1, address2, address3, address4, city, state, postcode, country_code
+            </small>
           </div>
 
           <div class="field col-span-2">
             <label>Operational Address</label>
-            <Textarea v-model="form.operational_address" autoResize rows="3" />
+            <Textarea v-model="operationalAddressText" autoResize rows="3" />
+            <small class="hint">
+              Lines: building, address1, address2, address3, address4, city, state, postcode, country_code
+            </small>
           </div>
 
           <div class="field col-span-2">
             <label>Company Logo</label>
 
-            <!-- ✅ PrimeVue FileUpload (basic mode) -->
             <FileUpload
               class="btn-primary"
               mode="basic"
@@ -101,7 +106,7 @@
         <div class="form-grid">
           <div class="field">
             <label>Default Currency</label>
-            <InputText v-model="form.default_currency" />
+            <InputText v-model="form.default_currency_code" />
             <small class="hint">3-letter code (e.g. USD, GBP, EUR)</small>
           </div>
 
@@ -136,6 +141,8 @@ const {
   saving,
   statusOptions,
   form,
+  registeredAddressText,
+  operationalAddressText,
   logoPreview,
   onLogoSelect,
   onRefresh,
