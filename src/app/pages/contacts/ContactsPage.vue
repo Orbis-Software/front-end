@@ -63,6 +63,13 @@
         responsiveLayout="scroll"
         class="contacts-table"
         :pt="{ mask: { class: 'contacts-loading-mask' } }"
+        paginator
+        lazy
+        :rows="store.perPage"
+        :totalRecords="store.total"
+        :first="firstRow"
+        :rowsPerPageOptions="[15, 25, 50, 100]"
+        @page="onPage"
       >
         <Column header="Types" style="width: 340px">
           <template #body="{ data }">
@@ -108,7 +115,13 @@
           <template #body="{ data }">
             <div class="row-actions">
               <Button text icon="pi pi-pencil" label="Edit" @click="onEdit(data.id)" />
-              <Button text severity="danger" icon="pi pi-trash" label="Delete" @click="onDelete(data.id)" />
+              <Button
+                text
+                severity="danger"
+                icon="pi pi-trash"
+                label="Delete"
+                @click="onDelete(data.id)"
+              />
             </div>
           </template>
         </Column>
@@ -132,6 +145,8 @@ const {
   store,
   search,
   headerTitle,
+  firstRow,
+  onPage,
   onSearchInput,
   setTypeId,
   onCreate,

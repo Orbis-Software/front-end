@@ -39,7 +39,7 @@ export function useTopNavItems(): {
         children: [
           { id: "contacts-all", label: "All Contacts", icon: "pi pi-users", to: "/contacts" },
           { id: "contacts-new", label: "New Contact", icon: "pi pi-user-plus", to: "/contacts/new" },
-          { id: "contacts-export", label: "Export Contacts", icon: "pi pi-download", to: "/contacts/export" },
+          { id: "contacts-import", label: "Export Contacts", icon: "pi pi-download", to: "/contacts/import" },
         ],
       },
       { id: "crm", label: "CRM", icon: "pi pi-sitemap", to: "/crm" },
@@ -102,6 +102,9 @@ export function useTopNavItems(): {
           { id: "company", label: "Company Details", icon: "pi pi-building", to: "/settings/company" },
           { id: "branding", label: "Logos & Branding", icon: "pi pi-palette", to: "/settings/branding" },
           { id: "shortcuts", label: "System Shortcuts", icon: "pi pi-bolt", to: "/settings/shortcuts" },
+
+          // ✅ NEW
+          { id: "master-settings", label: "Master Settings", icon: "pi pi-sliders-h", to: "/settings/master" },
         ],
       },
     ],
