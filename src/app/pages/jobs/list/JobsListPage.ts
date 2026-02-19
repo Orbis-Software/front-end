@@ -73,7 +73,7 @@ export function useJobsListPage() {
   }
 
   function onEdit(id: number) {
-    router.push(`/transport-jobs/${id}`)
+    router.push(`/jobs/${id}`)
   }
 
   async function onDelete(id: number) {

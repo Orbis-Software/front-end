@@ -71,25 +71,18 @@
         :rowsPerPageOptions="[15, 25, 50, 100]"
         @page="onPage"
       >
-        <Column header="Types" style="width: 340px">
-          <template #body="{ data }">
-            <div class="type-badges">
-              <span v-for="t in (data.contact_types || [])" :key="t.id" class="badge">
-                {{ t.name }}
-              </span>
-              <span v-if="!(data.contact_types || []).length" class="badge muted">—</span>
-            </div>
-          </template>
-        </Column>
-
         <Column header="Company" style="width: 280px">
           <template #body="{ data }">
-            <strong>{{ data.company_name || '—' }}</strong>
+            <button class="link-strong" type="button" @click="onOpenCompany(data.id)">
+              {{ data.company_name || '—' }}
+            </button>
+
             <div class="muted subline">
               {{ data.account_number || 'No account number' }}
             </div>
           </template>
         </Column>
+
 
         <Column header="Address">
           <template #body="{ data }">
@@ -100,6 +93,17 @@
         <Column header="EORI" style="width: 220px">
           <template #body="{ data }">
             {{ data.eori || '—' }}
+          </template>
+        </Column>
+
+        <Column header="Types" style="width: 340px">
+          <template #body="{ data }">
+            <div class="type-badges">
+              <span v-for="t in (data.contact_types || [])" :key="t.id" class="badge">
+                {{ t.name }}
+              </span>
+              <span v-if="!(data.contact_types || []).length" class="badge muted">—</span>
+            </div>
           </template>
         </Column>
 
@@ -152,5 +156,6 @@ const {
   onCreate,
   onEdit,
   onDelete,
+  onOpenCompany
 } = useContactsPage()
 </script>

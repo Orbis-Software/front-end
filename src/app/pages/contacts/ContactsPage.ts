@@ -61,6 +61,13 @@ export function useContactsPage() {
     router.push(`/contacts/${id}/edit`)
   }
 
+ function onOpenCompany(id: number) {
+    const route = router.resolve(`/contacts/${id}`)
+    window.open(route.href, '_blank')
+  }
+
+
+
   function onDelete(contactId: number) {
     confirm.require({
       header: 'Delete Contact',
@@ -98,5 +105,6 @@ export function useContactsPage() {
     onCreate,
     onEdit,
     onDelete,
+    onOpenCompany,
   }
 }

@@ -281,7 +281,11 @@ export function useJobCreatePage() {
         // ignore
       }
 
-      await router.push("/dashboard");
+      await router.push({
+        name: "tms.jobs.show",   // use your route name
+        params: { id: job.id },
+      });
+
       return job;
     } catch (e: any) {
       createError.value = extractErrorMessage(e);

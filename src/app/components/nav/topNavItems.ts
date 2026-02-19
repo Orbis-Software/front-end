@@ -39,7 +39,7 @@ export function useTopNavItems(): {
         children: [
           { id: "contacts-all", label: "All Contacts", icon: "pi pi-users", to: "/contacts" },
           { id: "contacts-new", label: "New Contact", icon: "pi pi-user-plus", to: "/contacts/new" },
-          { id: "contacts-import", label: "Export Contacts", icon: "pi pi-download", to: "/contacts/import" },
+          { id: "contacts-import", label: "Import/Export Contacts", icon: "pi pi-download", to: "/contacts/import" },
         ],
       },
       { id: "crm", label: "CRM", icon: "pi pi-sitemap", to: "/crm" },

@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { onMounted, onBeforeUnmount } from "vue";
+import { useRoute } from "vue-router";
 import AppHeader from "@/app/components/header/AppHeader.vue";
 import AppTopNav from "@/app/components/nav/AppTopNav.vue";
 import { useUiStore } from "@/app/stores/ui";
 
 const ui = useUiStore();
+const route = useRoute();
 
 function onResize() {
   ui.setDesktop(window.innerWidth >= 1024);
@@ -36,7 +38,8 @@ onBeforeUnmount(() => window.removeEventListener("resize", onResize));
     </div>
 
     <main class="app-content">
-      <router-view />
+      <!-- ✅ force remount on navigation -->
+      <router-view :key="route.fullPath" />
     </main>
   </div>
 </template>

@@ -164,3 +164,22 @@
   padding: 14px;
   color: var(--text-muted);
 }
+
+.link-strong {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+
+  font: inherit;              /* ✅ inherit font-family, size, weight */
+  color: inherit;             /* ✅ keep same text color */
+  letter-spacing: inherit;    /* optional but safe */
+
+  font-weight: 700;           /* keep bold like before */
+  cursor: pointer;
+  text-align: left;
+}
+
+.link-strong:hover {
+  text-decoration: underline;
+}

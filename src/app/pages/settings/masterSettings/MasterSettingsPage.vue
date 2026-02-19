@@ -85,11 +85,19 @@
             <div class="ms-row2">
               <div class="ms-field">
                 <div class="ms-label">Address Line 2</div>
-                <input v-model="form.trading_address_line_2" class="ms-input" placeholder="Additional address information" />
+                <input
+                  v-model="form.trading_address_line_2"
+                  class="ms-input"
+                  placeholder="Additional address information"
+                />
               </div>
               <div class="ms-field">
                 <div class="ms-label">Address Line 3</div>
-                <input v-model="form.trading_address_line_3" class="ms-input" placeholder="Additional address information" />
+                <input
+                  v-model="form.trading_address_line_3"
+                  class="ms-input"
+                  placeholder="Additional address information"
+                />
               </div>
             </div>
 
@@ -247,7 +255,8 @@
           <div class="ref-card" v-for="r in form.refs" :key="r.type">
             <div class="ref-title">{{ r.title }}</div>
 
-            <div class="ref-cols">
+            <!-- Non-account refs: show Year (display-only) -->
+            <div class="ref-cols" v-if="r.type !== 'account'">
               <div class="ref-col">
                 <div class="ref-label">Prefix</div>
                 <input v-model="r.prefix" class="ms-input ms-input-sm" />
@@ -255,7 +264,7 @@
 
               <div class="ref-col">
                 <div class="ref-label">Year</div>
-                <input v-model.number="r.year_digits" class="ms-input ms-input-sm" type="number" min="0" max="99" />
+                <input :value="year2(r.year_digits)" class="ms-input ms-input-sm ms-disabled" disabled />
               </div>
 
               <div class="ref-col ref-col-wide">
@@ -264,7 +273,7 @@
                   v-model="r.start_number"
                   class="ms-input ms-input-sm"
                   maxlength="9"
-                  @input="r.start_number = digitsMax9(r.start_number)"
+                  @input="onStartNumberInput(r)"
                 />
               </div>
 
@@ -273,14 +282,38 @@
                 <input class="ms-input ms-input-sm ms-readonly" :value="sampleFor(r)" readonly />
               </div>
             </div>
-          </div>
-        </div>
 
-        <div class="ref-bottom">
-          <label class="chk">
-            <input type="checkbox" v-model="globalUseSystem" />
-            Use This Numbering System
-          </label>
+            <!-- Account Numbers: no Year -->
+            <div class="ref-cols ref-cols-account" v-else>
+              <div class="ref-col">
+                <div class="ref-label">Prefix</div>
+                <input v-model="r.prefix" class="ms-input ms-input-sm" />
+              </div>
+
+              <div class="ref-col ref-col-wide">
+                <div class="ref-label">Starting Number</div>
+                <input
+                  v-model="r.start_number"
+                  class="ms-input ms-input-sm"
+                  maxlength="9"
+                  @input="onStartNumberInput(r)"
+                />
+              </div>
+
+              <div class="ref-col ref-col-wide">
+                <div class="ref-label">Sample</div>
+                <input class="ms-input ms-input-sm ms-readonly" :value="sampleFor(r)" readonly />
+              </div>
+            </div>
+
+            <!-- Checkbox ONLY under Account Numbers -->
+            <div class="ref-bottom" v-if="r.type === 'account'">
+              <label class="chk">
+                <input type="checkbox" v-model="globalUseSystem" />
+                Use This Numbering System
+              </label>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -324,7 +357,9 @@ const {
   globalUseSystem,
 
   digitsMax9,
+  year2,
   sampleFor,
+  onStartNumberInput,
   copyToAll,
 
   addPhone,
