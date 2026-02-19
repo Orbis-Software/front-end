@@ -1,13 +1,16 @@
 <script setup lang="ts">
+import type { TransportMode } from "@/app/types/transport-job";
+
 type Props = {
   form: {
-    mode_of_transport: string | null;
+    mode_of_transport: TransportMode | null;
 
     collection_address: string;
     delivery_address: string;
 
-    collection_date: string | null; // use YYYY-MM-DD or empty
-    delivery_date: string | null;
+    // ✅ match page form (Date | null)
+    collection_date: Date | null;
+    delivery_date: Date | null;
 
     cmr_number: string;
     warehouse_grn: string;
@@ -15,10 +18,49 @@ type Props = {
   disabled?: boolean;
 };
 
-const props = defineProps<Props>();
+const { form, disabled } = defineProps<Props>();
 
 function modeLabel() {
-  return (props.form.mode_of_transport || "road").toString().toUpperCase();
+  return (form.mode_of_transport || "road").toString().toUpperCase();
+}
+
+function formatDDMMYYYY(d: Date | null) {
+  if (!d) return "";
+  const day = String(d.getDate()).padStart(2, "0");
+  const mon = String(d.getMonth() + 1).padStart(2, "0");
+  const yr = d.getFullYear();
+  return `${day}/${mon}/${yr}`;
+}
+
+// Optional: allow typing dd/mm/yyyy into a text box and convert to Date
+function parseDDMMYYYY(value: string): Date | null {
+  const v = value.trim();
+  if (!v) return null;
+
+  const m = v.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (!m) return null;
+
+  const dd = Number(m[1]);
+  const mm = Number(m[2]);
+  const yyyy = Number(m[3]);
+
+  const d = new Date(yyyy, mm - 1, dd);
+  if (Number.isNaN(d.getTime())) return null;
+
+  // validate that date didn't overflow (e.g. 32/01/2026)
+  if (d.getFullYear() !== yyyy || d.getMonth() !== mm - 1 || d.getDate() !== dd) return null;
+
+  return d;
+}
+
+function onCollectionDateInput(e: Event) {
+  const v = (e.target as HTMLInputElement).value;
+  form.collection_date = parseDDMMYYYY(v);
+}
+
+function onDeliveryDateInput(e: Event) {
+  const v = (e.target as HTMLInputElement).value;
+  form.delivery_date = parseDDMMYYYY(v);
 }
 </script>
 
@@ -54,12 +96,14 @@ function modeLabel() {
       <div class="grid-2">
         <div class="field">
           <div class="label">Collection Date</div>
+          <!-- Use text input to match your UI screenshot, but bind to Date | null -->
           <input
             class="input"
             type="text"
-            v-model="form.collection_date"
             :disabled="disabled"
+            :value="formatDDMMYYYY(form.collection_date)"
             placeholder="dd/mm/yyyy"
+            @input="onCollectionDateInput"
           />
         </div>
 
@@ -68,9 +112,10 @@ function modeLabel() {
           <input
             class="input"
             type="text"
-            v-model="form.delivery_date"
             :disabled="disabled"
+            :value="formatDDMMYYYY(form.delivery_date)"
             placeholder="dd/mm/yyyy"
+            @input="onDeliveryDateInput"
           />
         </div>
       </div>
@@ -101,7 +146,6 @@ function modeLabel() {
 </template>
 
 <style scoped>
-/* matches the big white card in the screenshot */
 .route-card {
   background: #ffffff;
   border-radius: 14px;
@@ -142,7 +186,6 @@ function modeLabel() {
   margin-bottom: 10px;
 }
 
-/* input style like screenshot */
 .input {
   height: 44px;
   border-radius: 10px;
@@ -160,7 +203,6 @@ function modeLabel() {
   border-color: #c9c9c9;
 }
 
-/* responsive */
 @media (max-width: 1100px) {
   .grid-2 {
     grid-template-columns: 1fr;
