@@ -246,7 +246,7 @@ export function useContactCreatePage() {
       errors.push('Please enter a valid email address.')
     }
 
-    if (!hasAnyUsage()) errors.push('Please select at least one address usage type.')
+    // if (!hasAnyUsage()) errors.push('Please select at least one address usage type.')
 
     return errors
   }
