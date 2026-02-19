@@ -21,6 +21,8 @@ const ConsolidationPage = () => import("@/app/pages/consolidations/Consolidation
 const SettingsPage = () => import("@/app/pages/settings/SettingsPage.vue");
 const MasterSettingsPage = () => import("@/app/pages/settings/masterSettings/MasterSettingsPage.vue");
 const ContactsImportPage = () => import('@/app/pages/contacts/import/ContactsImportPage.vue')
+const JobDetailsPage = () => import("@/app/pages/jobs/details/JobDetailsPage.vue");
+
 
 export const routes: RouteRecordRaw[] = [
   {
@@ -62,6 +64,13 @@ export const routes: RouteRecordRaw[] = [
         component: JobPage,
         meta: { title: "Jobs • New" },
       },
+      {
+        path: "jobs/:id",
+        name: "tms.jobs.show",
+        component: JobDetailsPage,
+        meta: { title: "Jobs • Details" },
+      },
+
 
       {
         path: "quotes",

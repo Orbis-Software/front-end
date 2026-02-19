@@ -208,7 +208,7 @@
             </div>
           </div>
 
-          <div class="usage">
+          <!-- <div class="usage">
             <div class="usage-title">
               <i class="pi pi-tags"></i>
               Address Usage
@@ -240,7 +240,7 @@
                 <span>Head Office Address</span>
               </label>
             </div>
-          </div>
+          </div> -->
         </div>
 
         <!-- ACTIONS -->

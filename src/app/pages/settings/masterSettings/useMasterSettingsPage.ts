@@ -15,12 +15,8 @@ type RefForm = {
   prefix: string
   year_digits: number | null
 
-  // what user edits (can include leading zeros)
   start_number: string
-
-  // width to preserve leading zeros (this is what backend stores)
   min_width: number
-
   use_system: boolean
 }
 
@@ -31,7 +27,7 @@ const refCatalog: Array<{ type: CompanyReferenceType; title: string; defaultPref
   { type: "purchase_order", title: "Purchase Order", defaultPrefix: "PO" },
   { type: "collection_order", title: "Collection Order", defaultPrefix: "COL" },
   { type: "transport_order", title: "Transport Order", defaultPrefix: "TRN" },
-  { type: "booking_reference", title: "Booking Reference", defaultPrefix: "BOOK" },
+  { type: "booking_reference", title: "Booking Reference", defaultPrefix: "BR" },
   { type: "account", title: "Account Numbers", defaultPrefix: "ACC" },
 ]
 
@@ -141,13 +137,8 @@ export function useMasterSettingsPage() {
 
       const yearDigits = seq?.year_digits ?? Number(new Date().getFullYear().toString().slice(-2))
 
-      // sequence may not store formatted; your API already returns next_number_formatted
       const startRaw = digitsMax9(seq?.next_number_formatted ?? "000000001")
-
-      // min_width from backend (preferred), else length of input, else 1
       const width = Math.max(1, Number(seq?.min_width ?? startRaw.length ?? 1))
-
-      // ensure input reflects width (preserve leading zeros)
       const startDisplay = padLeft(startRaw || "1", width)
 
       return {
@@ -174,12 +165,17 @@ export function useMasterSettingsPage() {
 
   function sampleFor(r: RefForm) {
     const prefix = (r.prefix ?? "").trim()
-    const yy = year2(r.year_digits)
-
     const raw = digitsMax9(r.start_number || "")
     const width = Math.max(1, Number(r.min_width ?? raw.length ?? 1))
-
     const num = padLeft(raw || "1", width)
+
+    // ✅ account numbers: NO year, NO dash
+    if (r.type === "account") {
+      return `${prefix}${num}`
+    }
+
+    // ✅ others: prefix + YY + "-" + number
+    const yy = year2(r.year_digits)
     return `${prefix}${yy}-${num}`
   }
 
@@ -189,16 +185,20 @@ export function useMasterSettingsPage() {
   }
 
   function copyToAll() {
-    const first = form.refs.find((x) => x.type === "job") ?? form.refs[0]
-    if (!first) return
+    const src = form.refs.find((x) => x.type === "job") ?? form.refs[0]
+    if (!src) return
 
     for (const r of form.refs) {
-      if (r.type === first.type) continue
-      r.prefix = first.prefix
-      r.year_digits = first.year_digits
-      r.start_number = first.start_number
-      r.min_width = first.min_width
-      r.use_system = first.use_system
+      if (r.type === src.type) continue
+
+      // copy these
+      r.prefix = src.prefix
+      r.start_number = src.start_number
+      r.min_width = src.min_width
+      r.use_system = src.use_system
+
+      // ✅ do NOT copy year (it’s display-only anyway, and account doesn't use it)
+      // r.year_digits stays as-is
     }
   }
 
@@ -274,8 +274,8 @@ export function useMasterSettingsPage() {
       reference_sequences: form.refs.map((r) => ({
         type: r.type,
         prefix: r.prefix,
-        year_digits: r.year_digits ?? null,
-        start_number: digitsMax9(r.start_number || "") || null, // backend converts to min_width + next_number
+        year_digits: r.type === "account" ? null : (r.year_digits ?? null), // ✅ account has no year
+        start_number: digitsMax9(r.start_number || "") || null,
         use_system: r.use_system,
       })),
     }
@@ -328,6 +328,7 @@ export function useMasterSettingsPage() {
     globalUseSystem,
 
     digitsMax9,
+    year2,
     sampleFor,
     onStartNumberInput,
     copyToAll,
