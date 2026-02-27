@@ -3,7 +3,7 @@ import { routes } from './routes'
 import { useAuthStore } from '@/app/stores/auth'
 
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHistory("/"),
   routes,
 })
 
