@@ -1,17 +1,18 @@
 .auth-layout {
+  /* keep full screen */
   position: fixed;
   inset: 0;
 
+  /* keep your centering */
   display: flex;
   align-items: center;
   justify-content: center;
 
-  /* Force background to win */
-  background-color: transparent !important;
-  background-image: url("/auth-bg.webp") !important;
-  background-size: cover !important;
-  background-position: center !important;
-  background-repeat: no-repeat !important;
+  /* background image */
+  background: url("/auth-bg.webp") center / cover no-repeat;
+
+  /* IMPORTANT: give it a fallback color, but do NOT override image */
+  background-color: #6b7280;
 
   overflow: hidden;
 }
@@ -22,17 +23,17 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: rgba(15, 23, 42, 0.55);
 }
 
 /* Wider panel like Descartes */
 .auth-layout-container {
-  position: relative;
-  z-index: 1;
-
   width: 100%;
-  max-width: 640px;
-  padding: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  /* IMPORTANT: no background here */
+  background: transparent;
 }
 
 @media (max-width: 720px) {
