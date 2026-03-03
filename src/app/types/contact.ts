@@ -137,8 +137,14 @@ export interface ContactCollectionAddress {
   county_state: string | null
   postal_code: string | null
   country_id: number | null
-}
 
+  // ✅ persisted UI fields
+  hours_of_operation?: string | null
+  contact_person?: string | null
+  email?: string | null
+  phone?: string | null
+  special_instructions?: string | null
+}
 export interface ContactUpdatePayload extends Partial<ContactCreatePayload> {}
 
 export interface PaginationMeta {

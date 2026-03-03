@@ -9,7 +9,6 @@ type CollectionUI = ContactCollectionAddress & {
   email?: string | null
   phone?: string | null
   special_instructions?: string | null
-  country_code?: string | null
 }
 
 const props = defineProps<{ items: ContactCollectionAddress[] }>()
@@ -67,7 +66,6 @@ function onSave() {
   if (!selected.value) return
   if (!selected.value.id || selected.value.id <= 0) return
 
-  // ✅ only save fields that exist in backend type
   const payload: Partial<ContactCollectionAddress> = {
     label: selected.value.label ?? null,
 
@@ -80,6 +78,13 @@ function onSave() {
     postal_code: selected.value.postal_code ?? null,
 
     country_id: selected.value.country_id ?? null,
+
+    // ✅ now include these so backend can persist them
+    hours_of_operation: selected.value.hours_of_operation ?? null,
+    contact_person: selected.value.contact_person ?? null,
+    email: selected.value.email ?? null,
+    phone: selected.value.phone ?? null,
+    special_instructions: selected.value.special_instructions ?? null,
   }
 
   emit("save", selected.value.id, payload)

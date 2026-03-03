@@ -44,6 +44,13 @@ function blankCollectionAddress(): Omit<ContactCollectionAddress, "id"> {
     county_state: null,
     postal_code: null,
     country_id: null,
+
+    // ✅ persisted UI fields
+    hours_of_operation: null,
+    contact_person: null,
+    email: null,
+    phone: null,
+    special_instructions: null,
   }
 }
 
