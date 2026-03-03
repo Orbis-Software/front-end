@@ -61,9 +61,13 @@ export function useContactsPage() {
     router.push(`/contacts/${id}/edit`)
   }
 
- function onOpenCompany(id: number) {
-    const route = router.resolve(`/contacts/${id}`)
-    window.open(route.href, '_blank')
+  function onOpenCompany(id: number) {
+    const routeData = router.resolve({
+      name: "crm.contacts.show",
+      params: { id },
+    })
+
+    window.open(routeData.href, "_blank")
   }
 
 

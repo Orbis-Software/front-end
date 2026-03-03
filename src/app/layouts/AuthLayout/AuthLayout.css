@@ -8,11 +8,10 @@
   align-items: center;
   justify-content: center;
 
-  /* background image */
-  background: url("/auth-bg.webp") center / cover no-repeat;
-
-  /* IMPORTANT: give it a fallback color, but do NOT override image */
-  background-color: #6b7280;
+  background-image: url('/auth-bg.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 
   overflow: hidden;
 }
