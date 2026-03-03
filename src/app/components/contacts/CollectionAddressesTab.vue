@@ -3,13 +3,7 @@ import { computed, nextTick, ref, watch } from "vue"
 import Button from "primevue/button"
 import type { ContactCollectionAddress } from "@/app/types/contact"
 
-type CollectionUI = ContactCollectionAddress & {
-  hours_of_operation?: string | null
-  contact_person?: string | null
-  email?: string | null
-  phone?: string | null
-  special_instructions?: string | null
-}
+type CollectionUI = ContactCollectionAddress
 
 const props = defineProps<{ items: ContactCollectionAddress[] }>()
 
@@ -20,7 +14,7 @@ const emit = defineEmits<{
   (e: "cancel"): void
 }>()
 
-const rows = computed(() => props.items as CollectionUI[])
+const rows = computed(() => (props.items ?? []) as CollectionUI[])
 
 const selectedIndex = ref(0)
 const lastLength = ref(rows.value.length)
@@ -79,7 +73,7 @@ function onSave() {
 
     country_id: selected.value.country_id ?? null,
 
-    // ✅ now include these so backend can persist them
+    // ✅ persisted UI fields
     hours_of_operation: selected.value.hours_of_operation ?? null,
     contact_person: selected.value.contact_person ?? null,
     email: selected.value.email ?? null,
@@ -160,11 +154,11 @@ function displayLine(c: CollectionUI) {
           </div>
 
           <div class="listItem__meta">
-            <span v-if="(c as any).contact_person" class="metaChip">
-              <i class="pi pi-user" /> {{ (c as any).contact_person }}
+            <span v-if="c.contact_person" class="metaChip">
+              <i class="pi pi-user" /> {{ c.contact_person }}
             </span>
-            <span v-if="(c as any).hours_of_operation" class="metaChip">
-              <i class="pi pi-clock" /> {{ (c as any).hours_of_operation }}
+            <span v-if="c.hours_of_operation" class="metaChip">
+              <i class="pi pi-clock" /> {{ c.hours_of_operation }}
             </span>
           </div>
         </button>
@@ -229,7 +223,6 @@ function displayLine(c: CollectionUI) {
               <input class="input" v-model="selected.postal_code" placeholder="M50 3AH" />
             </div>
 
-            <!-- ✅ for now show country_id since backend uses it -->
             <div class="field">
               <label class="label">Country (ID)</label>
               <input class="input" v-model.number="selected.country_id" placeholder="GB country_id" />
@@ -239,33 +232,33 @@ function displayLine(c: CollectionUI) {
 
           <hr class="divider" />
 
-          <!-- UI-only fields (won't save until backend supports them) -->
+          <!-- ✅ persisted UI fields -->
           <div class="row2">
             <div class="field">
-              <label class="label">Hours of operation (UI only)</label>
+              <label class="label">Hours of operation</label>
               <input class="input" v-model="selected.hours_of_operation" placeholder="06:00 – 22:00" />
             </div>
 
             <div class="field">
-              <label class="label">Contact person (UI only)</label>
+              <label class="label">Contact person</label>
               <input class="input" v-model="selected.contact_person" placeholder="Marta Bellini" />
             </div>
           </div>
 
           <div class="row2">
             <div class="field">
-              <label class="label">Email (UI only)</label>
+              <label class="label">Email</label>
               <input class="input" v-model="selected.email" placeholder="name@company.com" />
             </div>
 
             <div class="field">
-              <label class="label">Phone (UI only)</label>
+              <label class="label">Phone</label>
               <input class="input" v-model="selected.phone" placeholder="+44 ..." />
             </div>
           </div>
 
           <div class="field">
-            <label class="label">Special instructions (UI only)</label>
+            <label class="label">Special instructions / gate code</label>
             <input class="input" v-model="selected.special_instructions" placeholder="Tail lift required" />
           </div>
         </div>
@@ -299,7 +292,6 @@ function displayLine(c: CollectionUI) {
 </template>
 
 <style scoped>
-/* keep your existing styles (same as your current file) */
 .emptyState {
   padding: 16px;
   color: #6b7280;
@@ -307,27 +299,34 @@ function displayLine(c: CollectionUI) {
   border-radius: 12px;
   background: #fafafa;
 }
+
+/* layout */
 .split {
   display: grid;
   grid-template-columns: 340px 1fr;
   gap: 14px;
   align-items: start;
 }
+
 @media (max-width: 1100px) {
   .split {
     grid-template-columns: 1fr;
   }
 }
+
+/* left list */
 .list {
   border: 1px solid #e5e7eb;
   border-radius: 14px;
   background: #fff;
   overflow: hidden;
 }
+
 .listInner {
   max-height: 620px;
   overflow: auto;
 }
+
 .listItem {
   width: 100%;
   text-align: left;
@@ -337,20 +336,24 @@ function displayLine(c: CollectionUI) {
   cursor: pointer;
   border-bottom: 1px solid #f3f4f6;
 }
+
 .listItem:hover {
   background: #fafafa;
 }
+
 .listItem--active {
   background: #fff7ed;
   border-left: 4px solid var(--primary);
   padding-left: 8px;
 }
+
 .listItem__top {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
 }
+
 .listItem__title {
   display: flex;
   align-items: center;
@@ -359,6 +362,7 @@ function displayLine(c: CollectionUI) {
   color: #111827;
   min-width: 0;
 }
+
 .pinIcon {
   width: 22px;
   height: 22px;
@@ -368,23 +372,27 @@ function displayLine(c: CollectionUI) {
   background: #fff;
   border: 1px solid #fed7aa;
 }
+
 .truncate {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
 .listItem__desc {
   margin-top: 6px;
   color: #6b7280;
   font-size: 12px;
   line-height: 1.35;
 }
+
 .listItem__meta {
   margin-top: 8px;
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
+
 .metaChip {
   display: inline-flex;
   align-items: center;
@@ -397,6 +405,7 @@ function displayLine(c: CollectionUI) {
   font-size: 12px;
   font-weight: 700;
 }
+
 .badge {
   font-size: 11px;
   font-weight: 800;
@@ -406,45 +415,60 @@ function displayLine(c: CollectionUI) {
   padding: 4px 8px;
   background: #fff;
 }
+
 .badge--muted {
   color: #6b7280;
 }
+
+/* right editor */
 .editor {
   border: 1px solid #e5e7eb;
   border-radius: 14px;
   background: #fff;
   overflow: hidden;
 }
+
 .editorHead {
   padding: 12px 14px;
   border-bottom: 1px solid #e5e7eb;
   background: #fafafa;
 }
+
 .editorTitleRow {
   display: flex;
   gap: 10px;
   align-items: flex-start;
 }
+
 .editorTitle {
   font-weight: 900;
   color: #111827;
 }
+
 .editorSub {
   margin-top: 2px;
   font-size: 12px;
   color: #6b7280;
 }
+
 .emptyEditor {
   padding: 18px;
   color: #6b7280;
 }
+
 .editorBody {
   padding: 14px;
 }
+
 .formGrid {
   display: grid;
   gap: 10px;
 }
+
+.field {
+  margin-top: 0;
+}
+
 .label {
   display: block;
   font-size: 12px;
@@ -454,6 +478,7 @@ function displayLine(c: CollectionUI) {
   letter-spacing: 0.04em;
   font-weight: 800;
 }
+
 .input {
   width: 100%;
   border: 1px solid #e5e7eb;
@@ -462,29 +487,36 @@ function displayLine(c: CollectionUI) {
   outline: none;
   background: #fff;
 }
+
 .input:focus {
   border-color: #111827;
 }
+
 .hint {
   margin-top: 6px;
   font-size: 12px;
   color: #6b7280;
 }
+
 .row2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
 }
+
 @media (max-width: 900px) {
   .row2 {
     grid-template-columns: 1fr;
   }
 }
+
 .divider {
   border: 0;
   border-top: 1px solid #f3f4f6;
   margin: 10px 0;
 }
+
+/* bottom actions */
 .editorActions {
   margin-top: 14px;
   padding-top: 12px;
@@ -494,24 +526,29 @@ function displayLine(c: CollectionUI) {
   justify-content: space-between;
   gap: 10px;
 }
+
 .editorActions__right {
   display: flex;
   gap: 10px;
 }
+
 :global(.p-button.btn) {
   padding: 10px 12px;
   border-radius: 10px;
   font-weight: 800;
   box-shadow: none;
 }
+
 :global(.p-button.btn:focus) {
   box-shadow: none;
 }
+
 .btn--danger {
   background: #fff1f2;
   color: #9f1239;
   border-color: #fecaca;
 }
+
 .btn--danger:hover {
   background: #ffe4e6;
   border-color: #fecaca;

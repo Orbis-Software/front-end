@@ -43,8 +43,8 @@ export interface Contact {
   is_accounts?: boolean;
   is_headoffice?: boolean;
 
-  branches?: ContactBranch[]
-  collection_addresses?: ContactCollectionAddress[]
+  branches?: ContactBranch[];
+  collection_addresses?: ContactCollectionAddress[];
 
   // System
   status: string;
@@ -100,51 +100,52 @@ export interface ContactCreatePayload {
 }
 
 export interface ContactBranch {
-  id: number
-  name: string | null
+  id: number;
+  name: string | null;
 
-  contact_person: string | null
-  email: string | null
-  phone: string | null
+  contact_person: string | null;
+  email: string | null;
+  phone: string | null;
 
-  delivery_address_line_1: string | null
-  delivery_address_line_2: string | null
-  delivery_address_line_3: string | null
-  delivery_city: string | null
-  delivery_county_state: string | null
-  delivery_postal_code: string | null
-  delivery_country_id: number | null
+  delivery_address_line_1: string | null;
+  delivery_address_line_2: string | null;
+  delivery_address_line_3: string | null;
+  delivery_city: string | null;
+  delivery_county_state: string | null;
+  delivery_postal_code: string | null;
+  delivery_country_id: number | null;
 
-  billing_same_as_delivery: boolean
+  billing_same_as_delivery: boolean;
 
-  billing_address_line_1: string | null
-  billing_address_line_2: string | null
-  billing_address_line_3: string | null
-  billing_city: string | null
-  billing_county_state: string | null
-  billing_postal_code: string | null
-  billing_country_id: number | null
+  billing_address_line_1: string | null;
+  billing_address_line_2: string | null;
+  billing_address_line_3: string | null;
+  billing_city: string | null;
+  billing_county_state: string | null;
+  billing_postal_code: string | null;
+  billing_country_id: number | null;
 }
 
 export interface ContactCollectionAddress {
-  id: number
-  label: string | null
+  id: number;
+  label: string | null;
 
-  address_line_1: string | null
-  address_line_2: string | null
-  address_line_3: string | null
-  city: string | null
-  county_state: string | null
-  postal_code: string | null
-  country_id: number | null
+  address_line_1: string | null;
+  address_line_2: string | null;
+  address_line_3: string | null;
+  city: string | null;
+  county_state: string | null;
+  postal_code: string | null;
+  country_id: number | null;
 
   // ✅ persisted UI fields
-  hours_of_operation?: string | null
-  contact_person?: string | null
-  email?: string | null
-  phone?: string | null
-  special_instructions?: string | null
+  hours_of_operation?: string | null;
+  contact_person?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  special_instructions?: string | null;
 }
+
 export interface ContactUpdatePayload extends Partial<ContactCreatePayload> {}
 
 export interface PaginationMeta {

@@ -107,24 +107,13 @@ export function useContactDetailsPage() {
   // ✅ SAVE branch patch
   async function saveBranch(branchId: number, patch: Partial<ContactBranch>) {
     if (!contact.value) return
-    if (!branchId || branchId <= 0) return // must exist in backend
+    if (!branchId || branchId <= 0) return
 
     try {
       await contactStore.updateBranch(contact.value.id, branchId, patch)
-
-      toast.add({
-        severity: "success",
-        summary: "Saved",
-        detail: "Branch updated",
-        life: 1500,
-      })
+      toast.add({ severity: "success", summary: "Saved", detail: "Branch updated", life: 1500 })
     } catch (e) {
-      toast.add({
-        severity: "error",
-        summary: "Failed to save branch",
-        detail: errMsg(e),
-        life: 4000,
-      })
+      toast.add({ severity: "error", summary: "Failed to save branch", detail: errMsg(e), life: 4000 })
     }
   }
 
@@ -141,19 +130,9 @@ export function useContactDetailsPage() {
         billing_same_as_delivery: true,
       })
 
-      toast.add({
-        severity: "success",
-        summary: "Added",
-        detail: "Branch added successfully",
-        life: 2500,
-      })
+      toast.add({ severity: "success", summary: "Added", detail: "Branch added successfully", life: 2500 })
     } catch (e) {
-      toast.add({
-        severity: "error",
-        summary: "Failed to add branch",
-        detail: errMsg(e),
-        life: 4000,
-      })
+      toast.add({ severity: "error", summary: "Failed to add branch", detail: errMsg(e), life: 4000 })
     } finally {
       busy.value = false
     }
@@ -178,20 +157,9 @@ export function useContactDetailsPage() {
           } else {
             await contactStore.removeBranch(contact.value!.id, branch.id)
           }
-
-          toast.add({
-            severity: "success",
-            summary: "Deleted",
-            detail: "Branch deleted successfully",
-            life: 2500,
-          })
+          toast.add({ severity: "success", summary: "Deleted", detail: "Branch deleted successfully", life: 2500 })
         } catch (e) {
-          toast.add({
-            severity: "error",
-            summary: "Failed to delete branch",
-            detail: errMsg(e),
-            life: 4000,
-          })
+          toast.add({ severity: "error", summary: "Failed to delete branch", detail: errMsg(e), life: 4000 })
         } finally {
           busy.value = false
         }
@@ -211,35 +179,25 @@ export function useContactDetailsPage() {
         label: "New collection point",
       })
 
-      toast.add({
-        severity: "success",
-        summary: "Added",
-        detail: "Collection address added successfully",
-        life: 2500,
-      })
+      toast.add({ severity: "success", summary: "Added", detail: "Collection address added successfully", life: 2500 })
     } catch (e) {
-      toast.add({
-        severity: "error",
-        summary: "Failed to add collection address",
-        detail: errMsg(e),
-        life: 4000,
-      })
+      toast.add({ severity: "error", summary: "Failed to add collection address", detail: errMsg(e), life: 4000 })
     } finally {
       busy.value = false
     }
   }
 
   async function saveCollectionAddress(id: number, payload: Partial<ContactCollectionAddress>) {
-  if (!contact.value) return
-  if (!id || id <= 0) return
+    if (!contact.value) return
+    if (!id || id <= 0) return
 
-  try {
-    await contactStore.updateCollectionAddress(contact.value.id, id, payload)
-    toast.add({ severity: "success", summary: "Saved", detail: "Collection address updated", life: 1500 })
-  } catch (e) {
-    toast.add({ severity: "error", summary: "Failed to save", detail: errMsg(e), life: 4000 })
+    try {
+      await contactStore.updateCollectionAddress(contact.value.id, id, payload)
+      toast.add({ severity: "success", summary: "Saved", detail: "Collection address updated", life: 1500 })
+    } catch (e) {
+      toast.add({ severity: "error", summary: "Failed to save", detail: errMsg(e), life: 4000 })
+    }
   }
-}
 
   function removeCollectionAddressById(id: number) {
     if (!contact.value) return
@@ -279,7 +237,7 @@ export function useContactDetailsPage() {
 
     addBranch,
     removeBranch,
-    saveBranch, // ✅ expose
+    saveBranch,
 
     addCollectionAddress,
     saveCollectionAddress,
