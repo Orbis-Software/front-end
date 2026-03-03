@@ -25,7 +25,7 @@ const {
   saveCollectionAddress,
   removeCollectionAddressById,
 
-  load, // ✅ IMPORTANT: include this
+  load, // ✅ IMPORTANT
 } = useContactDetailsPage()
 </script>
 

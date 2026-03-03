@@ -58,6 +58,13 @@ function normalizeCollectionAddress(raw: any): ContactCollectionAddress {
     county_state: raw.county_state ?? null,
     postal_code: raw.postal_code ?? null,
     country_id: toNumberOrNull(raw.country_id),
+
+    // ✅ NEW persisted fields (THIS was missing)
+    hours_of_operation: raw.hours_of_operation ?? null,
+    contact_person: raw.contact_person ?? null,
+    email: raw.email ?? null,
+    phone: raw.phone ?? null,
+    special_instructions: raw.special_instructions ?? null,
   }
 }
 
