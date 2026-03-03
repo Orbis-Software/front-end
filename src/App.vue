@@ -1,5 +1,6 @@
 <template>
   <Toast />
+  <ConfirmDialog />
 
   <!-- Wait for auth hydration -->
   <router-view v-if="ready" />
@@ -12,7 +13,8 @@
 
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
-import Toast from 'primevue/toast'
+import Toast from "primevue/toast"
+import ConfirmDialog from "primevue/confirmdialog"
 import { useAuthStore } from '@/app/stores/auth'
 
 const auth = useAuthStore()

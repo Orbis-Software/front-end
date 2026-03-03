@@ -1,5 +1,11 @@
-.page { padding: 20px; }
-.loading { padding: 24px; color: #6b7280; }
+.page {
+  padding: 20px;
+}
+
+.loading {
+  padding: 24px;
+  color: #6b7280;
+}
 
 .pageHeader {
   display: flex;
@@ -9,9 +15,28 @@
   margin-bottom: 16px;
 }
 
-.pageTitle { font-size: 22px; font-weight: 700; color: #111827; }
-.pageMeta { margin-top: 8px; display: flex; align-items: center; gap: 10px; color: #6b7280; font-size: 13px; }
-.dot { opacity: .7; }
+.pageTitle {
+  font-size: 22px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.pageMeta {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.dot {
+  opacity: 0.7;
+}
+
+.metaItem {
+  white-space: nowrap;
+}
 
 .pill {
   display: inline-flex;
@@ -23,8 +48,16 @@
   background: #fff;
   color: #111827;
 }
-.pill__label { color: #6b7280; }
-.pill__value { font-weight: 600; }
+
+.pill__label {
+  color: #6b7280;
+}
+
+.pill__value {
+  font-weight: 600;
+}
+
+/* keep everything else the same, only update these parts */
 
 .btn {
   border: 1px solid #e5e7eb;
@@ -34,8 +67,34 @@
   font-weight: 600;
   cursor: pointer;
 }
-.btn--primary { background: #111827; color: #fff; border-color: #111827; }
-.btn--ghost { background: #fff; }
+
+/* ✅ use your design token primary */
+.btn--primary {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+
+.btn--primary:hover {
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
+}
+
+.btn--ghost {
+  background: #fff;
+}
+
+/* ✅ if you use PrimeVue Button, remove its default look but keep your .btn styling */
+:global(.p-button.btn) {
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-weight: 600;
+  box-shadow: none;
+}
+
+:global(.p-button.btn:focus) {
+  box-shadow: none;
+}
 
 .panel {
   background: #fff;
@@ -43,8 +102,12 @@
   border-radius: 14px;
   overflow: hidden;
 }
-.panelBody { padding: 16px; }
 
+.panelBody {
+  padding: 16px;
+}
+
+/* Tabs */
 .tabs {
   display: flex;
   gap: 8px;
@@ -52,6 +115,7 @@
   border-bottom: 1px solid #e5e7eb;
   background: #fafafa;
 }
+
 .tab {
   padding: 10px 12px;
   border-radius: 10px;
@@ -61,12 +125,14 @@
   color: #6b7280;
   cursor: pointer;
 }
+
 .tab--active {
   background: #fff;
   border-color: #e5e7eb;
   color: #111827;
 }
 
+/* Tab header */
 .tabHeader {
   display: flex;
   align-items: flex-start;
@@ -74,19 +140,35 @@
   gap: 16px;
   margin-bottom: 12px;
 }
-.tabHeader__title { font-weight: 800; color: #111827; }
-.tabHeader__subtitle { font-weight: 500; color: #6b7280; font-size: 13px; margin-top: 2px; }
 
+.tabHeader__title {
+  font-weight: 800;
+  color: #111827;
+}
+
+.tabHeader__subtitle {
+  font-weight: 500;
+  color: #6b7280;
+  font-size: 13px;
+  margin-top: 2px;
+}
+
+/* Grid (2 columns like screenshot) */
 .grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
 }
+
 @media (max-width: 1100px) {
-  .grid { grid-template-columns: 1fr; }
+  .grid {
+    grid-template-columns: 1fr;
+  }
 }
 
-.branchCard, .collectionCard {
+/* Cards */
+.branchCard,
+.collectionCard {
   border: 1px solid #e5e7eb;
   border-radius: 14px;
   padding: 14px;
@@ -97,56 +179,144 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 10px;
   margin-bottom: 10px;
 }
-.branchCard__title { font-weight: 800; color: #111827; }
 
-.iconBtn {
+.branchTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.branchIcon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  color: #9a3412;
+  font-weight: 900;
+  flex: 0 0 auto;
+}
+
+.branchNameInput {
+  width: 100%;
+  max-width: 260px;
   border: 1px solid #e5e7eb;
-  background: #fff;
   border-radius: 10px;
-  width: 36px;
-  height: 36px;
+  padding: 10px 10px;
+  outline: none;
+}
+
+.branchNameInput:focus {
+  border-color: #111827;
+}
+
+/* delete button (pill-like) */
+.dangerBtn {
+  border: 1px solid #fecaca;
+  background: #fff1f2;
+  color: #9f1239;
+  padding: 7px 10px;
+  border-radius: 999px;
   cursor: pointer;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* fields */
+.field {
+  margin-top: 10px;
+}
+
+.label {
+  display: block;
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
   font-weight: 800;
 }
 
-.field { margin-top: 10px; }
-.label { display: block; font-size: 12px; color: #6b7280; margin-bottom: 6px; }
 .input {
   width: 100%;
   border: 1px solid #e5e7eb;
   border-radius: 10px;
   padding: 10px 10px;
   outline: none;
+  background: #fff;
 }
-.input:focus { border-color: #111827; }
+
+.input:focus {
+  border-color: #111827;
+}
+
+.row2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
 
 .row3 {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
 }
+
 @media (max-width: 900px) {
-  .row3 { grid-template-columns: 1fr; }
+  .row2,
+  .row3 {
+    grid-template-columns: 1fr;
+  }
 }
 
 .sectionTitle {
   margin-top: 14px;
-  font-weight: 800;
+  font-weight: 900;
   color: #111827;
-  padding-top: 10px;
+  padding-top: 12px;
   border-top: 1px solid #f3f4f6;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sectionIcon {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  flex: 0 0 auto;
 }
 
 .toggleRow {
   margin-top: 12px;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 10px;
 }
-.checkbox { width: 16px; height: 16px; }
-.toggleLabel { font-weight: 700; color: #111827; }
 
-.muted { opacity: 0.55; }
-.collections { display: grid; gap: 14px; }
+.toggleLabel {
+  font-weight: 800;
+  color: #111827;
+}
+
+.checkbox {
+  width: 16px;
+  height: 16px;
+}
+
+.muted {
+  opacity: 0.55;
+}
