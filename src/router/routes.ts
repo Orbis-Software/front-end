@@ -22,6 +22,7 @@ const SettingsPage = () => import("@/app/pages/settings/SettingsPage.vue");
 const MasterSettingsPage = () => import("@/app/pages/settings/masterSettings/MasterSettingsPage.vue");
 const ContactsImportPage = () => import('@/app/pages/contacts/import/ContactsImportPage.vue')
 const JobDetailsPage = () => import("@/app/pages/jobs/details/JobDetailsPage.vue");
+const ContactDetailsPage = () => import("@/app/pages/contacts/details/ContactDetailsPage.vue");
 
 
 export const routes: RouteRecordRaw[] = [
@@ -95,6 +96,12 @@ export const routes: RouteRecordRaw[] = [
         name: "crm.contacts.create",
         component: ContactCreatePage,
         meta: { title: "Contacts • New" },
+      },
+      {
+        path: "contacts/:id",
+        name: "crm.contacts.show",
+        component: ContactDetailsPage,
+        meta: { title: "Contacts • Details" },
       },
       {
         path: "contacts/:id/edit",

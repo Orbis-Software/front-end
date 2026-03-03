@@ -103,4 +103,53 @@ body {
     background: var(--bg-page) !important; /* stays neutral */
     }
 
+    @layer components {
+  /* Base “btn” applied to PrimeVue Button */
+  .p-button.btn {
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-weight: 600;
+    box-shadow: none;
+    font-family: var(--font-body);
+  }
+
+  /* ✅ YOUR PRIMARY — will now work with class="btn btn--primary" */
+  .p-button.btn.btn--primary {
+    background: var(--primary) !important;
+    border-color: var(--primary) !important;
+    color: #fff !important;
+  }
+
+  .p-button.btn.btn--primary:hover:not(:disabled) {
+    background: var(--primary-hover) !important;
+    border-color: var(--primary-hover) !important;
+  }
+
+  /* Optional ghost */
+  .p-button.btn.btn--ghost {
+    background: #fff !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+  }
+
+  .p-button.btn.btn--ghost:hover:not(:disabled) {
+    background: var(--tab-inactive) !important;
+  }
+
+    /* Danger button override for PrimeVue */
+  .p-button.dangerBtn {
+    background: #fff1f2 !important;
+    border: 1px solid #fecaca !important;
+    color: #9f1239 !important;
+    border-radius: 999px !important;
+    font-weight: 800;
+    padding: 7px 10px;
+  }
+
+  .p-button.dangerBtn:hover:not(:disabled) {
+    background: #ffe4e6 !important;
+    border-color: #fca5a5 !important;
+  }
+}
+
 }
