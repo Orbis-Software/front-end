@@ -1,136 +1,200 @@
 <script setup lang="ts">
-import { computed, reactive, ref, watch, onMounted, onBeforeUnmount } from "vue";
-import { useRouter, useRoute } from "vue-router";
-import type { AppArea } from "@/app/stores/ui";
-import { useUiStore } from "@/app/stores/ui";
-import { useTopNavItems, type NavItem } from "./topNavItems";
+import { computed, reactive, ref, watch, onMounted, onBeforeUnmount } from "vue"
+import { useRouter, useRoute } from "vue-router"
+import type { AppArea } from "@/app/stores/ui"
+import { useUiStore } from "@/app/stores/ui"
+import { useAuthStore } from "@/app/stores/auth"
+import { useTopNavItems, type NavItem } from "./topNavItems"
 
 type Props = {
-  area: AppArea;
-  mobileOpen: boolean;
-};
+  area: AppArea
+  mobileOpen: boolean
+}
 
-const props = defineProps<Props>();
-const emit = defineEmits<{ (e: "close-mobile"): void }>();
+const props = defineProps<Props>()
+const emit = defineEmits<{ (e: "close-mobile"): void }>()
 
-const router = useRouter();
-const route = useRoute();
+const router = useRouter()
+const route = useRoute()
 
-const ui = useUiStore();
-const items = useTopNavItems();
+const ui = useUiStore()
+const auth = useAuthStore()
+const items = useTopNavItems()
 
 /**
- * ✅ One connected menu:
- * - Base (TMS/WMS)
- * - + Management appended only if user can see it
+ * ✅ Access check for each nav item
+ */
+function canAccess(item: NavItem): boolean {
+  // optional flags
+  if (item.devOnly && !auth.isDev) return false
+  if (item.adminOnly && !auth.isAdmin) return false
+
+  // optional role gate
+  if (item.roles?.length) {
+    if (item.roles.some((r) => auth.hasRole(r))) return true
+    // continue to permissions check
+  }
+
+  // permission gate
+  if (item.permission) return auth.hasPermission(item.permission)
+
+  if (item.anyPermissions?.length) {
+    return item.anyPermissions.some((p) => auth.hasPermission(p))
+  }
+
+  // no rule => visible
+  return true
+}
+
+/**
+ * ✅ Recursively filter items:
+ * - keep only children user can access
+ * - hide group if no visible children and no direct "to"
+ */
+function filterNav(list: NavItem[]): NavItem[] {
+  return list
+    .map((item) => {
+      const children = item.children ? filterNav(item.children) : undefined
+      return { ...item, children }
+    })
+    .filter((item) => {
+      const allowed = canAccess(item)
+      const hasChildren = (item.children?.length ?? 0) > 0
+
+      // group
+      if (item.children) {
+        if (hasChildren) return true
+        return !!item.to && allowed
+      }
+
+      // leaf
+      return allowed
+    })
+}
+
+/**
+ * ✅ Management visibility (permission-driven)
+ * You can also just always append management and rely on filterNav()
+ */
+const canSeeManagement = computed(() => {
+  return auth.permissions.some((p) => p.startsWith("mgmt."))
+})
+
+/**
+ * ✅ One connected menu (TMS/WMS base + management if allowed)
  */
 const menu = computed(() => {
-  const base = props.area === "tms" ? items.tms : items.wms;
-  return ui.canSeeManagement ? [...base, ...items.management] : base;
-});
+  const base = props.area === "tms" ? items.tms : items.wms
+
+  const combined =
+    ui.canSeeManagement || canSeeManagement.value
+      ? [...base, ...items.management]
+      : base
+
+  return filterNav(combined)
+})
 
 /**
  * ✅ Mobile dropdown open state (accordion style)
  */
-const openMobile = reactive<Record<string, boolean>>({});
+const openMobile = reactive<Record<string, boolean>>({})
 
 watch(
   () => props.mobileOpen,
   (v) => {
-    if (!v) Object.keys(openMobile).forEach((k) => (openMobile[k] = false));
+    if (!v) Object.keys(openMobile).forEach((k) => (openMobile[k] = false))
   },
-);
+)
 
 function matchPath(path: string) {
-  return route.path === path || route.path.startsWith(path + "/");
+  return route.path === path || route.path.startsWith(path + "/")
 }
 
 function getActiveChildId(children?: NavItem[]) {
-  if (!children?.length) return null;
+  if (!children?.length) return null
 
-  let best: NavItem | null = null;
+  let best: NavItem | null = null
   for (const c of children) {
-    if (!c.to) continue;
+    if (!c.to) continue
     if (matchPath(c.to)) {
-      if (!best || c.to.length > (best.to?.length ?? 0)) best = c;
+      if (!best || c.to.length > (best.to?.length ?? 0)) best = c
     }
   }
 
-  return best?.id ?? null;
+  return best?.id ?? null
 }
 
 function isGroupActive(item: NavItem) {
-  if (item.to && matchPath(item.to)) return true;
-  return !!getActiveChildId(item.children);
+  if (item.to && matchPath(item.to)) return true
+  return !!getActiveChildId(item.children)
 }
 
 function go(path?: string) {
-  if (!path) return;
-  router.push(path);
-  closeDropdownNow();
-  emit("close-mobile");
+  if (!path) return
+  router.push(path)
+  closeDropdownNow()
+  emit("close-mobile")
 }
 
 function toggleMobileDropdown(id: string) {
-  openMobile[id] = !openMobile[id];
+  openMobile[id] = !openMobile[id]
 }
 
 /* =========================================================
    ✅ Desktop Dropdown Bypass (Teleport to body) - stable hover
    ========================================================= */
-const activeId = ref<string | null>(null);
-const dropdownPos = ref({ top: 0, left: 0 });
+const activeId = ref<string | null>(null)
+const dropdownPos = ref({ top: 0, left: 0 })
 
-let closeTimer: number | null = null;
+let closeTimer: number | null = null
 
 function clearCloseTimer() {
   if (closeTimer) {
-    window.clearTimeout(closeTimer);
-    closeTimer = null;
+    window.clearTimeout(closeTimer)
+    closeTimer = null
   }
 }
 
 function openDropdown(id: string, el: HTMLElement) {
-  if (props.mobileOpen) return;
+  if (props.mobileOpen) return
 
-  clearCloseTimer();
+  clearCloseTimer()
 
-  const rect = el.getBoundingClientRect();
+  const rect = el.getBoundingClientRect()
   dropdownPos.value = {
     top: rect.bottom + 8,
     left: rect.left,
-  };
+  }
 
-  activeId.value = id;
+  activeId.value = id
 }
 
 function scheduleCloseDropdown(delay = 180) {
-  clearCloseTimer();
+  clearCloseTimer()
   closeTimer = window.setTimeout(() => {
-    activeId.value = null;
-  }, delay);
+    activeId.value = null
+  }, delay)
 }
 
 function closeDropdownNow() {
-  clearCloseTimer();
-  activeId.value = null;
+  clearCloseTimer()
+  activeId.value = null
 }
 
 function handleWindowChange() {
-  // close on scroll/resize so it never drifts
-  if (activeId.value) closeDropdownNow();
+  if (activeId.value) closeDropdownNow()
 }
 
 onMounted(() => {
-  window.addEventListener("scroll", handleWindowChange, true);
-  window.addEventListener("resize", handleWindowChange);
-});
+  window.addEventListener("scroll", handleWindowChange, true)
+  window.addEventListener("resize", handleWindowChange)
+})
 
 onBeforeUnmount(() => {
-  window.removeEventListener("scroll", handleWindowChange, true);
-  window.removeEventListener("resize", handleWindowChange);
-  clearCloseTimer();
-});
+  window.removeEventListener("scroll", handleWindowChange, true)
+  window.removeEventListener("resize", handleWindowChange)
+  clearCloseTimer()
+})
 </script>
 
 <template>
