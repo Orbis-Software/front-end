@@ -6,6 +6,13 @@ import { useToast } from "primevue/usetoast"
 import type { ContactBranch, ContactCollectionAddress } from "@/app/types/contact"
 import { useContactStore } from "@/app/stores/contact"
 
+export type ContactDetailsTab =
+  | "branches"
+  | "collections"
+  | "weight_break"
+  | "customer"
+  | "demo"
+
 function blankBranch(): Omit<ContactBranch, "id"> {
   return {
     name: null,
@@ -70,9 +77,11 @@ export function useContactDetailsPage() {
   const loading = computed(() => contactStore.currentLoading)
 
   const busy = ref(false)
-  const activeTab = ref<"branches" | "collections">("branches")
 
-  function setTab(tab: "branches" | "collections") {
+  // ✅ UPDATED: include all tabs
+  const activeTab = ref<ContactDetailsTab>("branches")
+
+  function setTab(tab: ContactDetailsTab) {
     activeTab.value = tab
   }
 
@@ -104,7 +113,6 @@ export function useContactDetailsPage() {
     })
   }
 
-  // ✅ SAVE branch patch
   async function saveBranch(branchId: number, patch: Partial<ContactBranch>) {
     if (!contact.value) return
     if (!branchId || branchId <= 0) return
