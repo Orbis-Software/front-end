@@ -4,7 +4,7 @@
 }
 
 /* Top header row */
-.job-top {
+.job-page .job-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -12,71 +12,71 @@
   margin-bottom: 14px;
 }
 
-.job-title {
+.job-page .job-title {
   display: flex;
   align-items: center;
   gap: 10px;
   font-weight: 800;
 }
 
-.job-actions {
+.job-page .job-actions {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-.btn {
+.job-page .btn {
   border-radius: 10px;
 }
 
-/* Shared page look */
-.card {
+/* Shared page look (scoped so it won’t affect Job Details page) */
+.job-page .card {
   background: #fff;
   border: 1px solid #e8e8e8;
   border-radius: 14px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
-.section {
+.job-page .section {
   padding: 16px;
   margin-bottom: 14px;
 }
 
 /* Meta section */
-.meta-title {
+.job-page .meta-title {
   font-weight: 800;
   font-size: 16px;
   margin-bottom: 12px;
 }
 
 /* fields */
-.grid-3 {
+.job-page .grid-3 {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 12px;
 }
 
-.field {
+.job-page .field {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 
-.label {
+.job-page .label {
   font-size: 12px;
   font-weight: 700;
 }
 
-.control {
+.job-page .control {
   width: 100%;
 }
 
-.textarea {
+.job-page .textarea {
   min-height: 110px;
 }
 
 /* ✅ TWO COLUMN ROW (Docs left, Actions right) */
-.two-col {
+.job-page .two-col {
   display: grid;
   grid-template-columns: 1.4fr 0.9fr;
   gap: 14px;
@@ -84,14 +84,14 @@
 }
 
 /* Docs layout inside left card */
-.docs-grid {
+.job-page .docs-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
   margin-top: 12px;
 }
 
-.drop-box {
+.job-page .drop-box {
   height: 140px;
   border: 1px dashed #d8d8d8;
   border-radius: 12px;
@@ -102,14 +102,14 @@
 }
 
 /* Right actions card (like old design) */
-.actions {
+.job-page .actions {
   display: grid;
   gap: 10px;
   align-content: start;
 }
 
 /* Big orange button full width */
-.create-btn {
+.job-page .create-btn {
   width: 100%;
   justify-content: center;
   border-radius: 10px;
@@ -117,7 +117,7 @@
 }
 
 /* Cancel link centered under button */
-.cancel-link {
+.job-page .cancel-link {
   border: none;
   background: transparent;
   color: #b42318;
@@ -130,6 +130,13 @@
   width: 100%;
 }
 
-.cancel-link:hover {
+.job-page .cancel-link:hover {
   background: #fdecec;
+}
+
+.job-details-page .card {
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  background: transparent !important;
 }

@@ -98,6 +98,7 @@ const {
               @save="saveCollectionAddress"
               @cancel="load"
             />
+            
           </template>
         </div>
       </div>

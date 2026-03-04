@@ -86,7 +86,7 @@
           <small class="emp-hint">Minimum 8 characters</small>
         </div>
 
-        <div v-if="store.roles.length" class="emp-field">
+        <!-- <div v-if="store.roles.length" class="emp-field">
           <label class="emp-label">Roles</label>
           <MultiSelect
             v-model="createForm.roles"
@@ -94,7 +94,7 @@
             placeholder="Select roles"
             class="w-full"
           />
-        </div>
+        </div> -->
       </div>
 
       <template #footer>
@@ -132,7 +132,7 @@
           <InputText v-model="editForm.password" type="password" class="w-full" />
         </div>
 
-        <div v-if="store.roles.length" class="emp-field">
+        <!-- <div v-if="store.roles.length" class="emp-field">
           <label class="emp-label">Roles</label>
           <MultiSelect
             v-model="editForm.roles"
@@ -140,7 +140,7 @@
             placeholder="Select roles"
             class="w-full"
           />
-        </div>
+        </div> -->
       </div>
 
       <template #footer>

@@ -12,6 +12,9 @@ import {
   JobOverviewTab,
   JobTransportTab,
   JobPlaceholderTab,
+  JobMilestonesTab,
+  JobDocsTab,
+  JobCostsTab,
 } from "@/app/components/jobs/details";
 
 const {
@@ -147,9 +150,49 @@ const {
 
     <!-- Content -->
     <div class="job-details-content">
-      <JobOverviewTab v-if="activeTab === 'overview'" :form="form" :disabled="loading" />
-      <JobTransportTab v-else-if="activeTab === 'transport'" :form="form" :disabled="loading" />
-      <JobPlaceholderTab v-else :title="tabs.find((t) => t.key === activeTab)?.label || 'Section'" />
+      <JobOverviewTab
+        v-if="activeTab === 'overview'"
+        :form="form"
+        :disabled="loading"
+      />
+
+      <JobTransportTab
+        v-else-if="activeTab === 'transport'"
+        :form="form"
+        :disabled="loading"
+      />
+
+      <JobMilestonesTab
+        v-else-if="activeTab === 'milestones'"
+        :disabled="loading"
+        :milestones="(job as any)?.milestones ?? undefined"
+      />
+
+      <JobDocsTab
+        v-else-if="activeTab === 'docs'"
+        :disabled="loading"
+        @upload="(files) => console.log('upload', files)"
+        @view="(id) => console.log('view', id)"
+        @download="(id) => console.log('download', id)"
+        @remove="(id) => console.log('remove', id)"
+        @export="(key) => console.log('export', key)"
+        @printAll="() => console.log('printAll')"
+        @downloadZip="() => console.log('downloadZip')"
+        @emailCustomer="() => console.log('emailCustomer')"
+      />
+
+      <JobCostsTab
+  v-else-if="activeTab === 'costs'"
+  :disabled="loading"
+  @print="() => console.log('print')"
+  @exportExcel="() => console.log('excel')"
+  @emailCustomer="() => console.log('email')"
+/>
+      <JobPlaceholderTab
+        v-else
+        :title="tabs.find((t) => t.key === activeTab)?.label || 'Section'"
+      />
+      
     </div>
   </div>
 </template>
