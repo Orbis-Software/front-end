@@ -1,0 +1,109 @@
+.emp-page {
+  padding: 1rem;
+}
+
+.emp-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.emp-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0;
+}
+
+.emp-subtitle {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  margin: 0.25rem 0 0 0;
+}
+
+.emp-search {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  padding: 0.75rem;
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.emp-search__icon {
+  color: var(--text-muted);
+}
+
+.emp-search__input {
+  width: 420px;            /* ✅ not full width */
+  max-width: 100%;
+}
+
+.emp-search__right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.emp-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  padding: 0.5rem;
+}
+
+.emp-roles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.emp-muted {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.emp-text {
+  font-size: 0.875rem;
+  color: var(--text);
+}
+
+.emp-form {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.emp-field {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.emp-label {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.emp-hint {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.cancel-link {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+}
+
+.cancel-link:hover {
+  background: var(--tab-inactive);
+  color: var(--text);
+}

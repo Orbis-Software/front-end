@@ -23,6 +23,8 @@ const MasterSettingsPage = () => import("@/app/pages/settings/masterSettings/Mas
 const ContactsImportPage = () => import('@/app/pages/contacts/import/ContactsImportPage.vue')
 const JobDetailsPage = () => import("@/app/pages/jobs/details/JobDetailsPage.vue");
 const ContactDetailsPage = () => import("@/app/pages/contacts/details/ContactDetailsPage.vue");
+const EmployeeListPage = () => import("@/app/pages/employees/EmployeeListPage.vue");
+const SystemAccessPage = () => import("@/app/pages/system-access/SystemAccessPage.vue");
 
 
 export const routes: RouteRecordRaw[] = [
@@ -150,8 +152,14 @@ export const routes: RouteRecordRaw[] = [
       {
         path: "employees",
         name: "mgmt.employees",
-        component: PlaceholderPage,
+        component: EmployeeListPage,
         meta: { title: "Employees (Logins & Roles)" },
+      },
+      {
+        path: "system-access",
+        name: "mgmt.system-access",
+        component: SystemAccessPage,
+        meta: { title: "System Access" },
       },
       {
         path: "settings",
