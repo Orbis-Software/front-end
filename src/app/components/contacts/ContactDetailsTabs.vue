@@ -31,7 +31,7 @@ const emit = defineEmits<{
       :class="{ 'tab--active': active === 'collections' }"
       @click="emit('change', 'collections')"
     >
-      Collection Addresses
+      Addresses
     </button>
 
     <button

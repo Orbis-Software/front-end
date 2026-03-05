@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch, onMounted, onBeforeUnmount } from "vue"
-import { useRouter, useRoute } from "vue-router"
+import { useRouter, useRoute, RouterLink } from "vue-router"
 import type { AppArea } from "@/app/stores/ui"
 import { useUiStore } from "@/app/stores/ui"
 import { useAuthStore } from "@/app/stores/auth"
@@ -25,24 +25,19 @@ const items = useTopNavItems()
  * ✅ Access check for each nav item
  */
 function canAccess(item: NavItem): boolean {
-  // optional flags
   if (item.devOnly && !auth.isDev) return false
   if (item.adminOnly && !auth.isAdmin) return false
 
-  // optional role gate
   if (item.roles?.length) {
     if (item.roles.some((r) => auth.hasRole(r))) return true
-    // continue to permissions check
   }
 
-  // permission gate
   if (item.permission) return auth.hasPermission(item.permission)
 
   if (item.anyPermissions?.length) {
     return item.anyPermissions.some((p) => auth.hasPermission(p))
   }
 
-  // no rule => visible
   return true
 }
 
@@ -61,28 +56,19 @@ function filterNav(list: NavItem[]): NavItem[] {
       const allowed = canAccess(item)
       const hasChildren = (item.children?.length ?? 0) > 0
 
-      // group
       if (item.children) {
         if (hasChildren) return true
         return !!item.to && allowed
       }
 
-      // leaf
       return allowed
     })
 }
 
-/**
- * ✅ Management visibility (permission-driven)
- * You can also just always append management and rely on filterNav()
- */
 const canSeeManagement = computed(() => {
   return auth.permissions.some((p) => p.startsWith("mgmt."))
 })
 
-/**
- * ✅ One connected menu (TMS/WMS base + management if allowed)
- */
 const menu = computed(() => {
   const base = props.area === "tms" ? items.tms : items.wms
 
@@ -129,11 +115,12 @@ function isGroupActive(item: NavItem) {
   return !!getActiveChildId(item.children)
 }
 
-function go(path?: string) {
-  if (!path) return
-  router.push(path)
-  closeDropdownNow()
-  emit("close-mobile")
+/**
+ * ✅ For right-click / open in new tab we need real href
+ */
+function resolveHref(path?: string) {
+  if (!path) return "#"
+  return router.resolve(path).href
 }
 
 function toggleMobileDropdown(id: string) {
@@ -211,31 +198,41 @@ onBeforeUnmount(() => {
           }"
           @mouseleave="!mobileOpen && scheduleCloseDropdown()"
         >
+          <!-- ✅ GROUP (has dropdown): keep button -->
           <button
+            v-if="item.children?.length"
             class="nav-link"
             :class="{
               active: isGroupActive(item),
               expanded: mobileOpen && openMobile[item.id],
             }"
             type="button"
-            @mouseenter="item.children?.length ? openDropdown(item.id, $event.currentTarget as HTMLElement) : null"
-            @focus="item.children?.length ? openDropdown(item.id, $event.currentTarget as HTMLElement) : null"
+            @mouseenter="!mobileOpen ? openDropdown(item.id, $event.currentTarget as HTMLElement) : null"
+            @focus="!mobileOpen ? openDropdown(item.id, $event.currentTarget as HTMLElement) : null"
             @mouseleave="!mobileOpen && scheduleCloseDropdown()"
-            @click="
-              mobileOpen && item.children?.length
-                ? toggleMobileDropdown(item.id)
-                : go(item.to)
-            "
+            @click="mobileOpen ? toggleMobileDropdown(item.id) : (item.to ? router.push(item.to) : null)"
           >
             <i v-if="item.icon" :class="item.icon" />
             <span>{{ item.label }}</span>
 
             <i
-              v-if="item.children?.length"
               class="pi pi-chevron-down chevron"
               :class="{ open: mobileOpen && openMobile[item.id] }"
             />
           </button>
+
+          <!-- ✅ LEAF (no children): use RouterLink so right-click/open new tab works -->
+          <RouterLink
+            v-else
+            class="nav-link"
+            :class="{ active: isGroupActive(item) }"
+            :to="item.to || '/'"
+            :href="resolveHref(item.to)"
+            @click="emit('close-mobile')"
+          >
+            <i v-if="item.icon" :class="item.icon" />
+            <span>{{ item.label }}</span>
+          </RouterLink>
 
           <!-- ✅ MOBILE: inline dropdown -->
           <div
@@ -243,17 +240,18 @@ onBeforeUnmount(() => {
             class="dropdown mobile"
             :class="{ show: openMobile[item.id] }"
           >
-            <button
+            <RouterLink
               v-for="child in item.children"
               :key="child.id"
               class="dropdown-link"
               :class="{ active: child.id === getActiveChildId(item.children) }"
-              type="button"
-              @click="go(child.to)"
+              :to="child.to || '/'"
+              :href="resolveHref(child.to)"
+              @click="emit('close-mobile')"
             >
               <i v-if="child.icon" :class="child.icon" />
               <span>{{ child.label }}</span>
-            </button>
+            </RouterLink>
           </div>
 
           <!-- ✅ DESKTOP: Teleported dropdown (bypasses header clipping) -->
@@ -268,17 +266,18 @@ onBeforeUnmount(() => {
               @mouseenter="clearCloseTimer()"
               @mouseleave="scheduleCloseDropdown()"
             >
-              <button
+              <RouterLink
                 v-for="child in item.children"
                 :key="child.id"
                 class="dropdown-link"
                 :class="{ active: child.id === getActiveChildId(item.children) }"
-                type="button"
-                @click="go(child.to)"
+                :to="child.to || '/'"
+                :href="resolveHref(child.to)"
+                @click="closeDropdownNow(); emit('close-mobile')"
               >
                 <i v-if="child.icon" :class="child.icon" />
                 <span>{{ child.label }}</span>
-              </button>
+              </RouterLink>
             </div>
           </Teleport>
         </li>
@@ -288,6 +287,27 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
+
+.nav-link {
+  text-decoration: none;
+}
+
+.nav-link:visited,
+.nav-link:active,
+.nav-link:hover {
+  text-decoration: none;
+}
+
+.dropdown-link {
+  text-decoration: none;
+}
+
+.dropdown-link:link,
+.dropdown-link:visited,
+.dropdown-link:hover,
+.dropdown-link:active {
+  text-decoration: none;
+}
 /* =========================
    TransportPro tab bar style
    ========================= */

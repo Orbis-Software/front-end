@@ -59,7 +59,15 @@ function normalizeCollectionAddress(raw: any): ContactCollectionAddress {
     postal_code: raw.postal_code ?? null,
     country_id: toNumberOrNull(raw.country_id),
 
-    // ✅ NEW persisted fields (THIS was missing)
+    // ✅ NEW generated fields
+    sequence_no: raw.sequence_no === null || raw.sequence_no === undefined ? null : Number(raw.sequence_no),
+    reference_code: raw.reference_code ?? null,
+
+    // ✅ NEW flags
+    is_collection: Boolean(raw.is_collection),
+    is_delivery: Boolean(raw.is_delivery),
+
+    // ✅ persisted UI fields
     hours_of_operation: raw.hours_of_operation ?? null,
     contact_person: raw.contact_person ?? null,
     email: raw.email ?? null,
