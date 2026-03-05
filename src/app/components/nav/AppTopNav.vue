@@ -188,6 +188,11 @@ function handleWindowChange() {
   if (activeId.value) closeDropdownNow()
 }
 
+function onDesktopChildClick() {
+  closeDropdownNow()
+  emit("close-mobile")
+}
+
 onMounted(() => {
   window.addEventListener("scroll", handleWindowChange, true)
   window.addEventListener("resize", handleWindowChange)
@@ -293,10 +298,7 @@ onBeforeUnmount(() => {
                 :class="{ active: child.id === getActiveChildId(item.children) }"
                 :to="child.to || '/'"
                 :href="resolveHref(child.to)"
-                @click="
-                  closeDropdownNow()
-                  emit('close-mobile')
-                "
+                @click="onDesktopChildClick"
               >
                 <i v-if="child.icon" :class="child.icon" />
                 <span>{{ child.label }}</span>
