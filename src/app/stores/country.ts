@@ -1,9 +1,9 @@
-import { defineStore } from 'pinia'
-import { ref } from 'vue'
-import type { Country, PaginatedResponse } from '@/app/types/country'
-import listCountries from '@/app/services/countries/list'
+import { defineStore } from "pinia"
+import { ref } from "vue"
+import type { Country, PaginatedResponse } from "@/app/types/country"
+import listCountries from "@/app/services/countries/list"
 
-export const useCountryStore = defineStore('country', () => {
+export const useCountryStore = defineStore("country", () => {
   const items = ref<Country[]>([])
   const loading = ref(false)
 
@@ -12,7 +12,7 @@ export const useCountryStore = defineStore('country', () => {
   const total = ref(0)
   const lastPage = ref(1)
 
-  const q = ref('')
+  const q = ref("")
 
   async function fetch() {
     loading.value = true

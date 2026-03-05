@@ -1,4 +1,4 @@
-import type { Company } from '@/app/types/company'
+import type { Company } from "@/app/types/company"
 
 /**
  * ============

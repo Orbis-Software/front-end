@@ -63,7 +63,7 @@ export const useEmployeeStore = defineStore("employee", () => {
     saving.value = true
     try {
       const updated = await employeeService.update(id, payload)
-      const idx = items.value.findIndex((x) => x.id === id)
+      const idx = items.value.findIndex(x => x.id === id)
       if (idx !== -1) items.value[idx] = updated
       return updated
     } finally {

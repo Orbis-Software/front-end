@@ -154,7 +154,11 @@ function addDimRow(target: "collection" | "transport") {
   })
 }
 
-function calcTotalCost(t: { collection_cost: number; additional_costs: number; fsc_percent: number }) {
+function calcTotalCost(t: {
+  collection_cost: number
+  additional_costs: number
+  fsc_percent: number
+}) {
   const base = (t.collection_cost || 0) + (t.additional_costs || 0)
   const fsc = base * ((t.fsc_percent || 0) / 100)
   return base + fsc
@@ -223,7 +227,7 @@ function togglePanel(key: "collection" | "transport") {
     <section class="panel">
       <div class="panel-head">
         <button class="panel-toggle" type="button" @click="togglePanel('collection')">
-          <i class="pi pi-chevron-down" :class="{ 'rot': !open.collection }" />
+          <i class="pi pi-chevron-down" :class="{ rot: !open.collection }" />
           <span>Collection Orders</span>
         </button>
 
@@ -236,7 +240,12 @@ function togglePanel(key: "collection" | "transport") {
             class="mini-dd"
             :disabled="disabled"
           />
-          <Button class="orbis-btn orbis-btn--orange" icon="pi pi-plus" label="Add Collection Orders" :disabled="disabled" />
+          <Button
+            class="orbis-btn orbis-btn--orange"
+            icon="pi pi-plus"
+            label="Add Collection Orders"
+            :disabled="disabled"
+          />
         </div>
       </div>
 
@@ -270,19 +279,33 @@ function togglePanel(key: "collection" | "transport") {
 
           <div class="field">
             <label class="label">Order Reference</label>
-            <InputText v-model="collection.order_reference" class="field-fluid field-input" :disabled="true" />
+            <InputText
+              v-model="collection.order_reference"
+              class="field-fluid field-input"
+              :disabled="true"
+            />
           </div>
         </div>
 
         <div class="grid-3">
           <div class="field">
             <label class="label">Customer Ref</label>
-            <InputText v-model="collection.customer_ref" class="field-fluid field-input" placeholder="Enter customer reference" :disabled="disabled" />
+            <InputText
+              v-model="collection.customer_ref"
+              class="field-fluid field-input"
+              placeholder="Enter customer reference"
+              :disabled="disabled"
+            />
           </div>
 
           <div class="field">
             <label class="label">Collection Ref</label>
-            <InputText v-model="collection.collection_ref" class="field-fluid field-input" placeholder="Enter collection reference" :disabled="disabled" />
+            <InputText
+              v-model="collection.collection_ref"
+              class="field-fluid field-input"
+              placeholder="Enter collection reference"
+              :disabled="disabled"
+            />
           </div>
 
           <div class="field">
@@ -303,8 +326,19 @@ function togglePanel(key: "collection" | "transport") {
           <div class="field">
             <label class="label">Pick Up Date &amp; Time</label>
             <div class="dt-row">
-              <Calendar v-model="collection.pickup_date" dateFormat="dd/mm/yy" class="field-fluid" inputClass="field-input" :disabled="disabled" />
-              <InputText v-model="collection.pickup_time" class="time-input" placeholder="--:-- --" :disabled="disabled" />
+              <Calendar
+                v-model="collection.pickup_date"
+                dateFormat="dd/mm/yy"
+                class="field-fluid"
+                inputClass="field-input"
+                :disabled="disabled"
+              />
+              <InputText
+                v-model="collection.pickup_time"
+                class="time-input"
+                placeholder="--:-- --"
+                :disabled="disabled"
+              />
               <i class="pi pi-clock clock-ico" />
             </div>
           </div>
@@ -312,8 +346,19 @@ function togglePanel(key: "collection" | "transport") {
           <div class="field">
             <label class="label">Delivery Date &amp; Time</label>
             <div class="dt-row">
-              <Calendar v-model="collection.delivery_date" dateFormat="dd/mm/yy" class="field-fluid" inputClass="field-input" :disabled="disabled" />
-              <InputText v-model="collection.delivery_time" class="time-input" placeholder="--:-- --" :disabled="disabled" />
+              <Calendar
+                v-model="collection.delivery_date"
+                dateFormat="dd/mm/yy"
+                class="field-fluid"
+                inputClass="field-input"
+                :disabled="disabled"
+              />
+              <InputText
+                v-model="collection.delivery_time"
+                class="time-input"
+                placeholder="--:-- --"
+                :disabled="disabled"
+              />
               <i class="pi pi-clock clock-ico" />
             </div>
           </div>
@@ -328,7 +373,13 @@ function togglePanel(key: "collection" | "transport") {
 
         <div class="field">
           <label class="label">Description of Goods</label>
-          <Textarea v-model="collection.goods_description" class="field-fluid" autoResize placeholder="Enter description" :disabled="disabled" />
+          <Textarea
+            v-model="collection.goods_description"
+            class="field-fluid"
+            autoResize
+            placeholder="Enter description"
+            :disabled="disabled"
+          />
         </div>
 
         <!-- DIMENSIONS TABLE -->
@@ -373,30 +424,62 @@ function togglePanel(key: "collection" | "transport") {
             <div class="dims-total">
               <div class="t-label">TOTAL</div>
               <div>{{ collectionTotals.qty }}</div>
-              <div></div><div></div><div></div>
-              <div><b>{{ collectionTotals.gross.toFixed(1) }}</b> kg</div>
-              <div><b>{{ collectionTotals.cube.toFixed(3) }}</b> m³</div>
-              <div><b>{{ collectionTotals.vol.toFixed(1) }}</b> m³</div>
-              <div><b>{{ collectionTotals.ldm.toFixed(3) }}</b> LDM</div>
+              <div></div>
+              <div></div>
+              <div></div>
+              <div>
+                <b>{{ collectionTotals.gross.toFixed(1) }}</b> kg
+              </div>
+              <div>
+                <b>{{ collectionTotals.cube.toFixed(3) }}</b> m³
+              </div>
+              <div>
+                <b>{{ collectionTotals.vol.toFixed(1) }}</b> m³
+              </div>
+              <div>
+                <b>{{ collectionTotals.ldm.toFixed(3) }}</b> LDM
+              </div>
             </div>
           </div>
 
-          <Button class="orbis-btn orbis-btn--orange-lite" icon="pi pi-plus" label="Add Item" :disabled="disabled" @click="addDimRow('collection')" />
+          <Button
+            class="orbis-btn orbis-btn--orange-lite"
+            icon="pi pi-plus"
+            label="Add Item"
+            :disabled="disabled"
+            @click="addDimRow('collection')"
+          />
         </div>
 
         <!-- COSTS BOX -->
         <div class="cost-box">
           <div class="cost-row">
             <div>Collection Cost:</div>
-            <InputNumber v-model="collection.collection_cost" class="cost-in" :min="0" :disabled="disabled" />
+            <InputNumber
+              v-model="collection.collection_cost"
+              class="cost-in"
+              :min="0"
+              :disabled="disabled"
+            />
           </div>
           <div class="cost-row">
             <div>Additional Costs:</div>
-            <InputNumber v-model="collection.additional_costs" class="cost-in" :min="0" :disabled="disabled" />
+            <InputNumber
+              v-model="collection.additional_costs"
+              class="cost-in"
+              :min="0"
+              :disabled="disabled"
+            />
           </div>
           <div class="cost-row">
             <div>FSC %:</div>
-            <InputNumber v-model="collection.fsc_percent" class="cost-in" :min="0" :max="100" :disabled="disabled" />
+            <InputNumber
+              v-model="collection.fsc_percent"
+              class="cost-in"
+              :min="0"
+              :max="100"
+              :disabled="disabled"
+            />
           </div>
           <div class="cost-row cost-row--total">
             <div><b>Total:</b></div>
@@ -406,14 +489,26 @@ function togglePanel(key: "collection" | "transport") {
 
         <!-- ACTIONS -->
         <div class="row-actions">
-          <Button class="orbis-btn orbis-btn--orange" icon="pi pi-plus" label="Save & Add Collection Order" :disabled="disabled" />
+          <Button
+            class="orbis-btn orbis-btn--orange"
+            icon="pi pi-plus"
+            label="Save & Add Collection Order"
+            :disabled="disabled"
+          />
           <Button class="orbis-btn" icon="pi pi-print" label="Print All" :disabled="disabled" />
-          <Button class="orbis-btn" icon="pi pi-envelope" label="Email to Carrier" :disabled="disabled" />
+          <Button
+            class="orbis-btn"
+            icon="pi pi-envelope"
+            label="Email to Carrier"
+            :disabled="disabled"
+          />
         </div>
 
         <!-- EXISTING -->
         <div class="existing">
-          <div class="existing-title">Existing Collection Orders ({{ existingCollectionOrders.length }})</div>
+          <div class="existing-title">
+            Existing Collection Orders ({{ existingCollectionOrders.length }})
+          </div>
 
           <div v-for="o in existingCollectionOrders" :key="o.id" class="order-line">
             <div class="order-main">
@@ -449,7 +544,7 @@ function togglePanel(key: "collection" | "transport") {
     <section class="panel">
       <div class="panel-head">
         <button class="panel-toggle" type="button" @click="togglePanel('transport')">
-          <i class="pi pi-chevron-down" :class="{ 'rot': !open.transport }" />
+          <i class="pi pi-chevron-down" :class="{ rot: !open.transport }" />
           <span>Transport Orders</span>
         </button>
 
@@ -462,7 +557,12 @@ function togglePanel(key: "collection" | "transport") {
             class="mini-dd"
             :disabled="disabled"
           />
-          <Button class="orbis-btn orbis-btn--orange" icon="pi pi-plus" label="Add Transport Orders" :disabled="disabled" />
+          <Button
+            class="orbis-btn orbis-btn--orange"
+            icon="pi pi-plus"
+            label="Add Transport Orders"
+            :disabled="disabled"
+          />
         </div>
       </div>
 
@@ -497,19 +597,33 @@ function togglePanel(key: "collection" | "transport") {
 
           <div class="field">
             <label class="label">Order Reference</label>
-            <InputText v-model="transport.order_reference" class="field-fluid field-input" :disabled="true" />
+            <InputText
+              v-model="transport.order_reference"
+              class="field-fluid field-input"
+              :disabled="true"
+            />
           </div>
         </div>
 
         <div class="grid-3">
           <div class="field">
             <label class="label">Customer Ref</label>
-            <InputText v-model="transport.customer_ref" class="field-fluid field-input" placeholder="Enter customer reference" :disabled="disabled" />
+            <InputText
+              v-model="transport.customer_ref"
+              class="field-fluid field-input"
+              placeholder="Enter customer reference"
+              :disabled="disabled"
+            />
           </div>
 
           <div class="field">
             <label class="label">Collection Ref</label>
-            <InputText v-model="transport.collection_ref" class="field-fluid field-input" placeholder="Enter collection reference" :disabled="disabled" />
+            <InputText
+              v-model="transport.collection_ref"
+              class="field-fluid field-input"
+              placeholder="Enter collection reference"
+              :disabled="disabled"
+            />
           </div>
 
           <div class="field">
@@ -530,8 +644,19 @@ function togglePanel(key: "collection" | "transport") {
           <div class="field">
             <label class="label">Pick Up Date &amp; Time</label>
             <div class="dt-row">
-              <Calendar v-model="transport.pickup_date" dateFormat="dd/mm/yy" class="field-fluid" inputClass="field-input" :disabled="disabled" />
-              <InputText v-model="transport.pickup_time" class="time-input" placeholder="--:-- --" :disabled="disabled" />
+              <Calendar
+                v-model="transport.pickup_date"
+                dateFormat="dd/mm/yy"
+                class="field-fluid"
+                inputClass="field-input"
+                :disabled="disabled"
+              />
+              <InputText
+                v-model="transport.pickup_time"
+                class="time-input"
+                placeholder="--:-- --"
+                :disabled="disabled"
+              />
               <i class="pi pi-clock clock-ico" />
             </div>
           </div>
@@ -539,8 +664,19 @@ function togglePanel(key: "collection" | "transport") {
           <div class="field">
             <label class="label">Delivery Date &amp; Time</label>
             <div class="dt-row">
-              <Calendar v-model="transport.delivery_date" dateFormat="dd/mm/yy" class="field-fluid" inputClass="field-input" :disabled="disabled" />
-              <InputText v-model="transport.delivery_time" class="time-input" placeholder="--:-- --" :disabled="disabled" />
+              <Calendar
+                v-model="transport.delivery_date"
+                dateFormat="dd/mm/yy"
+                class="field-fluid"
+                inputClass="field-input"
+                :disabled="disabled"
+              />
+              <InputText
+                v-model="transport.delivery_time"
+                class="time-input"
+                placeholder="--:-- --"
+                :disabled="disabled"
+              />
               <i class="pi pi-clock clock-ico" />
             </div>
           </div>
@@ -555,7 +691,13 @@ function togglePanel(key: "collection" | "transport") {
 
         <div class="field">
           <label class="label">Description of Goods</label>
-          <Textarea v-model="transport.goods_description" class="field-fluid" autoResize placeholder="Enter description" :disabled="disabled" />
+          <Textarea
+            v-model="transport.goods_description"
+            class="field-fluid"
+            autoResize
+            placeholder="Enter description"
+            :disabled="disabled"
+          />
         </div>
 
         <div class="dims">
@@ -575,7 +717,15 @@ function togglePanel(key: "collection" | "transport") {
             </div>
 
             <div v-for="(r, idx) in transport.dimensions" :key="idx" class="dims-row">
-              <Dropdown v-model="r.packaging" :options="packagingOptions" optionLabel="label" optionValue="value" placeholder="Select" class="cell" :disabled="disabled" />
+              <Dropdown
+                v-model="r.packaging"
+                :options="packagingOptions"
+                optionLabel="label"
+                optionValue="value"
+                placeholder="Select"
+                class="cell"
+                :disabled="disabled"
+              />
               <InputNumber v-model="r.qty" class="cell" :min="0" :disabled="disabled" />
               <InputNumber v-model="r.length_cm" class="cell" :min="0" :disabled="disabled" />
               <InputNumber v-model="r.width_cm" class="cell" :min="0" :disabled="disabled" />
@@ -589,29 +739,61 @@ function togglePanel(key: "collection" | "transport") {
             <div class="dims-total">
               <div class="t-label">TOTAL</div>
               <div>{{ transportTotals.qty }}</div>
-              <div></div><div></div><div></div>
-              <div><b>{{ transportTotals.gross.toFixed(1) }}</b> kg</div>
-              <div><b>{{ transportTotals.cube.toFixed(3) }}</b> m³</div>
-              <div><b>{{ transportTotals.vol.toFixed(1) }}</b> m³</div>
-              <div><b>{{ transportTotals.ldm.toFixed(3) }}</b> LDM</div>
+              <div></div>
+              <div></div>
+              <div></div>
+              <div>
+                <b>{{ transportTotals.gross.toFixed(1) }}</b> kg
+              </div>
+              <div>
+                <b>{{ transportTotals.cube.toFixed(3) }}</b> m³
+              </div>
+              <div>
+                <b>{{ transportTotals.vol.toFixed(1) }}</b> m³
+              </div>
+              <div>
+                <b>{{ transportTotals.ldm.toFixed(3) }}</b> LDM
+              </div>
             </div>
           </div>
 
-          <Button class="orbis-btn orbis-btn--orange-lite" icon="pi pi-plus" label="Add Item" :disabled="disabled" @click="addDimRow('transport')" />
+          <Button
+            class="orbis-btn orbis-btn--orange-lite"
+            icon="pi pi-plus"
+            label="Add Item"
+            :disabled="disabled"
+            @click="addDimRow('transport')"
+          />
         </div>
 
         <div class="cost-box">
           <div class="cost-row">
             <div>Collection Cost:</div>
-            <InputNumber v-model="transport.collection_cost" class="cost-in" :min="0" :disabled="disabled" />
+            <InputNumber
+              v-model="transport.collection_cost"
+              class="cost-in"
+              :min="0"
+              :disabled="disabled"
+            />
           </div>
           <div class="cost-row">
             <div>Additional Costs:</div>
-            <InputNumber v-model="transport.additional_costs" class="cost-in" :min="0" :disabled="disabled" />
+            <InputNumber
+              v-model="transport.additional_costs"
+              class="cost-in"
+              :min="0"
+              :disabled="disabled"
+            />
           </div>
           <div class="cost-row">
             <div>FSC %:</div>
-            <InputNumber v-model="transport.fsc_percent" class="cost-in" :min="0" :max="100" :disabled="disabled" />
+            <InputNumber
+              v-model="transport.fsc_percent"
+              class="cost-in"
+              :min="0"
+              :max="100"
+              :disabled="disabled"
+            />
           </div>
           <div class="cost-row cost-row--total">
             <div><b>Total:</b></div>
@@ -620,13 +802,25 @@ function togglePanel(key: "collection" | "transport") {
         </div>
 
         <div class="row-actions">
-          <Button class="orbis-btn orbis-btn--orange" icon="pi pi-plus" label="Save & Add Transport Order" :disabled="disabled" />
+          <Button
+            class="orbis-btn orbis-btn--orange"
+            icon="pi pi-plus"
+            label="Save & Add Transport Order"
+            :disabled="disabled"
+          />
           <Button class="orbis-btn" icon="pi pi-print" label="Print All" :disabled="disabled" />
-          <Button class="orbis-btn" icon="pi pi-envelope" label="Email to Carrier" :disabled="disabled" />
+          <Button
+            class="orbis-btn"
+            icon="pi pi-envelope"
+            label="Email to Carrier"
+            :disabled="disabled"
+          />
         </div>
 
         <div class="existing">
-          <div class="existing-title">Existing Transport Orders ({{ existingTransportOrders.length }})</div>
+          <div class="existing-title">
+            Existing Transport Orders ({{ existingTransportOrders.length }})
+          </div>
 
           <div v-for="o in existingTransportOrders" :key="o.id" class="order-line">
             <div class="order-main">
@@ -654,8 +848,18 @@ function togglePanel(key: "collection" | "transport") {
           </div>
 
           <div class="bottom-actions">
-            <Button class="orbis-btn orbis-btn--orange" icon="pi pi-download" label="Export All Orders" :disabled="disabled" />
-            <Button class="orbis-btn" icon="pi pi-envelope" label="Send to All Carriers" :disabled="disabled" />
+            <Button
+              class="orbis-btn orbis-btn--orange"
+              icon="pi pi-download"
+              label="Export All Orders"
+              :disabled="disabled"
+            />
+            <Button
+              class="orbis-btn"
+              icon="pi pi-envelope"
+              label="Send to All Carriers"
+              :disabled="disabled"
+            />
           </div>
         </div>
       </div>

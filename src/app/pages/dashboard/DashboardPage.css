@@ -82,7 +82,7 @@
   background: #fff;
   border: 1px solid #e8e8e8;
   border-radius: 14px;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 /* Filters row */
@@ -305,13 +305,13 @@
 
 /* Force equal sizing for PrimeVue buttons */
 .btn-eq.p-button {
-  min-width: 150px;      /* same width */
-  height: 44px;          /* same height (pick the number you like) */
-  padding: 0 16px;       /* consistent padding */
+  min-width: 150px; /* same width */
+  height: 44px; /* same height (pick the number you like) */
+  padding: 0 16px; /* consistent padding */
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  white-space: nowrap;   /* ✅ prevents Export ↵ CSV wrapping */
+  white-space: nowrap; /* ✅ prevents Export ↵ CSV wrapping */
 }
 
 /* Ensure label doesn’t wrap (PrimeVue label span) */
@@ -324,7 +324,6 @@
 .btn-eq.p-button i {
   line-height: 1;
 }
-
 
 /* Ensure search wrapper behaves nicely in center area */
 .search {

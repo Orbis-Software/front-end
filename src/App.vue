@@ -6,16 +6,14 @@
   <router-view v-if="ready" />
 
   <!-- Optional loading state -->
-  <div v-else class="app-loading">
-    Loading...
-  </div>
+  <div v-else class="app-loading">Loading...</div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, onMounted } from "vue"
 import Toast from "primevue/toast"
 import ConfirmDialog from "primevue/confirmdialog"
-import { useAuthStore } from '@/app/stores/auth'
+import { useAuthStore } from "@/app/stores/auth"
 
 const auth = useAuthStore()
 const ready = computed(() => auth.ready)

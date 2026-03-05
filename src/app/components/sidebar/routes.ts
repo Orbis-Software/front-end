@@ -1,24 +1,24 @@
 export type SidebarLeaf = {
-  type: "leaf";
-  label: string;
-  to: string; 
-  icon?: string; 
-  disabled?: boolean;
-};
+  type: "leaf"
+  label: string
+  to: string
+  icon?: string
+  disabled?: boolean
+}
 
 export type SidebarSubmenu = {
-  type: "submenu";
-  label: string;
-  icon?: string;
-  key: string; 
-  children: SidebarLeaf[];
-};
+  type: "submenu"
+  label: string
+  icon?: string
+  key: string
+  children: SidebarLeaf[]
+}
 
 export type SidebarGroup = {
-  key: string;
-  label: string; 
-  items: (SidebarLeaf | SidebarSubmenu)[];
-};
+  key: string
+  label: string
+  items: (SidebarLeaf | SidebarSubmenu)[]
+}
 
 export const SIDEBAR_GROUPS: SidebarGroup[] = [
   {
@@ -66,4 +66,4 @@ export const SIDEBAR_GROUPS: SidebarGroup[] = [
       { type: "leaf", label: "Settings", to: "/settings", icon: "pi pi-cog" },
     ],
   },
-];
+]

@@ -11,10 +11,10 @@
 
 <script setup lang="ts">
 type Lane = {
-  key: string;
-  title: string;
-  tiles: { ref: string; meta: string }[];
-};
+  key: string
+  title: string
+  tiles: { ref: string; meta: string }[]
+}
 
-defineProps<{ lane: Lane }>();
+defineProps<{ lane: Lane }>()
 </script>

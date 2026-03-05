@@ -13,9 +13,7 @@ const emit = defineEmits<{
 }>()
 
 // stable checkbox id per card
-const sameId = computed(
-  () => `same-${props.branch.id ?? Math.random().toString(16).slice(2)}`
-)
+const sameId = computed(() => `same-${props.branch.id ?? Math.random().toString(16).slice(2)}`)
 
 /**
  * Track last-saved snapshot so we only emit real changes.
@@ -245,14 +243,9 @@ const sameAsDelivery = computed({
 
     <div class="toggleRow">
       <div class="toggleLabel">Same as delivery</div>
-      <div style="display:flex; align-items:center; gap:10px;">
-        <input
-          :id="sameId"
-          type="checkbox"
-          class="checkbox"
-          v-model="sameAsDelivery"
-        />
-        <label :for="sameId" style="color:#6b7280; font-weight:700;">
+      <div style="display: flex; align-items: center; gap: 10px">
+        <input :id="sameId" type="checkbox" class="checkbox" v-model="sameAsDelivery" />
+        <label :for="sameId" style="color: #6b7280; font-weight: 700">
           Copy delivery → billing
         </label>
       </div>

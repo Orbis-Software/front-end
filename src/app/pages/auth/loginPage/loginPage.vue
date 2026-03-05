@@ -3,11 +3,7 @@
     <template #content>
       <!-- Header -->
       <div class="auth-enterprise-header">
-        <img
-          src="/orbis-logo.png"
-          alt="Orbis"
-          class="auth-enterprise-logo"
-        />
+        <img src="/orbis-logo.png" alt="Orbis" class="auth-enterprise-logo" />
 
         <h1 class="auth-enterprise-title">Sign In</h1>
       </div>
@@ -23,7 +19,7 @@
               v-model="email"
               type="email"
               autofocus
-              class="w-full auth-enterprise-input"
+              class="auth-enterprise-input w-full"
               :disabled="loading || step === 2"
               @keyup.enter="nextFromEmail"
             />
@@ -37,25 +33,17 @@
           </div>
 
           <div class="field-meta">
-            <small
-              v-if="emailError"
-              class="field-error"
-            >
+            <small v-if="emailError" class="field-error">
               {{ emailError }}
             </small>
 
             <!-- same placement as reference: right aligned hint -->
-            <small class="field-hint">
-              Default domain is orbis.local
-            </small>
+            <small class="field-hint"> Default domain is orbis.local </small>
           </div>
         </div>
 
         <!-- Password (step 2 only) -->
-        <div
-          v-if="step === 2"
-          class="form-group"
-        >
+        <div v-if="step === 2" class="form-group">
           <label class="form-label required">Password</label>
 
           <div class="input-shell">
@@ -63,7 +51,7 @@
               v-model="password"
               toggleMask
               :feedback="false"
-              class="w-full auth-enterprise-password"
+              class="auth-enterprise-password w-full"
               inputClass="auth-enterprise-input auth-enterprise-password-input"
               :disabled="loading"
               @keyup.enter="submit"
@@ -77,10 +65,7 @@
           </div>
 
           <div class="field-meta">
-            <small
-              v-if="passwordError"
-              class="field-error"
-            >
+            <small v-if="passwordError" class="field-error">
               {{ passwordError }}
             </small>
           </div>
@@ -117,13 +102,7 @@
 
         <!-- Footer link (bottom-left like reference) -->
         <div class="auth-enterprise-footer">
-          <a
-            href="#"
-            class="auth-enterprise-link"
-            @click.prevent
-          >
-            Customer Support
-          </a>
+          <a href="#" class="auth-enterprise-link" @click.prevent> Customer Support </a>
         </div>
       </div>
     </template>
@@ -131,7 +110,7 @@
 </template>
 
 <script setup lang="ts">
-import { useLoginPage } from './useLoginPage'
+import { useLoginPage } from "./useLoginPage"
 
 const {
   email,

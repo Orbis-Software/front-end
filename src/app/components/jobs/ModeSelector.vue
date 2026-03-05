@@ -15,16 +15,16 @@
 </template>
 
 <script setup lang="ts">
-type CardItem<K extends string> = { key: K; title: string; subtitle: string };
+type CardItem<K extends string> = { key: K; title: string; subtitle: string }
 
 defineProps<{
-  items: CardItem<string>[];
-  selected: string | null;
-}>();
+  items: CardItem<string>[]
+  selected: string | null
+}>()
 
 defineEmits<{
-  (e: "select", key: any): void;
-}>();
+  (e: "select", key: any): void
+}>()
 </script>
 
 <style scoped>
@@ -41,7 +41,9 @@ defineEmits<{
   background: #fff;
   padding: 12px 12px;
   cursor: pointer;
-  transition: background 0.12s ease, border-color 0.12s ease;
+  transition:
+    background 0.12s ease,
+    border-color 0.12s ease;
 }
 
 .card-btn:hover {

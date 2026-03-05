@@ -192,10 +192,18 @@
   color: #fff;
 }
 
-.job-docs .docBadge--pdf { background: #ef4444; }
-.job-docs .docBadge--doc { background: #2563eb; }
-.job-docs .docBadge--xls { background: #16a34a; }
-.job-docs .docBadge--img { background: #7c3aed; }
+.job-docs .docBadge--pdf {
+  background: #ef4444;
+}
+.job-docs .docBadge--doc {
+  background: #2563eb;
+}
+.job-docs .docBadge--xls {
+  background: #16a34a;
+}
+.job-docs .docBadge--img {
+  background: #7c3aed;
+}
 
 /* Export grid */
 .job-docs .exportGrid {

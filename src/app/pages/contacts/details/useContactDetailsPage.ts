@@ -6,12 +6,7 @@ import { useToast } from "primevue/usetoast"
 import type { ContactBranch, ContactCollectionAddress } from "@/app/types/contact"
 import { useContactStore } from "@/app/stores/contact"
 
-export type ContactDetailsTab =
-  | "branches"
-  | "collections"
-  | "weight_break"
-  | "customer"
-  | "demo"
+export type ContactDetailsTab = "branches" | "collections" | "weight_break" | "customer" | "demo"
 
 function blankBranch(): Omit<ContactBranch, "id"> {
   return {
@@ -129,7 +124,12 @@ export function useContactDetailsPage() {
       await contactStore.updateBranch(contact.value.id, branchId, patch)
       toast.add({ severity: "success", summary: "Saved", detail: "Branch updated", life: 1500 })
     } catch (e) {
-      toast.add({ severity: "error", summary: "Failed to save branch", detail: errMsg(e), life: 4000 })
+      toast.add({
+        severity: "error",
+        summary: "Failed to save branch",
+        detail: errMsg(e),
+        life: 4000,
+      })
     }
   }
 
@@ -146,9 +146,19 @@ export function useContactDetailsPage() {
         billing_same_as_delivery: true,
       })
 
-      toast.add({ severity: "success", summary: "Added", detail: "Branch added successfully", life: 2500 })
+      toast.add({
+        severity: "success",
+        summary: "Added",
+        detail: "Branch added successfully",
+        life: 2500,
+      })
     } catch (e) {
-      toast.add({ severity: "error", summary: "Failed to add branch", detail: errMsg(e), life: 4000 })
+      toast.add({
+        severity: "error",
+        summary: "Failed to add branch",
+        detail: errMsg(e),
+        life: 4000,
+      })
     } finally {
       busy.value = false
     }
@@ -173,9 +183,19 @@ export function useContactDetailsPage() {
           } else {
             await contactStore.removeBranch(contact.value!.id, branch.id)
           }
-          toast.add({ severity: "success", summary: "Deleted", detail: "Branch deleted successfully", life: 2500 })
+          toast.add({
+            severity: "success",
+            summary: "Deleted",
+            detail: "Branch deleted successfully",
+            life: 2500,
+          })
         } catch (e) {
-          toast.add({ severity: "error", summary: "Failed to delete branch", detail: errMsg(e), life: 4000 })
+          toast.add({
+            severity: "error",
+            summary: "Failed to delete branch",
+            detail: errMsg(e),
+            life: 4000,
+          })
         } finally {
           busy.value = false
         }
@@ -195,9 +215,19 @@ export function useContactDetailsPage() {
         label: "New collection point",
       })
 
-      toast.add({ severity: "success", summary: "Added", detail: "Collection address added successfully", life: 2500 })
+      toast.add({
+        severity: "success",
+        summary: "Added",
+        detail: "Collection address added successfully",
+        life: 2500,
+      })
     } catch (e) {
-      toast.add({ severity: "error", summary: "Failed to add collection address", detail: errMsg(e), life: 4000 })
+      toast.add({
+        severity: "error",
+        summary: "Failed to add collection address",
+        detail: errMsg(e),
+        life: 4000,
+      })
     } finally {
       busy.value = false
     }
@@ -209,7 +239,12 @@ export function useContactDetailsPage() {
 
     try {
       await contactStore.updateCollectionAddress(contact.value.id, id, payload)
-      toast.add({ severity: "success", summary: "Saved", detail: "Collection address updated", life: 1500 })
+      toast.add({
+        severity: "success",
+        summary: "Saved",
+        detail: "Collection address updated",
+        life: 1500,
+      })
     } catch (e) {
       toast.add({ severity: "error", summary: "Failed to save", detail: errMsg(e), life: 4000 })
     }
@@ -228,9 +263,19 @@ export function useContactDetailsPage() {
         busy.value = true
         try {
           await contactStore.removeCollectionAddress(contact.value!.id, id)
-          toast.add({ severity: "success", summary: "Deleted", detail: "Collection address deleted", life: 2500 })
+          toast.add({
+            severity: "success",
+            summary: "Deleted",
+            detail: "Collection address deleted",
+            life: 2500,
+          })
         } catch (e) {
-          toast.add({ severity: "error", summary: "Failed to delete", detail: errMsg(e), life: 4000 })
+          toast.add({
+            severity: "error",
+            summary: "Failed to delete",
+            detail: errMsg(e),
+            life: 4000,
+          })
         } finally {
           busy.value = false
         }

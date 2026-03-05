@@ -1,18 +1,10 @@
 <!-- src/app/pages/contacts/import/ContactsImportPage.vue -->
 <script setup lang="ts">
-import './ContactsImportPage.css'
-import { useContactsImportPage } from './ContactsImportPage'
+import "./ContactsImportPage.css"
+import { useContactsImportPage } from "./ContactsImportPage"
 
-const {
-  companyName,
-  file,
-  importing,
-  result,
-  errorMessage,
-  canImport,
-  onFileSelect,
-  onImport,
-} = useContactsImportPage()
+const { companyName, file, importing, result, errorMessage, canImport, onFileSelect, onImport } =
+  useContactsImportPage()
 </script>
 
 <template>
@@ -40,7 +32,7 @@ const {
 
       <div class="actions">
         <button class="btn primary" :disabled="!canImport" @click="onImport">
-          {{ importing ? 'Importing…' : 'Import File' }}
+          {{ importing ? "Importing…" : "Import File" }}
         </button>
       </div>
 
@@ -48,7 +40,8 @@ const {
 
       <div v-if="result" class="result">
         <div class="alert success">
-          Import finished: Created {{ result.created }}, Updated {{ result.updated }}, Skipped {{ result.skipped }}
+          Import finished: Created {{ result.created }}, Updated {{ result.updated }}, Skipped
+          {{ result.skipped }}
         </div>
 
         <div v-if="result.errors.length" class="errors">

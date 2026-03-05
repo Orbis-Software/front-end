@@ -219,42 +219,42 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref } from "vue";
+import { computed, reactive, ref } from "vue"
 
-import InputText from "primevue/inputtext";
-import Dropdown from "primevue/dropdown";
-import Textarea from "primevue/textarea";
-import Button from "primevue/button";
-import InputSwitch from "primevue/inputswitch";
+import InputText from "primevue/inputtext"
+import Dropdown from "primevue/dropdown"
+import Textarea from "primevue/textarea"
+import Button from "primevue/button"
+import InputSwitch from "primevue/inputswitch"
 
-import FormActionBar from "@/app/components/common/FormActionBar.vue";
+import FormActionBar from "@/app/components/common/FormActionBar.vue"
 import ShipmentSummaryCard, {
   type ShipmentSummary,
-} from "@/app/components/quotes/ShipmentSummaryCard.vue";
-import ChargesCard, { type ChargeLine } from "@/app/components/quotes/ChargesCard.vue";
+} from "@/app/components/quotes/ShipmentSummaryCard.vue"
+import ChargesCard, { type ChargeLine } from "@/app/components/quotes/ChargesCard.vue"
 
-import "@/app/pages/quotes/QuoteCreatePage.css";
+import "@/app/pages/quotes/QuoteCreatePage.css"
 
 /**
  * ✅ ALL dummy & fillable later.
  * Replace with API + store when ready.
  */
 
-type Option = { label: string; value: string };
+type Option = { label: string; value: string }
 
 const quoteTypes = ref<Option[]>([
   { label: "Import", value: "import" },
   { label: "Export", value: "export" },
   { label: "Domestic", value: "domestic" },
   { label: "Cross-trade", value: "cross" },
-]);
+])
 
 const modes = ref<Option[]>([
   { label: "Road", value: "road" },
   { label: "Sea", value: "sea" },
   { label: "Air", value: "air" },
   { label: "Rail", value: "rail" },
-]);
+])
 
 const incoterms = ref<Option[]>([
   { label: "EXW", value: "EXW" },
@@ -262,13 +262,13 @@ const incoterms = ref<Option[]>([
   { label: "CFR", value: "CFR" },
   { label: "CIF", value: "CIF" },
   { label: "DAP", value: "DAP" },
-]);
+])
 
 const contacts = ref<Option[]>([
   { label: "Raj Chohan", value: "raj" },
   { label: "Ian Harper", value: "ian" },
   { label: "Maral", value: "maral" },
-]);
+])
 
 const form = reactive({
   ref: "Mini Spares UK Order",
@@ -299,7 +299,7 @@ const form = reactive({
   },
 
   notes: "",
-});
+})
 
 /** ✅ Shipment Summary (dummy) */
 const shipmentSummary = reactive<ShipmentSummary>({
@@ -309,10 +309,10 @@ const shipmentSummary = reactive<ShipmentSummary>({
   cube: "11.732",
   weightUnit: "kg",
   cubeUnit: "m³",
-});
+})
 
 /** ✅ Charges (dummy + fillable) */
-const chargeLines = ref<ChargeLine[]>([]);
+const chargeLines = ref<ChargeLine[]>([])
 
 const chargesInitial = reactive({
   currency: "GBP",
@@ -320,61 +320,61 @@ const chargesInitial = reactive({
   discount: "0",
   addCharge: "freight",
   conditions: "Payment terms, validity, fuel clauses, etc.",
-});
+})
 
-const saving = ref(false);
-const sending = ref(false);
+const saving = ref(false)
+const sending = ref(false)
 
 const canSave = computed(() => {
   // dummy validation; replace later
-  return !!form.customer.company && !!form.quoteRef;
-});
+  return !!form.customer.company && !!form.quoteRef
+})
 
-const canSend = computed(() => canSave.value);
+const canSend = computed(() => canSave.value)
 
 /** Actions */
 async function onCancel() {
-  console.log("cancel");
+  console.log("cancel")
 }
 
 async function onSave() {
-  saving.value = true;
+  saving.value = true
   try {
-    console.log("save quote", JSON.parse(JSON.stringify(form)));
-    console.log("shipmentSummary", JSON.parse(JSON.stringify(shipmentSummary)));
-    console.log("chargeLines", JSON.parse(JSON.stringify(chargeLines.value)));
-    console.log("chargesInitial", JSON.parse(JSON.stringify(chargesInitial)));
+    console.log("save quote", JSON.parse(JSON.stringify(form)))
+    console.log("shipmentSummary", JSON.parse(JSON.stringify(shipmentSummary)))
+    console.log("chargeLines", JSON.parse(JSON.stringify(chargeLines.value)))
+    console.log("chargesInitial", JSON.parse(JSON.stringify(chargesInitial)))
     // await api...
   } finally {
-    saving.value = false;
+    saving.value = false
   }
 }
 
 async function onSend() {
-  sending.value = true;
+  sending.value = true
   try {
-    console.log("send to customer", JSON.parse(JSON.stringify(form)));
+    console.log("send to customer", JSON.parse(JSON.stringify(form)))
     // await api...
   } finally {
-    sending.value = false;
+    sending.value = false
   }
 }
 
 function onUpload() {
-  console.log("upload file");
+  console.log("upload file")
 }
 
 function onEditDimensions() {
-  console.log("edit dimensions");
+  console.log("edit dimensions")
 }
 
 function onClearCharges() {
-  console.log("clear charges");
-  chargeLines.value = [];
+  console.log("clear charges")
+  chargeLines.value = []
 }
 
 function onAddChargeLine(chargeKey: string) {
-  console.log("add charge line:", chargeKey);
+  console.log("add charge line:", chargeKey)
 
   // dummy behavior: add one line (you'll replace with real form later)
   chargeLines.value.push({
@@ -394,6 +394,6 @@ function onAddChargeLine(chargeKey: string) {
     markup: 0,
     sell: 0,
     total: 0,
-  });
+  })
 }
 </script>

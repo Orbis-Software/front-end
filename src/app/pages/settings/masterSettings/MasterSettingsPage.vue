@@ -5,7 +5,8 @@
         <div>
           <div class="ms-title">Master Settings</div>
           <div class="ms-subtitle">
-            Complete your company profile. This will be the main page for all job numbers and company information.
+            Complete your company profile. This will be the main page for all job numbers and
+            company information.
           </div>
 
           <button class="ms-pill" type="button">SYSTEM SETTINGS</button>
@@ -22,37 +23,55 @@
               <div class="ms-card-desc">Legal and registration details</div>
             </div>
 
-            <div class="ms-saved" v-if="company">
-              <span class="dot" /> Saved
-            </div>
+            <div class="ms-saved" v-if="company"><span class="dot" /> Saved</div>
           </div>
 
           <div class="ms-card-body">
             <div class="ms-field">
               <div class="ms-label">Company Name <span class="req">(required)</span></div>
-              <input v-model="form.legal_name" class="ms-input" placeholder="Enter full legal company name" />
+              <input
+                v-model="form.legal_name"
+                class="ms-input"
+                placeholder="Enter full legal company name"
+              />
             </div>
 
             <div class="ms-field">
               <div class="ms-label">Trading Name <span class="muted">(if different)</span></div>
-              <input v-model="form.trading_name" class="ms-input" placeholder="Enter trading name if different" />
+              <input
+                v-model="form.trading_name"
+                class="ms-input"
+                placeholder="Enter trading name if different"
+              />
             </div>
 
             <div class="ms-row2">
               <div class="ms-field">
                 <div class="ms-label">Registration Number</div>
-                <input v-model="form.registration_number" class="ms-input" placeholder="Company registration number" />
+                <input
+                  v-model="form.registration_number"
+                  class="ms-input"
+                  placeholder="Company registration number"
+                />
               </div>
               <div class="ms-field">
                 <div class="ms-label">VAT Number</div>
-                <input v-model="form.vat_number" class="ms-input" placeholder="VAT registration number" />
+                <input
+                  v-model="form.vat_number"
+                  class="ms-input"
+                  placeholder="VAT registration number"
+                />
               </div>
             </div>
 
             <div class="ms-row2">
               <div class="ms-field">
                 <div class="ms-label">EORI Number</div>
-                <input v-model="form.eori_number" class="ms-input" placeholder="Economic Operators Registration Num" />
+                <input
+                  v-model="form.eori_number"
+                  class="ms-input"
+                  placeholder="Economic Operators Registration Num"
+                />
               </div>
               <div class="ms-field">
                 <div class="ms-label">IATA Code</div>
@@ -74,12 +93,20 @@
           <div class="ms-card-body">
             <div class="ms-field">
               <div class="ms-label">Apartment/House Number</div>
-              <input v-model="form.trading_building" class="ms-input" placeholder="Suite, Building, Floor" />
+              <input
+                v-model="form.trading_building"
+                class="ms-input"
+                placeholder="Suite, Building, Floor"
+              />
             </div>
 
             <div class="ms-field">
               <div class="ms-label">Address Line 1 <span class="req">(required)</span></div>
-              <input v-model="form.trading_address_line_1" class="ms-input" placeholder="Street address" />
+              <input
+                v-model="form.trading_address_line_1"
+                class="ms-input"
+                placeholder="Street address"
+              />
             </div>
 
             <div class="ms-row2">
@@ -143,17 +170,29 @@
           <div class="ms-card-body">
             <div class="ms-field">
               <div class="ms-label">Main Contact Name <span class="req">(required)</span></div>
-              <input v-model="form.contact_name" class="ms-input" placeholder="Full name of main contact" />
+              <input
+                v-model="form.contact_name"
+                class="ms-input"
+                placeholder="Full name of main contact"
+              />
             </div>
 
             <div class="ms-row2">
               <div class="ms-field">
                 <div class="ms-label">Email <span class="req">(required)</span></div>
-                <input v-model="form.contact_email" class="ms-input" placeholder="email@company.com" />
+                <input
+                  v-model="form.contact_email"
+                  class="ms-input"
+                  placeholder="email@company.com"
+                />
               </div>
               <div class="ms-field">
                 <div class="ms-label">Mobile <span class="req">(required)</span></div>
-                <input v-model="form.contact_mobile" class="ms-input" placeholder="+44 7123 456789" />
+                <input
+                  v-model="form.contact_mobile"
+                  class="ms-input"
+                  placeholder="+44 7123 456789"
+                />
               </div>
             </div>
 
@@ -205,7 +244,12 @@
               <div class="ms-label">Additional Currencies</div>
 
               <div class="ms-inline">
-                <input v-model="addCurrencyInput" class="ms-input" placeholder="e.g. USD" maxlength="3" />
+                <input
+                  v-model="addCurrencyInput"
+                  class="ms-input"
+                  placeholder="e.g. USD"
+                  maxlength="3"
+                />
                 <button class="ms-btn" type="button" @click="addCurrency">+ Add Currency</button>
               </div>
 
@@ -222,7 +266,11 @@
             <div class="ms-row2">
               <div class="ms-field">
                 <div class="ms-label">Start Period</div>
-                <input v-model="form.settings_start_period" class="ms-input" placeholder="YYYY-MM-DD" />
+                <input
+                  v-model="form.settings_start_period"
+                  class="ms-input"
+                  placeholder="YYYY-MM-DD"
+                />
                 <div class="ms-help">System start date</div>
               </div>
               <div class="ms-field">
@@ -264,7 +312,11 @@
 
               <div class="ref-col">
                 <div class="ref-label">Year</div>
-                <input :value="year2(r.year_digits)" class="ms-input ms-input-sm ms-disabled" disabled />
+                <input
+                  :value="year2(r.year_digits)"
+                  class="ms-input ms-input-sm ms-disabled"
+                  disabled
+                />
               </div>
 
               <div class="ref-col ref-col-wide">
@@ -331,9 +383,7 @@
         </div>
       </div>
 
-      <div v-if="loading" style="margin-top: 12px; color: #555; font-size: 12px;">
-        Loading...
-      </div>
+      <div v-if="loading" style="margin-top: 12px; color: #555; font-size: 12px">Loading...</div>
     </div>
   </div>
 </template>

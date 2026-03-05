@@ -43,11 +43,46 @@ const uploadedList = computed<JobUploadedDocument[]>(() => {
   // fallback sample data (until backend is ready)
   return (
     props.uploaded ?? [
-      { id: 1, name: "Commercial Invoice.pdf", size_label: "2.4 MB", uploaded_at_label: "03/02/2026", uploaded_by: "John Smith", type: "pdf" },
-      { id: 2, name: "Packing List.docx", size_label: "1.1 MB", uploaded_at_label: "03/02/2026", uploaded_by: "Sarah Johnson", type: "doc" },
-      { id: 3, name: "Certificate of Origin.pdf", size_label: "1.8 MB", uploaded_at_label: "02/02/2026", uploaded_by: "John Smith", type: "pdf" },
-      { id: 4, name: "Insurance Certificate.pdf", size_label: "1.5 MB", uploaded_at_label: "02/02/2026", uploaded_by: "Sarah Johnson", type: "pdf" },
-      { id: 5, name: "Customer Purchase Order.xlsx", size_label: "3.2 MB", uploaded_at_label: "01/02/2026", uploaded_by: "Mike Wilson", type: "xls" },
+      {
+        id: 1,
+        name: "Commercial Invoice.pdf",
+        size_label: "2.4 MB",
+        uploaded_at_label: "03/02/2026",
+        uploaded_by: "John Smith",
+        type: "pdf",
+      },
+      {
+        id: 2,
+        name: "Packing List.docx",
+        size_label: "1.1 MB",
+        uploaded_at_label: "03/02/2026",
+        uploaded_by: "Sarah Johnson",
+        type: "doc",
+      },
+      {
+        id: 3,
+        name: "Certificate of Origin.pdf",
+        size_label: "1.8 MB",
+        uploaded_at_label: "02/02/2026",
+        uploaded_by: "John Smith",
+        type: "pdf",
+      },
+      {
+        id: 4,
+        name: "Insurance Certificate.pdf",
+        size_label: "1.5 MB",
+        uploaded_at_label: "02/02/2026",
+        uploaded_by: "Sarah Johnson",
+        type: "pdf",
+      },
+      {
+        id: 5,
+        name: "Customer Purchase Order.xlsx",
+        size_label: "3.2 MB",
+        uploaded_at_label: "01/02/2026",
+        uploaded_by: "Mike Wilson",
+        type: "xls",
+      },
     ]
   )
 })
@@ -55,10 +90,25 @@ const uploadedList = computed<JobUploadedDocument[]>(() => {
 const exportDocs: JobExportDoc[] = [
   { key: "transport_order", title: "Transport Order", icon: "pi pi-truck", status: "ready" },
   { key: "collection_order", title: "Collection Order", icon: "pi pi-inbox", status: "ready" },
-  { key: "shipping_instructions", title: "Shipping Instructions", icon: "pi pi-file-edit", status: "generate" },
-  { key: "commercial_invoice", title: "Commercial Invoice", icon: "pi pi-receipt", status: "generate" },
+  {
+    key: "shipping_instructions",
+    title: "Shipping Instructions",
+    icon: "pi pi-file-edit",
+    status: "generate",
+  },
+  {
+    key: "commercial_invoice",
+    title: "Commercial Invoice",
+    icon: "pi pi-receipt",
+    status: "generate",
+  },
   { key: "delivery_note", title: "Delivery Note", icon: "pi pi-file", status: "generate" },
-  { key: "proof_of_delivery", title: "Proof of Delivery", icon: "pi pi-verified", status: "generate" },
+  {
+    key: "proof_of_delivery",
+    title: "Proof of Delivery",
+    icon: "pi pi-verified",
+    status: "generate",
+  },
 ]
 
 function openFilePicker() {
@@ -117,7 +167,12 @@ function badgeClass(t?: JobDocFileType) {
               <div class="blockHead__title">Upload Documents</div>
             </div>
 
-            <div class="dropzone" :class="{ 'dropzone--disabled': disabled }" @drop="onDrop" @dragover="onDragOver">
+            <div
+              class="dropzone"
+              :class="{ 'dropzone--disabled': disabled }"
+              @drop="onDrop"
+              @dragover="onDragOver"
+            >
               <div class="dzIcon">
                 <i class="pi pi-cloud-upload" />
               </div>
@@ -147,7 +202,7 @@ function badgeClass(t?: JobDocFileType) {
             </div>
           </div>
 
-          <div class="block" style="margin-top: 14px;">
+          <div class="block" style="margin-top: 14px">
             <div class="blockHead">
               <i class="pi pi-file" />
               <div class="blockHead__title">Uploaded Documents ({{ uploadedList.length }})</div>
@@ -171,13 +226,31 @@ function badgeClass(t?: JobDocFileType) {
                 </div>
 
                 <div class="uploadedActions">
-                  <button class="iconBtn" type="button" title="View" :disabled="disabled" @click="emit('view', d.id)">
+                  <button
+                    class="iconBtn"
+                    type="button"
+                    title="View"
+                    :disabled="disabled"
+                    @click="emit('view', d.id)"
+                  >
                     <i class="pi pi-eye" />
                   </button>
-                  <button class="iconBtn" type="button" title="Download" :disabled="disabled" @click="emit('download', d.id)">
+                  <button
+                    class="iconBtn"
+                    type="button"
+                    title="Download"
+                    :disabled="disabled"
+                    @click="emit('download', d.id)"
+                  >
                     <i class="pi pi-download" />
                   </button>
-                  <button class="iconBtn iconBtn--danger" type="button" title="Delete" :disabled="disabled" @click="emit('remove', d.id)">
+                  <button
+                    class="iconBtn iconBtn--danger"
+                    type="button"
+                    title="Delete"
+                    :disabled="disabled"
+                    @click="emit('remove', d.id)"
+                  >
                     <i class="pi pi-trash" />
                   </button>
                 </div>

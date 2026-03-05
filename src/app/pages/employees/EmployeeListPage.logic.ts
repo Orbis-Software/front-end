@@ -146,11 +146,11 @@ export function useEmployeeListPage() {
 
   watch(
     searchLocal,
-    (val) => {
+    val => {
       // realtime search, but debounced
       runSearch(val ?? "")
     },
-    { immediate: false }
+    { immediate: false },
   )
 
   function clearSearch() {

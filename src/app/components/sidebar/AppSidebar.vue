@@ -147,53 +147,48 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from "vue";
-import { useRouter, useRoute } from "vue-router";
-import { useAuthStore } from "@/app/stores/auth";
-import {
-  SIDEBAR_GROUPS,
-  type SidebarGroup,
-  type SidebarLeaf,
-  type SidebarSubmenu,
-} from "./routes";
-import "./AppSidebar.css";
+import { computed, reactive, ref, watch } from "vue"
+import { useRouter, useRoute } from "vue-router"
+import { useAuthStore } from "@/app/stores/auth"
+import { SIDEBAR_GROUPS, type SidebarGroup, type SidebarLeaf, type SidebarSubmenu } from "./routes"
+import "./AppSidebar.css"
 
 type Props = {
-  embedded?: boolean;
-  visible?: boolean;
-  collapsed?: boolean;
-};
+  embedded?: boolean
+  visible?: boolean
+  collapsed?: boolean
+}
 
 const props = withDefaults(defineProps<Props>(), {
   embedded: false,
   visible: true,
   collapsed: false,
-});
+})
 
 const emit = defineEmits<{
-  (e: "update:visible", value: boolean): void;
-  (e: "update:collapsed", value: boolean): void;
-}>();
+  (e: "update:visible", value: boolean): void
+  (e: "update:collapsed", value: boolean): void
+}>()
 
-const router = useRouter();
-const route = useRoute();
-const authStore = useAuthStore();
+const router = useRouter()
+const route = useRoute()
+const authStore = useAuthStore()
 
-const groups = computed<SidebarGroup[]>(() => SIDEBAR_GROUPS);
+const groups = computed<SidebarGroup[]>(() => SIDEBAR_GROUPS)
 
-const collapsedLocal = ref<boolean>(props.collapsed);
+const collapsedLocal = ref<boolean>(props.collapsed)
 
 watch(
   () => props.collapsed,
-  (v) => (collapsedLocal.value = v),
-);
+  v => (collapsedLocal.value = v),
+)
 
 function toggleCollapsed() {
-  collapsedLocal.value = !collapsedLocal.value;
-  emit("update:collapsed", collapsedLocal.value);
+  collapsedLocal.value = !collapsedLocal.value
+  emit("update:collapsed", collapsedLocal.value)
 
   if (collapsedLocal.value) {
-    Object.keys(submenuOpen).forEach((k) => (submenuOpen[k] = false));
+    Object.keys(submenuOpen).forEach(k => (submenuOpen[k] = false))
   }
 }
 
@@ -201,68 +196,66 @@ const groupOpen = reactive<Record<string, boolean>>({
   tms: true,
   wms: true,
   mgmt: true,
-});
+})
 
 const submenuOpen = reactive<Record<string, boolean>>({
   contacts: false,
-});
+})
 
 function toggleGroup(key: string) {
-  groupOpen[key] = !groupOpen[key];
+  groupOpen[key] = !groupOpen[key]
 }
 
 function onSubmenuClick(key: string) {
   if (collapsedLocal.value) {
-    collapsedLocal.value = false;
-    emit("update:collapsed", false);
+    collapsedLocal.value = false
+    emit("update:collapsed", false)
   }
-  submenuOpen[key] = !submenuOpen[key];
+  submenuOpen[key] = !submenuOpen[key]
 }
 
 function go(path: string) {
-  router.push(path);
+  router.push(path)
 }
 
 function isActive(path: string) {
-  return route.path === path || route.path.startsWith(path + "/");
+  return route.path === path || route.path.startsWith(path + "/")
 }
 
 function isActiveSubmenu(item: SidebarSubmenu) {
-  return item.children.some((c) => isActive(c.to));
+  return item.children.some(c => isActive(c.to))
 }
 
 function itemKey(groupKey: string, item: SidebarLeaf | SidebarSubmenu) {
-  return item.type === "leaf"
-    ? `${groupKey}:${item.to}`
-    : `${groupKey}:submenu:${item.key}`;
+  return item.type === "leaf" ? `${groupKey}:${item.to}` : `${groupKey}:submenu:${item.key}`
 }
 
 async function logout() {
-  await authStore.logout();
-  router.push("/login");
+  await authStore.logout()
+  router.push("/login")
 }
 
-const userName = computed(() => authStore.user?.name ?? "User");
+const userName = computed(() => authStore.user?.name ?? "User")
 
 const initials = computed(() => {
-  const parts = userName.value.trim().split(/\s+/).filter(Boolean);
-  const first = parts[0]?.charAt(0) ?? "";
-  const second = parts[1]?.charAt(0) ?? "";
-  if (first && second) return (first + second).toUpperCase();
-  if (first) return first.toUpperCase();
-  return "U";
-});
+  const parts = userName.value.trim().split(/\s+/).filter(Boolean)
+  const first = parts[0]?.charAt(0) ?? ""
+  const second = parts[1]?.charAt(0) ?? ""
+  if (first && second) return (first + second).toUpperCase()
+  if (first) return first.toUpperCase()
+  return "U"
+})
 
 /**
  * ✅ Company branding (from auth user.company)
  * Prefer logo_url (if backend provides), else logo string, else fallback image
  */
 const companyName = computed(() => {
-  return authStore.user?.company?.legal_name ?? "Transport Programme";
-});
+  return authStore.user?.company?.legal_name ?? "Transport Programme"
+})
 
 const companyLogoSrc = computed(() => {
-  const c: any = authStore.user?.company;
-  return c?.logo_url ?? c?.logo ?? "/orbis-logo.png";
-});
+  const c: any = authStore.user?.company
+  return c?.logo_url ?? c?.logo ?? "/orbis-logo.png"
+})
 </script>

@@ -8,26 +8,26 @@ export type JobDetailsTabKey =
   | "invoices"
   | "packages"
   | "customs"
-  | "notes";
+  | "notes"
 
 export type JobDetailsTabItem = {
-  key: JobDetailsTabKey;
-  label: string;
-};
+  key: JobDetailsTabKey
+  label: string
+}
 
 const props = defineProps<{
-  modelValue: JobDetailsTabKey;
-  tabs: JobDetailsTabItem[];
-  disabled?: boolean;
-}>();
+  modelValue: JobDetailsTabKey
+  tabs: JobDetailsTabItem[]
+  disabled?: boolean
+}>()
 
 const emit = defineEmits<{
-  (e: "update:modelValue", v: JobDetailsTabKey): void;
-}>();
+  (e: "update:modelValue", v: JobDetailsTabKey): void
+}>()
 
 function selectTab(key: JobDetailsTabKey) {
-  if (props.disabled) return;
-  emit("update:modelValue", key);
+  if (props.disabled) return
+  emit("update:modelValue", key)
 }
 </script>
 

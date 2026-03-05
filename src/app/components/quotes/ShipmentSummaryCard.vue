@@ -1,7 +1,7 @@
 <template>
   <section class="card section">
     <div class="ss-head">
-      <div class="section-title" style="margin:0">Shipment Summary</div>
+      <div class="section-title" style="margin: 0">Shipment Summary</div>
 
       <Button class="btn orbis-primary" outlined type="button" @click="$emit('edit-dimensions')">
         Edit Dimensions
@@ -42,20 +42,20 @@
 </template>
 
 <script setup lang="ts">
-import Button from "primevue/button";
+import Button from "primevue/button"
 
 export type ShipmentSummary = {
-  nop: number;
-  actualWeight: string | number;
-  chargeableWeight: string | number;
-  cube: string | number;
-  weightUnit?: string; // kg
-  cubeUnit?: string; // m³
-};
+  nop: number
+  actualWeight: string | number
+  chargeableWeight: string | number
+  cube: string | number
+  weightUnit?: string // kg
+  cubeUnit?: string // m³
+}
 
 withDefaults(
   defineProps<{
-    data: ShipmentSummary;
+    data: ShipmentSummary
   }>(),
   {
     data: () => ({
@@ -66,10 +66,10 @@ withDefaults(
       weightUnit: "kg",
       cubeUnit: "m³",
     }),
-  }
-);
+  },
+)
 
 defineEmits<{
-  (e: "edit-dimensions"): void;
-}>();
+  (e: "edit-dimensions"): void
+}>()
 </script>

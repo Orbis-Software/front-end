@@ -6,19 +6,18 @@
         <div class="page-subtitle">Manage all transport jobs</div>
       </div>
 
-    <div class="page-actions">
+      <div class="page-actions">
         <span class="p-input-icon-left search-wrap">
-            <i class="pi pi-search" />
-            <InputText
+          <i class="pi pi-search" />
+          <InputText
             v-model="searchText"
             class="search-input"
             placeholder="Search job number, customer, quote ref..."
-            />
+          />
         </span>
 
         <Button class="orbis-primary" icon="pi pi-plus" label="New Job" @click="onNewJob" />
-    </div>
-
+      </div>
     </div>
 
     <section class="filters-card">
@@ -66,18 +65,18 @@
         <Column header="Job" style="width: 260px">
           <template #body="{ data }">
             <div class="job-cell">
-                  <!-- clickable job number -->
-                  <button
-                    type="button"
-                    class="job-number job-link"
-                    @click="onEdit(data.id)"
-                    title="Open job"
-                  >
-                    {{ data.job_number }}
-                  </button>
+              <!-- clickable job number -->
+              <button
+                type="button"
+                class="job-number job-link"
+                @click="onEdit(data.id)"
+                title="Open job"
+              >
+                {{ data.job_number }}
+              </button>
 
-                  <div class="muted">#{{ data.id }}</div>
-                </div>
+              <div class="muted">#{{ data.id }}</div>
+            </div>
           </template>
         </Column>
 
@@ -120,7 +119,14 @@
 
         <Column header="" style="width: 190px" bodyClass="actions-col">
           <template #body="{ data }">
-            <Button text size="small" icon="pi pi-pencil" label="Edit" class="action-btn" @click="onEdit(data.id)" />
+            <Button
+              text
+              size="small"
+              icon="pi pi-pencil"
+              label="Edit"
+              class="action-btn"
+              @click="onEdit(data.id)"
+            />
             <Button
               text
               size="small"
@@ -135,9 +141,7 @@
       </DataTable>
 
       <div class="table-footer">
-        <div class="muted">
-          Page {{ page }} of {{ lastPage }} • {{ total }} total
-        </div>
+        <div class="muted">Page {{ page }} of {{ lastPage }} • {{ total }} total</div>
 
         <Paginator
           :rows="perPage"

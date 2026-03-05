@@ -39,20 +39,20 @@
 </template>
 
 <script setup lang="ts">
-import Button from "primevue/button";
+import Button from "primevue/button"
 
 withDefaults(
   defineProps<{
-    cancelLabel?: string;
-    saveLabel?: string;
-    sendLabel?: string;
+    cancelLabel?: string
+    saveLabel?: string
+    sendLabel?: string
 
-    loading?: boolean; // loading for Save
-    loadingPrimary?: boolean; // loading for Send
+    loading?: boolean // loading for Save
+    loadingPrimary?: boolean // loading for Send
 
-    cancelDisabled?: boolean;
-    saveDisabled?: boolean;
-    sendDisabled?: boolean;
+    cancelDisabled?: boolean
+    saveDisabled?: boolean
+    sendDisabled?: boolean
   }>(),
   {
     cancelLabel: "Cancel",
@@ -63,14 +63,14 @@ withDefaults(
     cancelDisabled: false,
     saveDisabled: false,
     sendDisabled: false,
-  }
-);
+  },
+)
 
 defineEmits<{
-  (e: "cancel"): void;
-  (e: "save"): void;
-  (e: "send"): void;
-}>();
+  (e: "cancel"): void
+  (e: "save"): void
+  (e: "send"): void
+}>()
 </script>
 
 <style scoped>

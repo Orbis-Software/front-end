@@ -1,22 +1,19 @@
-import type { TransportJob } from "@/app/types/transport-job";
-import jobFileTransformer from "@/app/transformers/job-file";
+import type { TransportJob } from "@/app/types/transport-job"
+import jobFileTransformer from "@/app/transformers/job-file"
 
 // If you already have contact transformer you can use it.
 // For now we accept raw customer_contact into Contact type shape.
 const transportJobTransformer = {
   fetch(raw: any): TransportJob {
-    const filesRaw = raw.files ?? raw.job_files ?? [];
-    const customerRaw =
-      raw.customer_contact ?? raw.customerContact ?? raw.customer ?? null;
+    const filesRaw = raw.files ?? raw.job_files ?? []
+    const customerRaw = raw.customer_contact ?? raw.customerContact ?? raw.customer ?? null
 
     return {
       id: Number(raw.id),
       company_id: Number(raw.company_id),
 
       customer_id:
-        raw.customer_id === null || raw.customer_id === undefined
-          ? null
-          : Number(raw.customer_id),
+        raw.customer_id === null || raw.customer_id === undefined ? null : Number(raw.customer_id),
 
       account_number: raw.account_number ?? null,
 
@@ -36,13 +33,13 @@ const transportJobTransformer = {
       created_at: raw.created_at ?? undefined,
       updated_at: raw.updated_at ?? undefined,
       deleted_at: raw.deleted_at ?? undefined,
-    };
+    }
   },
 
   fetchCollection(raw: any): TransportJob[] {
-    if (!Array.isArray(raw)) return [];
-    return raw.map((x) => transportJobTransformer.fetch(x));
+    if (!Array.isArray(raw)) return []
+    return raw.map(x => transportJobTransformer.fetch(x))
   },
-};
+}
 
-export default transportJobTransformer;
+export default transportJobTransformer

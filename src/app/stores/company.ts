@@ -1,12 +1,12 @@
-import { defineStore } from 'pinia'
-import { ref } from 'vue'
-import type { Company, CompanyUpdatePayload } from '@/app/types/company'
-import companyService from '@/app/services/company'
-import { useAuthStore } from '@/app/stores/auth'
+import { defineStore } from "pinia"
+import { ref } from "vue"
+import type { Company, CompanyUpdatePayload } from "@/app/types/company"
+import companyService from "@/app/services/company"
+import { useAuthStore } from "@/app/stores/auth"
 
 type UpdatePayload = CompanyUpdatePayload | FormData
 
-export const useCompanyStore = defineStore('company', () => {
+export const useCompanyStore = defineStore("company", () => {
   const item = ref<Company | null>(null)
   const loading = ref(false)
   const saving = ref(false)

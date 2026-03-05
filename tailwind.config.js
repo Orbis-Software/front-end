@@ -7,9 +7,9 @@ export default {
         body: ["Inter"],
         accent: ["IBM Plex Sans"],
       },
-      colors: { 
-        primary: 'var(--primary)',
-          'primary-hover': 'var(--primary-hover)',
+      colors: {
+        primary: "var(--primary)",
+        "primary-hover": "var(--primary-hover)",
         orbis: {
           primary: "#EC691A",
           primaryHover: "#D85F17",
@@ -32,4 +32,4 @@ export default {
     },
   },
   plugins: [],
-};
+}

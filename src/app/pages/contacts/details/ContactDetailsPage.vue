@@ -46,17 +46,15 @@ const {
 
             <span class="dot">•</span>
             <span class="metaItem">
-              {{ (contact.collection_addresses?.length ?? 0) }} collection addresses
+              {{ contact.collection_addresses?.length ?? 0 }} collection addresses
             </span>
 
             <span class="dot">•</span>
-            <span class="metaItem">
-              {{ (contact.branches?.length ?? 0) }} branches
-            </span>
+            <span class="metaItem"> {{ contact.branches?.length ?? 0 }} branches </span>
           </div>
         </div>
 
-        <div class="pageHeader__right" style="display:flex; gap:10px;">
+        <div class="pageHeader__right" style="display: flex; gap: 10px">
           <Button
             type="button"
             class="btn btn--ghost orbis-muted"
@@ -98,7 +96,6 @@ const {
               @save="saveCollectionAddress"
               @cancel="load"
             />
-            
           </template>
         </div>
       </div>

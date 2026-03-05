@@ -1,7 +1,7 @@
-import { defineStore } from "pinia";
-import { computed, ref } from "vue";
-import type { DashboardData, SidebarState } from "@/app/types/dashboard";
-import { toDashboardData } from "@/app/transformers/dashboard";
+import { defineStore } from "pinia"
+import { computed, ref } from "vue"
+import type { DashboardData, SidebarState } from "@/app/types/dashboard"
+import { toDashboardData } from "@/app/transformers/dashboard"
 
 const SEED: DashboardData = {
   kpis: [
@@ -27,7 +27,7 @@ const SEED: DashboardData = {
     { time: "12:45", text: "Invoice INV-1007 exported" },
     { time: "14:15", text: "Exception raised for PC-240201" },
   ],
-};
+}
 
 export const useDashboardStore = defineStore("dashboard", () => {
   // UI state
@@ -37,26 +37,26 @@ export const useDashboardStore = defineStore("dashboard", () => {
     tmsOpen: true,
     wmsOpen: true,
     mgmtOpen: true,
-  });
+  })
 
   // Data state
-  const data = ref<DashboardData>(toDashboardData(SEED));
+  const data = ref<DashboardData>(toDashboardData(SEED))
 
   // Getters
-  const sidebarWidthPx = computed(() => (sidebar.value.sidebarOpen ? 208 : 64));
+  const sidebarWidthPx = computed(() => (sidebar.value.sidebarOpen ? 208 : 64))
 
   // Actions
   function toggleSidebar() {
-    sidebar.value.sidebarOpen = !sidebar.value.sidebarOpen;
+    sidebar.value.sidebarOpen = !sidebar.value.sidebarOpen
   }
 
   function toggleSection(key: keyof SidebarState) {
     // Optional: prevent toggling sidebarOpen here if you want
-    sidebar.value[key] = !sidebar.value[key];
+    sidebar.value[key] = !sidebar.value[key]
   }
 
   async function fetchDashboard() {
-    data.value = toDashboardData(SEED);
+    data.value = toDashboardData(SEED)
   }
 
   return {
@@ -66,5 +66,5 @@ export const useDashboardStore = defineStore("dashboard", () => {
     toggleSidebar,
     toggleSection,
     fetchDashboard,
-  };
-});
+  }
+})

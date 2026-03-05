@@ -163,7 +163,12 @@
                   </div>
 
                   <div class="sa-group__actions">
-                    <Button label="Select all" icon="pi pi-check-square" outlined @click="selectAllUnmapped" />
+                    <Button
+                      label="Select all"
+                      icon="pi pi-check-square"
+                      outlined
+                      @click="selectAllUnmapped"
+                    />
                     <Button label="Clear" icon="pi pi-times" outlined @click="clearAllUnmapped" />
                     <small class="sa-muted sa-group__count">
                       {{ countSelectedUnmapped }} / {{ unmappedPermissions.length }}
@@ -185,7 +190,8 @@
           <div class="sa-section">
             <div class="sa-section__title">Effective Permissions</div>
             <div class="sa-muted">
-              Effective = roles + direct. “Role” ones won’t be removed by unchecking direct permissions.
+              Effective = roles + direct. “Role” ones won’t be removed by unchecking direct
+              permissions.
             </div>
 
             <div v-if="!store.selected.effective_permissions.length" class="sa-muted">—</div>
@@ -202,7 +208,9 @@
                     <span class="sa-effItem__label">{{ p.label }}</span>
                     <span class="sa-effItem__code">{{ p.permission }}</span>
 
-                    <span v-if="p.source === 'direct'" class="sa-badge sa-badge--direct">Direct</span>
+                    <span v-if="p.source === 'direct'" class="sa-badge sa-badge--direct"
+                      >Direct</span
+                    >
                     <span v-else class="sa-badge sa-badge--role">Role</span>
                   </div>
                 </div>

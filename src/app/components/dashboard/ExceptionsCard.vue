@@ -20,5 +20,5 @@
 </template>
 
 <script setup lang="ts">
-defineProps<{ items: { ref: string; desc: string; timeAgo: string }[] }>();
+defineProps<{ items: { ref: string; desc: string; timeAgo: string }[] }>()
 </script>

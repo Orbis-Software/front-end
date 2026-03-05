@@ -41,11 +41,11 @@ function saveBranch(branchId: number, patch: Partial<ContactBranch>) {
       :key="b.id ?? `new-${index}`"
       :branch="b"
       @delete="removeAt(index)"
-      @save="(patch) => saveBranch(b.id, patch)"
+      @save="patch => saveBranch(b.id, patch)"
     />
   </div>
 
-  <div v-if="branches.length === 0" class="loading" style="padding: 14px 0;">
+  <div v-if="branches.length === 0" class="loading" style="padding: 14px 0">
     No branches yet. Click “Add new branch”.
   </div>
 </template>

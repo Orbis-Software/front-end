@@ -1,10 +1,10 @@
-import { defineStore } from 'pinia'
-import type { User } from '@/app/types/user'
-import AuthService from '@/app/services/auth'
+import { defineStore } from "pinia"
+import type { User } from "@/app/types/user"
+import AuthService from "@/app/services/auth"
 
-const TOKEN_KEY = 'auth_token'
+const TOKEN_KEY = "auth_token"
 
-export const useAuthStore = defineStore('auth', {
+export const useAuthStore = defineStore("auth", {
   /*
   |--------------------------------------------------------------------------
   | State
@@ -25,31 +25,29 @@ export const useAuthStore = defineStore('auth', {
     /**
      * Basic Auth State
      */
-    isAuthenticated: (state) => !!state.user && !!state.token,
+    isAuthenticated: state => !!state.user && !!state.token,
 
     /**
      * Role helpers
      */
-    roles: (state) => state.user?.roles ?? [],
-    permissions: (state) => state.user?.permissions ?? [],
+    roles: state => state.user?.roles ?? [],
+    permissions: state => state.user?.permissions ?? [],
 
-    isAdmin: (state) => state.user?.is_admin ?? false,
-    isDev: (state) => state.user?.is_dev ?? false,
+    isAdmin: state => state.user?.is_admin ?? false,
+    isDev: state => state.user?.is_dev ?? false,
 
     /**
      * Dynamic Role Checker
      */
-    hasRole: (state) => {
-      return (role: string): boolean =>
-        state.user?.roles.includes(role) ?? false
+    hasRole: state => {
+      return (role: string): boolean => state.user?.roles.includes(role) ?? false
     },
 
     /**
      * Dynamic Permission Checker
      */
-    hasPermission: (state) => {
-      return (permission: string): boolean =>
-        state.user?.permissions.includes(permission) ?? false
+    hasPermission: state => {
+      return (permission: string): boolean => state.user?.permissions.includes(permission) ?? false
     },
   },
 
