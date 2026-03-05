@@ -43,7 +43,7 @@ export function useJobsListPage() {
   function prettify(v: any) {
     return String(v ?? "")
       .replace(/_/g, " ")
-      .replace(/\b\w/g, (c) => c.toUpperCase())
+      .replace(/\b\w/g, c => c.toUpperCase())
   }
 
   function toJobTypeParam(): JobType | undefined {
@@ -103,14 +103,14 @@ export function useJobsListPage() {
     () => {
       if (t) clearTimeout(t)
       t = setTimeout(() => fetchNow(true), 300)
-    }
+    },
   )
 
   watch(
     () => [jobTypeFilter.value, modeFilter.value],
     () => {
       fetchNow(true)
-    }
+    },
   )
 
   onMounted(async () => {

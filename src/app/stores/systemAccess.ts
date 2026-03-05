@@ -67,7 +67,10 @@ export const useSystemAccessStore = defineStore("systemAccess", () => {
     if (!selected.value) return null
     savingPerms.value = true
     try {
-      selected.value = await systemAccessService.syncEmployeePermissions(selected.value.id, permissionNames)
+      selected.value = await systemAccessService.syncEmployeePermissions(
+        selected.value.id,
+        permissionNames,
+      )
       return selected.value
     } finally {
       savingPerms.value = false

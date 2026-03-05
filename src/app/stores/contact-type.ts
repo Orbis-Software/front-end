@@ -1,10 +1,10 @@
-import { defineStore } from 'pinia'
-import { ref } from 'vue'
-import type { ContactType } from '@/app/types/contact-type'
-import contactTypesApi from '@/app/services/contact-types'
-import contactTypeTransformer from '@/app/transformers/contact-type'
+import { defineStore } from "pinia"
+import { ref } from "vue"
+import type { ContactType } from "@/app/types/contact-type"
+import contactTypesApi from "@/app/services/contact-types"
+import contactTypeTransformer from "@/app/transformers/contact-type"
 
-export const useContactTypeStore = defineStore('contactType', () => {
+export const useContactTypeStore = defineStore("contactType", () => {
   const items = ref<ContactType[]>([])
   const loading = ref(false)
 
@@ -26,11 +26,11 @@ export const useContactTypeStore = defineStore('contactType', () => {
   }
 
   function findByCode(code: string) {
-    return items.value.find((t) => t.code === code) ?? null
+    return items.value.find(t => t.code === code) ?? null
   }
 
   function findById(id: number) {
-    return items.value.find((t) => t.id === id) ?? null
+    return items.value.find(t => t.id === id) ?? null
   }
 
   return {

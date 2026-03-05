@@ -7,7 +7,7 @@ type Payload = Partial<Omit<ContactBranch, "id">>
 export default async function updateBranch(
   contactId: number,
   branchId: number,
-  payload: Payload
+  payload: Payload,
 ): Promise<Contact> {
   const response = await http.patch(`/contacts/${contactId}/branches/${branchId}`, payload)
   return contactTransformer.fetch(response.data)

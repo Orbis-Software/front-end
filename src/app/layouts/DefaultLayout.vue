@@ -1,24 +1,24 @@
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount } from "vue";
-import { useRoute } from "vue-router";
-import AppHeader from "@/app/components/header/AppHeader.vue";
-import AppTopNav from "@/app/components/nav/AppTopNav.vue";
-import { useUiStore } from "@/app/stores/ui";
+import { onMounted, onBeforeUnmount } from "vue"
+import { useRoute } from "vue-router"
+import AppHeader from "@/app/components/header/AppHeader.vue"
+import AppTopNav from "@/app/components/nav/AppTopNav.vue"
+import { useUiStore } from "@/app/stores/ui"
 
-const ui = useUiStore();
-const route = useRoute();
+const ui = useUiStore()
+const route = useRoute()
 
 function onResize() {
-  ui.setDesktop(window.innerWidth >= 1024);
-  if (window.innerWidth >= 1024) ui.mobileNavOpen = false;
+  ui.setDesktop(window.innerWidth >= 1024)
+  if (window.innerWidth >= 1024) ui.mobileNavOpen = false
 }
 
 onMounted(() => {
-  ui.setDesktop(window.innerWidth >= 1024);
-  window.addEventListener("resize", onResize);
-});
+  ui.setDesktop(window.innerWidth >= 1024)
+  window.addEventListener("resize", onResize)
+})
 
-onBeforeUnmount(() => window.removeEventListener("resize", onResize));
+onBeforeUnmount(() => window.removeEventListener("resize", onResize))
 </script>
 
 <template>
@@ -52,15 +52,16 @@ onBeforeUnmount(() => window.removeEventListener("resize", onResize));
   flex-direction: column;
 }
 
-/* ✅ Header + Nav sticky */
+/* ✅ Header + Nav sticky (full width) */
 .sticky-chrome {
   position: sticky;
   top: 0;
   z-index: 300;
   background: #fff;
+  width: 100%;
 }
 
-/* Centered container like TransportPro */
+/* ✅ Content stays centered */
 .app-content {
   width: 100%;
   max-width: 1400px;
@@ -69,9 +70,15 @@ onBeforeUnmount(() => window.removeEventListener("resize", onResize));
   flex: 1;
 }
 
-@media (max-width: 1200px) {
+@media (max-width: 1280px) {
   .app-content {
     padding: 22px 20px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .app-content {
+    padding: 18px 14px;
   }
 }
 </style>

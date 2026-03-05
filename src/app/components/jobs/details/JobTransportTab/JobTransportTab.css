@@ -158,14 +158,14 @@
 .job-transport .dims-total {
   display: grid;
   grid-template-columns:
-    180px  /* Packaging */
-    70px   /* Qty */
-    110px  /* Length */
-    110px  /* Width */
-    110px  /* Height */
-    150px  /* Gross Weight */
-    120px  /* Cube */
-    130px  /* Volume */
+    180px /* Packaging */
+    70px /* Qty */
+    110px /* Length */
+    110px /* Width */
+    110px /* Height */
+    150px /* Gross Weight */
+    120px /* Cube */
+    130px /* Volume */
     110px; /* LDM */
 
   column-gap: 12px;
@@ -207,7 +207,7 @@
 .job-transport .dims-total > * {
   min-width: 0 !important;
   max-width: 100% !important;
-  overflow: hidden;          /* stops Gross spilling into Cube */
+  overflow: hidden; /* stops Gross spilling into Cube */
   box-sizing: border-box;
 }
 
@@ -226,7 +226,7 @@
   min-width: 0 !important;
   max-width: 100% !important;
   display: block !important;
-  flex: 0 0 auto !important;   /* stop flex growth */
+  flex: 0 0 auto !important; /* stop flex growth */
   overflow: hidden;
   box-sizing: border-box;
 }

@@ -4,12 +4,8 @@
     <div class="kpi-value">
       {{ kpi.value }}
 
-      <span
-        v-if="kpi.delta"
-        class="pill"
-        :class="kpi.delta.direction === 'up' ? 'up' : 'down'"
-      >
-        {{ kpi.delta.direction === 'up' ? '↗' : '↘' }}
+      <span v-if="kpi.delta" class="pill" :class="kpi.delta.direction === 'up' ? 'up' : 'down'">
+        {{ kpi.delta.direction === "up" ? "↗" : "↘" }}
         {{ kpi.delta.text }}
       </span>
     </div>
@@ -18,11 +14,11 @@
 
 <script setup lang="ts">
 type Kpi = {
-  key: string;
-  label: string;
-  value: string | number;
-  delta?: { direction: "up" | "down"; text: string };
-};
+  key: string
+  label: string
+  value: string | number
+  delta?: { direction: "up" | "down"; text: string }
+}
 
-defineProps<{ kpi: Kpi }>();
+defineProps<{ kpi: Kpi }>()
 </script>

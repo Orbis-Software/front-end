@@ -10,10 +10,10 @@
 
 <script setup lang="ts">
 defineProps<{
-  title: string;
-  subtitle?: string;
-  badge?: string;
-}>();
+  title: string
+  subtitle?: string
+  badge?: string
+}>()
 </script>
 
 <style scoped>

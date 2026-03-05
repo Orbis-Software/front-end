@@ -14,7 +14,7 @@
           <i class="pi pi-search" />
           <InputText
             :modelValue="search"
-            @update:modelValue="(v) => onSearchInput(v ?? '')"
+            @update:modelValue="v => onSearchInput(v ?? '')"
             placeholder="Search company, address, EORI..."
           />
         </span>
@@ -74,32 +74,31 @@
         <Column header="Company" style="width: 280px">
           <template #body="{ data }">
             <button class="link-strong" type="button" @click="onOpenCompany(data.id)">
-              {{ data.company_name || '—' }}
+              {{ data.company_name || "—" }}
             </button>
 
             <div class="muted subline">
-              {{ data.account_number || 'No account number' }}
+              {{ data.account_number || "No account number" }}
             </div>
           </template>
         </Column>
 
-
         <Column header="Address">
           <template #body="{ data }">
-            {{ data.address_line_1 || '—' }}
+            {{ data.address_line_1 || "—" }}
           </template>
         </Column>
 
         <Column header="EORI" style="width: 220px">
           <template #body="{ data }">
-            {{ data.eori || '—' }}
+            {{ data.eori || "—" }}
           </template>
         </Column>
 
         <Column header="Types" style="width: 340px">
           <template #body="{ data }">
             <div class="type-badges">
-              <span v-for="t in (data.contact_types || [])" :key="t.id" class="badge">
+              <span v-for="t in data.contact_types || []" :key="t.id" class="badge">
                 {{ t.name }}
               </span>
               <span v-if="!(data.contact_types || []).length" class="badge muted">—</span>
@@ -142,8 +141,8 @@
 </template>
 
 <script setup lang="ts">
-import './ContactsPage.css'
-import { useContactsPage } from './ContactsPage'
+import "./ContactsPage.css"
+import { useContactsPage } from "./ContactsPage"
 
 const {
   store,
@@ -156,6 +155,6 @@ const {
   onCreate,
   onEdit,
   onDelete,
-  onOpenCompany
+  onOpenCompany,
 } = useContactsPage()
 </script>

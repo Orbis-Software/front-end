@@ -46,7 +46,7 @@ function flattenNavToPermRows(items: NavItem[]): PermRow[] {
   const rows: PermRow[] = []
 
   const pushPerms = (node: NavItem, perms: string[]) => {
-    perms.forEach((p) => {
+    perms.forEach(p => {
       rows.push({
         key: `${node.id}:${p}`,
         label: node.label,
@@ -65,10 +65,10 @@ function flattenNavToPermRows(items: NavItem[]): PermRow[] {
 
       // ✅ Build a set of permissions that are already represented by children
       const childPerms = new Set<string>()
-      node.children.forEach((c) => collectPermissionsFromItem(c).forEach((p) => childPerms.add(p)))
+      node.children.forEach(c => collectPermissionsFromItem(c).forEach(p => childPerms.add(p)))
 
       // ✅ Only keep parent perms that are NOT already in children
-      const parentOnly = nodePerms.filter((p) => !childPerms.has(p))
+      const parentOnly = nodePerms.filter(p => !childPerms.has(p))
       pushPerms(node, parentOnly)
       return
     }
@@ -81,7 +81,7 @@ function flattenNavToPermRows(items: NavItem[]): PermRow[] {
 
   // ✅ Final de-dupe by permission (keep FIRST occurrence = most specific due to child-first walk)
   const seenPerm = new Set<string>()
-  return rows.filter((r) => {
+  return rows.filter(r => {
     if (seenPerm.has(r.permission)) return false
     seenPerm.add(r.permission)
     return true
@@ -101,16 +101,16 @@ export function useSystemAccessPage() {
   // Hide dev role
   const HIDDEN_ROLES = new Set(["dev"])
   const rolesOptions = computed(() =>
-    (store.roles ?? []).filter((r) => !HIDDEN_ROLES.has(String(r).toLowerCase()))
+    (store.roles ?? []).filter(r => !HIDDEN_ROLES.has(String(r).toLowerCase())),
   )
 
   watch(
     rolesDraft,
-    (val) => {
-      const next = (val ?? []).filter((r) => !HIDDEN_ROLES.has(String(r).toLowerCase()))
+    val => {
+      const next = (val ?? []).filter(r => !HIDDEN_ROLES.has(String(r).toLowerCase()))
       if (next.length !== (val ?? []).length) rolesDraft.value = next
     },
-    { deep: true }
+    { deep: true },
   )
 
   const runSearch = debounce(async (val: string) => {
@@ -130,7 +130,7 @@ export function useSystemAccessPage() {
     }
   }, 300)
 
-  watch(searchLocal, (val) => runSearch(val ?? ""))
+  watch(searchLocal, val => runSearch(val ?? ""))
 
   function clearSearch() {
     searchLocal.value = ""
@@ -143,7 +143,7 @@ export function useSystemAccessPage() {
     try {
       const selected = await store.selectEmployee(Number(row.id))
       rolesDraft.value = [...(selected?.roles ?? [])].filter(
-        (r) => !HIDDEN_ROLES.has(String(r).toLowerCase())
+        r => !HIDDEN_ROLES.has(String(r).toLowerCase()),
       )
       permsDraft.value = [...(selected?.direct_permissions ?? [])]
     } catch (err: any) {
@@ -159,59 +159,57 @@ export function useSystemAccessPage() {
   // ✅ Build grouped permissions from nav structure
   const nav = useTopNavItems()
 
-const permissionGroups = computed<PermGroup[]>(() => {
-  const effective = new Set(store.selected?.effective_permissions ?? [])
-  const direct = new Set(store.selected?.direct_permissions ?? [])
+  const permissionGroups = computed<PermGroup[]>(() => {
+    const effective = new Set(store.selected?.effective_permissions ?? [])
+    const direct = new Set(store.selected?.direct_permissions ?? [])
 
-  const roleOnlyPermissions = new Set(
-    Array.from(effective).filter((p) => !direct.has(p))
-  )
+    const roleOnlyPermissions = new Set(Array.from(effective).filter(p => !direct.has(p)))
 
-  const buildGroup = (id: string, label: string, icon: string, items: NavItem[]) => {
-    const rows = flattenNavToPermRows(items)
+    const buildGroup = (id: string, label: string, icon: string, items: NavItem[]) => {
+      const rows = flattenNavToPermRows(items)
 
-    // ✅ FILTER OUT permissions that are granted via role only
-    const filtered = rows.filter((row) => {
-      return !roleOnlyPermissions.has(row.permission)
-    })
+      // ✅ FILTER OUT permissions that are granted via role only
+      const filtered = rows.filter(row => {
+        return !roleOnlyPermissions.has(row.permission)
+      })
 
-    return {
-      id,
-      label,
-      icon,
-      items: filtered,
+      return {
+        id,
+        label,
+        icon,
+        items: filtered,
+      }
     }
-  }
 
-  const groups = [
-    buildGroup("tms", "TMS", "pi pi-home", nav.tms),
-    buildGroup("wms", "WMS", "pi pi-warehouse", nav.wms),
-    buildGroup("mgmt", "Management", "pi pi-cog", nav.management),
-  ]
+    const groups = [
+      buildGroup("tms", "TMS", "pi pi-home", nav.tms),
+      buildGroup("wms", "WMS", "pi pi-warehouse", nav.wms),
+      buildGroup("mgmt", "Management", "pi pi-cog", nav.management),
+    ]
 
-  return groups.filter((g) => g.items.length > 0)
-})
+    return groups.filter(g => g.items.length > 0)
+  })
 
   // Permissions not covered by nav mapping (still selectable)
   const allMapped = computed(() => {
     const set = new Set<string>()
-    permissionGroups.value.forEach((g) => g.items.forEach((i) => set.add(i.permission)))
+    permissionGroups.value.forEach(g => g.items.forEach(i => set.add(i.permission)))
     return set
   })
 
   const unmappedPermissions = computed(() => {
-    return (store.permissions ?? []).filter((p) => !allMapped.value.has(p))
+    return (store.permissions ?? []).filter(p => !allMapped.value.has(p))
   })
 
   function selectAllGroup(group: PermGroup) {
     const set = new Set(permsDraft.value ?? [])
-    group.items.forEach((i) => set.add(i.permission))
+    group.items.forEach(i => set.add(i.permission))
     permsDraft.value = Array.from(set)
   }
 
   function clearAllGroup(group: PermGroup) {
-    const remove = new Set(group.items.map((i) => i.permission))
-    permsDraft.value = (permsDraft.value ?? []).filter((p) => !remove.has(p))
+    const remove = new Set(group.items.map(i => i.permission))
+    permsDraft.value = (permsDraft.value ?? []).filter(p => !remove.has(p))
   }
 
   function countSelectedInGroup(group: PermGroup) {
@@ -225,13 +223,13 @@ const permissionGroups = computed<PermGroup[]>(() => {
 
   function selectAllUnmapped() {
     const set = new Set(permsDraft.value ?? [])
-    unmappedPermissions.value.forEach((p) => set.add(p))
+    unmappedPermissions.value.forEach(p => set.add(p))
     permsDraft.value = Array.from(set)
   }
 
   function clearAllUnmapped() {
     const remove = new Set(unmappedPermissions.value)
-    permsDraft.value = (permsDraft.value ?? []).filter((p) => !remove.has(p))
+    permsDraft.value = (permsDraft.value ?? []).filter(p => !remove.has(p))
   }
 
   const countSelectedUnmapped = computed(() => {
@@ -243,12 +241,17 @@ const permissionGroups = computed<PermGroup[]>(() => {
     if (!store.selected) return
     try {
       const safeRoles = (rolesDraft.value ?? []).filter(
-        (r) => !HIDDEN_ROLES.has(String(r).toLowerCase())
+        r => !HIDDEN_ROLES.has(String(r).toLowerCase()),
       )
       const updated = await store.saveRoles(safeRoles)
-      toast.add({ severity: "success", summary: "Roles saved", detail: "Updated employee roles.", life: 2500 })
+      toast.add({
+        severity: "success",
+        summary: "Roles saved",
+        detail: "Updated employee roles.",
+        life: 2500,
+      })
       rolesDraft.value = [...(updated?.roles ?? [])].filter(
-        (r) => !HIDDEN_ROLES.has(String(r).toLowerCase())
+        r => !HIDDEN_ROLES.has(String(r).toLowerCase()),
       )
     } catch (err: any) {
       toast.add({
@@ -288,8 +291,8 @@ const permissionGroups = computed<PermGroup[]>(() => {
 
     const mapGroup = (group: PermGroup) => {
       const perms = group.items
-        .filter((i) => effective.has(i.permission))
-        .map((i) => ({
+        .filter(i => effective.has(i.permission))
+        .map(i => ({
           ...i,
           source: direct.has(i.permission) ? ("direct" as const) : ("role" as const),
         }))
@@ -297,15 +300,13 @@ const permissionGroups = computed<PermGroup[]>(() => {
       return { id: group.id, label: group.label, icon: group.icon, permissions: perms }
     }
 
-    return permissionGroups.value
-      .map(mapGroup)
-      .filter((g) => g.permissions.length > 0)
+    return permissionGroups.value.map(mapGroup).filter(g => g.permissions.length > 0)
   })
 
   const effectiveUnmapped = computed(() => {
     const effective = new Set(store.selected?.effective_permissions ?? [])
     const mapped = allMapped.value
-    return Array.from(effective).filter((p) => !mapped.has(p))
+    return Array.from(effective).filter(p => !mapped.has(p))
   })
 
   async function init() {

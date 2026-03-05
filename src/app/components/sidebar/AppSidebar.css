@@ -3,7 +3,7 @@
 /* Root sidebar (mobile overlay default) */
 .pc-sidebar {
   width: 280px;
-  height: 100vh;                 /* ✅ must be 100vh */
+  height: 100vh; /* ✅ must be 100vh */
   position: fixed;
   top: 0;
   left: 0;
@@ -12,15 +12,15 @@
   background-color: #f7f8fa;
   border-right: 1px solid rgba(0, 0, 0, 0.12);
 
-  display: flex;                 /* ✅ make it a flex column container */
-  flex-direction: column;        /* ✅ */
+  display: flex; /* ✅ make it a flex column container */
+  flex-direction: column; /* ✅ */
 }
 
 /* Embedded desktop sidebar */
 .pc-sidebar.embedded {
-  position: sticky;              /* ✅ so it doesn't move with page */
+  position: sticky; /* ✅ so it doesn't move with page */
   top: 0;
-  height: 100vh;                 /* ✅ keep full height */
+  height: 100vh; /* ✅ keep full height */
   width: 100%;
 
   border-right: 1px solid rgba(0, 0, 0, 0.12);
@@ -31,9 +31,8 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  min-height: 0;                 /* ✅ important for flex + overflow children */
+  min-height: 0; /* ✅ important for flex + overflow children */
 }
-
 
 /* Collapsed state */
 .pc-sidebar.collapsed {
@@ -115,7 +114,7 @@
 /* Menu */
 .sidebar-menu {
   flex: 1;
-  min-height: 0;                 /* ✅ crucial: allows internal scrolling */
+  min-height: 0; /* ✅ crucial: allows internal scrolling */
   overflow-y: auto;
   padding-top: 0.5rem;
 }
@@ -128,7 +127,7 @@
 
   display: flex;
   flex-direction: column;
-  min-height: 100%;              /* ✅ ensures spacer can push footer */
+  min-height: 100%; /* ✅ ensures spacer can push footer */
 }
 
 .menu-item {
@@ -313,7 +312,7 @@
 
 /* Footer */
 .sidebar-footer {
-  flex-shrink: 0;                /* ✅ prevents footer from shrinking away */
+  flex-shrink: 0; /* ✅ prevents footer from shrinking away */
   display: flex;
   align-items: center;
   gap: 0.75rem;

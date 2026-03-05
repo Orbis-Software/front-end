@@ -94,7 +94,7 @@ export function useMasterSettingsPage() {
   }
 
   function getAddress(c: Company, type: "trading" | "registered" | "operational") {
-    return c.addresses?.find((a) => a.type === type) ?? null
+    return c.addresses?.find(a => a.type === type) ?? null
   }
 
   function hydrateFromCompany(c: Company) {
@@ -123,16 +123,19 @@ export function useMasterSettingsPage() {
       : []
 
     form.settings_time_zone = c.settings?.time_zone ?? c.time_zone ?? ""
-    form.settings_main_currency_code = c.settings?.main_currency_code ?? c.default_currency_code ?? ""
+    form.settings_main_currency_code =
+      c.settings?.main_currency_code ?? c.default_currency_code ?? ""
     form.settings_start_period = c.settings?.start_period ?? ""
     form.settings_invoicing_period = (c.settings?.invoicing_period ?? "monthly") as any
 
-    form.additional_currencies = Array.isArray(c.additional_currencies) ? [...c.additional_currencies] : []
+    form.additional_currencies = Array.isArray(c.additional_currencies)
+      ? [...c.additional_currencies]
+      : []
 
     const byType = new Map<string, any>()
     for (const r of c.reference_sequences ?? []) byType.set(r.type, r)
 
-    form.refs = refCatalog.map((cfg) => {
+    form.refs = refCatalog.map(cfg => {
       const seq = byType.get(cfg.type)
 
       const yearDigits = seq?.year_digits ?? Number(new Date().getFullYear().toString().slice(-2))
@@ -156,7 +159,7 @@ export function useMasterSettingsPage() {
   const globalUseSystem = computed({
     get() {
       if (!form.refs.length) return true
-      return form.refs.every((r) => r.use_system)
+      return form.refs.every(r => r.use_system)
     },
     set(v: boolean) {
       for (const r of form.refs) r.use_system = v
@@ -185,7 +188,7 @@ export function useMasterSettingsPage() {
   }
 
   function copyToAll() {
-    const src = form.refs.find((x) => x.type === "job") ?? form.refs[0]
+    const src = form.refs.find(x => x.type === "job") ?? form.refs[0]
     if (!src) return
 
     for (const r of form.refs) {
@@ -223,7 +226,7 @@ export function useMasterSettingsPage() {
   }
 
   function removeCurrency(code: string) {
-    form.additional_currencies = form.additional_currencies.filter((c) => c !== code)
+    form.additional_currencies = form.additional_currencies.filter(c => c !== code)
   }
 
   function buildPayload(): CompanyUpdatePayload {
@@ -271,7 +274,7 @@ export function useMasterSettingsPage() {
 
       additional_currencies: [...form.additional_currencies],
 
-      reference_sequences: form.refs.map((r) => ({
+      reference_sequences: form.refs.map(r => ({
         type: r.type,
         prefix: r.prefix,
         year_digits: r.type === "account" ? null : (r.year_digits ?? null), // ✅ account has no year

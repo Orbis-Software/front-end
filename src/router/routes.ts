@@ -1,31 +1,31 @@
-import type { RouteRecordRaw } from "vue-router";
+import type { RouteRecordRaw } from "vue-router"
 
 /* =========================
    Layouts
 ========================= */
-const DefaultLayout = () => import("@/app/layouts/DefaultLayout.vue");
-const AuthLayout = () => import("@/app/layouts/AuthLayout/AuthLayout.vue");
+const DefaultLayout = () => import("@/app/layouts/DefaultLayout.vue")
+const AuthLayout = () => import("@/app/layouts/AuthLayout/AuthLayout.vue")
 
 /* =========================
    Pages
 ========================= */
-const LoginPage = () => import("@/app/pages/auth/loginPage/loginPage.vue");
-const DashboardPage = () => import("@/app/pages/dashboard/DashboardPage.vue");
-const PlaceholderPage = () => import("@/app/pages/default/PlaceholderPage.vue");
-const QuoteCreatePage = () => import("@/app/pages/quotes/QuoteCreatePage.vue");
-const JobPage = () => import("@/app/pages/jobs/JobPage.vue");
-const JobsListPage = () => import("@/app/pages/jobs/list/JobsListPage.vue");
-const ContactsPage = () => import("@/app/pages/contacts/ContactsPage.vue");
-const ContactCreatePage = () => import("@/app/pages/contacts/create/ContactCreatePage.vue");
-const ConsolidationPage = () => import("@/app/pages/consolidations/ConsolidationPage.vue");
-const SettingsPage = () => import("@/app/pages/settings/SettingsPage.vue");
-const MasterSettingsPage = () => import("@/app/pages/settings/masterSettings/MasterSettingsPage.vue");
-const ContactsImportPage = () => import('@/app/pages/contacts/import/ContactsImportPage.vue')
-const JobDetailsPage = () => import("@/app/pages/jobs/details/JobDetailsPage.vue");
-const ContactDetailsPage = () => import("@/app/pages/contacts/details/ContactDetailsPage.vue");
-const EmployeeListPage = () => import("@/app/pages/employees/EmployeeListPage.vue");
-const SystemAccessPage = () => import("@/app/pages/system-access/SystemAccessPage.vue");
-
+const LoginPage = () => import("@/app/pages/auth/loginPage/loginPage.vue")
+const DashboardPage = () => import("@/app/pages/dashboard/DashboardPage.vue")
+const PlaceholderPage = () => import("@/app/pages/default/PlaceholderPage.vue")
+const QuoteCreatePage = () => import("@/app/pages/quotes/QuoteCreatePage.vue")
+const JobPage = () => import("@/app/pages/jobs/JobPage.vue")
+const JobsListPage = () => import("@/app/pages/jobs/list/JobsListPage.vue")
+const ContactsPage = () => import("@/app/pages/contacts/ContactsPage.vue")
+const ContactCreatePage = () => import("@/app/pages/contacts/create/ContactCreatePage.vue")
+const ConsolidationPage = () => import("@/app/pages/consolidations/ConsolidationPage.vue")
+const SettingsPage = () => import("@/app/pages/settings/SettingsPage.vue")
+const MasterSettingsPage = () =>
+  import("@/app/pages/settings/masterSettings/MasterSettingsPage.vue")
+const ContactsImportPage = () => import("@/app/pages/contacts/import/ContactsImportPage.vue")
+const JobDetailsPage = () => import("@/app/pages/jobs/details/JobDetailsPage.vue")
+const ContactDetailsPage = () => import("@/app/pages/contacts/details/ContactDetailsPage.vue")
+const EmployeeListPage = () => import("@/app/pages/employees/EmployeeListPage.vue")
+const SystemAccessPage = () => import("@/app/pages/system-access/SystemAccessPage.vue")
 
 export const routes: RouteRecordRaw[] = [
   {
@@ -73,7 +73,6 @@ export const routes: RouteRecordRaw[] = [
         component: JobDetailsPage,
         meta: { title: "Jobs • Details" },
       },
-
 
       {
         path: "quotes",
@@ -174,10 +173,10 @@ export const routes: RouteRecordRaw[] = [
         meta: { title: "Master Settings" },
       },
       {
-        path: '/contacts/import',
-        name: 'contacts.import',
+        path: "/contacts/import",
+        name: "contacts.import",
         component: ContactsImportPage,
-      }
+      },
     ],
   },
-];
+]

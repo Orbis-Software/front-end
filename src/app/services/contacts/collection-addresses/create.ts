@@ -6,7 +6,7 @@ type Payload = Partial<Omit<ContactCollectionAddress, "id">>
 
 export default async function createCollectionAddress(
   contactId: number,
-  payload: Payload
+  payload: Payload,
 ): Promise<Contact> {
   const response = await http.post(`/contacts/${contactId}/collection-addresses`, payload)
   return contactTransformer.fetch(response.data)

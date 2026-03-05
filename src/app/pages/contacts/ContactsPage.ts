@@ -1,7 +1,7 @@
-import { computed, onMounted, ref } from 'vue'
-import { useConfirm } from 'primevue/useconfirm'
-import { useRouter } from 'vue-router'
-import { useContactStore } from '@/app/stores/contact'
+import { computed, onMounted, ref } from "vue"
+import { useConfirm } from "primevue/useconfirm"
+import { useRouter } from "vue-router"
+import { useContactStore } from "@/app/stores/contact"
 
 /** tiny debounce (no extra deps) */
 function debounce<T extends (...args: any[]) => void>(fn: T, wait = 350) {
@@ -24,12 +24,12 @@ export function useContactsPage() {
   const confirm = useConfirm()
   const router = useRouter()
 
-  const search = ref(store.search ?? '')
+  const search = ref(store.search ?? "")
 
   const headerTitle = computed(() => {
-    if (store.activeTypeId === null) return 'Contacts'
-    const t = store.types.find((x) => x.id === store.activeTypeId)
-    return t?.name ?? 'Contacts'
+    if (store.activeTypeId === null) return "Contacts"
+    const t = store.types.find(x => x.id === store.activeTypeId)
+    return t?.name ?? "Contacts"
   })
 
   // PrimeVue paginator "first" (0-based index)
@@ -49,12 +49,12 @@ export function useContactsPage() {
   }, 350)
 
   function onSearchInput(v: string) {
-    search.value = v ?? ''
+    search.value = v ?? ""
     applySearch(search.value)
   }
 
   function onCreate() {
-    router.push('/contacts/new')
+    router.push("/contacts/new")
   }
 
   function onEdit(id: number) {
@@ -70,16 +70,14 @@ export function useContactsPage() {
     window.open(routeData.href, "_blank")
   }
 
-
-
   function onDelete(contactId: number) {
     confirm.require({
-      header: 'Delete Contact',
-      message: 'Are you sure you want to delete this contact?',
-      icon: 'pi pi-exclamation-triangle',
-      acceptLabel: 'Delete',
-      rejectLabel: 'Cancel',
-      acceptClass: 'p-button-danger',
+      header: "Delete Contact",
+      message: "Are you sure you want to delete this contact?",
+      icon: "pi pi-exclamation-triangle",
+      acceptLabel: "Delete",
+      rejectLabel: "Cancel",
+      acceptClass: "p-button-danger",
       accept: async () => {
         await store.remove(contactId)
       },

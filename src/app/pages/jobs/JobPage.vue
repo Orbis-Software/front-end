@@ -102,7 +102,10 @@
 
     <div v-if="jobType && mode" class="two-col">
       <section class="card section">
-        <JobStepHeader title="Documents & Notes" subtitle="Optional attachments and internal notes" />
+        <JobStepHeader
+          title="Documents & Notes"
+          subtitle="Optional attachments and internal notes"
+        />
 
         <div class="docs-grid">
           <div class="drop-box">Drag &amp; drop documents</div>
@@ -141,15 +144,15 @@
 </template>
 
 <script setup lang="ts">
-import "@/app/pages/jobs/JobPage.css";
-import AutoComplete from "primevue/autocomplete";
+import "@/app/pages/jobs/JobPage.css"
+import AutoComplete from "primevue/autocomplete"
 
-import JobStepHeader from "@/app/components/jobs/JobStepHeader.vue";
-import JobTypeSelector from "@/app/components/jobs/JobTypeSelector.vue";
-import ModeSelector from "@/app/components/jobs/ModeSelector.vue";
+import JobStepHeader from "@/app/components/jobs/JobStepHeader.vue"
+import JobTypeSelector from "@/app/components/jobs/JobTypeSelector.vue"
+import ModeSelector from "@/app/components/jobs/ModeSelector.vue"
 
-import { onBeforeUnmount, onMounted } from "vue";
-import { useJobCreatePage } from "./JobPage.logic";
+import { onBeforeUnmount, onMounted } from "vue"
+import { useJobCreatePage } from "./JobPage.logic"
 
 const {
   store,
@@ -182,13 +185,13 @@ const {
 
   onSave,
   onCancel,
-} = useJobCreatePage();
+} = useJobCreatePage()
 
 onMounted(async () => {
-  await initJobPage();
-});
+  await initJobPage()
+})
 
 onBeforeUnmount(() => {
-  cleanupJobPage();
-});
+  cleanupJobPage()
+})
 </script>

@@ -104,7 +104,11 @@ function fmtMoney(n: number) {
 }
 
 function toNumber(v: any): number {
-  const n = Number(String(v ?? "").replace(/,/g, "").trim())
+  const n = Number(
+    String(v ?? "")
+      .replace(/,/g, "")
+      .trim(),
+  )
   return Number.isFinite(n) ? n : 0
 }
 
@@ -125,7 +129,7 @@ const ieCostTotal = computed(() => sumCost(state.import_export))
 const ieChargeTotal = computed(() => sumCharge(state.import_export))
 
 const grandTotal = computed(
-  () => domesticChargeTotal.value + ieChargeTotal.value + manualChargeTotal.value
+  () => domesticChargeTotal.value + ieChargeTotal.value + manualChargeTotal.value,
 )
 
 function addLine(section: "manual" | "domestic" | "import_export") {
@@ -147,7 +151,7 @@ function addLine(section: "manual" | "domestic" | "import_export") {
 
 function removeLine(section: "manual" | "domestic" | "import_export", id: string) {
   emit("removeLine", section, id)
-  state[section] = state[section].filter((x) => x.id !== id) as any
+  state[section] = state[section].filter(x => x.id !== id) as any
 }
 </script>
 
@@ -238,8 +242,12 @@ function removeLine(section: "manual" | "domestic" | "import_export", id: string
             <div class="muted">TOTAL</div>
             <div></div>
             <div></div>
-            <div class="right"><b>{{ fmtMoney(manualCostTotal) }}</b></div>
-            <div class="right"><b>{{ fmtMoney(manualChargeTotal) }}</b></div>
+            <div class="right">
+              <b>{{ fmtMoney(manualCostTotal) }}</b>
+            </div>
+            <div class="right">
+              <b>{{ fmtMoney(manualChargeTotal) }}</b>
+            </div>
             <div></div>
             <div></div>
           </div>
@@ -328,8 +336,12 @@ function removeLine(section: "manual" | "domestic" | "import_export", id: string
             <div class="muted">TOTAL</div>
             <div></div>
             <div></div>
-            <div class="right"><b>{{ fmtMoney(domesticCostTotal) }}</b></div>
-            <div class="right"><b>{{ fmtMoney(domesticChargeTotal) }}</b></div>
+            <div class="right">
+              <b>{{ fmtMoney(domesticCostTotal) }}</b>
+            </div>
+            <div class="right">
+              <b>{{ fmtMoney(domesticChargeTotal) }}</b>
+            </div>
             <div></div>
             <div></div>
           </div>
@@ -418,8 +430,12 @@ function removeLine(section: "manual" | "domestic" | "import_export", id: string
             <div class="muted">TOTAL</div>
             <div></div>
             <div></div>
-            <div class="right"><b>{{ fmtMoney(ieCostTotal) }}</b></div>
-            <div class="right"><b>{{ fmtMoney(ieChargeTotal) }}</b></div>
+            <div class="right">
+              <b>{{ fmtMoney(ieCostTotal) }}</b>
+            </div>
+            <div class="right">
+              <b>{{ fmtMoney(ieChargeTotal) }}</b>
+            </div>
             <div></div>
             <div></div>
           </div>

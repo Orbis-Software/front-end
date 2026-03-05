@@ -1,60 +1,60 @@
 <script setup lang="ts">
-import { computed, onMounted, onBeforeUnmount, ref } from "vue";
-import UserDropdown from "@/app/components/nav/UserDropdown.vue";
-import { useAuthStore } from "@/app/stores/auth";
-import type { AppArea } from "@/app/stores/ui";
+import { computed, onMounted, onBeforeUnmount, ref } from "vue"
+import UserDropdown from "@/app/components/nav/UserDropdown.vue"
+import { useAuthStore } from "@/app/stores/auth"
+import type { AppArea } from "@/app/stores/ui"
 
 type Props = {
-  area: AppArea;
-};
+  area: AppArea
+}
 
-defineProps<Props>();
+defineProps<Props>()
 
 const emit = defineEmits<{
-  (e: "switch-area", v: AppArea): void;
-  (e: "toggle-mobile-nav"): void;
-}>();
+  (e: "switch-area", v: AppArea): void
+  (e: "toggle-mobile-nav"): void
+}>()
 
-const auth = useAuthStore();
-const userDropdownOpen = ref(false);
+const auth = useAuthStore()
+const userDropdownOpen = ref(false)
 
-const userName = computed(() => auth.user?.name ?? "User");
+const userName = computed(() => auth.user?.name ?? "User")
 const userRole = computed(() => {
-  const roles = (auth.user as any)?.roles as string[] | undefined;
-  if (roles?.length) return roles.join(", ");
-  return "User";
-});
+  const roles = (auth.user as any)?.roles as string[] | undefined
+  if (roles?.length) return roles.join(", ")
+  return "User"
+})
 
 const companyLogoSrc = computed(() => {
-  const c: any = auth.user?.company;
-  return c?.logo_url ?? c?.logo ?? "/orbis-logo.png";
-});
+  const c: any = auth.user?.company
+  return c?.logo_url ?? c?.logo ?? "/orbis-logo.png"
+})
 
 const initials = computed(() => {
-  const parts = userName.value.trim().split(/\s+/).filter(Boolean);
-  const a = parts[0]?.[0] ?? "";
-  const b = parts[1]?.[0] ?? "";
-  return (a + b).toUpperCase() || "U";
-});
+  const parts = userName.value.trim().split(/\s+/).filter(Boolean)
+  const a = parts[0]?.[0] ?? ""
+  const b = parts[1]?.[0] ?? ""
+  return (a + b).toUpperCase() || "U"
+})
 
-const companyName = computed(() => auth.user?.company?.legal_name ?? "Orbis Software Ltd");
+const companyName = computed(() => auth.user?.company?.legal_name ?? "Orbis Software Ltd")
 
 function toggleUserDropdown() {
-  userDropdownOpen.value = !userDropdownOpen.value;
+  userDropdownOpen.value = !userDropdownOpen.value
 }
 function closeUserDropdown() {
-  userDropdownOpen.value = false;
+  userDropdownOpen.value = false
 }
 
 function handleClickOutside(e: MouseEvent) {
-  const el = document.querySelector(".user-profile-container");
+  const el = document.querySelector(".user-profile-container")
   if (userDropdownOpen.value && el && !el.contains(e.target as Node)) {
-    closeUserDropdown();
+    closeUserDropdown()
   }
 }
 
-onMounted(() => document.addEventListener("click", handleClickOutside));
-onBeforeUnmount(() => document.removeEventListener("click", handleClickOutside));
+onMounted(() => document.addEventListener("click", handleClickOutside))
+onBeforeUnmount(() => document.removeEventListener("click", handleClickOutside))
 </script>
 
 <template>
@@ -113,10 +113,8 @@ onBeforeUnmount(() => document.removeEventListener("click", handleClickOutside))
 
 <style scoped>
 .app-header {
-  position: sticky;
-  top: 0;
-  z-index: 50;
-  background: var(--pc-bg-card, #fff);
+  width: 100%;
+  background: #fff;
 }
 
 .header-inner {
@@ -124,9 +122,12 @@ onBeforeUnmount(() => document.removeEventListener("click", handleClickOutside))
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 32px;
+
+  width: 100%;
   max-width: 1400px;
   margin: 0 auto;
+
+  padding: 0 32px;
 }
 
 .brand {
@@ -159,8 +160,8 @@ onBeforeUnmount(() => document.removeEventListener("click", handleClickOutside))
   display: flex;
   padding: 4px;
   border-radius: 12px;
-  border: 1px solid rgba(0,0,0,0.10);
-  background: rgba(0,0,0,0.03);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: rgba(0, 0, 0, 0.03);
 }
 
 .area-btn {
@@ -171,18 +172,21 @@ onBeforeUnmount(() => document.removeEventListener("click", handleClickOutside))
   cursor: pointer;
   font-weight: 900;
   color: var(--pc-text-muted);
-  transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease;
+  transition:
+    background 0.16s ease,
+    border-color 0.16s ease,
+    color 0.16s ease;
 }
 
 .area-btn:hover {
   background: rgba(236, 105, 26, 0.08);
-  border-color: rgba(236, 105, 26, 0.20);
+  border-color: rgba(236, 105, 26, 0.2);
   color: var(--pc-primary);
 }
 
 .area-btn.active {
   background: #fff;
-  border-color: rgba(0,0,0,0.12);
+  border-color: rgba(0, 0, 0, 0.12);
   color: var(--pc-text-main);
 }
 
@@ -200,12 +204,14 @@ onBeforeUnmount(() => document.removeEventListener("click", handleClickOutside))
   border: 1px solid transparent;
   background: transparent;
   cursor: pointer;
-  transition: background 0.16s ease, border-color 0.16s ease;
+  transition:
+    background 0.16s ease,
+    border-color 0.16s ease;
 }
 
 .user-profile:hover {
-  background: rgba(0,0,0,0.03);
-  border-color: rgba(0,0,0,0.08);
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.08);
 }
 
 .user-avatar {
@@ -214,7 +220,7 @@ onBeforeUnmount(() => document.removeEventListener("click", handleClickOutside))
   border-radius: 999px;
   display: grid;
   place-items: center;
-  background: rgba(0,0,0,0.06);
+  background: rgba(0, 0, 0, 0.06);
   font-weight: 900;
   color: var(--pc-text-main);
 }
@@ -243,7 +249,7 @@ onBeforeUnmount(() => document.removeEventListener("click", handleClickOutside))
 /* Mobile button */
 .mobile-toggle {
   display: none;
-  border: 1px solid rgba(0,0,0,0.10);
+  border: 1px solid rgba(0, 0, 0, 0.1);
   background: #fff;
   cursor: pointer;
   width: 40px;
@@ -252,7 +258,7 @@ onBeforeUnmount(() => document.removeEventListener("click", handleClickOutside))
 }
 
 .mobile-toggle:hover {
-  background: rgba(0,0,0,0.03);
+  background: rgba(0, 0, 0, 0.03);
 }
 
 @media (max-width: 1200px) {

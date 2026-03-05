@@ -128,81 +128,81 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, watch } from "vue";
-import Button from "primevue/button";
-import Dropdown from "primevue/dropdown";
-import InputText from "primevue/inputtext";
-import Textarea from "primevue/textarea";
+import { computed, reactive, watch } from "vue"
+import Button from "primevue/button"
+import Dropdown from "primevue/dropdown"
+import InputText from "primevue/inputtext"
+import Textarea from "primevue/textarea"
 
 export type ChargeLine = {
-  description: string;
-  qty: number;
-  unit: string;
-  cost: number;
-  markup: number; // %
-  sell: number;
-  total: number;
-};
+  description: string
+  qty: number
+  unit: string
+  cost: number
+  markup: number // %
+  sell: number
+  total: number
+}
 
 type ChargesInitial = {
-  currency: string;
-  defaultTax: string; // keep as string for now
-  discount: string; // keep as string for now
-  addCharge: string;
-  conditions: string;
-};
+  currency: string
+  defaultTax: string // keep as string for now
+  discount: string // keep as string for now
+  addCharge: string
+  conditions: string
+}
 
 const props = defineProps<{
-  lines: ChargeLine[];
-  initial: ChargesInitial;
-}>();
+  lines: ChargeLine[]
+  initial: ChargesInitial
+}>()
 
 const emit = defineEmits<{
-  (e: "clear"): void;
-  (e: "add-line", chargeKey: string): void;
-  (e: "update:initial", val: ChargesInitial): void;
-}>();
+  (e: "clear"): void
+  (e: "add-line", chargeKey: string): void
+  (e: "update:initial", val: ChargesInitial): void
+}>()
 
-const local = reactive<ChargesInitial>({ ...props.initial });
+const local = reactive<ChargesInitial>({ ...props.initial })
 
 watch(
   () => props.initial,
-  (v) => Object.assign(local, v),
-  { deep: true }
-);
+  v => Object.assign(local, v),
+  { deep: true },
+)
 
 watch(
   () => local,
   () => emit("update:initial", { ...local }),
-  { deep: true }
-);
+  { deep: true },
+)
 
 const currencyOptions = [
   { label: "GBP £", value: "GBP" },
   { label: "EUR €", value: "EUR" },
   { label: "USD $", value: "USD" },
-];
+]
 
 const chargeOptions = [
   { label: "Freight", value: "freight" },
   { label: "Handling", value: "handling" },
   { label: "Customs", value: "customs" },
   { label: "Insurance", value: "insurance" },
-];
+]
 
 const currencySymbol = computed(() => {
-  if (local.currency === "EUR") return "€";
-  if (local.currency === "USD") return "$";
-  return "£";
-});
+  if (local.currency === "EUR") return "€"
+  if (local.currency === "USD") return "$"
+  return "£"
+})
 
 function onAddLine() {
-  emit("add-line", local.addCharge);
+  emit("add-line", local.addCharge)
 }
 
 function money(n: number) {
   // simple formatting for now
-  return (Number(n) || 0).toFixed(2);
+  return (Number(n) || 0).toFixed(2)
 }
 
 /**
@@ -210,20 +210,23 @@ function money(n: number) {
  * Later: compute from lines + tax + discount properly.
  */
 const totals = computed(() => {
-  const subtotalSell = props.lines.reduce((s, l) => s + (Number(l.total) || 0), 0);
-  const subtotalCost = props.lines.reduce((s, l) => s + (Number(l.cost) || 0) * (Number(l.qty) || 0), 0);
+  const subtotalSell = props.lines.reduce((s, l) => s + (Number(l.total) || 0), 0)
+  const subtotalCost = props.lines.reduce(
+    (s, l) => s + (Number(l.cost) || 0) * (Number(l.qty) || 0),
+    0,
+  )
 
-  const discountPct = Number(local.discount || 0) / 100;
-  const discount = subtotalSell * discountPct;
+  const discountPct = Number(local.discount || 0) / 100
+  const discount = subtotalSell * discountPct
 
-  const taxPct = Number(local.defaultTax || 0) / 100;
-  const taxOnSell = (subtotalSell - discount) * taxPct;
+  const taxPct = Number(local.defaultTax || 0) / 100
+  const taxOnSell = (subtotalSell - discount) * taxPct
 
-  const totalExclTax = subtotalSell - discount;
-  const totalInclTax = totalExclTax + taxOnSell;
+  const totalExclTax = subtotalSell - discount
+  const totalInclTax = totalExclTax + taxOnSell
 
-  const estProfit = totalExclTax - subtotalCost;
-  const estProfitPct = totalExclTax > 0 ? (estProfit / totalExclTax) * 100 : 0;
+  const estProfit = totalExclTax - subtotalCost
+  const estProfitPct = totalExclTax > 0 ? (estProfit / totalExclTax) * 100 : 0
 
   return {
     subtotalSell,
@@ -234,8 +237,8 @@ const totals = computed(() => {
     totalInclTax,
     estProfit,
     estProfitPct,
-  };
-});
+  }
+})
 </script>
 
 <style scoped>

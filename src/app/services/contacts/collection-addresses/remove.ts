@@ -4,10 +4,8 @@ import type { Contact } from "@/app/types/contact"
 
 export default async function removeCollectionAddress(
   contactId: number,
-  addressId: number
+  addressId: number,
 ): Promise<Contact> {
-  const response = await http.delete(
-    `/contacts/${contactId}/collection-addresses/${addressId}`
-  )
+  const response = await http.delete(`/contacts/${contactId}/collection-addresses/${addressId}`)
   return contactTransformer.fetch(response.data)
 }

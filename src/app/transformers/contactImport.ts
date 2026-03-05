@@ -1,4 +1,4 @@
-import type { ContactImportError, ContactImportResult } from '@/app/types/contactImport'
+import type { ContactImportError, ContactImportResult } from "@/app/types/contactImport"
 
 const contactImportTransformer = {
   fetch(raw: any): ContactImportResult {
@@ -6,7 +6,7 @@ const contactImportTransformer = {
 
     const errors: ContactImportError[] = errorsRaw.map((e: any) => ({
       row: Number(e?.row ?? 0),
-      message: String(e?.message ?? ''),
+      message: String(e?.message ?? ""),
     }))
 
     return {

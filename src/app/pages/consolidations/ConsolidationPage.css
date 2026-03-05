@@ -10,7 +10,9 @@
 }
 
 .mono {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+    monospace;
 }
 
 .h2 {
@@ -90,7 +92,7 @@
 
 .panel {
   border-radius: 14px;
-  box-shadow: 0 1px 0 rgba(0,0,0,0.03);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.03);
   margin-bottom: 14px;
 }
 
@@ -98,7 +100,7 @@
 .summary-head,
 .section-head {
   display: flex;
-  align-items: flex-start;         /* same feel as Summary */
+  align-items: flex-start; /* same feel as Summary */
   justify-content: space-between;
   gap: 16px;
 }
@@ -107,13 +109,12 @@
 .inv-actions {
   display: flex;
   align-items: center;
-  gap: 10px;                /* spacing between buttons */
-  flex-wrap: nowrap;        /* ❗ keep buttons on one row */
+  gap: 10px; /* spacing between buttons */
+  flex-wrap: nowrap; /* ❗ keep buttons on one row */
 }
 .inv-actions .p-button {
   white-space: nowrap;
 }
-
 
 /* Form grid */
 .formgrid {
@@ -131,7 +132,7 @@
 .field label {
   font-size: 12px;
   font-weight: 600;
-  color: rgba(0,0,0,0.6);
+  color: rgba(0, 0, 0, 0.6);
 }
 
 .span-2 {
@@ -150,7 +151,7 @@
 }
 
 .tile {
-  border: 1px solid rgba(0,0,0,0.08);
+  border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 14px;
   padding: 14px;
   background: #fff;
@@ -160,7 +161,7 @@
   font-size: 11px;
   font-weight: 650;
   letter-spacing: 0.02em;
-  color: rgba(0,0,0,0.55);
+  color: rgba(0, 0, 0, 0.55);
   text-transform: uppercase;
   margin-bottom: 6px;
 }
@@ -187,7 +188,7 @@
   align-items: center;
   gap: 8px;
   padding: 8px;
-  border: 1px solid rgba(0,0,0,0.08);
+  border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 999px;
   background: #fff;
   margin-bottom: 14px;
@@ -201,7 +202,7 @@
   border-radius: 999px;
   font-weight: 650;
   font-size: 13px;
-  color: rgba(0,0,0,0.65);
+  color: rgba(0, 0, 0, 0.65);
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -210,20 +211,20 @@
 }
 
 .tab:hover {
-  background: rgba(0,0,0,0.04);
+  background: rgba(0, 0, 0, 0.04);
 }
 
 .tab.active {
-  background: rgba(0,0,0,0.06);
-  color: rgba(0,0,0,0.85);
+  background: rgba(0, 0, 0, 0.06);
+  color: rgba(0, 0, 0, 0.85);
 }
 
 /* Datatable */
 .datatable :deep(.p-datatable-thead > tr > th) {
   font-size: 12px;
   font-weight: 700;
-  color: rgba(0,0,0,0.65);
-  background: rgba(0,0,0,0.015);
+  color: rgba(0, 0, 0, 0.65);
+  background: rgba(0, 0, 0, 0.015);
 }
 
 .datatable :deep(.p-datatable-tbody > tr > td) {
@@ -247,7 +248,7 @@
 .currency-switch .label {
   font-size: 11px;
   font-weight: 700;
-  color: rgba(0,0,0,0.55);
+  color: rgba(0, 0, 0, 0.55);
   margin-bottom: 6px;
   letter-spacing: 0.02em;
 }
@@ -257,7 +258,7 @@
   display: inline-flex;
   gap: 6px;
   padding: 6px;
-  border: 1px solid rgba(0,0,0,0.08);
+  border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 999px;
   background: #fff;
 }
@@ -271,19 +272,18 @@
   font-weight: 650;
   font-size: 12px;
   cursor: pointer;
-  color: rgba(0,0,0,0.65);
+  color: rgba(0, 0, 0, 0.65);
   line-height: 1;
 }
 
 :deep(.pill:hover) {
-  background: rgba(0,0,0,0.04);
+  background: rgba(0, 0, 0, 0.04);
 }
 
 :deep(.pill.active) {
-  background: rgba(0,0,0,0.06);
-  color: rgba(0,0,0,0.85);
+  background: rgba(0, 0, 0, 0.06);
+  color: rgba(0, 0, 0, 0.85);
 }
-
 
 .totals-mini {
   text-align: right;
@@ -293,7 +293,7 @@
 }
 
 .invoice-box {
-  border: 1px solid rgba(0,0,0,0.08);
+  border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 14px;
   padding: 12px;
   background: #fff;
@@ -304,7 +304,7 @@
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.02em;
-  color: rgba(0,0,0,0.55);
+  color: rgba(0, 0, 0, 0.55);
   margin-bottom: 8px;
 }
 
@@ -329,8 +329,8 @@
   align-items: center;
   padding: 6px 10px;
   border-radius: 999px;
-  border: 1px solid rgba(0,0,0,0.08);
-  background: rgba(0,0,0,0.02);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(0, 0, 0, 0.02);
   font-size: 12px;
   font-weight: 650;
 }
@@ -349,7 +349,7 @@
 }
 
 .base-total {
-  border: 1px solid rgba(0,0,0,0.08);
+  border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 14px;
   padding: 12px 14px;
   min-width: 260px;
@@ -361,7 +361,7 @@
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.02em;
-  color: rgba(0,0,0,0.55);
+  color: rgba(0, 0, 0, 0.55);
   margin-bottom: 6px;
 }
 
@@ -372,13 +372,13 @@
 
 /* Placeholder */
 .placeholder {
-  border: 1px dashed rgba(0,0,0,0.18);
+  border: 1px dashed rgba(0, 0, 0, 0.18);
   border-radius: 14px;
   padding: 16px;
   display: inline-flex;
   gap: 10px;
   align-items: center;
-  color: rgba(0,0,0,0.6);
+  color: rgba(0, 0, 0, 0.6);
 }
 
 .status-text {
@@ -394,8 +394,8 @@
   align-items: center;
   padding: 6px 10px;
   border-radius: 999px;
-  border: 1px solid rgba(0,0,0,0.08);
-  background: rgba(0,0,0,0.02);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(0, 0, 0, 0.02);
   font-size: 12px;
   font-weight: 650;
   white-space: nowrap;
@@ -413,8 +413,8 @@
   align-items: center;
   padding: 6px 10px;
   border-radius: 999px;
-  border: 1px solid rgba(0,0,0,0.08);
-  background: rgba(0,0,0,0.02);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(0, 0, 0, 0.02);
   font-size: 12px;
   font-weight: 650;
   white-space: nowrap;
@@ -424,7 +424,7 @@
 .section-text {
   display: flex;
   flex-direction: column;
-  gap: 2px;                /* same vertical spacing as summary */
+  gap: 2px; /* same vertical spacing as summary */
 }
 
 /* Ensure the whole header aligns like Summary */
@@ -446,7 +446,6 @@
 .panel-actions .p-button {
   white-space: nowrap;
 }
-
 
 /* Responsive */
 @media (max-width: 1020px) {

@@ -1,6 +1,6 @@
-import { computed, ref } from 'vue'
-import { useContactImportStore } from '@/app/stores/contactImport'
-import { useAuthStore } from '@/app/stores/auth'
+import { computed, ref } from "vue"
+import { useContactImportStore } from "@/app/stores/contactImport"
+import { useAuthStore } from "@/app/stores/auth"
 
 export function useContactsImportPage() {
   const auth = useAuthStore()
@@ -10,7 +10,7 @@ export function useContactsImportPage() {
 
   const companyName = computed(() => {
     const c = auth.user?.company
-    return c?.trading_name ?? c?.legal_name ?? 'Company'
+    return c?.trading_name ?? c?.legal_name ?? "Company"
   })
 
   const canImport = computed(() => {

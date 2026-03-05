@@ -1,66 +1,66 @@
 <script setup lang="ts">
-import type { TransportMode } from "@/app/types/transport-job";
+import type { TransportMode } from "@/app/types/transport-job"
 
 type Props = {
   form: {
-    mode_of_transport: TransportMode | null;
+    mode_of_transport: TransportMode | null
 
-    collection_address: string;
-    delivery_address: string;
+    collection_address: string
+    delivery_address: string
 
     // ✅ match page form (Date | null)
-    collection_date: Date | null;
-    delivery_date: Date | null;
+    collection_date: Date | null
+    delivery_date: Date | null
 
-    cmr_number: string;
-    warehouse_grn: string;
-  };
-  disabled?: boolean;
-};
+    cmr_number: string
+    warehouse_grn: string
+  }
+  disabled?: boolean
+}
 
-const { form, disabled } = defineProps<Props>();
+const { form, disabled } = defineProps<Props>()
 
 function modeLabel() {
-  return (form.mode_of_transport || "road").toString().toUpperCase();
+  return (form.mode_of_transport || "road").toString().toUpperCase()
 }
 
 function formatDDMMYYYY(d: Date | null) {
-  if (!d) return "";
-  const day = String(d.getDate()).padStart(2, "0");
-  const mon = String(d.getMonth() + 1).padStart(2, "0");
-  const yr = d.getFullYear();
-  return `${day}/${mon}/${yr}`;
+  if (!d) return ""
+  const day = String(d.getDate()).padStart(2, "0")
+  const mon = String(d.getMonth() + 1).padStart(2, "0")
+  const yr = d.getFullYear()
+  return `${day}/${mon}/${yr}`
 }
 
 // Optional: allow typing dd/mm/yyyy into a text box and convert to Date
 function parseDDMMYYYY(value: string): Date | null {
-  const v = value.trim();
-  if (!v) return null;
+  const v = value.trim()
+  if (!v) return null
 
-  const m = v.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-  if (!m) return null;
+  const m = v.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/)
+  if (!m) return null
 
-  const dd = Number(m[1]);
-  const mm = Number(m[2]);
-  const yyyy = Number(m[3]);
+  const dd = Number(m[1])
+  const mm = Number(m[2])
+  const yyyy = Number(m[3])
 
-  const d = new Date(yyyy, mm - 1, dd);
-  if (Number.isNaN(d.getTime())) return null;
+  const d = new Date(yyyy, mm - 1, dd)
+  if (Number.isNaN(d.getTime())) return null
 
   // validate that date didn't overflow (e.g. 32/01/2026)
-  if (d.getFullYear() !== yyyy || d.getMonth() !== mm - 1 || d.getDate() !== dd) return null;
+  if (d.getFullYear() !== yyyy || d.getMonth() !== mm - 1 || d.getDate() !== dd) return null
 
-  return d;
+  return d
 }
 
 function onCollectionDateInput(e: Event) {
-  const v = (e.target as HTMLInputElement).value;
-  form.collection_date = parseDDMMYYYY(v);
+  const v = (e.target as HTMLInputElement).value
+  form.collection_date = parseDDMMYYYY(v)
 }
 
 function onDeliveryDateInput(e: Event) {
-  const v = (e.target as HTMLInputElement).value;
-  form.delivery_date = parseDDMMYYYY(v);
+  const v = (e.target as HTMLInputElement).value
+  form.delivery_date = parseDDMMYYYY(v)
 }
 </script>
 

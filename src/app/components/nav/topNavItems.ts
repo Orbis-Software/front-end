@@ -77,11 +77,7 @@ export function useTopNavItems(): {
         id: "contacts",
         label: "Contacts",
         icon: "pi pi-users",
-        anyPermissions: [
-          "tms.contacts.view",
-          "tms.contacts.create",
-          "tms.contacts.import_export",
-        ],
+        anyPermissions: ["tms.contacts.view", "tms.contacts.create", "tms.contacts.import_export"],
         children: [
           {
             id: "contacts-all",

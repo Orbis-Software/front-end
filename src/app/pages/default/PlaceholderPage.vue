@@ -5,9 +5,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
-import { useRoute } from "vue-router";
+import { computed } from "vue"
+import { useRoute } from "vue-router"
 
-const route = useRoute();
-const title = computed(() => (route.meta.title as string) ?? "Page");
+const route = useRoute()
+const title = computed(() => (route.meta.title as string) ?? "Page")
 </script>

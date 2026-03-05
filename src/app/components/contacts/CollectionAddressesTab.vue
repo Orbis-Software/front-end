@@ -31,7 +31,7 @@ const lastLength = ref(rows.value.length)
 
 watch(
   () => rows.value.length,
-  async (len) => {
+  async len => {
     if (len === 0) {
       selectedIndex.value = 0
       lastLength.value = 0
@@ -47,7 +47,7 @@ watch(
 
     lastLength.value = len
   },
-  { immediate: true }
+  { immediate: true },
 )
 
 const selected = computed(() => rows.value[selectedIndex.value])
@@ -90,15 +90,13 @@ onMounted(async () => {
 
 function hydrateSelectedCountryFromRow() {
   const cid = selected.value?.country_id ?? null
-  selectedCountry.value = cid
-    ? countryStore.items.find((x) => x.id === cid) ?? null
-    : null
+  selectedCountry.value = cid ? (countryStore.items.find(x => x.id === cid) ?? null) : null
 }
 
 watch(
   () => selected.value?.country_id,
   () => hydrateSelectedCountryFromRow(),
-  { immediate: true }
+  { immediate: true },
 )
 
 async function searchCountries(q: string) {
@@ -174,7 +172,10 @@ function splitHoursString(v: string | null | undefined): { from: Date | null; to
     .replace(/\s+to\s+/i, "-")
     .replace(/\s+/g, " ")
 
-  const parts = normalized.split("-").map((x) => x.trim()).filter(Boolean)
+  const parts = normalized
+    .split("-")
+    .map(x => x.trim())
+    .filter(Boolean)
 
   const fromStr = parts[0]
   const toStr = parts[1]
@@ -196,7 +197,7 @@ function buildHoursString(from: Date | null, to: Date | null): string | null {
 
 watch(
   () => selected.value?.hours_of_operation,
-  (v) => {
+  v => {
     hoursHydrating.value = true
     const { from, to } = splitHoursString(v ?? null)
     hoursFrom.value = from
@@ -205,7 +206,7 @@ watch(
       hoursHydrating.value = false
     })
   },
-  { immediate: true }
+  { immediate: true },
 )
 
 watch([hoursFrom, hoursTo], ([from, to]) => {
@@ -230,7 +231,7 @@ function ensureAtLeastOneFlag() {
 watch(
   () => [selected.value?.is_collection, selected.value?.is_delivery],
   () => ensureAtLeastOneFlag(),
-  { immediate: true }
+  { immediate: true },
 )
 
 /* =========================
@@ -352,9 +353,7 @@ function displayType(c: CollectionUI) {
           </div>
 
           <div class="listItem__meta">
-            <span class="metaChip">
-              <i class="pi pi-tag" /> {{ displayType(c) }}
-            </span>
+            <span class="metaChip"> <i class="pi pi-tag" /> {{ displayType(c) }} </span>
 
             <span v-if="c.contact_person" class="metaChip">
               <i class="pi pi-user" /> {{ c.contact_person }}
@@ -388,9 +387,7 @@ function displayType(c: CollectionUI) {
         </div>
       </div>
 
-      <div v-if="!selected" class="emptyEditor">
-        Select an address on the left.
-      </div>
+      <div v-if="!selected" class="emptyEditor">Select an address on the left.</div>
 
       <div v-else class="editorBody">
         <div class="formGrid">
@@ -419,7 +416,11 @@ function displayType(c: CollectionUI) {
 
           <div class="field">
             <label class="label">Address line 1</label>
-            <input class="input" v-model="selected.address_line_1" placeholder="Unit 12, The Wharf" />
+            <input
+              class="input"
+              v-model="selected.address_line_1"
+              placeholder="Unit 12, The Wharf"
+            />
           </div>
 
           <div class="field">
@@ -440,7 +441,11 @@ function displayType(c: CollectionUI) {
 
             <div class="field">
               <label class="label">County / State</label>
-              <input class="input" v-model="selected.county_state" placeholder="Greater Manchester" />
+              <input
+                class="input"
+                v-model="selected.county_state"
+                placeholder="Greater Manchester"
+              />
             </div>
           </div>
 
@@ -461,19 +466,21 @@ function displayType(c: CollectionUI) {
                 :dropdown="true"
                 :loading="countrySearching"
                 placeholder="Search country (e.g. United Kingdom, GB, +44)"
-                @complete="(e) => searchCountries(e.query)"
-                @item-select="(e) => onCountrySelect(e.value)"
+                @complete="e => searchCountries(e.query)"
+                @item-select="e => onCountrySelect(e.value)"
                 @clear="() => onCountrySelect(null)"
               >
                 <template #option="{ option }">
-                  <div style="display:flex; justify-content:space-between; gap:12px;">
+                  <div style="display: flex; justify-content: space-between; gap: 12px">
                     <span>{{ option.name }}</span>
-                    <span style="opacity:.7;">{{ option.alpha_2 }} • {{ option.dial_code }}</span>
+                    <span style="opacity: 0.7">{{ option.alpha_2 }} • {{ option.dial_code }}</span>
                   </div>
                 </template>
               </AutoComplete>
 
-              <div class="hint">Selecting a country will set the country_id (and can prefill phone if empty).</div>
+              <div class="hint">
+                Selecting a country will set the country_id (and can prefill phone if empty).
+              </div>
             </div>
           </div>
 
@@ -483,7 +490,7 @@ function displayType(c: CollectionUI) {
             <div class="field">
               <label class="label">Hours of operation</label>
 
-              <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px">
                 <Calendar
                   v-model="hoursFrom"
                   timeOnly
@@ -507,7 +514,7 @@ function displayType(c: CollectionUI) {
                 />
               </div>
 
-              <div class="hint" style="margin-top:6px;">
+              <div class="hint" style="margin-top: 6px">
                 Saved as: <b>{{ selected.hours_of_operation || "—" }}</b>
               </div>
             </div>
@@ -532,7 +539,11 @@ function displayType(c: CollectionUI) {
 
           <div class="field">
             <label class="label">Special instructions / gate code</label>
-            <input class="input" v-model="selected.special_instructions" placeholder="Tail lift required" />
+            <input
+              class="input"
+              v-model="selected.special_instructions"
+              placeholder="Tail lift required"
+            />
           </div>
         </div>
 
@@ -565,7 +576,6 @@ function displayType(c: CollectionUI) {
 </template>
 
 <style scoped>
-
 .switchRow {
   display: flex;
   align-items: center;

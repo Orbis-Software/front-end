@@ -1,7 +1,7 @@
-import { ref, nextTick } from 'vue'
-import { useRouter } from 'vue-router'
-import { useToast } from 'primevue/usetoast'
-import { useAuthStore } from '@/app/stores/auth'
+import { ref, nextTick } from "vue"
+import { useRouter } from "vue-router"
+import { useToast } from "primevue/usetoast"
+import { useAuthStore } from "@/app/stores/auth"
 
 function isValidEmail(value: string): boolean {
   // Simple but solid email check for UI step gating
@@ -9,32 +9,32 @@ function isValidEmail(value: string): boolean {
 }
 
 export function useLoginPage() {
-  const email = ref('')
-  const password = ref('')
+  const email = ref("")
+  const password = ref("")
   const loading = ref(false)
 
   const step = ref<1 | 2>(1)
 
-  const emailError = ref<string>('')
-  const passwordError = ref<string>('')
+  const emailError = ref<string>("")
+  const passwordError = ref<string>("")
 
   const authStore = useAuthStore()
   const router = useRouter()
   const toast = useToast()
 
   async function nextFromEmail() {
-    emailError.value = ''
+    emailError.value = ""
 
     const value = email.value.trim().toLowerCase()
     email.value = value
 
     if (!value) {
-      emailError.value = 'Email is required.'
+      emailError.value = "Email is required."
       return
     }
 
     if (!isValidEmail(value)) {
-      emailError.value = 'Please enter a valid email address.'
+      emailError.value = "Please enter a valid email address."
       return
     }
 
@@ -45,8 +45,8 @@ export function useLoginPage() {
   }
 
   function backToEmail() {
-    password.value = ''
-    passwordError.value = ''
+    password.value = ""
+    passwordError.value = ""
     step.value = 1
   }
 
@@ -57,10 +57,10 @@ export function useLoginPage() {
       return
     }
 
-    passwordError.value = ''
+    passwordError.value = ""
 
     if (!password.value) {
-      passwordError.value = 'Password is required.'
+      passwordError.value = "Password is required."
       return
     }
 
@@ -68,12 +68,12 @@ export function useLoginPage() {
 
     try {
       await authStore.login(email.value, password.value)
-      router.push('/')
+      router.push("/")
     } catch (error: any) {
       toast.add({
-        severity: 'error',
-        summary: 'Login Failed',
-        detail: error?.response?.data?.message ?? 'Invalid email or password',
+        severity: "error",
+        summary: "Login Failed",
+        detail: error?.response?.data?.message ?? "Invalid email or password",
         life: 4000,
       })
     } finally {

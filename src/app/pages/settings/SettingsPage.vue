@@ -65,7 +65,8 @@
             <label>Registered Address</label>
             <Textarea v-model="registeredAddressText" autoResize rows="3" />
             <small class="hint">
-              Lines: building, address1, address2, address3, address4, city, state, postcode, country_code
+              Lines: building, address1, address2, address3, address4, city, state, postcode,
+              country_code
             </small>
           </div>
 
@@ -73,7 +74,8 @@
             <label>Operational Address</label>
             <Textarea v-model="operationalAddressText" autoResize rows="3" />
             <small class="hint">
-              Lines: building, address1, address2, address3, address4, city, state, postcode, country_code
+              Lines: building, address1, address2, address3, address4, city, state, postcode,
+              country_code
             </small>
           </div>
 
@@ -132,8 +134,8 @@
 </template>
 
 <script setup lang="ts">
-import './SettingsPage.css'
-import { useSettingsPage } from './SettingsPage'
+import "./SettingsPage.css"
+import { useSettingsPage } from "./SettingsPage"
 
 const {
   company,

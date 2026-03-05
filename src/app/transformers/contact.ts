@@ -1,8 +1,4 @@
-import type {
-  Contact,
-  ContactBranch,
-  ContactCollectionAddress,
-} from "@/app/types/contact"
+import type { Contact, ContactBranch, ContactCollectionAddress } from "@/app/types/contact"
 import contactTypeTransformer from "@/app/transformers/contact-type"
 
 function asArray<T = any>(v: any): T[] {
@@ -60,7 +56,8 @@ function normalizeCollectionAddress(raw: any): ContactCollectionAddress {
     country_id: toNumberOrNull(raw.country_id),
 
     // ✅ NEW generated fields
-    sequence_no: raw.sequence_no === null || raw.sequence_no === undefined ? null : Number(raw.sequence_no),
+    sequence_no:
+      raw.sequence_no === null || raw.sequence_no === undefined ? null : Number(raw.sequence_no),
     reference_code: raw.reference_code ?? null,
 
     // ✅ NEW flags
@@ -100,9 +97,7 @@ const contactTransformer = {
     return {
       id: Number(raw.id),
       company_id:
-        raw.company_id === null || raw.company_id === undefined
-          ? null
-          : Number(raw.company_id),
+        raw.company_id === null || raw.company_id === undefined ? null : Number(raw.company_id),
 
       // ✅ DB-driven types
       contact_types: contactTypeTransformer.fetchCollection(normalizedTypes),

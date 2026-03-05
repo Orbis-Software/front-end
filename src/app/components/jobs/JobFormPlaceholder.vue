@@ -9,7 +9,8 @@
         <strong>{{ mode }}</strong>
       </div>
       <div class="p2">
-        Next: you’ll provide the form layout per mode, and we’ll replace this component with the real form.
+        Next: you’ll provide the form layout per mode, and we’ll replace this component with the
+        real form.
       </div>
     </div>
 
@@ -28,17 +29,17 @@
 </template>
 
 <script setup lang="ts">
-import Button from "primevue/button";
+import Button from "primevue/button"
 
 defineProps<{
-  jobType: string;
-  mode: string;
-}>();
+  jobType: string
+  mode: string
+}>()
 
 defineEmits<{
-  (e: "resetMode"): void;
-  (e: "resetAll"): void;
-}>();
+  (e: "resetMode"): void
+  (e: "resetAll"): void
+}>()
 </script>
 
 <style scoped>
@@ -62,7 +63,8 @@ defineEmits<{
   margin-bottom: 6px;
 }
 
-.p, .p2 {
+.p,
+.p2 {
   color: #555;
   font-size: 13px;
   margin-top: 4px;

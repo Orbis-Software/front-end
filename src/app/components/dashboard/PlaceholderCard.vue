@@ -6,5 +6,5 @@
 </template>
 
 <script setup lang="ts">
-defineProps<{ title: string; subtitle: string }>();
+defineProps<{ title: string; subtitle: string }>()
 </script>

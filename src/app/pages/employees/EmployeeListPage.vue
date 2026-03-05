@@ -47,7 +47,7 @@
         <Column header="Roles">
           <template #body="{ data }">
             <div class="emp-roles">
-              <Tag v-for="r in (data.roles || [])" :key="r" :value="r" />
+              <Tag v-for="r in data.roles || []" :key="r" :value="r" />
               <span v-if="!data.roles || data.roles.length === 0" class="emp-muted">—</span>
             </div>
           </template>

@@ -1,10 +1,5 @@
 <script setup lang="ts">
-export type MainTab =
-  | "branches"
-  | "collections"
-  | "weight_break"
-  | "customer"
-  | "demo"
+export type MainTab = "branches" | "collections" | "weight_break" | "customer" | "demo"
 
 defineProps<{
   active: MainTab
@@ -17,7 +12,6 @@ const emit = defineEmits<{
 
 <template>
   <div class="tabs">
-
     <button
       class="tab"
       :class="{ 'tab--active': active === 'branches' }"
@@ -57,6 +51,5 @@ const emit = defineEmits<{
     >
       Calculation Demo
     </button>
-
   </div>
 </template>

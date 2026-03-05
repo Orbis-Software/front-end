@@ -1,21 +1,21 @@
 <script setup lang="ts">
-import { useRouter } from "vue-router";
-import { useAuthStore } from "@/app/stores/auth";
+import { useRouter } from "vue-router"
+import { useAuthStore } from "@/app/stores/auth"
 
-const emit = defineEmits<{ (e: "close"): void }>();
+const emit = defineEmits<{ (e: "close"): void }>()
 
-const router = useRouter();
-const auth = useAuthStore();
+const router = useRouter()
+const auth = useAuthStore()
 
 function go(path: string) {
-  router.push(path);
-  emit("close");
+  router.push(path)
+  emit("close")
 }
 
 async function logout() {
-  await auth.logout();
-  emit("close");
-  router.push("/login");
+  await auth.logout()
+  emit("close")
+  router.push("/login")
 }
 </script>
 
@@ -48,10 +48,10 @@ async function logout() {
   min-width: 250px;
 
   background: var(--pc-bg-card, #fff);
-  border: 1px solid rgba(0,0,0,0.12);
+  border: 1px solid rgba(0, 0, 0, 0.12);
   border-radius: 12px;
 
-  box-shadow: 0 18px 45px rgba(0,0,0,0.14);
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.14);
   padding: 10px 0;
   z-index: 80;
 }
@@ -71,7 +71,9 @@ async function logout() {
 
   font-weight: 900;
   color: var(--pc-text-main);
-  transition: background 0.16s ease, color 0.16s ease;
+  transition:
+    background 0.16s ease,
+    color 0.16s ease;
 }
 
 .dd-link:hover {
@@ -81,7 +83,7 @@ async function logout() {
 
 .dd-divider {
   height: 1px;
-  background: rgba(0,0,0,0.10);
+  background: rgba(0, 0, 0, 0.1);
   margin: 8px 0;
 }
 

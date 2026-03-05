@@ -1,14 +1,18 @@
 <template>
   <div class="contact-create-page">
     <header class="page-header">
-      <h1 class="page-title">{{ isEdit ? 'Edit Contact' : 'Contact Details' }}</h1>
+      <h1 class="page-title">{{ isEdit ? "Edit Contact" : "Contact Details" }}</h1>
       <p class="page-subtitle">
         Please fill in the contact details below. Fields marked with * are required.
       </p>
     </header>
 
     <section class="card">
-      <div v-if="loadingContact" class="loading-wrap" style="padding: 18px; display:flex; gap:10px; align-items:center;">
+      <div
+        v-if="loadingContact"
+        class="loading-wrap"
+        style="padding: 18px; display: flex; gap: 10px; align-items: center"
+      >
         <i class="pi pi-spin pi-spinner"></i>
         <span>Loading contact…</span>
       </div>
@@ -47,7 +51,7 @@
             <h2>Company Details</h2>
           </div>
 
-          <div class="grid cols-4">
+          <div class="cols-4 grid">
             <div class="field">
               <label class="required">Company Name</label>
               <input v-model="form.company_name" type="text" placeholder="Enter company name" />
@@ -90,20 +94,32 @@
             <h2>Registration Details</h2>
           </div>
 
-          <div class="grid cols-3">
+          <div class="cols-3 grid">
             <div class="field">
               <label>Registration Number</label>
-              <input v-model="form.registration_number" type="text" placeholder="Company registration number" />
+              <input
+                v-model="form.registration_number"
+                type="text"
+                placeholder="Company registration number"
+              />
             </div>
 
             <div class="field">
               <label>VAT Number</label>
-              <input v-model="form.vat_number" type="text" placeholder="VAT identification number" />
+              <input
+                v-model="form.vat_number"
+                type="text"
+                placeholder="VAT identification number"
+              />
             </div>
 
             <div class="field">
               <label>EORI Number</label>
-              <input v-model="form.eori" type="text" placeholder="Economic Operators Registration ID" />
+              <input
+                v-model="form.eori"
+                type="text"
+                placeholder="Economic Operators Registration ID"
+              />
             </div>
           </div>
         </div>
@@ -117,20 +133,32 @@
             <h2>Address & Contact Details</h2>
           </div>
 
-          <div class="grid cols-4">
+          <div class="cols-4 grid">
             <div class="field">
               <label class="required">Address Line 1</label>
-              <input v-model="form.address_line_1" type="text" placeholder="Street address, P.O. box" />
+              <input
+                v-model="form.address_line_1"
+                type="text"
+                placeholder="Street address, P.O. box"
+              />
             </div>
 
             <div class="field">
               <label>Address Line 2</label>
-              <input v-model="form.address_line_2" type="text" placeholder="Apartment, suite, unit, building, floor" />
+              <input
+                v-model="form.address_line_2"
+                type="text"
+                placeholder="Apartment, suite, unit, building, floor"
+              />
             </div>
 
             <div class="field">
               <label>Address Line 3</label>
-              <input v-model="form.address_line_3" type="text" placeholder="Additional address information" />
+              <input
+                v-model="form.address_line_3"
+                type="text"
+                placeholder="Additional address information"
+              />
             </div>
 
             <div class="field">
@@ -139,7 +167,7 @@
             </div>
           </div>
 
-          <div class="grid cols-4">
+          <div class="cols-4 grid">
             <div class="field">
               <label>County/State</label>
               <input v-model="form.county_state" type="text" placeholder="County or state" />
@@ -161,14 +189,14 @@
                 :dropdown="true"
                 :loading="countrySearching"
                 placeholder="Search country (e.g. United Kingdom, GB, +44)"
-                @complete="(e) => searchCountries(e.query)"
-                @item-select="(e) => onCountrySelect(e.value)"
+                @complete="e => searchCountries(e.query)"
+                @item-select="e => onCountrySelect(e.value)"
                 @clear="() => onCountrySelect(null)"
               >
                 <template #option="{ option }">
-                  <div style="display:flex; justify-content:space-between; gap:12px;">
+                  <div style="display: flex; justify-content: space-between; gap: 12px">
                     <span>{{ option.name }}</span>
-                    <span style="opacity:.7;">{{ option.alpha_2 }} • {{ option.dial_code }}</span>
+                    <span style="opacity: 0.7">{{ option.alpha_2 }} • {{ option.dial_code }}</span>
                   </div>
                 </template>
               </AutoComplete>
@@ -182,7 +210,7 @@
             </div>
           </div>
 
-          <div class="grid cols-3">
+          <div class="cols-3 grid">
             <div class="field">
               <label class="required">Phone Number</label>
               <div class="phone">
@@ -190,11 +218,13 @@
                   v-model="phoneCountryCodeText"
                   type="text"
                   placeholder="+44"
-                  style="width: 120px;"
+                  style="width: 120px"
                 />
                 <input v-model="form.phone" type="tel" placeholder="(234) 567-8900" />
               </div>
-              <div class="hint">Dial code is auto-set from Country (you can edit it if needed).</div>
+              <div class="hint">
+                Dial code is auto-set from Country (you can edit it if needed).
+              </div>
             </div>
 
             <div class="field">
@@ -248,22 +278,20 @@
           <button class="btn ghost" type="button" @click="onClear">Clear All</button>
           <button class="btn ghost" type="button" @click="onCancel">Cancel</button>
           <button class="btn primary" type="button" :disabled="saving" @click="onSave">
-            {{ isEdit ? 'Update Contact' : 'Save Contact' }}
+            {{ isEdit ? "Update Contact" : "Save Contact" }}
           </button>
         </div>
       </template>
     </section>
 
-    <footer class="footer">
-      © 2026 Contact Management System. All rights reserved.
-    </footer>
+    <footer class="footer">© 2026 Contact Management System. All rights reserved.</footer>
   </div>
 </template>
 
 <script setup lang="ts">
-import './ContactCreatePage.css'
-import AutoComplete from 'primevue/autocomplete'
-import { useContactCreatePage } from './ContactCreatePage'
+import "./ContactCreatePage.css"
+import AutoComplete from "primevue/autocomplete"
+import { useContactCreatePage } from "./ContactCreatePage"
 
 const {
   store,

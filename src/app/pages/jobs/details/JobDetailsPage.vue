@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import "./JobDetailsPage.css";
-import { useJobDetailsPage } from "./JobDetailsPage";
+import "./JobDetailsPage.css"
+import { useJobDetailsPage } from "./JobDetailsPage"
 
-import Button from "primevue/button";
-import InputText from "primevue/inputtext";
-import Dropdown from "primevue/dropdown";
-import Calendar from "primevue/calendar";
+import Button from "primevue/button"
+import InputText from "primevue/inputtext"
+import Dropdown from "primevue/dropdown"
+import Calendar from "primevue/calendar"
 
 import {
   JobDetailsTabs,
@@ -15,7 +15,7 @@ import {
   JobMilestonesTab,
   JobDocsTab,
   JobCostsTab,
-} from "@/app/components/jobs/details";
+} from "@/app/components/jobs/details"
 
 const {
   job,
@@ -38,7 +38,7 @@ const {
   onPreAlert,
   onPrint,
   onExportPdf,
-} = useJobDetailsPage();
+} = useJobDetailsPage()
 </script>
 
 <template>
@@ -56,11 +56,41 @@ const {
           :disabled="loading"
           @click="onSave"
         />
-        <Button class="action-btn" icon="pi pi-plus" label="Create Shipment" :disabled="loading" @click="onCreateShipment" />
-        <Button class="action-btn" icon="pi pi-file" label="Create Invoice" :disabled="loading" @click="onCreateInvoice" />
-        <Button class="action-btn" icon="pi pi-envelope" label="Pre-alert" :disabled="loading" @click="onPreAlert" />
-        <Button class="action-btn" icon="pi pi-print" label="Print" :disabled="loading" @click="onPrint" />
-        <Button class="action-btn action-btn--export" icon="pi pi-download" label="Export PDF" :disabled="loading" @click="onExportPdf" />
+        <Button
+          class="action-btn"
+          icon="pi pi-plus"
+          label="Create Shipment"
+          :disabled="loading"
+          @click="onCreateShipment"
+        />
+        <Button
+          class="action-btn"
+          icon="pi pi-file"
+          label="Create Invoice"
+          :disabled="loading"
+          @click="onCreateInvoice"
+        />
+        <Button
+          class="action-btn"
+          icon="pi pi-envelope"
+          label="Pre-alert"
+          :disabled="loading"
+          @click="onPreAlert"
+        />
+        <Button
+          class="action-btn"
+          icon="pi pi-print"
+          label="Print"
+          :disabled="loading"
+          @click="onPrint"
+        />
+        <Button
+          class="action-btn action-btn--export"
+          icon="pi pi-download"
+          label="Export PDF"
+          :disabled="loading"
+          @click="onExportPdf"
+        />
       </div>
     </div>
 
@@ -150,17 +180,9 @@ const {
 
     <!-- Content -->
     <div class="job-details-content">
-      <JobOverviewTab
-        v-if="activeTab === 'overview'"
-        :form="form"
-        :disabled="loading"
-      />
+      <JobOverviewTab v-if="activeTab === 'overview'" :form="form" :disabled="loading" />
 
-      <JobTransportTab
-        v-else-if="activeTab === 'transport'"
-        :form="form"
-        :disabled="loading"
-      />
+      <JobTransportTab v-else-if="activeTab === 'transport'" :form="form" :disabled="loading" />
 
       <JobMilestonesTab
         v-else-if="activeTab === 'milestones'"
@@ -171,28 +193,24 @@ const {
       <JobDocsTab
         v-else-if="activeTab === 'docs'"
         :disabled="loading"
-        @upload="(files) => console.log('upload', files)"
-        @view="(id) => console.log('view', id)"
-        @download="(id) => console.log('download', id)"
-        @remove="(id) => console.log('remove', id)"
-        @export="(key) => console.log('export', key)"
+        @upload="files => console.log('upload', files)"
+        @view="id => console.log('view', id)"
+        @download="id => console.log('download', id)"
+        @remove="id => console.log('remove', id)"
+        @export="key => console.log('export', key)"
         @printAll="() => console.log('printAll')"
         @downloadZip="() => console.log('downloadZip')"
         @emailCustomer="() => console.log('emailCustomer')"
       />
 
       <JobCostsTab
-  v-else-if="activeTab === 'costs'"
-  :disabled="loading"
-  @print="() => console.log('print')"
-  @exportExcel="() => console.log('excel')"
-  @emailCustomer="() => console.log('email')"
-/>
-      <JobPlaceholderTab
-        v-else
-        :title="tabs.find((t) => t.key === activeTab)?.label || 'Section'"
+        v-else-if="activeTab === 'costs'"
+        :disabled="loading"
+        @print="() => console.log('print')"
+        @exportExcel="() => console.log('excel')"
+        @emailCustomer="() => console.log('email')"
       />
-      
+      <JobPlaceholderTab v-else :title="tabs.find(t => t.key === activeTab)?.label || 'Section'" />
     </div>
   </div>
 </template>

@@ -39,7 +39,7 @@
 }
 
 .emp-search__input {
-  width: 420px;            /* ✅ not full width */
+  width: 420px; /* ✅ not full width */
   max-width: 100%;
 }
 

@@ -9,7 +9,7 @@ export type JobMilestone = {
   subtitle?: string | null
   status: JobMilestoneStatus
   start_date?: string | null // "dd/mm/yyyy"
-  end_date?: string | null   // "dd/mm/yyyy"
+  end_date?: string | null // "dd/mm/yyyy"
 }
 
 const props = defineProps<{
@@ -93,7 +93,7 @@ const list: JobMilestone[] = props.milestones ?? [
 ]
 
 const total = list.length
-const completed = list.filter((m) => m.status === "done").length
+const completed = list.filter(m => m.status === "done").length
 const progressPct = total === 0 ? 0 : Math.round((completed / total) * 100)
 
 function statusIcon(status: JobMilestoneStatus) {

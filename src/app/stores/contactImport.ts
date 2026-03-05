@@ -1,7 +1,7 @@
-import { defineStore } from 'pinia'
-import contactImportService from '@/app/services/contactImport'
-import type { ContactImportResult } from '@/app/types/contactImport'
-import { useAuthStore } from '@/app/stores/auth'
+import { defineStore } from "pinia"
+import contactImportService from "@/app/services/contactImport"
+import type { ContactImportResult } from "@/app/types/contactImport"
+import { useAuthStore } from "@/app/stores/auth"
 
 type State = {
   importing: boolean
@@ -9,7 +9,7 @@ type State = {
   errorMessage: string | null
 }
 
-export const useContactImportStore = defineStore('contactImport', {
+export const useContactImportStore = defineStore("contactImport", {
   state: (): State => ({
     importing: false,
     result: null,
@@ -27,7 +27,7 @@ export const useContactImportStore = defineStore('contactImport', {
       const companyId = auth.user?.company?.id
 
       if (!companyId) {
-        this.errorMessage = 'No company found on your user account.'
+        this.errorMessage = "No company found on your user account."
         throw new Error(this.errorMessage)
       }
 
@@ -44,9 +44,7 @@ export const useContactImportStore = defineStore('contactImport', {
         return res
       } catch (err: any) {
         this.errorMessage =
-          err?.response?.data?.message ??
-          err?.message ??
-          'Import failed. Please try again.'
+          err?.response?.data?.message ?? err?.message ?? "Import failed. Please try again."
         throw err
       } finally {
         this.importing = false

@@ -29,13 +29,13 @@ function canAccess(item: NavItem): boolean {
   if (item.adminOnly && !auth.isAdmin) return false
 
   if (item.roles?.length) {
-    if (item.roles.some((r) => auth.hasRole(r))) return true
+    if (item.roles.some(r => auth.hasRole(r))) return true
   }
 
   if (item.permission) return auth.hasPermission(item.permission)
 
   if (item.anyPermissions?.length) {
-    return item.anyPermissions.some((p) => auth.hasPermission(p))
+    return item.anyPermissions.some(p => auth.hasPermission(p))
   }
 
   return true
@@ -48,11 +48,11 @@ function canAccess(item: NavItem): boolean {
  */
 function filterNav(list: NavItem[]): NavItem[] {
   return list
-    .map((item) => {
+    .map(item => {
       const children = item.children ? filterNav(item.children) : undefined
       return { ...item, children }
     })
-    .filter((item) => {
+    .filter(item => {
       const allowed = canAccess(item)
       const hasChildren = (item.children?.length ?? 0) > 0
 
@@ -66,16 +66,14 @@ function filterNav(list: NavItem[]): NavItem[] {
 }
 
 const canSeeManagement = computed(() => {
-  return auth.permissions.some((p) => p.startsWith("mgmt."))
+  return auth.permissions.some(p => p.startsWith("mgmt."))
 })
 
 const menu = computed(() => {
   const base = props.area === "tms" ? items.tms : items.wms
 
   const combined =
-    ui.canSeeManagement || canSeeManagement.value
-      ? [...base, ...items.management]
-      : base
+    ui.canSeeManagement || canSeeManagement.value ? [...base, ...items.management] : base
 
   return filterNav(combined)
 })
@@ -87,8 +85,8 @@ const openMobile = reactive<Record<string, boolean>>({})
 
 watch(
   () => props.mobileOpen,
-  (v) => {
-    if (!v) Object.keys(openMobile).forEach((k) => (openMobile[k] = false))
+  v => {
+    if (!v) Object.keys(openMobile).forEach(k => (openMobile[k] = false))
   },
 )
 
@@ -148,9 +146,27 @@ function openDropdown(id: string, el: HTMLElement) {
   clearCloseTimer()
 
   const rect = el.getBoundingClientRect()
+
+  const container = document.querySelector(".nav-inner") as HTMLElement
+  const containerRect = container.getBoundingClientRect()
+
+  const dropdownWidth = 260
+
+  let left = rect.left
+
+  // prevent overflow right
+  if (left + dropdownWidth > containerRect.right) {
+    left = containerRect.right - dropdownWidth
+  }
+
+  // prevent overflow left
+  if (left < containerRect.left) {
+    left = containerRect.left
+  }
+
   dropdownPos.value = {
     top: rect.bottom + 8,
-    left: rect.left,
+    left: left,
   }
 
   activeId.value = id
@@ -207,10 +223,14 @@ onBeforeUnmount(() => {
               expanded: mobileOpen && openMobile[item.id],
             }"
             type="button"
-            @mouseenter="!mobileOpen ? openDropdown(item.id, $event.currentTarget as HTMLElement) : null"
+            @mouseenter="
+              !mobileOpen ? openDropdown(item.id, $event.currentTarget as HTMLElement) : null
+            "
             @focus="!mobileOpen ? openDropdown(item.id, $event.currentTarget as HTMLElement) : null"
             @mouseleave="!mobileOpen && scheduleCloseDropdown()"
-            @click="mobileOpen ? toggleMobileDropdown(item.id) : (item.to ? router.push(item.to) : null)"
+            @click="
+              mobileOpen ? toggleMobileDropdown(item.id) : item.to ? router.push(item.to) : null
+            "
           >
             <i v-if="item.icon" :class="item.icon" />
             <span>{{ item.label }}</span>
@@ -273,7 +293,10 @@ onBeforeUnmount(() => {
                 :class="{ active: child.id === getActiveChildId(item.children) }"
                 :to="child.to || '/'"
                 :href="resolveHref(child.to)"
-                @click="closeDropdownNow(); emit('close-mobile')"
+                @click="
+                  closeDropdownNow()
+                  emit('close-mobile')
+                "
               >
                 <i v-if="child.icon" :class="child.icon" />
                 <span>{{ child.label }}</span>
@@ -287,80 +310,76 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-
-.nav-link {
+/* remove underlines */
+.nav-link,
+.dropdown-link {
   text-decoration: none;
 }
 
 .nav-link:visited,
 .nav-link:active,
-.nav-link:hover {
-  text-decoration: none;
-}
-
-.dropdown-link {
-  text-decoration: none;
-}
-
+.nav-link:hover,
 .dropdown-link:link,
 .dropdown-link:visited,
 .dropdown-link:hover,
 .dropdown-link:active {
   text-decoration: none;
 }
+
 /* =========================
-   TransportPro tab bar style
+   Top nav bar (full width)
    ========================= */
 .top-nav {
+  width: 100%;
   background: #fff;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.10);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
 }
 
+/* ✅ FULL WIDTH container (NO 1400 cap here) */
 .nav-inner {
-  padding: 0 32px;
-  max-width: 1400px;
+  width: 100%;
+  max-width: none; /* ✅ IMPORTANT: remove cap */
   margin: 0 auto;
+  padding: 0 5%;
 }
 
-/* ✅ one line, no scrollbar */
+/* ✅ force one row ALWAYS */
 .nav-list {
   display: flex;
   list-style: none;
   margin: 0;
   padding: 0;
-  gap: 0;
+
+  width: 100%;
+  justify-content: flex-start; /* ✅ no “space-between” behavior */
   align-items: center;
 
-  flex-wrap: nowrap;
-  white-space: nowrap;
-
-  overflow: hidden; /* ✅ no horizontal scrollbar */
+  flex-wrap: nowrap; /* ✅ one row */
+  white-space: nowrap; /* ✅ no wrapping */
+  overflow: visible; /* ✅ don’t clip the last items */
 }
 
+/* each item should never stretch weirdly */
 .nav-item {
   position: relative;
+  flex: 0 0 auto;
 }
 
-/* optional separators */
+/* ❌ REMOVE the vertical separator line (this is the line you see) */
 .nav-item + .nav-item::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 18px;
-  bottom: 18px;
-  width: 1px;
-  background: rgba(0, 0, 0, 0.10);
-  pointer-events: none;
+  display: none !important;
 }
 
-/* ✅ Tab button */
+/* =========================
+   Tab button
+   ========================= */
 .nav-link {
   position: relative;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 10px;
 
-  padding: 18px 22px;
+  padding: 18px 18px; /* slightly tighter default */
   background: transparent;
   border: none;
   cursor: pointer;
@@ -369,7 +388,9 @@ onBeforeUnmount(() => {
   font-size: 0.95rem;
   color: #1f2937;
 
-  transition: background-color 0.15s ease, color 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
 }
 
 .nav-link i {
@@ -401,8 +422,8 @@ onBeforeUnmount(() => {
 .nav-link.active::after {
   content: "";
   position: absolute;
-  left: 16px;
-  right: 16px;
+  left: 14px;
+  right: 14px;
   bottom: -1px;
   height: 3px;
   background-color: var(--primary);
@@ -413,24 +434,21 @@ onBeforeUnmount(() => {
    Dropdown base styles
    ========================= */
 .dropdown {
-  min-width: 240px;
-
+  min-width: 260px;
   background: #fff;
-  border: 1px solid rgba(0, 0, 0, 0.10);
+  border: 1px solid rgba(0, 0, 0, 0.1);
   border-radius: 12px;
-
   padding: 8px 0;
   box-shadow: 0 18px 45px rgba(0, 0, 0, 0.14);
 }
 
-/* ✅ DESKTOP: teleported dropdown overlays page */
+/* DESKTOP: teleported dropdown */
 .dropdown.teleport {
   position: fixed;
   z-index: 99999;
   display: block;
 }
 
-/* ✅ “hover bridge” so it doesn’t flicker between button and dropdown */
 .dropdown.teleport::before {
   content: "";
   position: absolute;
@@ -440,7 +458,7 @@ onBeforeUnmount(() => {
   height: 12px;
 }
 
-/* ✅ MOBILE: inline accordion */
+/* MOBILE: inline accordion */
 .dropdown.mobile {
   position: static;
   display: none;
@@ -470,7 +488,9 @@ onBeforeUnmount(() => {
 
   font-weight: 800;
   color: #1f2937;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
 }
 
 .dropdown-link:hover {
@@ -479,16 +499,62 @@ onBeforeUnmount(() => {
 }
 
 .dropdown-link.active {
-  background: rgba(236, 105, 26, 0.10);
+  background: rgba(236, 105, 26, 0.1);
   color: var(--primary);
 }
 
 /* =========================
-   Mobile nav behavior
+   ✅ Make everything fit on smaller screens
+   (still ONE row)
    ========================= */
-@media (max-width: 1200px) {
+
+/* 1440-ish */
+@media (max-width: 1500px) {
   .nav-inner {
-    padding: 0 20px;
+    padding: 0 24px;
+  }
+  .nav-link {
+    padding: 16px 14px;
+    font-size: 0.93rem;
+    gap: 8px;
+  }
+}
+
+/* 1366-ish */
+@media (max-width: 1400px) {
+  .nav-inner {
+    padding: 0 18px;
+  }
+  .nav-link {
+    padding: 14px 12px;
+    font-size: 0.9rem;
+  }
+  .nav-link i {
+    font-size: 1rem;
+  }
+}
+
+/* 1280-ish */
+@media (max-width: 1280px) {
+  .nav-inner {
+    padding: 0 14px;
+  }
+  .nav-link {
+    padding: 12px 10px;
+    font-size: 0.88rem;
+  }
+  .chevron {
+    margin-left: 4px;
+  }
+}
+
+/* =========================
+   Mobile nav behavior
+   (keep your existing dropdown overlay)
+   ========================= */
+@media (max-width: 1024px) {
+  .nav-inner {
+    padding: 0 14px;
   }
 
   .nav-list {
@@ -496,13 +562,18 @@ onBeforeUnmount(() => {
     left: 0;
     right: 0;
     top: 70px;
+
     background: #fff;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.10);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+
     flex-direction: column;
     align-items: stretch;
+
     display: none;
     z-index: 55;
+
     overflow: visible;
+    white-space: normal;
   }
 
   .nav-list.show {
@@ -510,15 +581,12 @@ onBeforeUnmount(() => {
     box-shadow: 0 18px 45px rgba(0, 0, 0, 0.12);
   }
 
-  .nav-item + .nav-item::before {
-    display: none;
-  }
-
   .nav-link {
     width: 100%;
     justify-content: space-between;
     padding: 16px 18px;
     border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 0;
   }
 
   .dropdown-link {

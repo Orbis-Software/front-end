@@ -3,7 +3,7 @@ import { systemAccessTransformer } from "@/app/transformers/systemAccess"
 import type { EmployeeAccessListParams, EmployeeAccessRow } from "@/app/types/systemAccess"
 
 export default async function listAccessEmployees(
-  params: EmployeeAccessListParams = {}
+  params: EmployeeAccessListParams = {},
 ): Promise<{ data: EmployeeAccessRow[]; meta?: any }> {
   const res = await http.get("/system-access/employees", { params })
   return {
