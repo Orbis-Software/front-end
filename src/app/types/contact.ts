@@ -138,6 +138,14 @@ export interface ContactCollectionAddress {
   postal_code: string | null;
   country_id: number | null;
 
+  // ✅ NEW: generated fields
+  sequence_no?: number | null;
+  reference_code?: string | null;
+
+  // ✅ NEW: flags (can be both true)
+  is_collection?: boolean;
+  is_delivery?: boolean;
+
   // ✅ persisted UI fields
   hours_of_operation?: string | null;
   contact_person?: string | null;

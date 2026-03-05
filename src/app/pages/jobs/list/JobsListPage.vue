@@ -66,9 +66,18 @@
         <Column header="Job" style="width: 260px">
           <template #body="{ data }">
             <div class="job-cell">
-              <div class="job-number">{{ data.job_number }}</div>
-              <div class="muted">#{{ data.id }}</div>
-            </div>
+                  <!-- clickable job number -->
+                  <button
+                    type="button"
+                    class="job-number job-link"
+                    @click="onEdit(data.id)"
+                    title="Open job"
+                  >
+                    {{ data.job_number }}
+                  </button>
+
+                  <div class="muted">#{{ data.id }}</div>
+                </div>
           </template>
         </Column>
 

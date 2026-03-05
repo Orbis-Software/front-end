@@ -129,7 +129,9 @@
   gap: 12px;
 }
 
-/* Dimensions */
+/* =========================
+   DIMENSIONS (FIXED + MATCH DESIGN)
+   ========================= */
 .job-transport .dims {
   margin-top: 10px;
   margin-bottom: 12px;
@@ -142,60 +144,128 @@
 
 .job-transport .dims-table {
   border-radius: 12px;
-  overflow: hidden;
   border: 1px solid #ededed;
+  overflow: hidden;
   margin-bottom: 10px;
+
+  /* allow horizontal scroll like the reference */
+  overflow-x: auto;
 }
 
-.job-transport .dims-head {
-  display: grid;
-  grid-template-columns: 1.1fr 0.5fr 0.8fr 0.8fr 0.8fr 0.9fr 0.9fr 0.9fr 0.6fr;
-  gap: 10px;
-  padding: 12px 12px;
-  background: #f6f6f6;
-  font-size: 13px;
-  font-weight: 800;
-}
-
-.job-transport .dims-row {
-  display: grid;
-  grid-template-columns: 1.1fr 0.5fr 0.8fr 0.8fr 0.8fr 0.9fr 0.9fr 0.9fr 0.6fr;
-  gap: 10px;
-  padding: 12px 12px;
-  border-top: 1px solid #efefef;
-  align-items: center;
-}
-
-.job-transport .cell {
-  width: 100%;
-}
-
-.job-transport .cell--calc {
-  height: 44px;
-  border-radius: 10px;
-  background: #f7f7f7;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #333;
-  font-weight: 700;
-}
-
+/* ✅ “table-like” fixed columns */
+.job-transport .dims-head,
+.job-transport .dims-row,
 .job-transport .dims-total {
   display: grid;
-  grid-template-columns: 1.1fr 0.5fr 0.8fr 0.8fr 0.8fr 0.9fr 0.9fr 0.9fr 0.6fr;
-  gap: 10px;
+  grid-template-columns:
+    180px  /* Packaging */
+    70px   /* Qty */
+    110px  /* Length */
+    110px  /* Width */
+    110px  /* Height */
+    150px  /* Gross Weight */
+    120px  /* Cube */
+    130px  /* Volume */
+    110px; /* LDM */
+
+  column-gap: 12px;
   padding: 12px 12px;
-  border-top: 2px solid #eee;
-  background: #fafafa;
   align-items: center;
+
+  /* forces header/rows/total to align perfectly */
+  min-width: 1200px;
+}
+
+/* Header */
+.job-transport .dims-head {
+  background: #f3f3f3;
+  font-size: 13px;
+  font-weight: 800;
+  color: #111;
+}
+
+/* Rows */
+.job-transport .dims-row {
+  border-top: 1px solid #efefef;
+  background: #fff;
+}
+
+/* Total row like reference */
+.job-transport .dims-total {
+  border-top: 2px solid #eee;
+  background: #f6f6f6;
+  font-weight: 700;
 }
 
 .job-transport .t-label {
   font-weight: 900;
 }
 
-/* Cost box */
+/* ✅ MOST IMPORTANT: prevent PrimeVue wrappers from overflowing their grid cell */
+.job-transport .dims-head > *,
+.job-transport .dims-row > *,
+.job-transport .dims-total > * {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  overflow: hidden;          /* stops Gross spilling into Cube */
+  box-sizing: border-box;
+}
+
+/* Cell base */
+.job-transport .cell {
+  width: 100%;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  box-sizing: border-box;
+}
+
+/* ✅ PrimeVue controls: hard constrain to the column */
+.job-transport .dims-row .p-dropdown,
+.job-transport .dims-row .p-inputnumber {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  display: block !important;
+  flex: 0 0 auto !important;   /* stop flex growth */
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* PrimeVue internal input elements */
+.job-transport .dims-row .p-inputnumber-input,
+.job-transport .dims-row .p-dropdown-label {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  box-sizing: border-box;
+}
+
+/* ✅ Tighter height like the 2nd image */
+.job-transport .dims-row .p-dropdown,
+.job-transport .dims-row .p-inputnumber,
+.job-transport .dims-row .p-inputnumber-input,
+.job-transport .dims-row .p-dropdown-label {
+  height: 38px;
+  border-radius: 6px;
+}
+
+/* ✅ Calc boxes look like disabled inputs (2nd image) */
+.job-transport .cell--calc {
+  height: 38px;
+  border-radius: 6px;
+  border: 1px solid #d9d9d9;
+  background: #f5f5f5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #111;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* =========================
+   COST BOX
+   ========================= */
 .job-transport .cost-box {
   border: 1px solid #e7e7e7;
   border-radius: 12px;
@@ -357,12 +427,7 @@
     grid-template-columns: 1fr;
   }
 
-  .job-transport .dims-head,
-  .job-transport .dims-row,
-  .job-transport .dims-total {
-    grid-template-columns: 1fr;
-  }
-
+  /* keep table scroll behavior instead of stacking */
   .job-transport .dt-row {
     grid-template-columns: 1fr;
   }

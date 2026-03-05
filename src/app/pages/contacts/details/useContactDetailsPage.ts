@@ -52,6 +52,14 @@ function blankCollectionAddress(): Omit<ContactCollectionAddress, "id"> {
     postal_code: null,
     country_id: null,
 
+    // ✅ NEW flags defaults
+    is_collection: true,
+    is_delivery: false,
+
+    // ✅ generated server-side (keep null)
+    sequence_no: null,
+    reference_code: null,
+
     // ✅ persisted UI fields
     hours_of_operation: null,
     contact_person: null,
