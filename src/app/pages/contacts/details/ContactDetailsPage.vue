@@ -5,8 +5,12 @@ import { useContactDetailsPage } from "./useContactDetailsPage"
 import Button from "primevue/button"
 
 import ContactDetailsTabs from "@/app/components/contacts/ContactDetailsTabs.vue"
+import ContactOverviewTab from "@/app/components/contacts/overview/ContactOverviewTab.vue"
 import BranchesBillingTab from "@/app/components/contacts/BranchesBillingTab.vue"
 import CollectionAddressesTab from "@/app/components/contacts/CollectionAddressesTab.vue"
+import ContactWeightChargesTab from "@/app/components/contacts/weight-charges/ContactWeightChargesTab.vue"
+import ContactCustomerChargesTab from "@/app/components/contacts/ContactCustomerChargesTab.vue"
+import ContactCalculationDemoTab from "@/app/components/contacts/ContactCalculationDemoTab.vue"
 
 const {
   loading,
@@ -25,7 +29,7 @@ const {
   saveCollectionAddress,
   removeCollectionAddressById,
 
-  load, // ✅ IMPORTANT
+  load,
 } = useContactDetailsPage()
 </script>
 
@@ -46,15 +50,17 @@ const {
 
             <span class="dot">•</span>
             <span class="metaItem">
-              {{ contact.collection_addresses?.length ?? 0 }} collection addresses
+              {{ contact.collection_addresses?.length ?? 0 }} addresses
             </span>
 
             <span class="dot">•</span>
-            <span class="metaItem"> {{ contact.branches?.length ?? 0 }} branches </span>
+            <span class="metaItem">
+              {{ contact.branches?.length ?? 0 }} branches
+            </span>
           </div>
         </div>
 
-        <div class="pageHeader__right" style="display: flex; gap: 10px">
+        <div class="pageHeader__right">
           <Button
             type="button"
             class="btn btn--ghost orbis-muted"
@@ -80,8 +86,13 @@ const {
           <div v-if="loading" class="loading">Loading…</div>
 
           <template v-else>
+            <ContactOverviewTab
+              v-if="activeTab === 'overview'"
+              :contact="contact"
+            />
+
             <BranchesBillingTab
-              v-if="activeTab === 'branches'"
+              v-else-if="activeTab === 'branches'"
               :branches="contact.branches ?? []"
               @add="addBranch"
               @remove="removeBranch"
@@ -89,12 +100,24 @@ const {
             />
 
             <CollectionAddressesTab
-              v-else
+              v-else-if="activeTab === 'collections'"
               :items="contact.collection_addresses ?? []"
               @add="addCollectionAddress"
               @remove="removeCollectionAddressById"
               @save="saveCollectionAddress"
               @cancel="load"
+            />
+
+            <ContactWeightChargesTab
+              v-else-if="activeTab === 'weight_break'"
+            />
+
+            <ContactCustomerChargesTab
+              v-else-if="activeTab === 'customer'"
+            />
+
+            <ContactCalculationDemoTab
+              v-else-if="activeTab === 'demo'"
             />
           </template>
         </div>

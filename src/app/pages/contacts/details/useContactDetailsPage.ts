@@ -6,7 +6,13 @@ import { useToast } from "primevue/usetoast"
 import type { ContactBranch, ContactCollectionAddress } from "@/app/types/contact"
 import { useContactStore } from "@/app/stores/contact"
 
-export type ContactDetailsTab = "branches" | "collections" | "weight_break" | "customer" | "demo"
+export type ContactDetailsTab =
+  | "overview"
+  | "branches"
+  | "collections"
+  | "weight_break"
+  | "customer"
+  | "demo"
 
 function blankBranch(): Omit<ContactBranch, "id"> {
   return {
@@ -47,15 +53,12 @@ function blankCollectionAddress(): Omit<ContactCollectionAddress, "id"> {
     postal_code: null,
     country_id: null,
 
-    // ✅ NEW flags defaults
     is_collection: true,
     is_delivery: false,
 
-    // ✅ generated server-side (keep null)
     sequence_no: null,
     reference_code: null,
 
-    // ✅ persisted UI fields
     hours_of_operation: null,
     contact_person: null,
     email: null,
@@ -81,8 +84,7 @@ export function useContactDetailsPage() {
 
   const busy = ref(false)
 
-  // ✅ UPDATED: include all tabs
-  const activeTab = ref<ContactDetailsTab>("branches")
+  const activeTab = ref<ContactDetailsTab>("overview")
 
   function setTab(tab: ContactDetailsTab) {
     activeTab.value = tab
@@ -104,7 +106,11 @@ export function useContactDetailsPage() {
 
   function onEditContact() {
     if (!contact.value) return
-    router.push({ name: "crm.contacts.edit", params: { id: contact.value.id } })
+
+    router.push({
+      name: "crm.contacts.edit",
+      params: { id: contact.value.id },
+    })
   }
 
   function onSendInvoice() {
@@ -122,7 +128,13 @@ export function useContactDetailsPage() {
 
     try {
       await contactStore.updateBranch(contact.value.id, branchId, patch)
-      toast.add({ severity: "success", summary: "Saved", detail: "Branch updated", life: 1500 })
+
+      toast.add({
+        severity: "success",
+        summary: "Saved",
+        detail: "Branch updated",
+        life: 1500,
+      })
     } catch (e) {
       toast.add({
         severity: "error",
@@ -133,12 +145,11 @@ export function useContactDetailsPage() {
     }
   }
 
-  // ---------------------------
-  // BRANCHES
-  // ---------------------------
   async function addBranch() {
     if (!contact.value) return
+
     busy.value = true
+
     try {
       await contactStore.createBranch(contact.value.id, {
         ...blankBranch(),
@@ -177,12 +188,14 @@ export function useContactDetailsPage() {
       acceptClass: "p-button-danger",
       accept: async () => {
         busy.value = true
+
         try {
           if (!branch.id || branch.id < 0) {
             contact.value!.branches!.splice(index, 1)
           } else {
             await contactStore.removeBranch(contact.value!.id, branch.id)
           }
+
           toast.add({
             severity: "success",
             summary: "Deleted",
@@ -203,12 +216,11 @@ export function useContactDetailsPage() {
     })
   }
 
-  // ---------------------------
-  // COLLECTION ADDRESSES
-  // ---------------------------
   async function addCollectionAddress() {
     if (!contact.value) return
+
     busy.value = true
+
     try {
       await contactStore.createCollectionAddress(contact.value.id, {
         ...blankCollectionAddress(),
@@ -233,12 +245,16 @@ export function useContactDetailsPage() {
     }
   }
 
-  async function saveCollectionAddress(id: number, payload: Partial<ContactCollectionAddress>) {
+  async function saveCollectionAddress(
+    id: number,
+    payload: Partial<ContactCollectionAddress>,
+  ) {
     if (!contact.value) return
     if (!id || id <= 0) return
 
     try {
       await contactStore.updateCollectionAddress(contact.value.id, id, payload)
+
       toast.add({
         severity: "success",
         summary: "Saved",
@@ -246,7 +262,12 @@ export function useContactDetailsPage() {
         life: 1500,
       })
     } catch (e) {
-      toast.add({ severity: "error", summary: "Failed to save", detail: errMsg(e), life: 4000 })
+      toast.add({
+        severity: "error",
+        summary: "Failed to save",
+        detail: errMsg(e),
+        life: 4000,
+      })
     }
   }
 
@@ -261,8 +282,10 @@ export function useContactDetailsPage() {
       acceptClass: "p-button-danger",
       accept: async () => {
         busy.value = true
+
         try {
           await contactStore.removeCollectionAddress(contact.value!.id, id)
+
           toast.add({
             severity: "success",
             summary: "Deleted",
