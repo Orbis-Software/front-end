@@ -5,7 +5,7 @@ import { useContactDetailsPage } from "./useContactDetailsPage"
 import Button from "primevue/button"
 
 import ContactDetailsTabs from "@/app/components/contacts/ContactDetailsTabs.vue"
-import ContactOverviewTab from "@/app/components/contacts/ContactOverviewTab.vue"
+import ContactOverviewTab from "@/app/components/contacts/overview/ContactOverviewTab.vue"
 import BranchesBillingTab from "@/app/components/contacts/BranchesBillingTab.vue"
 import CollectionAddressesTab from "@/app/components/contacts/CollectionAddressesTab.vue"
 import ContactWeightChargesTab from "@/app/components/contacts/weight-charges/ContactWeightChargesTab.vue"
