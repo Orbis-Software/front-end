@@ -8,8 +8,8 @@
             <div class="dash-eyebrow">ORBIS TMS / DASHBOARD DEMO</div>
             <h1 class="dash-title">Transport Management Dashboard</h1>
             <p class="dash-subtitle">
-              Consistent dashboard layout across User, Management All Users, and
-              Management Individual User views.
+              Consistent dashboard layout across User, Management All Users, and Management
+              Individual User views.
             </p>
           </div>
 
@@ -20,16 +20,8 @@
               class="btn btn--primary"
               @click="goJobsCreate"
             />
-            <Button
-              label="Create Quote"
-              class="btn btn--ghost"
-              @click="goQuotes"
-            />
-            <Button
-              label="Export View"
-              class="btn btn--ghost"
-              @click="exportView"
-            />
+            <Button label="Create Quote" class="btn btn--ghost" @click="goQuotes" />
+            <Button label="Export View" class="btn btn--ghost" @click="exportView" />
           </div>
         </div>
       </template>
@@ -107,30 +99,20 @@
 
     <!-- KPI GRID -->
     <section class="dash-kpis">
-      <Card
-        v-for="card in currentStatCards"
-        :key="card.key"
-        class="dash-card stat-card"
-      >
+      <Card v-for="card in currentStatCards" :key="card.key" class="dash-card stat-card">
         <template #content>
           <div class="stat-card__label">{{ card.label }}</div>
           <div class="stat-card__value">{{ card.value }}</div>
           <div class="stat-card__sub">{{ card.sub }}</div>
 
-          <div
-            v-if="card.progress !== undefined"
-            class="stat-card__progress-wrap"
-          >
+          <div v-if="card.progress !== undefined" class="stat-card__progress-wrap">
             <div class="stat-card__progress-meta">
               <span>{{ card.progressLabel }}</span>
               <span>{{ card.progress }}%</span>
             </div>
 
             <div class="stat-progress">
-              <div
-                class="stat-progress__bar"
-                :style="{ width: `${card.progress}%` }"
-              />
+              <div class="stat-progress__bar" :style="{ width: `${card.progress}%` }" />
             </div>
           </div>
         </template>
@@ -149,11 +131,7 @@
                 <div class="panel-card__sub">Workflow grouped by status.</div>
               </div>
 
-              <Button
-                label="VIEW ALL"
-                class="btn btn--ghost btn--small"
-                @click="goJobs"
-              />
+              <Button label="VIEW ALL" class="btn btn--ghost btn--small" @click="goJobs" />
             </div>
 
             <div class="kanban-grid">
@@ -187,23 +165,14 @@
             <div class="panel-card__head">
               <div>
                 <div class="panel-card__title">To Do & Exceptions</div>
-                <div class="panel-card__sub">
-                  Daily tasks plus exception handling.
-                </div>
+                <div class="panel-card__sub">Daily tasks plus exception handling.</div>
               </div>
 
-              <Button
-                label="VIEW ALL"
-                class="btn btn--ghost btn--small"
-              />
+              <Button label="VIEW ALL" class="btn btn--ghost btn--small" />
             </div>
 
             <div class="todo-list">
-              <div
-                v-for="t in userTodo"
-                :key="t.id"
-                class="todo-card"
-              >
+              <div v-for="t in userTodo" :key="t.id" class="todo-card">
                 <div class="todo-card__title">{{ t.title }}</div>
                 <div class="todo-card__meta">{{ t.owner }} · {{ t.when }}</div>
               </div>
@@ -222,10 +191,7 @@
                 <div class="panel-card__sub">Donut report by mode.</div>
               </div>
 
-              <Button
-                label="VIEW ALL"
-                class="btn btn--ghost btn--small"
-              />
+              <Button label="VIEW ALL" class="btn btn--ghost btn--small" />
             </div>
 
             <div class="chart-card">
@@ -268,10 +234,7 @@
                 <div class="panel-card__sub">Sales by mode.</div>
               </div>
 
-              <Button
-                label="VIEW ALL"
-                class="btn btn--ghost btn--small"
-              />
+              <Button label="VIEW ALL" class="btn btn--ghost btn--small" />
             </div>
 
             <div class="chart-card">
@@ -310,8 +273,8 @@
     <!-- MANAGEMENT VIEW -->
     <template v-else>
       <div class="management-note">
-        The management page now keeps the same structure whether you are viewing
-        All Users or an individual user.
+        The management page now keeps the same structure whether you are viewing All Users or an
+        individual user.
       </div>
 
       <section class="dash-grid dash-grid--main">
@@ -321,15 +284,10 @@
             <div class="panel-card__head">
               <div>
                 <div class="panel-card__title">Management Performance Overview</div>
-                <div class="panel-card__sub">
-                  Compare users by sales, profit and targets.
-                </div>
+                <div class="panel-card__sub">Compare users by sales, profit and targets.</div>
               </div>
 
-              <Button
-                label="VIEW ALL"
-                class="btn btn--ghost btn--small"
-              />
+              <Button label="VIEW ALL" class="btn btn--ghost btn--small" />
             </div>
 
             <div class="chart-area">
@@ -394,18 +352,11 @@
                 </div>
               </div>
 
-              <Button
-                label="VIEW ALL"
-                class="btn btn--ghost btn--small"
-              />
+              <Button label="VIEW ALL" class="btn btn--ghost btn--small" />
             </div>
 
             <div class="todo-list">
-              <div
-                v-for="t in managementExceptions"
-                :key="t.id"
-                class="todo-card"
-              >
+              <div v-for="t in managementExceptions" :key="t.id" class="todo-card">
                 <div class="todo-card__title">{{ t.title }}</div>
                 <div class="todo-card__meta">{{ t.owner }} · {{ t.when }}</div>
               </div>
@@ -424,10 +375,7 @@
                 <div class="panel-card__sub">Donut report by mode.</div>
               </div>
 
-              <Button
-                label="VIEW ALL"
-                class="btn btn--ghost btn--small"
-              />
+              <Button label="VIEW ALL" class="btn btn--ghost btn--small" />
             </div>
 
             <div class="chart-card">
@@ -466,10 +414,7 @@
                 <div class="panel-card__sub">Sales by mode.</div>
               </div>
 
-              <Button
-                label="VIEW ALL"
-                class="btn btn--ghost btn--small"
-              />
+              <Button label="VIEW ALL" class="btn btn--ghost btn--small" />
             </div>
 
             <div class="chart-card">
@@ -609,7 +554,7 @@ const managementStatCards: StatCard[] = [
 ]
 
 const currentStatCards = computed(() =>
-  activeView.value === "management" ? managementStatCards : userStatCards
+  activeView.value === "management" ? managementStatCards : userStatCards,
 )
 
 const kanban = [
@@ -678,10 +623,10 @@ const rawPerformance = [
 ]
 
 const maxMetric = Math.max(
-  ...rawPerformance.flatMap((item) => [item.sales, item.profit, item.target])
+  ...rawPerformance.flatMap(item => [item.sales, item.profit, item.target]),
 )
 
-const managementPerformance = rawPerformance.map((item) => ({
+const managementPerformance = rawPerformance.map(item => ({
   ...item,
   salesPct: Math.round((item.sales / maxMetric) * 100),
   profitPct: Math.round((item.profit / maxMetric) * 100),

@@ -121,7 +121,10 @@
     <!-- ✅ RIGHT SIDE ACTIONS: show when jobType AND (mode OR multi_modal) -->
     <div v-if="jobType && (jobType === 'multi_modal' || mode)" class="two-col">
       <section class="card section">
-        <JobStepHeader title="Documents & Notes" subtitle="Optional attachments and internal notes" />
+        <JobStepHeader
+          title="Documents & Notes"
+          subtitle="Optional attachments and internal notes"
+        />
 
         <div class="docs-grid">
           <div class="drop-box">Drag &amp; drop documents</div>

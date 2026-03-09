@@ -426,17 +426,11 @@
 }
 
 .donut--mode-user {
-  background: conic-gradient(
-    var(--primary) 0deg 120deg,
-    #9c9c9c 120deg 360deg
-  );
+  background: conic-gradient(var(--primary) 0deg 120deg, #9c9c9c 120deg 360deg);
 }
 
 .donut--revenue-user {
-  background: conic-gradient(
-    var(--primary) 0deg 180deg,
-    #9c9c9c 180deg 360deg
-  );
+  background: conic-gradient(var(--primary) 0deg 180deg, #9c9c9c 180deg 360deg);
 }
 
 .donut--mix-management {
@@ -522,12 +516,24 @@
   background: #ececec;
 }
 
-.bar-chart__gridline:nth-child(1) { bottom: 18%; }
-.bar-chart__gridline:nth-child(2) { bottom: 34%; }
-.bar-chart__gridline:nth-child(3) { bottom: 50%; }
-.bar-chart__gridline:nth-child(4) { bottom: 66%; }
-.bar-chart__gridline:nth-child(5) { bottom: 82%; }
-.bar-chart__gridline:nth-child(6) { bottom: 98%; }
+.bar-chart__gridline:nth-child(1) {
+  bottom: 18%;
+}
+.bar-chart__gridline:nth-child(2) {
+  bottom: 34%;
+}
+.bar-chart__gridline:nth-child(3) {
+  bottom: 50%;
+}
+.bar-chart__gridline:nth-child(4) {
+  bottom: 66%;
+}
+.bar-chart__gridline:nth-child(5) {
+  bottom: 82%;
+}
+.bar-chart__gridline:nth-child(6) {
+  bottom: 98%;
+}
 
 .bar-chart__group {
   position: relative;

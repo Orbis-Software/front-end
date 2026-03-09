@@ -245,10 +245,7 @@ export function useContactDetailsPage() {
     }
   }
 
-  async function saveCollectionAddress(
-    id: number,
-    payload: Partial<ContactCollectionAddress>,
-  ) {
+  async function saveCollectionAddress(id: number, payload: Partial<ContactCollectionAddress>) {
     if (!contact.value) return
     if (!id || id <= 0) return
 

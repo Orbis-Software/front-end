@@ -54,9 +54,7 @@ const {
             </span>
 
             <span class="dot">•</span>
-            <span class="metaItem">
-              {{ contact.branches?.length ?? 0 }} branches
-            </span>
+            <span class="metaItem"> {{ contact.branches?.length ?? 0 }} branches </span>
           </div>
         </div>
 
@@ -86,10 +84,7 @@ const {
           <div v-if="loading" class="loading">Loading…</div>
 
           <template v-else>
-            <ContactOverviewTab
-              v-if="activeTab === 'overview'"
-              :contact="contact"
-            />
+            <ContactOverviewTab v-if="activeTab === 'overview'" :contact="contact" />
 
             <BranchesBillingTab
               v-else-if="activeTab === 'branches'"
@@ -108,17 +103,11 @@ const {
               @cancel="load"
             />
 
-            <ContactWeightChargesTab
-              v-else-if="activeTab === 'weight_break'"
-            />
+            <ContactWeightChargesTab v-else-if="activeTab === 'weight_break'" />
 
-            <ContactCustomerChargesTab
-              v-else-if="activeTab === 'customer'"
-            />
+            <ContactCustomerChargesTab v-else-if="activeTab === 'customer'" />
 
-            <ContactCalculationDemoTab
-              v-else-if="activeTab === 'demo'"
-            />
+            <ContactCalculationDemoTab v-else-if="activeTab === 'demo'" />
           </template>
         </div>
       </div>

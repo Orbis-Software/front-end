@@ -88,8 +88,12 @@ function deleteCurrentTable() {
   if (index === -1) return
 
   tables.value.splice(index, 1)
-  activeTableId.value = tables.value[0].id
-  tableTitle.value = tables.value[0].name
+
+  const firstTable = tables.value[0]
+  if (!firstTable) return
+
+  activeTableId.value = firstTable.id
+  tableTitle.value = firstTable.name
 }
 
 function addWeightBreak() {
@@ -104,19 +108,19 @@ function addWeightBreak() {
     max: end,
   })
 
-  charges.value.forEach((row) => {
+  charges.value.forEach(row => {
     row.values.push(0)
   })
 }
 
 function removeWeightBreak(id: number) {
-  const index = weightBreaks.value.findIndex((b) => b.id === id)
+  const index = weightBreaks.value.findIndex(b => b.id === id)
   if (index === -1) return
   if (weightBreaks.value.length <= 1) return
 
   weightBreaks.value.splice(index, 1)
 
-  charges.value.forEach((row) => {
+  charges.value.forEach(row => {
     row.values.splice(index, 1)
   })
 }
@@ -130,7 +134,7 @@ function addCharge() {
 }
 
 function confirmDeleteCharge(chargeId: number) {
-  const row = charges.value.find((item) => item.id === chargeId)
+  const row = charges.value.find(item => item.id === chargeId)
   if (!row) return
 
   confirm.require({
@@ -139,7 +143,7 @@ function confirmDeleteCharge(chargeId: number) {
     icon: "pi pi-exclamation-triangle",
     acceptClass: "p-button-danger",
     accept: () => {
-      charges.value = charges.value.filter((item) => item.id !== chargeId)
+      charges.value = charges.value.filter(item => item.id !== chargeId)
     },
   })
 }
@@ -205,32 +209,30 @@ function confirmDeleteCharge(chargeId: number) {
     </section>
 
     <section class="wcCard">
-    <div class="wcValidity">
+      <div class="wcValidity">
         <div class="wcValidity__left">
-        <div class="wcSectionTitle wcSectionTitle--icon">
+          <div class="wcSectionTitle wcSectionTitle--icon">
             <i class="pi pi-calendar"></i>
             <span>Validity Date</span>
-        </div>
+          </div>
 
-        <div class="wcValidity__row">
+          <div class="wcValidity__row">
             <span class="wcLabel">These charges are valid until:</span>
 
             <Calendar
-            v-model="validityDate"
-            showIcon
-            iconDisplay="input"
-            dateFormat="dd/mm/yy"
-            class="wcCalendar"
+              v-model="validityDate"
+              showIcon
+              iconDisplay="input"
+              dateFormat="dd/mm/yy"
+              class="wcCalendar"
             />
 
-            <span class="wcHint">
-            Charges become null and void after this date
-            </span>
-        </div>
+            <span class="wcHint"> Charges become null and void after this date </span>
+          </div>
         </div>
 
         <div class="wcValidity__status">Valid</div>
-    </div>
+      </div>
     </section>
 
     <div class="wcToolbar">
@@ -257,11 +259,7 @@ function confirmDeleteCharge(chargeId: number) {
       </p>
 
       <div class="wcBreaks">
-        <div
-          v-for="weightBreak in weightBreaks"
-          :key="weightBreak.id"
-          class="wcBreakCard"
-        >
+        <div v-for="weightBreak in weightBreaks" :key="weightBreak.id" class="wcBreakCard">
           <div class="wcBreakCard__head">
             <span>{{ weightBreak.label }}</span>
             <div class="wcBreakCard__icons">
@@ -282,9 +280,7 @@ function confirmDeleteCharge(chargeId: number) {
             </div>
           </div>
 
-          <div class="wcBreakCard__foot">
-            {{ weightBreak.min }} kg - {{ weightBreak.max }} kg
-          </div>
+          <div class="wcBreakCard__foot">{{ weightBreak.min }} kg - {{ weightBreak.max }} kg</div>
         </div>
       </div>
     </section>
@@ -332,10 +328,7 @@ function confirmDeleteCharge(chargeId: number) {
               </th>
             </tr>
             <tr>
-              <th
-                v-for="weightBreak in weightBreaks"
-                :key="weightBreak.id"
-              >
+              <th v-for="weightBreak in weightBreaks" :key="weightBreak.id">
                 <div class="wcThMain">{{ weightBreak.label }}</div>
                 <div class="wcThSub">{{ weightBreak.min }} - {{ weightBreak.max }} kg</div>
               </th>
@@ -364,11 +357,7 @@ function confirmDeleteCharge(chargeId: number) {
               <td v-for="(_, index) in weightBreaks" :key="index">
                 <div class="wcMoneyInput">
                   <span>{{ currentCurrencySymbol() }}</span>
-                  <input
-                    v-model="charge.values[index]"
-                    type="number"
-                    step="0.01"
-                  />
+                  <input v-model="charge.values[index]" type="number" step="0.01" />
                 </div>
               </td>
             </tr>
