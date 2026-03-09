@@ -1,0 +1,588 @@
+.weightCharges {
+  display: grid;
+  gap: 18px;
+  color: var(--text);
+}
+
+.weightCharges__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.weightCharges__titleWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.weightCharges__title {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.2;
+  font-weight: 700;
+  color: var(--text);
+  font-family: var(--font-body);
+}
+
+.weightCharges__subtitle {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+/* CARD */
+.wcCard {
+  background: var(--bg-card);
+  border: 1px solid #d9d9d9;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.wcCard--tight {
+  padding: 12px;
+}
+
+.wcCard--notice {
+  padding: 10px 12px;
+}
+
+/* TWO COLUMN TOP */
+.wcSplit {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.wcSplit__col {
+  display: grid;
+  gap: 10px;
+}
+
+.wcSplit__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.wcCount {
+  font-size: 12px;
+  color: var(--text);
+}
+
+.wcSectionTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.wcSectionTitle--icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.wcChevron {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* INPUTS */
+.wcInput,
+.wcDateInput,
+.wcSelect,
+.wcMiniField input,
+.wcCellInput,
+.wcMoneyInput input {
+  width: 100%;
+  height: 32px;
+  border: 1px solid #cfcfcf;
+  border-radius: 4px;
+  background: #fff;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 13px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.wcInput,
+.wcDateInput,
+.wcSelect,
+.wcMiniField input,
+.wcCellInput {
+  padding: 0 10px;
+}
+
+.wcMoneyInput input {
+  border: none;
+  height: 100%;
+  padding: 0 8px;
+  background: transparent;
+}
+
+.wcInput:focus,
+.wcDateInput:focus,
+.wcSelect:focus,
+.wcMiniField input:focus,
+.wcCellInput:focus,
+.wcMoneyInput:focus-within {
+  border-color: var(--primary);
+}
+
+/* BUTTONS */
+.wcBtn {
+  height: 32px;
+  font-size: 12px;
+}
+
+.wcBtn--block {
+  width: 100%;
+}
+
+.p-button.wcBtn--danger {
+  background: #fff !important;
+  border-color: #ef4444 !important;
+  color: #ef4444 !important;
+}
+
+.p-button.wcBtn--danger:hover:not(:disabled) {
+  background: #fff5f5 !important;
+  border-color: #ef4444 !important;
+  color: #ef4444 !important;
+}
+
+.wcBtn--footer {
+  min-width: 148px;
+}
+
+/* LIST */
+.wcTableListItem {
+  width: 100%;
+  min-height: 36px;
+  border: 1px solid #d6d6d6;
+  border-radius: 4px;
+  background: #fff;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10px;
+  font-size: 13px;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.wcTableListItem:hover {
+  border-color: var(--primary);
+}
+
+.wcTableListItem--active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+  font-weight: 600;
+}
+
+/* VALIDITY */
+.wcValidity {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.wcValidity__left {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
+.wcValidity__row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.wcLabel {
+  font-size: 13px;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.wcHint {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.wcValidity__status {
+  font-size: 12px;
+  color: var(--text);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.wcCalendar {
+  width: 150px;
+  flex: 0 0 150px;
+}
+
+.wcCalendar .p-inputtext {
+  width: 100%;
+  height: 34px;
+  border: 1px solid #cfcfcf !important;
+  border-radius: 6px 0 0 6px !important;
+  background: #fff !important;
+  color: var(--text) !important;
+  font-size: 13px;
+  padding: 0 12px !important;
+  box-shadow: none !important;
+}
+
+.wcCalendar .p-datepicker-trigger {
+  width: 34px !important;
+  min-width: 34px !important;
+  height: 34px !important;
+  border: 1px solid #cfcfcf !important;
+  border-left: 0 !important;
+  border-radius: 0 6px 6px 0 !important;
+  background: #fff !important;
+  color: var(--text-muted) !important;
+  box-shadow: none !important;
+}
+
+.wcCalendar .p-datepicker-trigger:hover {
+  background: #f5f5f5 !important;
+  color: var(--text) !important;
+}
+
+.wcCalendar .p-inputtext:focus,
+.wcCalendar.p-focus .p-inputtext,
+.wcCalendar:focus-within .p-inputtext {
+  border-color: var(--primary) !important;
+}
+
+.wcCalendar:focus-within .p-datepicker-trigger {
+  border-color: var(--primary) !important;
+}
+
+@media (max-width: 640px) {
+  .wcValidity {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .wcValidity__row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .wcCalendar {
+    width: 100%;
+    flex: 1 1 auto;
+  }
+}
+
+.wcDateWrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* TOOLBAR */
+.wcToolbar {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* BREAKS */
+.wcPanelHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.wcHelpText {
+  margin: 0 0 14px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.wcBreaks {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.wcBreakCard {
+  border: 1px solid #d6d6d6;
+  border-radius: 6px;
+  background: #fff;
+  padding: 10px;
+  display: grid;
+  gap: 10px;
+}
+
+.wcBreakCard__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.wcBreakCard__icons {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.wcBreakCard__fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.wcMiniField {
+  display: grid;
+  gap: 4px;
+}
+
+.wcMiniField label {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.wcBreakCard__foot {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* META ROW */
+.wcMetaRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 220px;
+  gap: 14px;
+  align-items: end;
+}
+
+.wcMetaRow__field {
+  display: grid;
+  gap: 6px;
+}
+
+.wcMetaRow__field--grow {
+  min-width: 0;
+}
+
+.wcMetaRow__field--currency {
+  width: 100%;
+}
+
+.wcMetaLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.wcCurrencyWrap {
+  display: grid;
+  grid-template-columns: 1fr 36px;
+  gap: 8px;
+  align-items: center;
+}
+
+.wcCurrencySymbol {
+  height: 32px;
+  border: 1px solid #cfcfcf;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  background: #fff;
+}
+
+/* NOTICE */
+.wcNotice {
+  font-size: 12px;
+  color: var(--text);
+}
+
+/* TABLE */
+.wcTableWrap {
+  overflow-x: auto;
+}
+
+.wcChargeTable {
+  width: 100%;
+  min-width: 1100px;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.wcChargeTable th,
+.wcChargeTable td {
+  border: 1px solid #dddddd;
+  padding: 8px;
+  vertical-align: middle;
+  background: #fff;
+}
+
+.wcChargeTable thead th {
+  background: #f7f7f7;
+  text-align: center;
+  font-weight: 700;
+  color: var(--text);
+  font-size: 13px;
+}
+
+.wcChargeTable th.is-group {
+  font-size: 14px;
+}
+
+.wcChargeTable th.is-description {
+  width: 185px;
+}
+
+.wcChargeTable th.is-actions {
+  width: 60px;
+}
+
+.wcThMain {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.wcThSub {
+  margin-top: 4px;
+  font-size: 10px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.wcCellInput--text {
+  height: 28px;
+}
+
+.wcMoneyInput {
+  height: 28px;
+  border: 1px solid #cfcfcf;
+  border-radius: 4px;
+  display: grid;
+  grid-template-columns: 22px 1fr;
+  align-items: center;
+  background: #fff;
+  overflow: hidden;
+}
+
+.wcMoneyInput span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: var(--text-muted);
+  border-right: 1px solid #dcdcdc;
+  height: 100%;
+}
+
+.wcMoneyInput input {
+  text-align: right;
+  font-size: 13px;
+  color: var(--text);
+}
+
+/* FOOTER */
+.wcFooter {
+  display: flex;
+  justify-content: center;
+  padding-top: 18px;
+}
+
+.wcRowDeleteBtn.p-button {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  justify-content: center;
+  color: #dc2626 !important;
+}
+
+.wcRowDeleteBtn.p-button:hover:not(:disabled) {
+  background: #fef2f2 !important;
+  color: #b91c1c !important;
+}   
+
+.wcCalendar {
+  width: 170px;
+}
+
+.wcCalendar .p-inputtext {
+  height: 32px;
+  border-radius: 4px;
+  border: 1px solid #cfcfcf;
+  font-size: 13px;
+}
+
+.wcCalendar .p-button {
+  background: transparent !important;
+  border: none !important;
+  color: var(--text-muted) !important;
+}
+
+/* RESPONSIVE */
+@media (max-width: 1200px) {
+  .wcBreaks {
+    grid-template-columns: repeat(3, minmax(140px, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .wcSplit,
+  .wcMetaRow {
+    grid-template-columns: 1fr;
+  }
+
+  .wcValidity {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .wcBreaks {
+    grid-template-columns: repeat(2, minmax(140px, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .wcBreaks {
+    grid-template-columns: 1fr;
+  }
+
+  .wcValidity__row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .wcToolbar {
+    justify-content: stretch;
+  }
+
+  .wcToolbar .p-button {
+    width: 100%;
+  }
+}

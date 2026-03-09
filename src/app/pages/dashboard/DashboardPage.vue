@@ -1,290 +1,713 @@
 <template>
-  <div class="dash">
-    <!-- Top bar -->
-    <header class="dash-top">
-      <div class="dash-left">
-        <button class="icon-btn" type="button" aria-label="Close" @click="onClose">
-          <i class="pi pi-times"></i>
-        </button>
-
-        <div class="brand">
-          <i class="pi pi-truck"></i>
-          <span class="brand-text">{{ ui.title }}</span>
-        </div>
-
-        <span class="crumb">{{ ui.crumb }}</span>
-      </div>
-
-      <div class="dash-center">
-        <span class="p-input-icon-left search">
-          <i class="pi pi-search"></i>
-          <InputText
-            class="search-input"
-            v-model="filters.globalSearch"
-            :placeholder="ui.searchPlaceholder"
-          />
-        </span>
-
-        <Button class="btn btn-eq orbis-primary" outlined type="button" @click="onExportCsv">
-          <i class="pi pi-download" style="margin-right: 8px"></i>
-          {{ ui.exportLabel }}
-        </Button>
-      </div>
-
-      <div class="dash-right">
-        <Button class="btn btn-eq orbis-primary" outlined type="button" @click="onNewJob">
-          <i class="pi pi-plus" style="margin-right: 8px"></i>
-          {{ ui.newJobLabel }}
-        </Button>
-
-        <button class="icon-btn" type="button" aria-label="Notifications" @click="onNotifications">
-          <i class="pi pi-bell"></i>
-        </button>
-      </div>
-    </header>
-
-    <!-- Filters row -->
-    <section class="dash-row card">
-      <div class="filters-left">
-        <span class="filters-label">Filters</span>
-        <InputText
-          class="filters-input"
-          v-model="filters.quickFilter"
-          placeholder="Customer, lane, ref..."
-        />
-      </div>
-
-      <div class="tabs">
-        <button
-          v-for="t in modeTabs"
-          :key="t.key"
-          class="tab"
-          :class="{ active: filters.mode === t.key }"
-          type="button"
-          @click="filters.mode = t.key"
-        >
-          {{ t.label }}
-        </button>
-      </div>
-
-      <div class="filters-right">
-        <Button class="btn orbis-primary" outlined type="button" @click="onAdvanced">
-          <i class="pi pi-filter" style="margin-right: 8px"></i>
-          Advanced
-        </Button>
-      </div>
-    </section>
-
-    <!-- ✅ KPIs (component) -->
-    <section class="kpis">
-      <KpiCard v-for="k in kpis" :key="k.key" :kpi="k" />
-    </section>
-
-    <!-- Main grid -->
-    <section class="grid">
-      <!-- Map card -->
-      <div class="card map">
-        <div class="card-head">
-          <div>
-            <div class="card-title">{{ mapCard.title }}</div>
-            <div class="card-sub">{{ mapCard.subtitle }}</div>
+  <div class="dashboard-page">
+    <!-- HERO -->
+    <Card class="dash-card dash-hero">
+      <template #content>
+        <div class="dash-hero__inner">
+          <div class="dash-hero__content">
+            <div class="dash-eyebrow">ORBIS TMS / DASHBOARD DEMO</div>
+            <h1 class="dash-title">Transport Management Dashboard</h1>
+            <p class="dash-subtitle">
+              Consistent dashboard layout across User, Management All Users, and
+              Management Individual User views.
+            </p>
           </div>
 
-          <div class="card-actions">
-            <Button class="btn orbis-primary" outlined type="button" @click="onRoutes">
-              <i class="pi pi-map" style="margin-right: 8px"></i>
-              Routes
-            </Button>
-            <Button class="btn orbis-primary" outlined type="button" @click="onMapFilters">
-              <i class="pi pi-filter" style="margin-right: 8px"></i>
-              Filters
-            </Button>
+          <div class="dash-hero__actions">
+            <Button
+              label="Create Job"
+              icon="pi pi-plus"
+              class="btn btn--primary"
+              @click="goJobsCreate"
+            />
+            <Button
+              label="Create Quote"
+              class="btn btn--ghost"
+              @click="goQuotes"
+            />
+            <Button
+              label="Export View"
+              class="btn btn--ghost"
+              @click="exportView"
+            />
           </div>
         </div>
+      </template>
+    </Card>
 
-        <div class="map-box">
-          <div class="map-text">{{ mapCard.placeholder }}</div>
-        </div>
-      </div>
+    <!-- VIEW TABS -->
+    <div class="dash-view-tabs">
+      <button
+        type="button"
+        class="dash-view-tab"
+        :class="{ 'dash-view-tab--active': activeView === 'user' }"
+        @click="activeView = 'user'"
+      >
+        User Dashboard
+      </button>
 
-      <!-- ✅ Ops board (component used per lane) -->
-      <div class="card ops">
-        <div class="card-head">
-          <div>
-            <div class="card-title">{{ opsBoard.title }}</div>
-            <div class="card-sub">{{ opsBoard.subtitle }}</div>
+      <button
+        type="button"
+        class="dash-view-tab"
+        :class="{ 'dash-view-tab--active': activeView === 'management' }"
+        @click="activeView = 'management'"
+      >
+        Management Overview
+      </button>
+    </div>
+
+    <!-- FILTERS -->
+    <Card class="dash-card dash-filters">
+      <template #content>
+        <div class="dash-filters__grid" :class="{ 'dash-filters__grid--management': isManagement }">
+          <div class="dash-field">
+            <label class="dash-label">DATE RANGE</label>
+            <Select
+              v-model="filters.date"
+              :options="dateOptions"
+              optionLabel="label"
+              optionValue="value"
+              class="dash-select"
+            />
+          </div>
+
+          <div v-if="isManagement" class="dash-field">
+            <label class="dash-label">USER FOCUS</label>
+            <Select
+              v-model="filters.userFocus"
+              :options="userFocusOptions"
+              optionLabel="label"
+              optionValue="value"
+              class="dash-select"
+            />
+          </div>
+
+          <div class="dash-field">
+            <label class="dash-label">MODE OF TRANSPORT</label>
+            <Select
+              v-model="filters.mode"
+              :options="modeOptions"
+              optionLabel="label"
+              optionValue="value"
+              class="dash-select"
+            />
+          </div>
+
+          <div class="dash-field dash-field--search">
+            <label class="dash-label">SEARCH</label>
+            <InputText
+              v-model="filters.search"
+              class="dash-search"
+              placeholder="Search jobs, customers, issues..."
+            />
           </div>
         </div>
+      </template>
+    </Card>
 
-        <div class="kanban">
-          <KanbanColumn v-for="lane in opsBoard.lanes" :key="lane.key" :lane="lane" />
-        </div>
+    <!-- KPI GRID -->
+    <section class="dash-kpis">
+      <Card
+        v-for="card in currentStatCards"
+        :key="card.key"
+        class="dash-card stat-card"
+      >
+        <template #content>
+          <div class="stat-card__label">{{ card.label }}</div>
+          <div class="stat-card__value">{{ card.value }}</div>
+          <div class="stat-card__sub">{{ card.sub }}</div>
+
+          <div
+            v-if="card.progress !== undefined"
+            class="stat-card__progress-wrap"
+          >
+            <div class="stat-card__progress-meta">
+              <span>{{ card.progressLabel }}</span>
+              <span>{{ card.progress }}%</span>
+            </div>
+
+            <div class="stat-progress">
+              <div
+                class="stat-progress__bar"
+                :style="{ width: `${card.progress}%` }"
+              />
+            </div>
+          </div>
+        </template>
+      </Card>
+    </section>
+
+    <!-- USER VIEW -->
+    <template v-if="activeView === 'user'">
+      <section class="dash-grid dash-grid--main">
+        <!-- KANBAN -->
+        <Card class="dash-card panel-card">
+          <template #content>
+            <div class="panel-card__head">
+              <div>
+                <div class="panel-card__title">Operational Kanban</div>
+                <div class="panel-card__sub">Workflow grouped by status.</div>
+              </div>
+
+              <Button
+                label="VIEW ALL"
+                class="btn btn--ghost btn--small"
+                @click="goJobs"
+              />
+            </div>
+
+            <div class="kanban-grid">
+              <div
+                v-for="lane in kanban"
+                :key="lane.key"
+                class="kanban-lane"
+                :class="`kanban-lane--${lane.key}`"
+              >
+                <div class="kanban-lane__title">{{ lane.title }}</div>
+
+                <div class="kanban-lane__list">
+                  <div
+                    v-for="job in lane.jobs"
+                    :key="job.ref"
+                    class="kanban-card"
+                    @click="openJob(job.id)"
+                  >
+                    <div class="kanban-card__ref">{{ job.ref }}</div>
+                    <div class="kanban-card__customer">{{ job.customer }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </template>
+        </Card>
+
+        <!-- TODO / EXCEPTIONS -->
+        <Card class="dash-card panel-card">
+          <template #content>
+            <div class="panel-card__head">
+              <div>
+                <div class="panel-card__title">To Do & Exceptions</div>
+                <div class="panel-card__sub">
+                  Daily tasks plus exception handling.
+                </div>
+              </div>
+
+              <Button
+                label="VIEW ALL"
+                class="btn btn--ghost btn--small"
+              />
+            </div>
+
+            <div class="todo-list">
+              <div
+                v-for="t in userTodo"
+                :key="t.id"
+                class="todo-card"
+              >
+                <div class="todo-card__title">{{ t.title }}</div>
+                <div class="todo-card__meta">{{ t.owner }} · {{ t.when }}</div>
+              </div>
+            </div>
+          </template>
+        </Card>
+      </section>
+
+      <section class="dash-grid dash-grid--bottom">
+        <!-- MODE OF TRANSPORT -->
+        <Card class="dash-card panel-card">
+          <template #content>
+            <div class="panel-card__head">
+              <div>
+                <div class="panel-card__title">Mode of Transport</div>
+                <div class="panel-card__sub">Donut report by mode.</div>
+              </div>
+
+              <Button
+                label="VIEW ALL"
+                class="btn btn--ghost btn--small"
+              />
+            </div>
+
+            <div class="chart-card">
+              <div class="chart-card__legend chart-card__legend--top">
+                <div class="legend-item">
+                  <span class="legend-dot legend-dot--orange"></span>
+                  <span>Air</span>
+                </div>
+                <div class="legend-item">
+                  <span class="legend-dot legend-dot--gray"></span>
+                  <span>Road</span>
+                </div>
+              </div>
+
+              <div class="donut donut--mode-user">
+                <div class="donut-hole"></div>
+              </div>
+
+              <div class="metric-row">
+                <div class="metric-pill">
+                  <span>Air</span>
+                  <strong>1</strong>
+                </div>
+
+                <div class="metric-pill">
+                  <span>Road</span>
+                  <strong>2</strong>
+                </div>
+              </div>
+            </div>
+          </template>
+        </Card>
+
+        <!-- REVENUE DISTRIBUTION -->
+        <Card class="dash-card panel-card">
+          <template #content>
+            <div class="panel-card__head">
+              <div>
+                <div class="panel-card__title">Revenue Distribution</div>
+                <div class="panel-card__sub">Sales by mode.</div>
+              </div>
+
+              <Button
+                label="VIEW ALL"
+                class="btn btn--ghost btn--small"
+              />
+            </div>
+
+            <div class="chart-card">
+              <div class="chart-card__legend chart-card__legend--top">
+                <div class="legend-item">
+                  <span class="legend-dot legend-dot--orange"></span>
+                  <span>Air</span>
+                </div>
+                <div class="legend-item">
+                  <span class="legend-dot legend-dot--gray"></span>
+                  <span>Road</span>
+                </div>
+              </div>
+
+              <div class="donut donut--revenue-user">
+                <div class="donut-hole"></div>
+              </div>
+
+              <div class="metric-row">
+                <div class="metric-pill">
+                  <span>Air</span>
+                  <strong>£2,450</strong>
+                </div>
+
+                <div class="metric-pill">
+                  <span>Road</span>
+                  <strong>£2,490</strong>
+                </div>
+              </div>
+            </div>
+          </template>
+        </Card>
+      </section>
+    </template>
+
+    <!-- MANAGEMENT VIEW -->
+    <template v-else>
+      <div class="management-note">
+        The management page now keeps the same structure whether you are viewing
+        All Users or an individual user.
       </div>
-    </section>
 
-    <!-- ✅ Bottom row placeholders (component) -->
-    <section class="bottom">
-      <PlaceholderCard
-        v-for="b in bottomCards"
-        :key="b.key"
-        :title="b.title"
-        :subtitle="b.subtitle"
-      />
-    </section>
+      <section class="dash-grid dash-grid--main">
+        <!-- MANAGEMENT PERFORMANCE OVERVIEW -->
+        <Card class="dash-card panel-card">
+          <template #content>
+            <div class="panel-card__head">
+              <div>
+                <div class="panel-card__title">Management Performance Overview</div>
+                <div class="panel-card__sub">
+                  Compare users by sales, profit and targets.
+                </div>
+              </div>
 
-    <!-- ✅ Activity + Exceptions row (components) -->
-    <section class="activity">
-      <TodayTimelineCard :items="timeline" />
-      <ExceptionsCard :items="exceptions" />
-    </section>
+              <Button
+                label="VIEW ALL"
+                class="btn btn--ghost btn--small"
+              />
+            </div>
 
-    <!-- ✅ Quick Actions (component) -->
-    <QuickActionsCard @action="onQuickAction" />
+            <div class="chart-area">
+              <div class="bar-chart">
+                <div class="bar-chart__legend">
+                  <div class="legend-item">
+                    <span class="legend-dot legend-dot--orange"></span>
+                    <span>Sales</span>
+                  </div>
+                  <div class="legend-item">
+                    <span class="legend-dot legend-dot--gray-dark"></span>
+                    <span>Profit</span>
+                  </div>
+                  <div class="legend-item">
+                    <span class="legend-dot legend-dot--gray-light"></span>
+                    <span>Sales Target</span>
+                  </div>
+                </div>
+
+                <div class="bar-chart__plot">
+                  <div class="bar-chart__gridline" v-for="n in 6" :key="n"></div>
+
+                  <div
+                    v-for="item in managementPerformance"
+                    :key="item.name"
+                    class="bar-chart__group"
+                  >
+                    <div class="bar-chart__bars">
+                      <div
+                        class="bar bar--sales"
+                        :style="{ height: `${item.salesPct}%` }"
+                        :title="`Sales: ${item.sales}`"
+                      ></div>
+                      <div
+                        class="bar bar--profit"
+                        :style="{ height: `${item.profitPct}%` }"
+                        :title="`Profit: ${item.profit}`"
+                      ></div>
+                      <div
+                        class="bar bar--target"
+                        :style="{ height: `${item.targetPct}%` }"
+                        :title="`Sales Target: ${item.target}`"
+                      ></div>
+                    </div>
+
+                    <div class="bar-chart__label">{{ item.name }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </template>
+        </Card>
+
+        <!-- MANAGER EXCEPTIONS -->
+        <Card class="dash-card panel-card">
+          <template #content>
+            <div class="panel-card__head">
+              <div>
+                <div class="panel-card__title">Manager Exceptions View</div>
+                <div class="panel-card__sub">
+                  Showing the first 4 exceptions to keep the dashboard compact.
+                </div>
+              </div>
+
+              <Button
+                label="VIEW ALL"
+                class="btn btn--ghost btn--small"
+              />
+            </div>
+
+            <div class="todo-list">
+              <div
+                v-for="t in managementExceptions"
+                :key="t.id"
+                class="todo-card"
+              >
+                <div class="todo-card__title">{{ t.title }}</div>
+                <div class="todo-card__meta">{{ t.owner }} · {{ t.when }}</div>
+              </div>
+            </div>
+          </template>
+        </Card>
+      </section>
+
+      <section class="dash-grid dash-grid--bottom">
+        <!-- BUSINESS MIX -->
+        <Card class="dash-card panel-card">
+          <template #content>
+            <div class="panel-card__head">
+              <div>
+                <div class="panel-card__title">Business Mix by Mode</div>
+                <div class="panel-card__sub">Donut report by mode.</div>
+              </div>
+
+              <Button
+                label="VIEW ALL"
+                class="btn btn--ghost btn--small"
+              />
+            </div>
+
+            <div class="chart-card">
+              <div class="chart-card__legend chart-card__legend--top">
+                <div class="legend-item">
+                  <span class="legend-dot legend-dot--orange"></span>
+                  <span>Air</span>
+                </div>
+                <div class="legend-item">
+                  <span class="legend-dot legend-dot--gray"></span>
+                  <span>Road</span>
+                </div>
+                <div class="legend-item">
+                  <span class="legend-dot legend-dot--gray-dark"></span>
+                  <span>Sea</span>
+                </div>
+                <div class="legend-item">
+                  <span class="legend-dot legend-dot--gray-light"></span>
+                  <span>Rail</span>
+                </div>
+              </div>
+
+              <div class="donut donut--mix-management">
+                <div class="donut-hole"></div>
+              </div>
+            </div>
+          </template>
+        </Card>
+
+        <!-- BUSINESS REVENUE -->
+        <Card class="dash-card panel-card">
+          <template #content>
+            <div class="panel-card__head">
+              <div>
+                <div class="panel-card__title">Business Revenue by Mode</div>
+                <div class="panel-card__sub">Sales by mode.</div>
+              </div>
+
+              <Button
+                label="VIEW ALL"
+                class="btn btn--ghost btn--small"
+              />
+            </div>
+
+            <div class="chart-card">
+              <div class="chart-card__legend chart-card__legend--top">
+                <div class="legend-item">
+                  <span class="legend-dot legend-dot--orange"></span>
+                  <span>Air</span>
+                </div>
+                <div class="legend-item">
+                  <span class="legend-dot legend-dot--gray"></span>
+                  <span>Road</span>
+                </div>
+                <div class="legend-item">
+                  <span class="legend-dot legend-dot--gray-dark"></span>
+                  <span>Sea</span>
+                </div>
+                <div class="legend-item">
+                  <span class="legend-dot legend-dot--gray-light"></span>
+                  <span>Rail</span>
+                </div>
+              </div>
+
+              <div class="donut donut--revenue-management">
+                <div class="donut-hole"></div>
+              </div>
+            </div>
+          </template>
+        </Card>
+      </section>
+    </template>
   </div>
 </template>
 
 <script setup lang="ts">
-import { reactive, ref } from "vue"
-import InputText from "primevue/inputtext"
-import Button from "primevue/button"
-import "@/app/pages/dashboard/DashboardPage.css"
+import { computed, reactive, ref } from "vue"
+import { useRouter } from "vue-router"
+import "./DashboardPage.css"
 
-// ✅ Components (same markup inside, so CSS stays identical)
-import KpiCard from "@/app/components/dashboard/KpiCard.vue"
-import KanbanColumn from "@/app/components/dashboard/KanbanColumn.vue"
-import PlaceholderCard from "@/app/components/dashboard/PlaceholderCard.vue"
-import TodayTimelineCard from "@/app/components/dashboard/TodayTimelineCard.vue"
-import ExceptionsCard from "@/app/components/dashboard/ExceptionsCard.vue"
-import QuickActionsCard from "@/app/components/dashboard/QuickActionsCard.vue"
+type ViewMode = "user" | "management"
 
-type ModeKey = "all" | "road" | "sea" | "air" | "rail"
-
-const ui = reactive({
-  title: "PC Cargo — Freight Forward Thinking",
-  crumb: "Dashboard",
-  searchPlaceholder: "Search jobs, quotes, contacts...",
-  exportLabel: "Export CSV",
-  newJobLabel: "New Job",
-})
-
-const filters = reactive({
-  globalSearch: "",
-  quickFilter: "",
-  mode: "all" as ModeKey,
-})
-
-const modeTabs = ref([
-  { key: "all" as const, label: "All" },
-  { key: "road" as const, label: "Road" },
-  { key: "sea" as const, label: "Sea" },
-  { key: "air" as const, label: "Air" },
-  { key: "rail" as const, label: "Rail" },
-])
-
-/** ✅ Dummy + fillable later */
-type Kpi = {
+type StatCard = {
   key: string
   label: string
   value: string | number
-  delta?: { direction: "up" | "down"; text: string }
+  sub: string
+  progress?: number
+  progressLabel?: string
 }
 
-const kpis = ref<Kpi[]>([
-  { key: "open_jobs", label: "Open Jobs", value: 42, delta: { direction: "up", text: "+6" } },
-  { key: "in_transit", label: "In Transit", value: 18, delta: { direction: "down", text: "-2" } },
-  { key: "exceptions", label: "Exceptions", value: 3, delta: { direction: "up", text: "+1" } },
-  { key: "on_time", label: "On-time %", value: "96%", delta: { direction: "up", text: "+2" } },
-])
+const router = useRouter()
 
-const mapCard = reactive({
-  title: "Live Shipments Map",
-  subtitle: "Placeholder — integrate Mapbox/Leaflet later",
-  placeholder: "Map placeholder",
+const activeView = ref<ViewMode>("user")
+
+const filters = reactive({
+  date: "month",
+  userFocus: "all_users",
+  mode: "all",
+  search: "",
 })
 
-type OpsLane = { key: string; title: string; tiles: { ref: string; meta: string }[] }
+const isManagement = computed(() => activeView.value === "management")
 
-const opsBoard = reactive({
-  title: "Today’s Ops Board",
-  subtitle: "Mini Kanban: Planned · In Transit · Delivered",
-  lanes: [
-    {
-      key: "planned",
-      title: "Planned",
-      tiles: [
-        { ref: "REF PL-01", meta: "Client · Lane" },
-        { ref: "REF PL-02", meta: "Client · Lane" },
-        { ref: "REF PL-03", meta: "Client · Lane" },
-      ],
-    },
-    {
-      key: "in_transit",
-      title: "In Transit",
-      tiles: [
-        { ref: "REF IN-01", meta: "Client · Lane" },
-        { ref: "REF IN-02", meta: "Client · Lane" },
-        { ref: "REF IN-03", meta: "Client · Lane" },
-      ],
-    },
-    {
-      key: "delivered",
-      title: "Delivered",
-      tiles: [
-        { ref: "REF DE-01", meta: "Client · Lane" },
-        { ref: "REF DE-02", meta: "Client · Lane" },
-        { ref: "REF DE-03", meta: "Client · Lane" },
-      ],
-    },
-  ] as OpsLane[],
-})
+const dateOptions = [
+  { label: "This Month", value: "month" },
+  { label: "This Week", value: "week" },
+  { label: "Last Month", value: "last_month" },
+]
 
-const bottomCards = ref([
-  { key: "mode_mix", title: "Mode Mix", subtitle: "Donut placeholder" },
-  { key: "revenue_trend", title: "Revenue Trend", subtitle: "Last 8 weeks — placeholder" },
+const userFocusOptions = [
+  { label: "All Users", value: "all_users" },
+  { label: "Maral Y.", value: "maral" },
+  { label: "Ian H.", value: "ian" },
+  { label: "James K.", value: "james" },
+  { label: "Nadia R.", value: "nadia" },
+]
+
+const modeOptions = [
+  { label: "All Modes", value: "all" },
+  { label: "Air", value: "air" },
+  { label: "Road", value: "road" },
+  { label: "Sea", value: "sea" },
+  { label: "Rail", value: "rail" },
+]
+
+const userStatCards: StatCard[] = [
+  { key: "jobs", label: "ALL JOBS", value: 3, sub: "User history" },
+  { key: "quotes", label: "QUOTES", value: 2, sub: "Current quotes" },
+  { key: "open", label: "OPEN JOBS", value: 2, sub: "Planned + in transit" },
+  { key: "delivered", label: "JOBS DELIVERED", value: 1, sub: "Completed jobs" },
+  { key: "exceptions", label: "EXCEPTIONS", value: 2, sub: "Operational issues" },
+  { key: "sales", label: "TOTAL SALES", value: "£4,940", sub: "Visible sales" },
+  { key: "cost", label: "COST", value: "£3,250", sub: "Operational cost" },
+  { key: "profit", label: "PROFIT / LOSS", value: "£1,690", sub: "Sales less cost" },
   {
-    key: "exception_heatmap",
-    title: "Exception Heatmap",
-    subtitle: "Ports/Lanes recurring issues",
+    key: "target_sales",
+    label: "SALES TARGET",
+    value: "£12,000",
+    sub: "£4,940 actual",
+    progress: 41,
+    progressLabel: "Progress",
   },
-])
+  {
+    key: "target_profit",
+    label: "PROFIT TARGET",
+    value: "£3,800",
+    sub: "£1,690 actual",
+    progress: 44,
+    progressLabel: "Progress",
+  },
+]
 
-const timeline = ref([
-  { time: "08:30", text: "Booked carrier for PC-240198 (Air)" },
-  { time: "10:10", text: "Warehouse GRN completed — WHS-03" },
-  { time: "12:45", text: "Invoice INV-1007 exported" },
-  { time: "14:15", text: "Exception raised for PC-240201" },
-])
+const managementStatCards: StatCard[] = [
+  { key: "jobs", label: "ALL JOBS", value: 12, sub: "Entire dataset" },
+  { key: "quotes", label: "QUOTES", value: 8, sub: "All users" },
+  { key: "open", label: "OPEN JOBS", value: 8, sub: "Planned + in transit" },
+  { key: "delivered", label: "JOBS DELIVERED", value: 4, sub: "Completed jobs" },
+  { key: "exceptions", label: "EXCEPTIONS", value: 8, sub: "Business-wide issues" },
+  { key: "sales", label: "TOTAL SALES", value: "£43,790", sub: "Visible sales" },
+  { key: "cost", label: "COST", value: "£30,050", sub: "Operational cost" },
+  { key: "profit", label: "PROFIT / LOSS", value: "£13,740", sub: "Sales less cost" },
+  {
+    key: "target_sales",
+    label: "SALES TARGET",
+    value: "£68,500",
+    sub: "£43,790 actual",
+    progress: 64,
+    progressLabel: "Progress",
+  },
+  {
+    key: "target_profit",
+    label: "PROFIT TARGET",
+    value: "£21,000",
+    sub: "£13,740 actual",
+    progress: 65,
+    progressLabel: "Progress",
+  },
+]
 
-const exceptions = ref([
-  { ref: "PC-240201", desc: "Customs hold at Gdynia", timeAgo: "12m ago" },
-  { ref: "PC-240178", desc: "Temperature excursion (reefer)", timeAgo: "48m ago" },
-  { ref: "PC-240166", desc: "POD missing (Dover)", timeAgo: "2h ago" },
-])
+const currentStatCards = computed(() =>
+  activeView.value === "management" ? managementStatCards : userStatCards
+)
 
-/** handlers */
-function onClose() {
-  console.log("close")
-}
-function onExportCsv() {
-  console.log("export csv", { ...filters })
-}
-function onNewJob() {
-  console.log("new job")
-}
-function onNotifications() {
-  console.log("notifications")
-}
-function onAdvanced() {
-  console.log("advanced")
-}
-function onRoutes() {
-  console.log("routes")
-}
-function onMapFilters() {
-  console.log("map filters")
+const kanban = [
+  {
+    key: "planned",
+    title: "Planned",
+    jobs: [
+      { id: 1, ref: "JOB-250301", customer: "Aston Components Ltd" },
+      { id: 2, ref: "JOB-250311", customer: "PC Cargo House Account" },
+    ],
+  },
+  {
+    key: "transit",
+    title: "In Transit",
+    jobs: [],
+  },
+  {
+    key: "delivered",
+    title: "Delivered",
+    jobs: [{ id: 3, ref: "JOB-250306", customer: "Atlas Trade Group" }],
+  },
+]
+
+const userTodo = [
+  {
+    id: 1,
+    title: "Upload POD for JOB-250301",
+    owner: "Maral Y.",
+    when: "Due Today",
+  },
+]
+
+const managementExceptions = [
+  {
+    id: 1,
+    title: "JOB-250301 • Aston Components Ltd",
+    owner: "Maral Y.",
+    when: "Missing POD",
+  },
+  {
+    id: 2,
+    title: "JOB-250302 • Silk Route Trading",
+    owner: "Ian H.",
+    when: "Customs inspection",
+  },
+  {
+    id: 3,
+    title: "JOB-250304 • Northfield Medical",
+    owner: "James K.",
+    when: "Awaiting booking confirmation",
+  },
+  {
+    id: 4,
+    title: "JOB-250305 • EuroMach Systems",
+    owner: "Nadia R.",
+    when: "Documentation query",
+  },
+]
+
+const rawPerformance = [
+  { name: "Maral", sales: 5000, profit: 1800, target: 12000 },
+  { name: "Ian", sales: 15500, profit: 5000, target: 18000 },
+  { name: "Sarah", sales: 8500, profit: 2400, target: 14000 },
+  { name: "James", sales: 5700, profit: 1900, target: 11000 },
+  { name: "Nadia", sales: 9700, profit: 3200, target: 13500 },
+]
+
+const maxMetric = Math.max(
+  ...rawPerformance.flatMap((item) => [item.sales, item.profit, item.target])
+)
+
+const managementPerformance = rawPerformance.map((item) => ({
+  ...item,
+  salesPct: Math.round((item.sales / maxMetric) * 100),
+  profitPct: Math.round((item.profit / maxMetric) * 100),
+  targetPct: Math.round((item.target / maxMetric) * 100),
+}))
+
+function goJobs() {
+  router.push({ name: "tms.jobs.index" })
 }
 
-function onQuickAction(key: string) {
-  console.log("quick action:", key)
+function goJobsCreate() {
+  router.push({ name: "tms.jobs.create" })
+}
+
+function goQuotes() {
+  router.push({ name: "tms.quotes.index" })
+}
+
+function openJob(id: number) {
+  router.push({ name: "tms.jobs.show", params: { id } })
+}
+
+function exportView() {
+  console.log("export dashboard", {
+    view: activeView.value,
+    ...filters,
+  })
 }
 </script>

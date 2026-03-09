@@ -27,16 +27,30 @@
       <JobTypeSelector :items="JOB_TYPES" :selected="jobType" @select="selectJobType" />
     </section>
 
-    <section v-if="jobType" class="card section">
+    <!-- ✅ MODE: Only show when NOT Multi Modal -->
+    <section v-if="jobType && jobType !== 'multi_modal'" class="card section">
       <JobStepHeader
         :title="`Mode of Transport for ${jobTypeLabel}`"
         subtitle="Choose the transport mode"
       />
-      <ModeSelector :items="MODES" :selected="mode" @select="selectMode" />
+      <ModeSelector :items="availableModes" :selected="mode" @select="selectMode" />
     </section>
 
-    <section v-if="jobType && mode" class="card section">
-      <div class="meta-title">{{ `New ${jobTypeLabel} Job — ${modeLabel}` }}</div>
+    <!-- ✅ MULTI MODAL: different display (empty placeholder for now) -->
+    <section v-else-if="jobType === 'multi_modal'" class="card section">
+      <JobStepHeader title="Multi Modal" subtitle="Multi-modal setup (coming soon)" />
+      <div style="height: 80px"></div>
+    </section>
+
+    <!-- ✅ META: show when jobType AND (mode OR multi_modal) -->
+    <section v-if="jobType && (jobType === 'multi_modal' || mode)" class="card section">
+      <div class="meta-title">
+        {{
+          jobType === "multi_modal"
+            ? `New ${jobTypeLabel} Job`
+            : `New ${jobTypeLabel} Job — ${modeLabel}`
+        }}
+      </div>
 
       <div class="grid-3">
         <div class="field">
@@ -91,7 +105,11 @@
 
         <div class="field">
           <label class="label">Mode of Transport</label>
-          <InputText :modelValue="modeLabel" class="control" readonly />
+          <InputText
+            :modelValue="jobType === 'multi_modal' ? '' : modeLabel"
+            class="control"
+            readonly
+          />
         </div>
       </div>
 
@@ -100,12 +118,10 @@
       </div>
     </section>
 
-    <div v-if="jobType && mode" class="two-col">
+    <!-- ✅ RIGHT SIDE ACTIONS: show when jobType AND (mode OR multi_modal) -->
+    <div v-if="jobType && (jobType === 'multi_modal' || mode)" class="two-col">
       <section class="card section">
-        <JobStepHeader
-          title="Documents & Notes"
-          subtitle="Optional attachments and internal notes"
-        />
+        <JobStepHeader title="Documents & Notes" subtitle="Optional attachments and internal notes" />
 
         <div class="docs-grid">
           <div class="drop-box">Drag &amp; drop documents</div>
@@ -159,6 +175,7 @@ const {
 
   JOB_TYPES,
   MODES,
+  availableModes,
 
   jobType,
   mode,
