@@ -14,7 +14,9 @@ function toFormData(payload: TransportJobCreatePayload): FormData {
 
   if (payload.job_date !== undefined) fd.append("job_date", payload.job_date ?? "")
 
-  fd.append("mode_of_transport", payload.mode_of_transport)
+  if (payload.mode_of_transport) {
+    fd.append("mode_of_transport", payload.mode_of_transport)
+  }
   fd.append("job_type", payload.job_type)
 
   if (payload.note !== undefined) fd.append("note", payload.note ?? "")

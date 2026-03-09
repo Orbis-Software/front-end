@@ -112,9 +112,7 @@ const infoRows = computed(() => [
         </h2>
 
         <div class="contact-overview__meta">
-          <span class="contact-overview__chip">
-            Account: {{ contact.account_number || "-" }}
-          </span>
+          <span class="contact-overview__chip"> Account: {{ contact.account_number || "-" }} </span>
 
           <span class="contact-overview__chip">
             Payment Terms: {{ contact.payment_terms || "-" }}
@@ -142,11 +140,7 @@ const infoRows = computed(() => [
         </div>
 
         <div class="overview-details">
-          <div
-            v-for="item in infoRows"
-            :key="item.label"
-            class="overview-details__item"
-          >
+          <div v-for="item in infoRows" :key="item.label" class="overview-details__item">
             <span class="overview-details__label">{{ item.label }}</span>
             <span class="overview-details__value">
               {{ item.prefix && item.value !== "-" ? item.prefix : "" }}{{ item.value }}
@@ -171,9 +165,7 @@ const infoRows = computed(() => [
             :class="`overview-stat--${stat.tone}`"
           >
             <span class="overview-stat__label">{{ stat.label }}</span>
-            <strong class="overview-stat__value">
-              {{ stat.prefix || "" }}{{ stat.value }}
-            </strong>
+            <strong class="overview-stat__value"> {{ stat.prefix || "" }}{{ stat.value }} </strong>
           </article>
         </div>
       </section>

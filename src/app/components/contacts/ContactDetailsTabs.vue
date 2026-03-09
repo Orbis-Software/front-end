@@ -1,11 +1,5 @@
 <script setup lang="ts">
-export type MainTab =
-  | "overview"
-  | "branches"
-  | "collections"
-  | "weight_break"
-  | "customer"
-  | "demo"
+export type MainTab = "overview" | "branches" | "collections" | "weight_break" | "customer" | "demo"
 
 defineProps<{
   active: MainTab
