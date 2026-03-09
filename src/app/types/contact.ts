@@ -168,3 +168,108 @@ export interface PaginatedResponse<T> {
   meta?: PaginationMeta
   links?: any
 }
+
+export interface ContactChargeBreak {
+  id: number
+  charge_table_id: number
+  label: string
+  min_value: number | null
+  max_value: number | null
+  unit: string
+  sort_order: number
+  created_at?: string
+  updated_at?: string
+}
+
+export interface ContactChargeRowValue {
+  id: number
+  charge_row_id: number
+  charge_break_id: number
+  amount: number
+  created_at?: string
+  updated_at?: string
+}
+
+export interface ContactChargeRow {
+  id: number
+  charge_table_id: number
+  description: string
+  code: string | null
+  value_type: string
+  charge_basis: string | null
+  is_required: boolean
+  sort_order: number
+  values?: ContactChargeRowValue[]
+  created_at?: string
+  updated_at?: string
+}
+
+export interface ContactChargeTable {
+  id: number
+  company_id: number
+  contact_id: number
+  name: string
+  code: string | null
+  charge_type: string
+  applies_to: string
+  currency_code: string
+  valid_from: string | null
+  valid_until: string | null
+  is_active: boolean
+  is_default: boolean
+  sort_order: number
+  notes: string | null
+  breaks?: ContactChargeBreak[]
+  rows?: ContactChargeRow[]
+  created_at: string
+  updated_at: string
+}
+
+export interface ContactChargeRowValuePayload {
+  charge_break_id?: number | null
+  break_sort_order?: number | null
+  amount?: number | null
+}
+
+export interface ContactChargeRowPayload {
+  description: string
+  code?: string | null
+  value_type?: string | null
+  charge_basis?: string | null
+  is_required?: boolean
+  sort_order?: number
+  values?: ContactChargeRowValuePayload[]
+}
+
+export interface ContactChargeBreakPayload {
+  label: string
+  min_value?: number | null
+  max_value?: number | null
+  unit?: string | null
+  sort_order?: number
+}
+
+export interface ContactChargeTablePayload {
+  name: string
+  code?: string | null
+  charge_type: string
+  applies_to: string
+  currency_code: string
+  valid_from?: string | null
+  valid_until?: string | null
+  is_active?: boolean
+  is_default?: boolean
+  sort_order?: number
+  notes?: string | null
+  breaks?: ContactChargeBreakPayload[]
+  rows?: ContactChargeRowPayload[]
+}
+
+export interface ContactChargeTableListParams {
+  page?: number
+  per_page?: number
+  charge_type?: string
+  applies_to?: string
+  is_active?: boolean | string
+  q?: string
+}

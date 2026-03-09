@@ -1,6 +1,12 @@
 import { defineStore } from "pinia"
 import { computed, ref } from "vue"
-import type { Contact, PaginatedResponse } from "@/app/types/contact"
+import type {
+  Contact,
+  ContactChargeTable,
+  ContactChargeTableListParams,
+  ContactChargeTablePayload,
+  PaginatedResponse,
+} from "@/app/types/contact"
 import contacts from "@/app/services/contacts"
 import { useContactTypeStore } from "@/app/stores/contact-type"
 
@@ -8,11 +14,15 @@ export const useContactStore = defineStore("contact", () => {
   const items = ref<Contact[]>([])
   const loading = ref(false)
 
-  // ✅ optional: current contact (details page)
   const current = ref<Contact | null>(null)
   const currentLoading = ref(false)
 
-  // ✅ single source of truth for types
+  const chargeTables = ref<ContactChargeTable[]>([])
+  const chargeTablesLoading = ref(false)
+
+  const currentChargeTable = ref<ContactChargeTable | null>(null)
+  const currentChargeTableLoading = ref(false)
+
   const typeStore = useContactTypeStore()
   const types = computed(() => typeStore.items)
   const typesLoading = computed(() => typeStore.loading)
@@ -42,7 +52,6 @@ export const useContactStore = defineStore("contact", () => {
         q: search.value.trim() || undefined,
       }
 
-      // ✅ only send filter when not ALL
       if (activeTypeId.value !== null) {
         params.contact_type_id = activeTypeId.value
       }
@@ -51,9 +60,6 @@ export const useContactStore = defineStore("contact", () => {
 
       items.value = res.data ?? []
 
-      // ✅ support BOTH shapes:
-      // A) { data, meta: { current_page, per_page, total, last_page } }
-      // B) Laravel paginator: { data, current_page, per_page, total, last_page }
       const meta: any = (res as any).meta ?? (res as any)
 
       page.value = Number(meta.current_page ?? page.value)
@@ -84,7 +90,6 @@ export const useContactStore = defineStore("contact", () => {
     return fetch()
   }
 
-  // ✅ Details helpers
   async function find(id: number) {
     return contacts.show(id)
   }
@@ -104,7 +109,6 @@ export const useContactStore = defineStore("contact", () => {
     return load(current.value.id)
   }
 
-  // ✅ Core CRUD
   async function create(payload: any) {
     const created = await contacts.create(payload)
     await fetch()
@@ -115,7 +119,6 @@ export const useContactStore = defineStore("contact", () => {
     const updated = await contacts.update(id, payload)
     await fetch()
 
-    // keep details page in sync if open
     if (current.value?.id === id) current.value = updated
 
     return updated
@@ -128,7 +131,6 @@ export const useContactStore = defineStore("contact", () => {
     if (current.value?.id === id) current.value = null
   }
 
-  // ✅ NEW: Branch endpoints
   async function createBranch(contactId: number, payload: any) {
     const updatedContact = await contacts.createBranch(contactId, payload)
     if (current.value?.id === contactId) current.value = updatedContact
@@ -147,7 +149,6 @@ export const useContactStore = defineStore("contact", () => {
     return updatedContact
   }
 
-  // ✅ NEW: Collection Address endpoints
   async function createCollectionAddress(contactId: number, payload: any) {
     const updatedContact = await contacts.createCollectionAddress(contactId, payload)
     if (current.value?.id === contactId) current.value = updatedContact
@@ -166,6 +167,58 @@ export const useContactStore = defineStore("contact", () => {
     return updatedContact
   }
 
+  async function fetchChargeTables(contactId: number, params: ContactChargeTableListParams = {}) {
+    chargeTablesLoading.value = true
+    try {
+      const res = await contacts.listChargeTables(contactId, params)
+      chargeTables.value = res.data ?? []
+      return chargeTables.value
+    } finally {
+      chargeTablesLoading.value = false
+    }
+  }
+
+  async function loadChargeTable(contactId: number, tableId: number) {
+    currentChargeTableLoading.value = true
+    try {
+      currentChargeTable.value = await contacts.showChargeTable(contactId, tableId)
+      return currentChargeTable.value
+    } finally {
+      currentChargeTableLoading.value = false
+    }
+  }
+
+  async function createChargeTable(contactId: number, payload: ContactChargeTablePayload) {
+    const created = await contacts.createChargeTable(contactId, payload)
+    await fetchChargeTables(contactId)
+    currentChargeTable.value = created
+    return created
+  }
+
+  async function updateChargeTable(
+    contactId: number,
+    tableId: number,
+    payload: Partial<ContactChargeTablePayload>,
+  ) {
+    const updated = await contacts.updateChargeTable(contactId, tableId, payload)
+    await fetchChargeTables(contactId)
+
+    if (currentChargeTable.value?.id === tableId) {
+      currentChargeTable.value = updated
+    }
+
+    return updated
+  }
+
+  async function removeChargeTable(contactId: number, tableId: number) {
+    await contacts.removeChargeTable(contactId, tableId)
+    await fetchChargeTables(contactId)
+
+    if (currentChargeTable.value?.id === tableId) {
+      currentChargeTable.value = null
+    }
+  }
+
   function setPage(nextPage: number) {
     page.value = nextPage
     return fetch()
@@ -181,9 +234,14 @@ export const useContactStore = defineStore("contact", () => {
     items,
     loading,
 
-    // details
     current,
     currentLoading,
+
+    chargeTables,
+    chargeTablesLoading,
+    currentChargeTable,
+    currentChargeTableLoading,
+
     load,
     refreshCurrent,
 
@@ -210,7 +268,6 @@ export const useContactStore = defineStore("contact", () => {
     update,
     remove,
 
-    // ✅ new actions exposed
     createBranch,
     updateBranch,
     removeBranch,
@@ -218,5 +275,11 @@ export const useContactStore = defineStore("contact", () => {
     createCollectionAddress,
     updateCollectionAddress,
     removeCollectionAddress,
+
+    fetchChargeTables,
+    loadChargeTable,
+    createChargeTable,
+    updateChargeTable,
+    removeChargeTable,
   }
 })

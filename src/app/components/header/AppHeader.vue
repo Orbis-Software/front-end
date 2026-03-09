@@ -124,10 +124,8 @@ onBeforeUnmount(() => document.removeEventListener("click", handleClickOutside))
   justify-content: space-between;
 
   width: 100%;
-  max-width: 1400px;
-  margin: 0 auto;
 
-  padding: 0 32px;
+  padding: 0 6.2%;
 }
 
 .brand {
