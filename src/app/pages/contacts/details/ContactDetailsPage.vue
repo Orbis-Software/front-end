@@ -9,8 +9,8 @@ import ContactOverviewTab from "@/app/components/contacts/overview/ContactOvervi
 import BranchesBillingTab from "@/app/components/contacts/BranchesBillingTab.vue"
 import CollectionAddressesTab from "@/app/components/contacts/CollectionAddressesTab.vue"
 import ContactWeightChargesTab from "@/app/components/contacts/weight-charges/ContactWeightChargesTab.vue"
-import ContactCustomerChargesTab from "@/app/components/contacts/ContactCustomerChargesTab.vue"
-import ContactCalculationDemoTab from "@/app/components/contacts/ContactCalculationDemoTab.vue"
+import ContactCustomerChargesTab from "@/app/components/contacts/customer-charges/ContactCustomerChargesTab.vue"
+import ContactCalculationDemoTab from "@/app/components/contacts/collection-charges/ContactCalculationDemoTab.vue"
 
 const {
   loading,
