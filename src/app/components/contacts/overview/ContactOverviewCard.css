@@ -294,3 +294,110 @@
     padding-bottom: 18px;
   }
 }
+
+.contact-overview__mini-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.contact-overview__stop-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #b91c1c;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.contact-overview__mini-value--warning {
+  color: #b91c1c;
+  font-weight: 800;
+  text-decoration: underline;
+}
+
+.contact-overview__mini-subtext {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.contact-overview__chip--status {
+  font-weight: 700;
+}
+
+.contact-overview__chip--danger {
+  background: rgba(185, 28, 28, 0.12);
+  color: #991b1b;
+  border: 1px solid rgba(185, 28, 28, 0.2);
+}
+
+.contact-overview__chip--success {
+  background: rgba(22, 163, 74, 0.12);
+  color: #166534;
+  border: 1px solid rgba(22, 163, 74, 0.2);
+}
+
+.overview-details__value--danger {
+  color: #b91c1c;
+  font-weight: 700;
+}
+
+.overview-details__value--success {
+  color: #166534;
+  font-weight: 700;
+}
+
+.contact-overview__test-panel {
+  margin-bottom: 16px;
+  padding: 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  background: #fff;
+}
+
+.contact-overview__test-header {
+  margin-bottom: 12px;
+}
+
+.contact-overview__test-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.contact-overview__test-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.contact-overview__test-field span {
+  font-size: 12px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.contact-overview__test-field input {
+  height: 40px;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  padding: 0 12px;
+  font-size: 14px;
+}
+
+.contact-overview__test-results {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #111827;
+}

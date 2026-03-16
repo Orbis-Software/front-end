@@ -184,7 +184,7 @@ export interface ContactChargeBreak {
 export interface ContactChargeRowValue {
   id: number
   charge_row_id: number
-  charge_break_id: number
+  charge_break_id: number | null
   amount: number
   created_at?: string
   updated_at?: string
@@ -197,6 +197,7 @@ export interface ContactChargeRow {
   code: string | null
   value_type: string
   charge_basis: string | null
+  transport_mode?: string | null
   is_required: boolean
   sort_order: number
   values?: ContactChargeRowValue[]
@@ -236,6 +237,7 @@ export interface ContactChargeRowPayload {
   code?: string | null
   value_type?: string | null
   charge_basis?: string | null
+  transport_mode?: string | null
   is_required?: boolean
   sort_order?: number
   values?: ContactChargeRowValuePayload[]

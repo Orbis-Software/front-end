@@ -207,6 +207,7 @@ export function useTopNavItems(): {
         id: "accounts",
         label: "Accounts",
         icon: "pi pi-calculator",
+        to: "/accounts",
         anyPermissions: [
           "mgmt.accounts.invoices.view",
           "mgmt.accounts.invoices.manage",
@@ -215,50 +216,6 @@ export function useTopNavItems(): {
           "mgmt.accounts.tax_codes.manage",
           "mgmt.accounts.banks.manage",
           "mgmt.accounts.charge_descriptions.manage",
-        ],
-        children: [
-          {
-            id: "invoices",
-            label: "Invoicing",
-            icon: "pi pi-file",
-            to: "/accounts/invoices",
-            anyPermissions: ["mgmt.accounts.invoices.view", "mgmt.accounts.invoices.manage"],
-          },
-          {
-            id: "financial-reports",
-            label: "Financial Reports",
-            icon: "pi pi-chart-line",
-            to: "/accounts/reports",
-            permission: "mgmt.accounts.reports.view",
-          },
-          {
-            id: "exchange",
-            label: "Exchange Rates",
-            icon: "pi pi-dollar",
-            to: "/accounts/exchange-rates",
-            permission: "mgmt.accounts.exchange_rates.manage",
-          },
-          {
-            id: "tax",
-            label: "Tax Codes",
-            icon: "pi pi-percentage",
-            to: "/accounts/tax-codes",
-            permission: "mgmt.accounts.tax_codes.manage",
-          },
-          {
-            id: "bank",
-            label: "Bank Details",
-            icon: "pi pi-building-columns",
-            to: "/accounts/banks",
-            permission: "mgmt.accounts.banks.manage",
-          },
-          {
-            id: "charges",
-            label: "Charge Descriptions",
-            icon: "pi pi-file-edit",
-            to: "/accounts/charges",
-            permission: "mgmt.accounts.charge_descriptions.manage",
-          },
         ],
       },
 

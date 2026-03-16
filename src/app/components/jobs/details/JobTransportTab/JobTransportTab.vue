@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, ref } from "vue"
+import { ref } from "vue"
+
 import Button from "primevue/button"
 import Dropdown from "primevue/dropdown"
 import InputText from "primevue/inputtext"
@@ -7,223 +8,201 @@ import Calendar from "primevue/calendar"
 import InputSwitch from "primevue/inputswitch"
 import Textarea from "primevue/textarea"
 import InputNumber from "primevue/inputnumber"
+import Dialog from "primevue/dialog"
+import Checkbox from "primevue/checkbox"
 
-type Option = { label: string; value: string }
+import {
+  orderTypeOptions,
+  packagingOptions,
+  hazardClassOptions,
+  cubeM3,
+  volumeM3,
+  badgeClass,
+  useJobTransportTab,
+} from "./useJobTransportTab"
 
-type DimensionRow = {
-  packaging: string | null
-  qty: number
-  length_cm: number
-  width_cm: number
-  height_cm: number
-  gross_kg: number
-  ldm: number
-}
+const props = defineProps<{ form: any; disabled?: boolean }>()
 
-type ExistingOrder = {
-  id: string
-  carrier: string
-  pickup: string
-  ref: string
-  type: string
-  customer: string
-  status: "Confirmed" | "Draft" | "Sent"
-}
+const {
+  open,
+  collection,
+  transport,
+  selectedContact,
+  carrierOptions,
+  collectionAddressOptions,
+  deliveryAddressOptions,
+  collectionTotals,
+  transportTotals,
+  collectionAppliedCharges,
+  transportAppliedCharges,
+  collectionCostTotal,
+  transportCostTotal,
+  existingCollectionOrders,
+  existingTransportOrders,
+  addDimRow,
+  togglePanel,
+  handleHazardousChange,
+  createAddressForSelectedContact,
+} = useJobTransportTab(props.form)
 
-defineProps<{ form: any; disabled?: boolean }>() // keep consistent with your JobDetails usage
+const showAddressModal = ref(false)
+const addressTarget = ref<"collection" | "delivery">("collection")
+const savingAddress = ref(false)
 
-const orderTypeOptions: Option[] = [
-  { label: "Domestic", value: "DOMESTIC" },
-  { label: "Export", value: "EXPORT" },
-  { label: "Import", value: "IMPORT" },
-]
-
-const packagingOptions: Option[] = [
-  { label: "Pallet", value: "PALLET" },
-  { label: "Carton", value: "CARTON" },
-  { label: "Crate", value: "CRATE" },
-  { label: "Bag", value: "BAG" },
-]
-
-const carrierOptions: Option[] = [
-  { label: "Select carrier", value: "" },
-  { label: "ABC Logistics", value: "ABC Logistics" },
-  { label: "XYZ Transport", value: "XYZ Transport" },
-  { label: "Global Freight", value: "Global Freight" },
-]
-
-/** Panels (simple accordion) */
-const open = ref<{ collection: boolean; transport: boolean }>({
-  collection: true,
-  transport: true,
+const addressForm = ref({
+  label: "",
+  address_line_1: "",
+  address_line_2: "",
+  address_line_3: "",
+  city: "",
+  county_state: "",
+  postal_code: "",
+  country: "",
+  contact_person: "",
+  phone: "",
+  email: "",
+  special_instructions: "",
+  is_collection: true,
+  is_delivery: false,
 })
 
-/** Collection Orders form */
-const collection = ref({
-  type: "DOMESTIC",
-  collection_address: null as string | null,
-  delivery_address: null as string | null,
-  order_reference: "CO-2026-000003",
-  customer_ref: "",
-  collection_ref: "",
-  carrier: "",
-  pickup_date: null as Date | null,
-  pickup_time: "",
-  delivery_date: null as Date | null,
-  delivery_time: "",
-  hazardous: false,
-  goods_description: "",
-  dimensions: [
-    {
-      packaging: null,
-      qty: 1,
-      length_cm: 0,
-      width_cm: 0,
-      height_cm: 0,
-      gross_kg: 0,
-      ldm: 0,
-    },
-  ] as DimensionRow[],
-  collection_cost: 0,
-  additional_costs: 0,
-  fsc_percent: 0,
-})
-
-/** Transport Orders form (same layout, different reference prefix) */
-const transport = ref({
-  type: "DOMESTIC",
-  collection_address: null as string | null,
-  delivery_address: null as string | null,
-  order_reference: "TO-2026-000003",
-  customer_ref: "",
-  collection_ref: "",
-  carrier: "",
-  pickup_date: null as Date | null,
-  pickup_time: "",
-  delivery_date: null as Date | null,
-  delivery_time: "",
-  hazardous: false,
-  goods_description: "",
-  dimensions: [
-    {
-      packaging: null,
-      qty: 1,
-      length_cm: 0,
-      width_cm: 0,
-      height_cm: 0,
-      gross_kg: 0,
-      ldm: 0,
-    },
-  ] as DimensionRow[],
-  collection_cost: 0,
-  additional_costs: 0,
-  fsc_percent: 0,
-})
-
-function cubeM3(r: DimensionRow) {
-  const m3 = (r.length_cm / 100) * (r.width_cm / 100) * (r.height_cm / 100)
-  return Number.isFinite(m3) ? m3 : 0
+function resetAddressForm() {
+  addressForm.value = {
+    label: "",
+    address_line_1: "",
+    address_line_2: "",
+    address_line_3: "",
+    city: "",
+    county_state: "",
+    postal_code: "",
+    country: "",
+    contact_person: "",
+    phone: "",
+    email: "",
+    special_instructions: "",
+    is_collection: addressTarget.value === "collection",
+    is_delivery: addressTarget.value === "delivery",
+  }
 }
 
-function volumeM3(r: DimensionRow) {
-  return cubeM3(r) * (r.qty || 0)
+function openAddressModal(target: "collection" | "delivery") {
+  addressTarget.value = target
+  resetAddressForm()
+  showAddressModal.value = true
 }
 
-function totals(rows: DimensionRow[]) {
-  const qty = rows.reduce((a, r) => a + (r.qty || 0), 0)
-  const gross = rows.reduce((a, r) => a + (r.gross_kg || 0), 0)
-  const cube = rows.reduce((a, r) => a + cubeM3(r), 0)
-  const vol = rows.reduce((a, r) => a + volumeM3(r), 0)
-  const ldm = rows.reduce((a, r) => a + (r.ldm || 0), 0)
-  return { qty, gross, cube, vol, ldm }
-}
+async function saveAddress() {
+  if (!selectedContact.value?.id) return
 
-const collectionTotals = computed(() => totals(collection.value.dimensions))
-const transportTotals = computed(() => totals(transport.value.dimensions))
+  savingAddress.value = true
+  try {
+    await createAddressForSelectedContact({
+      ...addressForm.value,
+      is_collection: addressForm.value.is_collection,
+      is_delivery: addressForm.value.is_delivery,
+    })
 
-function addDimRow(target: "collection" | "transport") {
-  const t = target === "collection" ? collection.value : transport.value
-  t.dimensions.push({
-    packaging: null,
-    qty: 1,
-    length_cm: 0,
-    width_cm: 0,
-    height_cm: 0,
-    gross_kg: 0,
-    ldm: 0,
-  })
-}
-
-function calcTotalCost(t: {
-  collection_cost: number
-  additional_costs: number
-  fsc_percent: number
-}) {
-  const base = (t.collection_cost || 0) + (t.additional_costs || 0)
-  const fsc = base * ((t.fsc_percent || 0) / 100)
-  return base + fsc
-}
-
-const collectionCostTotal = computed(() => calcTotalCost(collection.value))
-const transportCostTotal = computed(() => calcTotalCost(transport.value))
-
-/** Existing list (placeholder) */
-const existingCollectionOrders = ref<ExistingOrder[]>([
-  {
-    id: "COL-2026-0001",
-    carrier: "ABC Logistics",
-    pickup: "04/02/2026",
-    ref: "CO-000001",
-    type: "DOMESTIC",
-    customer: "CUST-001",
-    status: "Confirmed",
-  },
-  {
-    id: "COL-2026-0002",
-    carrier: "XYZ Transport",
-    pickup: "05/02/2026",
-    ref: "CO-000002",
-    type: "EXPORT",
-    customer: "CUST-002",
-    status: "Draft",
-  },
-])
-
-const existingTransportOrders = ref<ExistingOrder[]>([
-  {
-    id: "TR-2026-0001",
-    carrier: "Global Freight",
-    pickup: "—",
-    ref: "TO-000001",
-    type: "IMPORT",
-    customer: "—",
-    status: "Sent",
-  },
-  {
-    id: "TR-2026-0002",
-    carrier: "Continental Shipping",
-    pickup: "—",
-    ref: "TO-000002",
-    type: "DOMESTIC",
-    customer: "—",
-    status: "Draft",
-  },
-])
-
-function badgeClass(s: ExistingOrder["status"]) {
-  if (s === "Confirmed") return "badge badge--confirmed"
-  if (s === "Sent") return "badge badge--sent"
-  return "badge badge--draft"
-}
-
-function togglePanel(key: "collection" | "transport") {
-  open.value[key] = !open.value[key]
+    showAddressModal.value = false
+    resetAddressForm()
+  } finally {
+    savingAddress.value = false
+  }
 }
 </script>
 
 <template>
   <div class="job-transport">
-    <!-- COLLECTION ORDERS -->
+    <Dialog
+      v-model:visible="showAddressModal"
+      modal
+      :style="{ width: '42rem', maxWidth: '95vw' }"
+      :header="addressTarget === 'collection' ? 'Add Collection Address' : 'Add Delivery Address'"
+    >
+      <div class="address-modal-grid">
+        <div class="field">
+          <label class="label">Label</label>
+          <InputText v-model="addressForm.label" class="field-fluid field-input" />
+        </div>
+
+        <div class="field">
+          <label class="label">Contact Person</label>
+          <InputText v-model="addressForm.contact_person" class="field-fluid field-input" />
+        </div>
+
+        <div class="field field--span-2">
+          <label class="label">Address Line 1</label>
+          <InputText v-model="addressForm.address_line_1" class="field-fluid field-input" />
+        </div>
+
+        <div class="field field--span-2">
+          <label class="label">Address Line 2</label>
+          <InputText v-model="addressForm.address_line_2" class="field-fluid field-input" />
+        </div>
+
+        <div class="field field--span-2">
+          <label class="label">Address Line 3</label>
+          <InputText v-model="addressForm.address_line_3" class="field-fluid field-input" />
+        </div>
+
+        <div class="field">
+          <label class="label">City</label>
+          <InputText v-model="addressForm.city" class="field-fluid field-input" />
+        </div>
+
+        <div class="field">
+          <label class="label">County / State</label>
+          <InputText v-model="addressForm.county_state" class="field-fluid field-input" />
+        </div>
+
+        <div class="field">
+          <label class="label">Postal Code</label>
+          <InputText v-model="addressForm.postal_code" class="field-fluid field-input" />
+        </div>
+
+        <div class="field">
+          <label class="label">Country</label>
+          <InputText v-model="addressForm.country" class="field-fluid field-input" />
+        </div>
+
+        <div class="field">
+          <label class="label">Phone</label>
+          <InputText v-model="addressForm.phone" class="field-fluid field-input" />
+        </div>
+
+        <div class="field">
+          <label class="label">Email</label>
+          <InputText v-model="addressForm.email" class="field-fluid field-input" />
+        </div>
+
+        <div class="field field--span-2">
+          <label class="label">Special Instructions</label>
+          <Textarea v-model="addressForm.special_instructions" class="field-fluid" autoResize />
+        </div>
+
+        <div class="checkbox-row field--span-2">
+          <div class="checkbox-item">
+            <Checkbox v-model="addressForm.is_collection" :binary="true" inputId="is_collection" />
+            <label for="is_collection">Collection Address</label>
+          </div>
+
+          <div class="checkbox-item">
+            <Checkbox v-model="addressForm.is_delivery" :binary="true" inputId="is_delivery" />
+            <label for="is_delivery">Delivery Address</label>
+          </div>
+        </div>
+      </div>
+
+      <template #footer>
+        <Button class="orbis-btn" label="Cancel" @click="showAddressModal = false" />
+        <Button
+          class="orbis-btn orbis-btn--orange"
+          label="Save Address"
+          :loading="savingAddress"
+          @click="saveAddress"
+        />
+      </template>
+    </Dialog>
+
     <section class="panel">
       <div class="panel-head">
         <button class="panel-toggle" type="button" @click="togglePanel('collection')">
@@ -238,6 +217,7 @@ function togglePanel(key: "collection" | "transport") {
             optionLabel="label"
             optionValue="value"
             class="mini-dd"
+            filter
             :disabled="disabled"
           />
           <Button
@@ -253,28 +233,48 @@ function togglePanel(key: "collection" | "transport") {
         <div class="grid-3">
           <div class="field">
             <label class="label">Collection Address</label>
-            <Dropdown
-              :options="[{ label: 'Select from contacts', value: null }]"
-              v-model="collection.collection_address"
-              optionLabel="label"
-              optionValue="value"
-              placeholder="Select from contacts"
-              class="field-fluid"
-              :disabled="disabled"
-            />
+            <div class="field-with-action">
+              <Dropdown
+                :options="collectionAddressOptions"
+                v-model="collection.collection_address"
+                optionLabel="label"
+                optionValue="value"
+                placeholder="Select collection address"
+                class="field-fluid"
+                filter
+                showClear
+                :disabled="disabled || !selectedContact"
+              />
+              <Button
+                class="orbis-btn orbis-btn--orange-lite add-mini-btn"
+                icon="pi pi-plus"
+                :disabled="disabled || !selectedContact"
+                @click="openAddressModal('collection')"
+              />
+            </div>
           </div>
 
           <div class="field">
             <label class="label">Delivery Address</label>
-            <Dropdown
-              :options="[{ label: 'Select from contacts', value: null }]"
-              v-model="collection.delivery_address"
-              optionLabel="label"
-              optionValue="value"
-              placeholder="Select from contacts"
-              class="field-fluid"
-              :disabled="disabled"
-            />
+            <div class="field-with-action">
+              <Dropdown
+                :options="deliveryAddressOptions"
+                v-model="collection.delivery_address"
+                optionLabel="label"
+                optionValue="value"
+                placeholder="Select delivery address"
+                class="field-fluid"
+                filter
+                showClear
+                :disabled="disabled || !selectedContact"
+              />
+              <Button
+                class="orbis-btn orbis-btn--orange-lite add-mini-btn"
+                icon="pi pi-plus"
+                :disabled="disabled || !selectedContact"
+                @click="openAddressModal('delivery')"
+              />
+            </div>
           </div>
 
           <div class="field">
@@ -317,6 +317,8 @@ function togglePanel(key: "collection" | "transport") {
               optionValue="value"
               placeholder="Select carrier"
               class="field-fluid"
+              filter
+              showClear
               :disabled="disabled"
             />
           </div>
@@ -364,10 +366,29 @@ function togglePanel(key: "collection" | "transport") {
           </div>
         </div>
 
-        <div class="haz-row">
+        <div class="haz-row haz-row--with-class">
           <div class="haz-left">
             <div class="label">Hazardous</div>
-            <InputSwitch v-model="collection.hazardous" :disabled="disabled" />
+            <InputSwitch
+              :modelValue="collection.hazardous"
+              :disabled="disabled"
+              @update:modelValue="handleHazardousChange('collection', $event)"
+            />
+          </div>
+
+          <div class="haz-class" v-if="collection.hazardous">
+            <label class="label">Hazardous Class</label>
+            <Dropdown
+              v-model="collection.hazardous_class"
+              :options="hazardClassOptions"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Select class"
+              class="field-fluid"
+              filter
+              showClear
+              :disabled="disabled"
+            />
           </div>
         </div>
 
@@ -382,7 +403,6 @@ function togglePanel(key: "collection" | "transport") {
           />
         </div>
 
-        <!-- DIMENSIONS TABLE -->
         <div class="dims">
           <div class="dims-title">Dimensions</div>
 
@@ -407,6 +427,8 @@ function togglePanel(key: "collection" | "transport") {
                 optionValue="value"
                 placeholder="Select"
                 class="cell"
+                filter
+                showClear
                 :disabled="disabled"
               />
               <InputNumber v-model="r.qty" class="cell" :min="0" :disabled="disabled" />
@@ -451,43 +473,41 @@ function togglePanel(key: "collection" | "transport") {
           />
         </div>
 
-        <!-- COSTS BOX -->
         <div class="cost-box">
-          <div class="cost-row">
-            <div>Collection Cost:</div>
-            <InputNumber
-              v-model="collection.collection_cost"
-              class="cost-in"
-              :min="0"
-              :disabled="disabled"
-            />
+          <div class="charge-summary">
+            <div class="charge-summary__title">Applied Charges</div>
+
+            <div class="charge-summary__meta">
+              <div>
+                <span class="charge-summary__label">Weight Table:</span>
+                <span>{{ collectionAppliedCharges.weight_table_name ?? "—" }}</span>
+              </div>
+              <div>
+                <span class="charge-summary__label">Customer Table:</span>
+                <span>{{ collectionAppliedCharges.customer_table_name ?? "—" }}</span>
+              </div>
+            </div>
+
+            <div v-if="collectionAppliedCharges.rows.length" class="charge-lines">
+              <div v-for="row in collectionAppliedCharges.rows" :key="row.id" class="charge-line">
+                <div class="charge-line__left">
+                  <b>{{ row.description }}</b>
+                  <span class="charge-line__source">{{ row.table_name }}</span>
+                  <span class="charge-line__basis">{{ row.basis }}</span>
+                </div>
+                <div>£{{ row.amount.toFixed(2) }}</div>
+              </div>
+            </div>
+
+            <div v-else class="empty-state">No charge rows available.</div>
           </div>
-          <div class="cost-row">
-            <div>Additional Costs:</div>
-            <InputNumber
-              v-model="collection.additional_costs"
-              class="cost-in"
-              :min="0"
-              :disabled="disabled"
-            />
-          </div>
-          <div class="cost-row">
-            <div>FSC %:</div>
-            <InputNumber
-              v-model="collection.fsc_percent"
-              class="cost-in"
-              :min="0"
-              :max="100"
-              :disabled="disabled"
-            />
-          </div>
+
           <div class="cost-row cost-row--total">
             <div><b>Total:</b></div>
             <div class="cost-total">£{{ collectionCostTotal.toFixed(2) }}</div>
           </div>
         </div>
 
-        <!-- ACTIONS -->
         <div class="row-actions">
           <Button
             class="orbis-btn orbis-btn--orange"
@@ -504,10 +524,13 @@ function togglePanel(key: "collection" | "transport") {
           />
         </div>
 
-        <!-- EXISTING -->
         <div class="existing">
           <div class="existing-title">
             Existing Collection Orders ({{ existingCollectionOrders.length }})
+          </div>
+
+          <div v-if="!existingCollectionOrders.length" class="empty-state">
+            No collection orders yet.
           </div>
 
           <div v-for="o in existingCollectionOrders" :key="o.id" class="order-line">
@@ -540,7 +563,6 @@ function togglePanel(key: "collection" | "transport") {
       </div>
     </section>
 
-    <!-- TRANSPORT ORDERS -->
     <section class="panel">
       <div class="panel-head">
         <button class="panel-toggle" type="button" @click="togglePanel('transport')">
@@ -555,6 +577,7 @@ function togglePanel(key: "collection" | "transport") {
             optionLabel="label"
             optionValue="value"
             class="mini-dd"
+            filter
             :disabled="disabled"
           />
           <Button
@@ -567,32 +590,51 @@ function togglePanel(key: "collection" | "transport") {
       </div>
 
       <div v-show="open.transport" class="panel-body">
-        <!-- same fields as collection (kept identical for design consistency) -->
         <div class="grid-3">
           <div class="field">
             <label class="label">Collection Address</label>
-            <Dropdown
-              :options="[{ label: 'Select from contacts', value: null }]"
-              v-model="transport.collection_address"
-              optionLabel="label"
-              optionValue="value"
-              placeholder="Select from contacts"
-              class="field-fluid"
-              :disabled="disabled"
-            />
+            <div class="field-with-action">
+              <Dropdown
+                :options="collectionAddressOptions"
+                v-model="transport.collection_address"
+                optionLabel="label"
+                optionValue="value"
+                placeholder="Select collection address"
+                class="field-fluid"
+                filter
+                showClear
+                :disabled="disabled || !selectedContact"
+              />
+              <Button
+                class="orbis-btn orbis-btn--orange-lite add-mini-btn"
+                icon="pi pi-plus"
+                :disabled="disabled || !selectedContact"
+                @click="openAddressModal('collection')"
+              />
+            </div>
           </div>
 
           <div class="field">
             <label class="label">Delivery Address</label>
-            <Dropdown
-              :options="[{ label: 'Select from contacts', value: null }]"
-              v-model="transport.delivery_address"
-              optionLabel="label"
-              optionValue="value"
-              placeholder="Select from contacts"
-              class="field-fluid"
-              :disabled="disabled"
-            />
+            <div class="field-with-action">
+              <Dropdown
+                :options="deliveryAddressOptions"
+                v-model="transport.delivery_address"
+                optionLabel="label"
+                optionValue="value"
+                placeholder="Select delivery address"
+                class="field-fluid"
+                filter
+                showClear
+                :disabled="disabled || !selectedContact"
+              />
+              <Button
+                class="orbis-btn orbis-btn--orange-lite add-mini-btn"
+                icon="pi pi-plus"
+                :disabled="disabled || !selectedContact"
+                @click="openAddressModal('delivery')"
+              />
+            </div>
           </div>
 
           <div class="field">
@@ -635,6 +677,8 @@ function togglePanel(key: "collection" | "transport") {
               optionValue="value"
               placeholder="Select carrier"
               class="field-fluid"
+              filter
+              showClear
               :disabled="disabled"
             />
           </div>
@@ -682,10 +726,29 @@ function togglePanel(key: "collection" | "transport") {
           </div>
         </div>
 
-        <div class="haz-row">
+        <div class="haz-row haz-row--with-class">
           <div class="haz-left">
             <div class="label">Hazardous</div>
-            <InputSwitch v-model="transport.hazardous" :disabled="disabled" />
+            <InputSwitch
+              :modelValue="transport.hazardous"
+              :disabled="disabled"
+              @update:modelValue="handleHazardousChange('transport', $event)"
+            />
+          </div>
+
+          <div class="haz-class" v-if="transport.hazardous">
+            <label class="label">Hazardous Class</label>
+            <Dropdown
+              v-model="transport.hazardous_class"
+              :options="hazardClassOptions"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Select class"
+              class="field-fluid"
+              filter
+              showClear
+              :disabled="disabled"
+            />
           </div>
         </div>
 
@@ -724,6 +787,8 @@ function togglePanel(key: "collection" | "transport") {
                 optionValue="value"
                 placeholder="Select"
                 class="cell"
+                filter
+                showClear
                 :disabled="disabled"
               />
               <InputNumber v-model="r.qty" class="cell" :min="0" :disabled="disabled" />
@@ -767,34 +832,34 @@ function togglePanel(key: "collection" | "transport") {
         </div>
 
         <div class="cost-box">
-          <div class="cost-row">
-            <div>Collection Cost:</div>
-            <InputNumber
-              v-model="transport.collection_cost"
-              class="cost-in"
-              :min="0"
-              :disabled="disabled"
-            />
+          <div class="charge-summary">
+            <div class="charge-summary__title">Applied Charges</div>
+
+            <div class="charge-summary__meta">
+              <div>
+                <span class="charge-summary__label">Weight Table:</span>
+                <span>{{ transportAppliedCharges.weight_table_name ?? "—" }}</span>
+              </div>
+              <div>
+                <span class="charge-summary__label">Customer Table:</span>
+                <span>{{ transportAppliedCharges.customer_table_name ?? "—" }}</span>
+              </div>
+            </div>
+
+            <div v-if="transportAppliedCharges.rows.length" class="charge-lines">
+              <div v-for="row in transportAppliedCharges.rows" :key="row.id" class="charge-line">
+                <div class="charge-line__left">
+                  <b>{{ row.description }}</b>
+                  <span class="charge-line__source">{{ row.table_name }}</span>
+                  <span class="charge-line__basis">{{ row.basis }}</span>
+                </div>
+                <div>£{{ row.amount.toFixed(2) }}</div>
+              </div>
+            </div>
+
+            <div v-else class="empty-state">No charge rows available.</div>
           </div>
-          <div class="cost-row">
-            <div>Additional Costs:</div>
-            <InputNumber
-              v-model="transport.additional_costs"
-              class="cost-in"
-              :min="0"
-              :disabled="disabled"
-            />
-          </div>
-          <div class="cost-row">
-            <div>FSC %:</div>
-            <InputNumber
-              v-model="transport.fsc_percent"
-              class="cost-in"
-              :min="0"
-              :max="100"
-              :disabled="disabled"
-            />
-          </div>
+
           <div class="cost-row cost-row--total">
             <div><b>Total:</b></div>
             <div class="cost-total">£{{ transportCostTotal.toFixed(2) }}</div>
@@ -820,6 +885,10 @@ function togglePanel(key: "collection" | "transport") {
         <div class="existing">
           <div class="existing-title">
             Existing Transport Orders ({{ existingTransportOrders.length }})
+          </div>
+
+          <div v-if="!existingTransportOrders.length" class="empty-state">
+            No transport orders yet.
           </div>
 
           <div v-for="o in existingTransportOrders" :key="o.id" class="order-line">
@@ -869,4 +938,118 @@ function togglePanel(key: "collection" | "transport") {
 
 <style scoped>
 @import "./JobTransportTab.css";
+
+.field-with-action {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.add-mini-btn {
+  min-width: 42px;
+  width: 42px;
+  height: 42px;
+  padding: 0 !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.address-modal-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px 16px;
+}
+
+.field--span-2 {
+  grid-column: span 2;
+}
+
+.checkbox-row {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+
+.checkbox-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.charge-summary {
+  display: grid;
+  gap: 12px;
+}
+
+.charge-summary__title {
+  font-weight: 800;
+}
+
+.charge-summary__meta {
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.charge-summary__label {
+  font-weight: 700;
+  margin-right: 6px;
+}
+
+.charge-lines {
+  display: grid;
+  gap: 8px;
+}
+
+.charge-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid #ececec;
+  border-radius: 10px;
+  background: #fafafa;
+  font-size: 13px;
+}
+
+.charge-line__left {
+  display: grid;
+  gap: 3px;
+}
+
+.charge-line__source {
+  color: #666;
+  font-size: 12px;
+}
+
+.charge-line__basis {
+  color: #8a8a8a;
+  font-size: 12px;
+}
+
+.empty-state {
+  border: 1px dashed #d8d8d8;
+  border-radius: 12px;
+  padding: 14px;
+  color: #666;
+  background: #fafafa;
+}
+
+@media (max-width: 900px) {
+  .address-modal-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .field--span-2 {
+    grid-column: span 1;
+  }
+
+  .checkbox-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
 </style>

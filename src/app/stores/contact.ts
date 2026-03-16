@@ -188,10 +188,18 @@ export const useContactStore = defineStore("contact", () => {
     }
   }
 
+  function setCurrentChargeTable(table: ContactChargeTable | null) {
+    currentChargeTable.value = table
+  }
+
+  function clearCurrentChargeTable() {
+    currentChargeTable.value = null
+  }
+
   async function createChargeTable(contactId: number, payload: ContactChargeTablePayload) {
     const created = await contacts.createChargeTable(contactId, payload)
-    await fetchChargeTables(contactId)
     currentChargeTable.value = created
+    await fetchChargeTables(contactId)
     return created
   }
 
@@ -278,6 +286,8 @@ export const useContactStore = defineStore("contact", () => {
 
     fetchChargeTables,
     loadChargeTable,
+    setCurrentChargeTable,
+    clearCurrentChargeTable,
     createChargeTable,
     updateChargeTable,
     removeChargeTable,

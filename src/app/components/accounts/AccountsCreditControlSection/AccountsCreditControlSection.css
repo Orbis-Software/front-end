@@ -1,0 +1,158 @@
+.accounts-credit-control {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.accounts-credit-control__hero,
+.accounts-credit-control__panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px;
+}
+
+.accounts-credit-control__eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.accounts-credit-control__title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.35;
+}
+
+.accounts-credit-control__subtitle {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.accounts-credit-control__grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 16px;
+}
+
+.accounts-credit-control__table-wrap {
+  overflow-x: auto;
+}
+
+.accounts-credit-control__table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 720px;
+}
+
+.accounts-credit-control__table th,
+.accounts-credit-control__table td {
+  padding: 10px 8px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  font-size: 12px;
+  color: var(--text);
+  vertical-align: middle;
+}
+
+.accounts-credit-control__table th {
+  background: #fafafa;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.accounts-credit-control__pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.accounts-credit-control__pill--warning {
+  background: #fff7e8;
+  color: #b7791f;
+  border-color: #f0d39b;
+}
+
+.accounts-credit-control__pill--success {
+  background: #edf9f0;
+  color: #2f855a;
+  border-color: #bde2c8;
+}
+
+.accounts-credit-control__pill--danger {
+  background: #fff1f2;
+  color: #b42318;
+  border-color: #fecaca;
+}
+
+.accounts-credit-control__pill--neutral {
+  background: #f5f5f5;
+  color: #666666;
+  border-color: #e5e5e5;
+}
+
+.accounts-credit-control__detail {
+  display: flex;
+  flex-direction: column;
+}
+
+.accounts-credit-control__detail-head {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 12px;
+}
+
+.accounts-credit-control__detail-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.accounts-credit-control__detail-card {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #fcfcfc;
+  padding: 12px;
+}
+
+.accounts-credit-control__detail-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.accounts-credit-control__detail-text {
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.accounts-credit-control__alert {
+  border: 1px solid #f0c36d;
+  background: #fff7e8;
+  color: #9a6700;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+@media (max-width: 1100px) {
+  .accounts-credit-control__grid {
+    grid-template-columns: 1fr;
+  }
+}
