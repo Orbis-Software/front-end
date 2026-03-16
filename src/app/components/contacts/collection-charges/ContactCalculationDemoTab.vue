@@ -66,7 +66,9 @@ const availableTables = computed(() => contactStore.chargeTables ?? [])
 
 const selectedTable = computed<ContactChargeTable | null>(() => {
   return (
-    availableTables.value.find(table => Number((table as any).id) === Number(selectedTableId.value)) ?? null
+    availableTables.value.find(
+      table => Number((table as any).id) === Number(selectedTableId.value),
+    ) ?? null
   )
 })
 
@@ -208,7 +210,8 @@ async function onTableChange() {
     table => Number((table as any).id) === Number(selectedTableId.value),
   )
 
-  const hasRows = Array.isArray((localSelected as any)?.rows) && (localSelected as any).rows.length > 0
+  const hasRows =
+    Array.isArray((localSelected as any)?.rows) && (localSelected as any).rows.length > 0
   const hasBreaks =
     Array.isArray((localSelected as any)?.breaks) && (localSelected as any).breaks.length > 0
 

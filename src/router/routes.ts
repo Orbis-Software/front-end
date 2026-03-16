@@ -26,6 +26,7 @@ const JobDetailsPage = () => import("@/app/pages/jobs/details/JobDetailsPage.vue
 const ContactDetailsPage = () => import("@/app/pages/contacts/details/ContactDetailsPage.vue")
 const EmployeeListPage = () => import("@/app/pages/employees/EmployeeListPage.vue")
 const SystemAccessPage = () => import("@/app/pages/system-access/SystemAccessPage.vue")
+const AccountsPage = () => import("@/app/pages/management/accounts/AccountsPage.vue")
 
 export const routes: RouteRecordRaw[] = [
   {
@@ -145,7 +146,7 @@ export const routes: RouteRecordRaw[] = [
       {
         path: "accounts",
         name: "acc.accounts",
-        component: PlaceholderPage,
+        component: AccountsPage,
         meta: { title: "Accounts" },
       },
       {

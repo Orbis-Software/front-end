@@ -267,36 +267,58 @@
    COST BOX
    ========================= */
 .job-transport .cost-box {
+  margin: 16px 0 14px;
+  padding: 14px 16px;
   border: 1px solid #e7e7e7;
-  border-radius: 12px;
-  padding: 14px;
-  margin: 10px 0 14px;
+  border-radius: 14px;
+  background: #fff;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
 }
 
 .job-transport .cost-row {
   display: grid;
-  grid-template-columns: 1fr 220px;
+  grid-template-columns: minmax(180px, 1fr) 240px;
   align-items: center;
-  gap: 12px;
-  padding: 10px 0;
-  border-top: 1px solid #eee;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid #ececec;
 }
 
-.job-transport .cost-row:first-child {
-  border-top: none;
+.job-transport .cost-row:last-child {
+  border-bottom: none;
+}
+
+.job-transport .cost-row--total {
+  padding-top: 14px;
+  font-weight: 800;
 }
 
 .job-transport .cost-in {
   width: 100%;
+  min-width: 0;
 }
 
-.job-transport .cost-row--total {
-  border-top: 1px solid #ddd;
+.job-transport .cost-in .p-inputnumber,
+.job-transport .cost-in .p-inputtext,
+.job-transport .cost-in .p-inputnumber-input {
+  width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box;
+}
+
+.job-transport .cost-in .p-inputnumber-input,
+.job-transport .cost-in .p-inputtext {
+  height: 42px;
+  border-radius: 8px;
 }
 
 .job-transport .cost-total {
   text-align: right;
+  font-size: 1.75rem;
   font-weight: 900;
+  color: #111;
 }
 
 /* Action row */
@@ -427,13 +449,16 @@
     grid-template-columns: 1fr;
   }
 
-  /* keep table scroll behavior instead of stacking */
   .job-transport .dt-row {
     grid-template-columns: 1fr;
   }
 
   .job-transport .cost-row {
     grid-template-columns: 1fr;
+  }
+
+  .job-transport .cost-total {
+    text-align: left;
   }
 
   .job-transport .order-line {
@@ -444,5 +469,35 @@
   .job-transport .bottom-actions {
     justify-content: flex-start;
     flex-wrap: wrap;
+  }
+}
+
+.haz-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 20px;
+  margin: 18px 0 14px;
+}
+
+.haz-row--with-class {
+  display: grid;
+  grid-template-columns: 160px minmax(260px, 360px);
+  gap: 20px;
+  align-items: end;
+}
+
+.haz-left {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.haz-class {
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .haz-row--with-class {
+    grid-template-columns: 1fr;
   }
 }

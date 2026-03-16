@@ -195,7 +195,10 @@
   font-size: 13px;
   color: #101828;
   outline: none;
-  transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    background 0.18s ease;
 }
 
 .form-control:hover {
@@ -242,17 +245,20 @@
   box-shadow: 0 10px 22px rgba(236, 105, 26, 0.28);
 }
 
-.btn--danger {
+.btn--danger,
+.p-button.btn--danger {
   width: 100%;
-  background: #ffffff;
-  border-color: #fda29b;
-  color: #d92d20;
+  background: linear-gradient(135deg, #f04438, #d92d20) !important;
+  border: none !important;
+  color: white !important;
   margin-top: 8px;
+  box-shadow: 0 8px 18px rgba(217, 45, 32, 0.25);
 }
 
-.btn--danger:hover {
-  background: #fff5f4;
-  border-color: #f97066;
+.btn--danger:hover,
+.p-button.btn--danger:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 22px rgba(217, 45, 32, 0.35);
 }
 
 .btn--ghost {
