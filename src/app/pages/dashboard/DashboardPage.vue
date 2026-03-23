@@ -5,48 +5,38 @@
       <template #content>
         <div class="dash-hero__inner">
           <div class="dash-hero__content">
-            <div class="dash-eyebrow">ORBIS TMS / DASHBOARD DEMO</div>
-            <h1 class="dash-title">Transport Management Dashboard</h1>
+            <div class="dash-eyebrow">ORBIS TMS / DASHBOARD</div>
+            <h1 class="dash-title">
+              {{ isManagement ? "Management Dashboard" : "Transport Management Dashboard" }}
+            </h1>
             <p class="dash-subtitle">
-              Consistent dashboard layout across User, Management All Users, and Management
-              Individual User views.
+              {{
+                isManagement
+                  ? "Management overview based on your access level."
+                  : "Operational dashboard based on your user access."
+              }}
             </p>
           </div>
 
           <div class="dash-hero__actions">
             <Button
+              v-if="canCreateJobs"
               label="Create Job"
               icon="pi pi-plus"
               class="btn btn--primary"
               @click="goJobsCreate"
             />
-            <Button label="Create Quote" class="btn btn--ghost" @click="goQuotes" />
+            <Button
+              v-if="canViewQuotes"
+              label="Create Quote"
+              class="btn btn--ghost"
+              @click="goQuotes"
+            />
             <Button label="Export View" class="btn btn--ghost" @click="exportView" />
           </div>
         </div>
       </template>
     </Card>
-
-    <!-- VIEW TABS -->
-    <div class="dash-view-tabs">
-      <button
-        type="button"
-        class="dash-view-tab"
-        :class="{ 'dash-view-tab--active': activeView === 'user' }"
-        @click="activeView = 'user'"
-      >
-        User Dashboard
-      </button>
-
-      <button
-        type="button"
-        class="dash-view-tab"
-        :class="{ 'dash-view-tab--active': activeView === 'management' }"
-        @click="activeView = 'management'"
-      >
-        Management Overview
-      </button>
-    </div>
 
     <!-- FILTERS -->
     <Card class="dash-card dash-filters">
@@ -120,7 +110,7 @@
     </section>
 
     <!-- USER VIEW -->
-    <template v-if="activeView === 'user'">
+    <template v-if="!isManagement">
       <section class="dash-grid dash-grid--main">
         <!-- KANBAN -->
         <Card class="dash-card panel-card">
@@ -273,8 +263,8 @@
     <!-- MANAGEMENT VIEW -->
     <template v-else>
       <div class="management-note">
-        The management page now keeps the same structure whether you are viewing All Users or an
-        individual user.
+        This dashboard is displayed automatically because your role or permissions allow management
+        access.
       </div>
 
       <section class="dash-grid dash-grid--main">
@@ -449,11 +439,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref } from "vue"
+import { computed, reactive } from "vue"
 import { useRouter } from "vue-router"
+import { useAuthStore } from "@/app/stores/auth"
 import "./DashboardPage.css"
-
-type ViewMode = "user" | "management"
 
 type StatCard = {
   key: string
@@ -465,8 +454,7 @@ type StatCard = {
 }
 
 const router = useRouter()
-
-const activeView = ref<ViewMode>("user")
+const auth = useAuthStore()
 
 const filters = reactive({
   date: "month",
@@ -474,8 +462,6 @@ const filters = reactive({
   mode: "all",
   search: "",
 })
-
-const isManagement = computed(() => activeView.value === "management")
 
 const dateOptions = [
   { label: "This Month", value: "month" },
@@ -498,6 +484,42 @@ const modeOptions = [
   { label: "Sea", value: "sea" },
   { label: "Rail", value: "rail" },
 ]
+
+const managementRoles = ["super-admin", "admin", "company-manager"]
+
+const hasManagementRole = computed(() => {
+  return managementRoles.some(role => auth.hasRole(role))
+})
+
+const managementDashboardPermissions = [
+  "mgmt.accounts.invoices.manage",
+  "mgmt.accounts.exchange_rates.manage",
+  "mgmt.accounts.tax_codes.manage",
+  "mgmt.accounts.banks.manage",
+  "mgmt.accounts.charge_descriptions.manage",
+  "mgmt.employees.view",
+  "mgmt.employees.manage",
+  "mgmt.employees.access.manage",
+  "mgmt.system.company.manage",
+  "mgmt.system.branding.manage",
+  "mgmt.system.shortcuts.manage",
+  "mgmt.system.master_settings.manage",
+]
+
+const hasManagementDashboardPermissions = computed(() => {
+  return managementDashboardPermissions.some(permission => auth.hasPermission(permission))
+})
+
+const isManagement = computed(() => {
+  return auth.isAdmin || hasManagementRole.value || hasManagementDashboardPermissions.value
+})
+const canCreateJobs = computed(() => {
+  return auth.hasPermission("tms.jobs.create")
+})
+
+const canViewQuotes = computed(() => {
+  return auth.hasPermission("tms.quotes.view") || auth.hasPermission("tms.quotes.create")
+})
 
 const userStatCards: StatCard[] = [
   { key: "jobs", label: "ALL JOBS", value: 3, sub: "User history" },
@@ -553,9 +575,9 @@ const managementStatCards: StatCard[] = [
   },
 ]
 
-const currentStatCards = computed(() =>
-  activeView.value === "management" ? managementStatCards : userStatCards,
-)
+const currentStatCards = computed(() => {
+  return isManagement.value ? managementStatCards : userStatCards
+})
 
 const kanban = [
   {
@@ -651,7 +673,7 @@ function openJob(id: number) {
 
 function exportView() {
   console.log("export dashboard", {
-    view: activeView.value,
+    view: isManagement.value ? "management" : "user",
     ...filters,
   })
 }

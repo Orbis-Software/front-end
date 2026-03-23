@@ -1,16 +1,21 @@
 import { computed, onMounted, ref, watch } from "vue"
 import { useRouter } from "vue-router"
 import { useTransportJobStore } from "@/app/stores/transport-job"
+import { useAuthStore } from "@/app/stores/auth"
 import type { JobType, TransportMode } from "@/app/types/transport-job"
 
 export type JobTypeKey = "all" | "import" | "export" | "domestic" | "cross_trade"
 export type ModeKey = "all" | "air" | "sea" | "road" | "rail"
 
-type Option<T> = { label: string; value: T }
+type Option<T> = {
+  label: string
+  value: T
+}
 
 export function useJobsListPage() {
   const router = useRouter()
   const store = useTransportJobStore()
+  const auth = useAuthStore()
 
   const jobTypeOptions: Option<JobTypeKey>[] = [
     { label: "All", value: "all" },
@@ -31,6 +36,7 @@ export function useJobsListPage() {
   const jobTypeFilter = ref<JobTypeKey>("all")
   const modeFilter = ref<ModeKey>("all")
   const searchText = ref("")
+  const showAllJobs = ref(true)
 
   const items = computed(() => store.items)
   const loading = computed(() => store.loading)
@@ -39,11 +45,14 @@ export function useJobsListPage() {
   const perPage = computed(() => store.perPage)
   const lastPage = computed(() => store.lastPage)
   const total = computed(() => store.total)
+  const firstRow = computed(() => (page.value - 1) * perPage.value)
 
-  function prettify(v: any) {
-    return String(v ?? "")
+  const currentUserId = computed(() => auth.user?.id ?? null)
+
+  function prettify(value: unknown): string {
+    return String(value ?? "")
       .replace(/_/g, " ")
-      .replace(/\b\w/g, c => c.toUpperCase())
+      .replace(/\b\w/g, char => char.toUpperCase())
   }
 
   function toJobTypeParam(): JobType | undefined {
@@ -57,19 +66,24 @@ export function useJobsListPage() {
   }
 
   async function fetchNow(resetPage = true) {
-    if (resetPage) store.page = 1
+    if (resetPage) {
+      store.page = 1
+    }
 
     await store.fetch({
       page: store.page,
       per_page: store.perPage,
       job_type: toJobTypeParam(),
       mode_of_transport: toModeParam(),
-      q: searchText.value || undefined,
+      q: searchText.value.trim() || undefined,
+
+      // ✅ THIS IS THE KEY PART
+      created_by: showAllJobs.value ? undefined : currentUserId.value || undefined,
     })
   }
 
   function onNewJob() {
-    router.push("/jobs")
+    router.push("/jobs/new")
   }
 
   function onEdit(id: number) {
@@ -81,33 +95,42 @@ export function useJobsListPage() {
 
     if (store.items.length === 0 && store.page > 1) {
       store.page -= 1
-      await fetchNow(false)
-    } else {
-      await fetchNow(false)
     }
+
+    await fetchNow(false)
   }
 
-  function onPage(e: any) {
-    const rows = Number(e.rows ?? store.perPage)
-    const nextPage = Math.floor(Number(e.first ?? 0) / rows) + 1
+  async function onPage(event: { first?: number; rows?: number }) {
+    const rows = Number(event.rows ?? store.perPage)
+    const nextPage = Math.floor(Number(event.first ?? 0) / rows) + 1
 
     store.perPage = rows
     store.page = nextPage
 
-    fetchNow(false)
+    await fetchNow(false)
   }
 
-  let t: any = null
+  let searchTimer: ReturnType<typeof setTimeout> | null = null
+
   watch(
     () => searchText.value,
     () => {
-      if (t) clearTimeout(t)
-      t = setTimeout(() => fetchNow(true), 300)
+      if (searchTimer) clearTimeout(searchTimer)
+      searchTimer = setTimeout(() => {
+        fetchNow(true)
+      }, 300)
     },
   )
 
   watch(
     () => [jobTypeFilter.value, modeFilter.value],
+    () => {
+      fetchNow(true)
+    },
+  )
+
+  watch(
+    () => showAllJobs.value,
     () => {
       fetchNow(true)
     },
@@ -125,10 +148,12 @@ export function useJobsListPage() {
     perPage,
     lastPage,
     total,
+    firstRow,
 
     jobTypeFilter,
     modeFilter,
     searchText,
+    showAllJobs,
 
     jobTypeOptions,
     modeOptions,

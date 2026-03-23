@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, reactive, ref, watch, onMounted, onBeforeUnmount } from "vue"
-import { useRouter, useRoute, RouterLink } from "vue-router"
+import { computed } from "vue"
+import { RouterLink, useRoute, useRouter } from "vue-router"
 import type { AppArea } from "@/app/stores/ui"
 import { useUiStore } from "@/app/stores/ui"
 import { useAuthStore } from "@/app/stores/auth"
@@ -14,297 +14,70 @@ type Props = {
 const props = defineProps<Props>()
 const emit = defineEmits<{ (e: "close-mobile"): void }>()
 
-const router = useRouter()
 const route = useRoute()
-
+const router = useRouter()
 const ui = useUiStore()
 const auth = useAuthStore()
 const items = useTopNavItems()
 
-/**
- * ✅ Access check for each nav item
- */
 function canAccess(item: NavItem): boolean {
   if (item.devOnly && !auth.isDev) return false
   if (item.adminOnly && !auth.isAdmin) return false
 
-  if (item.roles?.length) {
-    if (item.roles.some(r => auth.hasRole(r))) return true
+  if (item.roles?.length && item.roles.some(role => auth.hasRole(role))) {
+    return true
   }
 
   if (item.permission) return auth.hasPermission(item.permission)
 
   if (item.anyPermissions?.length) {
-    return item.anyPermissions.some(p => auth.hasPermission(p))
+    return item.anyPermissions.some(permission => auth.hasPermission(permission))
   }
 
   return true
 }
 
-/**
- * ✅ Recursively filter items:
- * - keep only children user can access
- * - hide group if no visible children and no direct "to"
- */
 function filterNav(list: NavItem[]): NavItem[] {
-  return list
-    .map(item => {
-      const children = item.children ? filterNav(item.children) : undefined
-      return { ...item, children }
-    })
-    .filter(item => {
-      const allowed = canAccess(item)
-      const hasChildren = (item.children?.length ?? 0) > 0
-
-      if (item.children) {
-        if (hasChildren) return true
-        return !!item.to && allowed
-      }
-
-      return allowed
-    })
+  return list.filter(canAccess)
 }
 
 const canSeeManagement = computed(() => {
-  return auth.permissions.some(p => p.startsWith("mgmt."))
+  return auth.permissions.some(permission => permission.startsWith("mgmt."))
 })
 
 const menu = computed(() => {
   const base = props.area === "tms" ? items.tms : items.wms
-
   const combined =
     ui.canSeeManagement || canSeeManagement.value ? [...base, ...items.management] : base
 
   return filterNav(combined)
 })
 
-/**
- * ✅ Mobile dropdown open state (accordion style)
- */
-const openMobile = reactive<Record<string, boolean>>({})
-
-watch(
-  () => props.mobileOpen,
-  v => {
-    if (!v) Object.keys(openMobile).forEach(k => (openMobile[k] = false))
-  },
-)
-
-function matchPath(path: string) {
+function matchPath(path?: string) {
+  if (!path) return false
   return route.path === path || route.path.startsWith(path + "/")
 }
 
-function getActiveChildId(children?: NavItem[]) {
-  if (!children?.length) return null
-
-  let best: NavItem | null = null
-  for (const c of children) {
-    if (!c.to) continue
-    if (matchPath(c.to)) {
-      if (!best || c.to.length > (best.to?.length ?? 0)) best = c
-    }
-  }
-
-  return best?.id ?? null
-}
-
-function isGroupActive(item: NavItem) {
-  if (item.to && matchPath(item.to)) return true
-  return !!getActiveChildId(item.children)
-}
-
-/**
- * ✅ For right-click / open in new tab we need real href
- */
 function resolveHref(path?: string) {
   if (!path) return "#"
   return router.resolve(path).href
 }
-
-function toggleMobileDropdown(id: string) {
-  openMobile[id] = !openMobile[id]
-}
-
-/* =========================================================
-   ✅ Desktop Dropdown Bypass (Teleport to body) - stable hover
-   ========================================================= */
-const activeId = ref<string | null>(null)
-const dropdownPos = ref({ top: 0, left: 0 })
-
-let closeTimer: number | null = null
-
-function clearCloseTimer() {
-  if (closeTimer) {
-    window.clearTimeout(closeTimer)
-    closeTimer = null
-  }
-}
-
-function openDropdown(id: string, el: HTMLElement) {
-  if (props.mobileOpen) return
-
-  clearCloseTimer()
-
-  const rect = el.getBoundingClientRect()
-
-  const container = document.querySelector(".nav-inner") as HTMLElement
-  const containerRect = container.getBoundingClientRect()
-
-  const dropdownWidth = 260
-
-  let left = rect.left
-
-  // prevent overflow right
-  if (left + dropdownWidth > containerRect.right) {
-    left = containerRect.right - dropdownWidth
-  }
-
-  // prevent overflow left
-  if (left < containerRect.left) {
-    left = containerRect.left
-  }
-
-  dropdownPos.value = {
-    top: rect.bottom + 8,
-    left: left,
-  }
-
-  activeId.value = id
-}
-
-function scheduleCloseDropdown(delay = 180) {
-  clearCloseTimer()
-  closeTimer = window.setTimeout(() => {
-    activeId.value = null
-  }, delay)
-}
-
-function closeDropdownNow() {
-  clearCloseTimer()
-  activeId.value = null
-}
-
-function handleWindowChange() {
-  if (activeId.value) closeDropdownNow()
-}
-
-function onDesktopChildClick() {
-  closeDropdownNow()
-  emit("close-mobile")
-}
-
-onMounted(() => {
-  window.addEventListener("scroll", handleWindowChange, true)
-  window.addEventListener("resize", handleWindowChange)
-})
-
-onBeforeUnmount(() => {
-  window.removeEventListener("scroll", handleWindowChange, true)
-  window.removeEventListener("resize", handleWindowChange)
-  clearCloseTimer()
-})
 </script>
 
 <template>
   <nav class="top-nav" role="navigation" aria-label="Primary">
     <div class="nav-inner">
       <ul class="nav-list" :class="{ show: mobileOpen }">
-        <li
-          v-for="item in menu"
-          :key="item.id"
-          class="nav-item"
-          :class="{
-            hasDropdown: !!item.children?.length,
-            activeItem: isGroupActive(item),
-          }"
-          @mouseleave="!mobileOpen && scheduleCloseDropdown()"
-        >
-          <!-- ✅ GROUP (has dropdown): keep button -->
-          <button
-            v-if="item.children?.length"
-            class="nav-link"
-            :class="{
-              active: isGroupActive(item),
-              expanded: mobileOpen && openMobile[item.id],
-            }"
-            type="button"
-            @mouseenter="
-              !mobileOpen ? openDropdown(item.id, $event.currentTarget as HTMLElement) : null
-            "
-            @focus="!mobileOpen ? openDropdown(item.id, $event.currentTarget as HTMLElement) : null"
-            @mouseleave="!mobileOpen && scheduleCloseDropdown()"
-            @click="
-              mobileOpen ? toggleMobileDropdown(item.id) : item.to ? router.push(item.to) : null
-            "
-          >
-            <i v-if="item.icon" :class="item.icon" />
-            <span>{{ item.label }}</span>
-
-            <i
-              class="pi pi-chevron-down chevron"
-              :class="{ open: mobileOpen && openMobile[item.id] }"
-            />
-          </button>
-
-          <!-- ✅ LEAF (no children): use RouterLink so right-click/open new tab works -->
+        <li v-for="item in menu" :key="item.id" class="nav-item">
           <RouterLink
-            v-else
             class="nav-link"
-            :class="{ active: isGroupActive(item) }"
+            :class="{ active: matchPath(item.to) }"
             :to="item.to || '/'"
             :href="resolveHref(item.to)"
             @click="emit('close-mobile')"
           >
-            <i v-if="item.icon" :class="item.icon" />
             <span>{{ item.label }}</span>
           </RouterLink>
-
-          <!-- ✅ MOBILE: inline dropdown -->
-          <div
-            v-if="mobileOpen && item.children?.length"
-            class="dropdown mobile"
-            :class="{ show: openMobile[item.id] }"
-          >
-            <RouterLink
-              v-for="child in item.children"
-              :key="child.id"
-              class="dropdown-link"
-              :class="{ active: child.id === getActiveChildId(item.children) }"
-              :to="child.to || '/'"
-              :href="resolveHref(child.to)"
-              @click="emit('close-mobile')"
-            >
-              <i v-if="child.icon" :class="child.icon" />
-              <span>{{ child.label }}</span>
-            </RouterLink>
-          </div>
-
-          <!-- ✅ DESKTOP: Teleported dropdown (bypasses header clipping) -->
-          <Teleport to="body">
-            <div
-              v-if="!mobileOpen && activeId === item.id && item.children?.length"
-              class="dropdown teleport"
-              :style="{
-                top: dropdownPos.top + 'px',
-                left: dropdownPos.left + 'px',
-              }"
-              @mouseenter="clearCloseTimer()"
-              @mouseleave="scheduleCloseDropdown()"
-            >
-              <RouterLink
-                v-for="child in item.children"
-                :key="child.id"
-                class="dropdown-link"
-                :class="{ active: child.id === getActiveChildId(item.children) }"
-                :to="child.to || '/'"
-                :href="resolveHref(child.to)"
-                @click="onDesktopChildClick"
-              >
-                <i v-if="child.icon" :class="child.icon" />
-                <span>{{ child.label }}</span>
-              </RouterLink>
-            </div>
-          </Teleport>
         </li>
       </ul>
     </div>
@@ -312,98 +85,63 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-/* remove underlines */
-.nav-link,
-.dropdown-link {
-  text-decoration: none;
-}
-
-.nav-link:visited,
-.nav-link:active,
-.nav-link:hover,
-.dropdown-link:link,
-.dropdown-link:visited,
-.dropdown-link:hover,
-.dropdown-link:active {
-  text-decoration: none;
-}
-
-/* =========================
-   Top nav bar (full width)
-   ========================= */
 .top-nav {
+  --shell-side-padding: clamp(36px, 4vw, 72px);
+  --shell-content-max: 1400px;
+
   width: 100%;
   background: #fff;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  border-bottom: none;
 }
 
-/* ✅ FULL WIDTH container (NO 1400 cap here) */
 .nav-inner {
   width: 100%;
-  max-width: none; /* ✅ IMPORTANT: remove cap */
+  max-width: calc(var(--shell-content-max) + (var(--shell-side-padding) * 2));
   margin: 0 auto;
-  padding: 0 5%;
+  padding: 0 var(--shell-side-padding);
+  box-sizing: border-box;
 }
 
-/* ✅ force one row ALWAYS */
 .nav-list {
   display: flex;
   list-style: none;
   margin: 0;
   padding: 0;
-
   width: 100%;
-  justify-content: flex-start; /* ✅ no “space-between” behavior */
+  justify-content: flex-start;
   align-items: center;
-
-  flex-wrap: nowrap; /* ✅ one row */
-  white-space: nowrap; /* ✅ no wrapping */
-  overflow: visible; /* ✅ don’t clip the last items */
+  flex-wrap: nowrap;
+  white-space: nowrap;
+  overflow: visible;
 }
 
-/* each item should never stretch weirdly */
 .nav-item {
   position: relative;
   flex: 0 0 auto;
 }
 
-/* ❌ REMOVE the vertical separator line (this is the line you see) */
-.nav-item + .nav-item::before {
-  display: none !important;
-}
-
-/* =========================
-   Tab button
-   ========================= */
 .nav-link {
   position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-
-  padding: 18px 18px; /* slightly tighter default */
+  justify-content: center;
+  padding: 16px 18px;
   background: transparent;
   border: none;
   cursor: pointer;
-
+  text-decoration: none;
   font-weight: 700;
   font-size: 0.95rem;
   color: #1f2937;
-
   transition:
     background-color 0.15s ease,
     color 0.15s ease;
 }
 
-.nav-link i {
-  font-size: 1.05rem;
-  opacity: 0.95;
-}
-
-.chevron {
-  margin-left: 6px;
-  font-size: 0.85rem;
-  opacity: 0.7;
+.nav-link:visited,
+.nav-link:active,
+.nav-link:hover {
+  text-decoration: none;
 }
 
 .nav-link:hover {
@@ -411,11 +149,6 @@ onBeforeUnmount(() => {
   color: var(--primary);
 }
 
-.nav-link:hover i {
-  color: var(--primary);
-}
-
-/* ✅ active underline like TransportPro */
 .nav-link.active {
   background: rgba(0, 0, 0, 0.04);
   color: var(--primary);
@@ -432,148 +165,31 @@ onBeforeUnmount(() => {
   border-radius: 2px;
 }
 
-/* =========================
-   Dropdown base styles
-   ========================= */
-.dropdown {
-  min-width: 260px;
-  background: #fff;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  border-radius: 12px;
-  padding: 8px 0;
-  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.14);
-}
-
-/* DESKTOP: teleported dropdown */
-.dropdown.teleport {
-  position: fixed;
-  z-index: 99999;
-  display: block;
-}
-
-.dropdown.teleport::before {
-  content: "";
-  position: absolute;
-  top: -12px;
-  left: 0;
-  right: 0;
-  height: 12px;
-}
-
-/* MOBILE: inline accordion */
-.dropdown.mobile {
-  position: static;
-  display: none;
-  border: none;
-  border-radius: 0;
-  box-shadow: none;
-  padding: 0;
-}
-
-.dropdown.mobile.show {
-  display: block;
-}
-
-/* Dropdown items */
-.dropdown-link {
-  width: 100%;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-
-  display: flex;
-  align-items: center;
-  gap: 10px;
-
-  padding: 12px 16px;
-  text-align: left;
-
-  font-weight: 800;
-  color: #1f2937;
-  transition:
-    background 0.15s ease,
-    color 0.15s ease;
-}
-
-.dropdown-link:hover {
-  background: rgba(0, 0, 0, 0.04);
-  color: var(--primary);
-}
-
-.dropdown-link.active {
-  background: rgba(236, 105, 26, 0.1);
-  color: var(--primary);
-}
-
-/* =========================
-   ✅ Make everything fit on smaller screens
-   (still ONE row)
-   ========================= */
-
-/* 1440-ish */
-@media (max-width: 1500px) {
-  .nav-inner {
-    padding: 0 24px;
-  }
-  .nav-link {
-    padding: 16px 14px;
-    font-size: 0.93rem;
-    gap: 8px;
-  }
-}
-
-/* 1366-ish */
 @media (max-width: 1400px) {
-  .nav-inner {
-    padding: 0 18px;
-  }
   .nav-link {
-    padding: 14px 12px;
-    font-size: 0.9rem;
-  }
-  .nav-link i {
-    font-size: 1rem;
+    padding: 14px 14px;
+    font-size: 0.92rem;
   }
 }
 
-/* 1280-ish */
 @media (max-width: 1280px) {
-  .nav-inner {
-    padding: 0 14px;
-  }
   .nav-link {
     padding: 12px 10px;
     font-size: 0.88rem;
   }
-  .chevron {
-    margin-left: 4px;
-  }
 }
 
-/* =========================
-   Mobile nav behavior
-   (keep your existing dropdown overlay)
-   ========================= */
 @media (max-width: 1024px) {
-  .nav-inner {
-    padding: 0 14px;
-  }
-
   .nav-list {
     position: absolute;
     left: 0;
     right: 0;
     top: 70px;
-
     background: #fff;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-
     flex-direction: column;
     align-items: stretch;
-
     display: none;
     z-index: 55;
-
     overflow: visible;
     white-space: normal;
   }
@@ -585,15 +201,9 @@ onBeforeUnmount(() => {
 
   .nav-link {
     width: 100%;
-    justify-content: space-between;
+    justify-content: flex-start;
     padding: 16px 18px;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
     border-radius: 0;
-  }
-
-  .dropdown-link {
-    padding: 14px 18px 14px 36px;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
   }
 }
 </style>

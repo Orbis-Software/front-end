@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref } from "vue"
+import { nextTick, ref } from "vue"
+import { useTransportJobStore } from "@/app/stores/transport-job"
 
 import Button from "primevue/button"
 import Dropdown from "primevue/dropdown"
@@ -8,8 +9,10 @@ import Calendar from "primevue/calendar"
 import InputSwitch from "primevue/inputswitch"
 import Textarea from "primevue/textarea"
 import InputNumber from "primevue/inputnumber"
-import Dialog from "primevue/dialog"
-import Checkbox from "primevue/checkbox"
+
+import JobTransportAddressModal, {
+  type JobTransportAddressPayload,
+} from "./JobTransportAddressModal.vue"
 
 import {
   orderTypeOptions,
@@ -20,6 +23,9 @@ import {
   badgeClass,
   useJobTransportTab,
 } from "./useJobTransportTab"
+
+type AddressTarget = "collection" | "delivery"
+type OrderSection = "collection" | "transport"
 
 const props = defineProps<{ form: any; disabled?: boolean }>()
 
@@ -46,162 +52,145 @@ const {
 } = useJobTransportTab(props.form)
 
 const showAddressModal = ref(false)
-const addressTarget = ref<"collection" | "delivery">("collection")
+const addressTarget = ref<AddressTarget>("collection")
+const addressSection = ref<OrderSection>("collection")
 const savingAddress = ref(false)
+const transportJobStore = useTransportJobStore()
 
-const addressForm = ref({
-  label: "",
-  address_line_1: "",
-  address_line_2: "",
-  address_line_3: "",
-  city: "",
-  county_state: "",
-  postal_code: "",
-  country: "",
-  contact_person: "",
-  phone: "",
-  email: "",
-  special_instructions: "",
-  is_collection: true,
-  is_delivery: false,
-})
-
-function resetAddressForm() {
-  addressForm.value = {
-    label: "",
-    address_line_1: "",
-    address_line_2: "",
-    address_line_3: "",
-    city: "",
-    county_state: "",
-    postal_code: "",
-    country: "",
-    contact_person: "",
-    phone: "",
-    email: "",
-    special_instructions: "",
-    is_collection: addressTarget.value === "collection",
-    is_delivery: addressTarget.value === "delivery",
-  }
-}
-
-function openAddressModal(target: "collection" | "delivery") {
+function openAddressModal(section: OrderSection, target: AddressTarget) {
+  addressSection.value = section
   addressTarget.value = target
-  resetAddressForm()
   showAddressModal.value = true
 }
 
-async function saveAddress() {
+function assignNewAddressToActiveField(addressId: number | null | undefined) {
+  if (!addressId) return
+
+  if (addressSection.value === "collection") {
+    if (addressTarget.value === "collection") {
+      collection.value.collection_address = addressId
+    } else {
+      collection.value.delivery_address = addressId
+    }
+    return
+  }
+
+  if (addressTarget.value === "collection") {
+    transport.value.collection_address = addressId
+  } else {
+    transport.value.delivery_address = addressId
+  }
+}
+async function saveAddress(payload: JobTransportAddressPayload) {
   if (!selectedContact.value?.id) return
 
   savingAddress.value = true
   try {
-    await createAddressForSelectedContact({
-      ...addressForm.value,
-      is_collection: addressForm.value.is_collection,
-      is_delivery: addressForm.value.is_delivery,
-    })
+    const created = await createAddressForSelectedContact(payload)
+
+    await nextTick()
+
+    const createdId = created?.id ?? null
+
+    assignNewAddressToActiveField(createdId)
 
     showAddressModal.value = false
-    resetAddressForm()
   } finally {
     savingAddress.value = false
   }
+}
+
+function findAddressById(addressId: number | null) {
+  return (
+    selectedContact.value?.collection_addresses?.find(address => address.id === addressId) ?? null
+  )
+}
+
+function buildCollectionPreviewPayload() {
+  const selectedCollectionAddress = findAddressById(collection.value.collection_address)
+  const selectedDeliveryAddress = findAddressById(collection.value.delivery_address)
+
+  const selectedCarrier =
+    carrierOptions.value.find(option => option.value === collection.value.carrier)?.label ?? ""
+
+  return {
+    date: collection.value.pickup_date,
+    haulier: selectedCarrier,
+    booking_ref: collection.value.order_reference,
+    collection_ref: collection.value.collection_ref,
+    delivery_ref: collection.value.customer_ref,
+    billing_account: selectedContact.value?.account_number ?? "",
+    special_instructions: collection.value.goods_description,
+    total: collectionCostTotal.value,
+
+    collection_address: selectedCollectionAddress,
+    delivery_address: selectedDeliveryAddress,
+
+    items: collection.value.dimensions.map(row => ({
+      description: collection.value.goods_description,
+      length_cm: row.length_cm,
+      width_cm: row.width_cm,
+      height_cm: row.height_cm,
+      qty: row.qty,
+      gross_kg: row.gross_kg,
+    })),
+  }
+}
+
+function buildTransportPreviewPayload() {
+  const selectedCollectionAddress = findAddressById(transport.value.collection_address)
+  const selectedDeliveryAddress = findAddressById(transport.value.delivery_address)
+
+  const selectedCarrier =
+    carrierOptions.value.find(option => option.value === transport.value.carrier)?.label ?? ""
+
+  return {
+    date: transport.value.pickup_date,
+    haulier: selectedCarrier,
+    booking_ref: transport.value.order_reference,
+    collection_ref: transport.value.collection_ref,
+    delivery_ref: transport.value.customer_ref,
+    billing_account: selectedContact.value?.account_number ?? "",
+    special_instructions: transport.value.goods_description,
+    total: transportCostTotal.value,
+
+    collection_address: selectedCollectionAddress,
+    delivery_address: selectedDeliveryAddress,
+
+    items: transport.value.dimensions.map(row => ({
+      description: transport.value.goods_description,
+      length_cm: row.length_cm,
+      width_cm: row.width_cm,
+      height_cm: row.height_cm,
+      qty: row.qty,
+      gross_kg: row.gross_kg,
+    })),
+  }
+}
+
+async function printCollectionPreview() {
+  const payload = buildCollectionPreviewPayload()
+  const blob = await transportJobStore.collectionNotePreview(payload)
+  const url = window.URL.createObjectURL(blob)
+  window.open(url, "_blank")
+}
+
+async function printTransportPreview() {
+  const payload = buildTransportPreviewPayload()
+  const blob = await transportJobStore.collectionNotePreview(payload)
+  const url = window.URL.createObjectURL(blob)
+  window.open(url, "_blank")
 }
 </script>
 
 <template>
   <div class="job-transport">
-    <Dialog
+    <JobTransportAddressModal
       v-model:visible="showAddressModal"
-      modal
-      :style="{ width: '42rem', maxWidth: '95vw' }"
-      :header="addressTarget === 'collection' ? 'Add Collection Address' : 'Add Delivery Address'"
-    >
-      <div class="address-modal-grid">
-        <div class="field">
-          <label class="label">Label</label>
-          <InputText v-model="addressForm.label" class="field-fluid field-input" />
-        </div>
-
-        <div class="field">
-          <label class="label">Contact Person</label>
-          <InputText v-model="addressForm.contact_person" class="field-fluid field-input" />
-        </div>
-
-        <div class="field field--span-2">
-          <label class="label">Address Line 1</label>
-          <InputText v-model="addressForm.address_line_1" class="field-fluid field-input" />
-        </div>
-
-        <div class="field field--span-2">
-          <label class="label">Address Line 2</label>
-          <InputText v-model="addressForm.address_line_2" class="field-fluid field-input" />
-        </div>
-
-        <div class="field field--span-2">
-          <label class="label">Address Line 3</label>
-          <InputText v-model="addressForm.address_line_3" class="field-fluid field-input" />
-        </div>
-
-        <div class="field">
-          <label class="label">City</label>
-          <InputText v-model="addressForm.city" class="field-fluid field-input" />
-        </div>
-
-        <div class="field">
-          <label class="label">County / State</label>
-          <InputText v-model="addressForm.county_state" class="field-fluid field-input" />
-        </div>
-
-        <div class="field">
-          <label class="label">Postal Code</label>
-          <InputText v-model="addressForm.postal_code" class="field-fluid field-input" />
-        </div>
-
-        <div class="field">
-          <label class="label">Country</label>
-          <InputText v-model="addressForm.country" class="field-fluid field-input" />
-        </div>
-
-        <div class="field">
-          <label class="label">Phone</label>
-          <InputText v-model="addressForm.phone" class="field-fluid field-input" />
-        </div>
-
-        <div class="field">
-          <label class="label">Email</label>
-          <InputText v-model="addressForm.email" class="field-fluid field-input" />
-        </div>
-
-        <div class="field field--span-2">
-          <label class="label">Special Instructions</label>
-          <Textarea v-model="addressForm.special_instructions" class="field-fluid" autoResize />
-        </div>
-
-        <div class="checkbox-row field--span-2">
-          <div class="checkbox-item">
-            <Checkbox v-model="addressForm.is_collection" :binary="true" inputId="is_collection" />
-            <label for="is_collection">Collection Address</label>
-          </div>
-
-          <div class="checkbox-item">
-            <Checkbox v-model="addressForm.is_delivery" :binary="true" inputId="is_delivery" />
-            <label for="is_delivery">Delivery Address</label>
-          </div>
-        </div>
-      </div>
-
-      <template #footer>
-        <Button class="orbis-btn" label="Cancel" @click="showAddressModal = false" />
-        <Button
-          class="orbis-btn orbis-btn--orange"
-          label="Save Address"
-          :loading="savingAddress"
-          @click="saveAddress"
-        />
-      </template>
-    </Dialog>
+      :target="addressTarget"
+      :saving="savingAddress"
+      @save="saveAddress"
+    />
 
     <section class="panel">
       <div class="panel-head">
@@ -249,7 +238,7 @@ async function saveAddress() {
                 class="orbis-btn orbis-btn--orange-lite add-mini-btn"
                 icon="pi pi-plus"
                 :disabled="disabled || !selectedContact"
-                @click="openAddressModal('collection')"
+                @click="openAddressModal('collection', 'collection')"
               />
             </div>
           </div>
@@ -272,13 +261,13 @@ async function saveAddress() {
                 class="orbis-btn orbis-btn--orange-lite add-mini-btn"
                 icon="pi pi-plus"
                 :disabled="disabled || !selectedContact"
-                @click="openAddressModal('delivery')"
+                @click="openAddressModal('collection', 'delivery')"
               />
             </div>
           </div>
 
           <div class="field">
-            <label class="label">Order Reference</label>
+            <label class="label">Collection Order Reference</label>
             <InputText
               v-model="collection.order_reference"
               class="field-fluid field-input"
@@ -515,7 +504,13 @@ async function saveAddress() {
             label="Save & Add Collection Order"
             :disabled="disabled"
           />
-          <Button class="orbis-btn" icon="pi pi-print" label="Print All" :disabled="disabled" />
+          <Button
+            class="orbis-btn"
+            icon="pi pi-print"
+            label="Print All"
+            :disabled="disabled"
+            @click="printCollectionPreview"
+          />
           <Button
             class="orbis-btn"
             icon="pi pi-envelope"
@@ -609,7 +604,7 @@ async function saveAddress() {
                 class="orbis-btn orbis-btn--orange-lite add-mini-btn"
                 icon="pi pi-plus"
                 :disabled="disabled || !selectedContact"
-                @click="openAddressModal('collection')"
+                @click="openAddressModal('transport', 'collection')"
               />
             </div>
           </div>
@@ -632,7 +627,7 @@ async function saveAddress() {
                 class="orbis-btn orbis-btn--orange-lite add-mini-btn"
                 icon="pi pi-plus"
                 :disabled="disabled || !selectedContact"
-                @click="openAddressModal('delivery')"
+                @click="openAddressModal('transport', 'delivery')"
               />
             </div>
           </div>
@@ -873,7 +868,13 @@ async function saveAddress() {
             label="Save & Add Transport Order"
             :disabled="disabled"
           />
-          <Button class="orbis-btn" icon="pi pi-print" label="Print All" :disabled="disabled" />
+          <Button
+            class="orbis-btn"
+            icon="pi pi-print"
+            label="Print All"
+            :disabled="disabled"
+            @click="printCollectionPreview"
+          />
           <Button
             class="orbis-btn"
             icon="pi pi-envelope"
@@ -956,28 +957,6 @@ async function saveAddress() {
   justify-content: center;
 }
 
-.address-modal-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 14px 16px;
-}
-
-.field--span-2 {
-  grid-column: span 2;
-}
-
-.checkbox-row {
-  display: flex;
-  gap: 20px;
-  align-items: center;
-}
-
-.checkbox-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
 .charge-summary {
   display: grid;
   gap: 12px;
@@ -1036,20 +1015,5 @@ async function saveAddress() {
   padding: 14px;
   color: #666;
   background: #fafafa;
-}
-
-@media (max-width: 900px) {
-  .address-modal-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .field--span-2 {
-    grid-column: span 1;
-  }
-
-  .checkbox-row {
-    flex-direction: column;
-    align-items: flex-start;
-  }
 }
 </style>

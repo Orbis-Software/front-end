@@ -1,16 +1,20 @@
 import type { TransportJob } from "@/app/types/transport-job"
 import jobFileTransformer from "@/app/transformers/job-file"
 
-// If you already have contact transformer you can use it.
-// For now we accept raw customer_contact into Contact type shape.
 const transportJobTransformer = {
   fetch(raw: any): TransportJob {
     const filesRaw = raw.files ?? raw.job_files ?? []
     const customerRaw = raw.customer_contact ?? raw.customerContact ?? raw.customer ?? null
 
+    const creatorRaw = raw.creator ?? null
+
     return {
       id: Number(raw.id),
       company_id: Number(raw.company_id),
+
+      // ✅ NEW
+      created_by:
+        raw.created_by === null || raw.created_by === undefined ? null : Number(raw.created_by),
 
       customer_id:
         raw.customer_id === null || raw.customer_id === undefined ? null : Number(raw.customer_id),
@@ -27,6 +31,15 @@ const transportJobTransformer = {
       note: raw.note ?? null,
 
       customer_contact: customerRaw ? (customerRaw as any) : null,
+
+      // ✅ NEW (structured creator object)
+      creator: creatorRaw
+        ? {
+            id: Number(creatorRaw.id),
+            name: creatorRaw.name ?? null,
+            email: creatorRaw.email ?? null,
+          }
+        : null,
 
       files: jobFileTransformer.fetchCollection(filesRaw),
 

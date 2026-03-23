@@ -19,14 +19,26 @@ const ContactsPage = () => import("@/app/pages/contacts/ContactsPage.vue")
 const ContactCreatePage = () => import("@/app/pages/contacts/create/ContactCreatePage.vue")
 const ConsolidationPage = () => import("@/app/pages/consolidations/ConsolidationPage.vue")
 const SettingsPage = () => import("@/app/pages/settings/SettingsPage.vue")
-const MasterSettingsPage = () =>
-  import("@/app/pages/settings/masterSettings/MasterSettingsPage.vue")
 const ContactsImportPage = () => import("@/app/pages/contacts/import/ContactsImportPage.vue")
 const JobDetailsPage = () => import("@/app/pages/jobs/details/JobDetailsPage.vue")
 const ContactDetailsPage = () => import("@/app/pages/contacts/details/ContactDetailsPage.vue")
 const EmployeeListPage = () => import("@/app/pages/employees/EmployeeListPage.vue")
 const SystemAccessPage = () => import("@/app/pages/system-access/SystemAccessPage.vue")
 const AccountsPage = () => import("@/app/pages/management/accounts/AccountsPage.vue")
+
+/* =========================
+   System Settings Pages
+========================= */
+const SystemSettingsPage = () =>
+  import("@/app/pages/settings/systemSettings/SystemSettingsPage.vue")
+const SystemSettingsCompanyPage = () =>
+  import("@/app/pages/settings/systemSettings/company/SystemSettingsCompanyPage.vue")
+const SystemSettingsBrandingPage = () =>
+  import("@/app/pages/settings/systemSettings/branding/SystemSettingsBrandingPage.vue")
+const SystemSettingsShortcutsPage = () =>
+  import("@/app/pages/settings/systemSettings/shortcuts/SystemSettingsShortcutsPage.vue")
+const MasterSettingsPage = () =>
+  import("@/app/pages/settings/systemSettings/master/SystemSettingsMasterPage.vue")
 
 export const routes: RouteRecordRaw[] = [
   {
@@ -167,14 +179,50 @@ export const routes: RouteRecordRaw[] = [
         component: SettingsPage,
         meta: { title: "Settings" },
       },
+
+      /**
+       * ============================
+       * System Settings
+       * ============================
+       */
       {
-        path: "/settings/master",
-        name: "settings.master",
-        component: MasterSettingsPage,
-        meta: { title: "Master Settings" },
+        path: "settings/system",
+        component: SystemSettingsPage,
+        meta: { title: "System Settings" },
+        children: [
+          {
+            path: "",
+            redirect: { name: "settings.system.company" },
+          },
+          {
+            path: "company",
+            name: "settings.system.company",
+            component: SystemSettingsCompanyPage,
+            meta: { title: "System Settings • Company" },
+          },
+          {
+            path: "branding",
+            name: "settings.system.branding",
+            component: SystemSettingsBrandingPage,
+            meta: { title: "System Settings • Branding" },
+          },
+          {
+            path: "shortcuts",
+            name: "settings.system.shortcuts",
+            component: SystemSettingsShortcutsPage,
+            meta: { title: "System Settings • Shortcuts" },
+          },
+          {
+            path: "master",
+            name: "settings.system.master",
+            component: MasterSettingsPage,
+            meta: { title: "System Settings • Master Settings" },
+          },
+        ],
       },
+
       {
-        path: "/contacts/import",
+        path: "contacts/import",
         name: "contacts.import",
         component: ContactsImportPage,
       },

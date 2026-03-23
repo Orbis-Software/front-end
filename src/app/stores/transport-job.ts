@@ -2,6 +2,7 @@ import { defineStore } from "pinia"
 import { ref } from "vue"
 
 import transportJobs from "@/app/services/transport-jobs"
+import type { CollectionNotePreviewPayload } from "@/app/services/transport-jobs/collection-note-preview"
 import type {
   TransportJob,
   PaginatedResponse,
@@ -14,12 +15,12 @@ import type {
 export type TransportJobFetchParams = {
   page?: number
   per_page?: number
-
-  customer_id?: number
-  mode_of_transport?: TransportMode
-  job_type?: JobType
-  status?: string
   q?: string
+  job_type?: JobType
+  mode_of_transport?: TransportMode
+  created_by?: number
+  customer_id?: number
+  status?: string
 }
 
 export const useTransportJobStore = defineStore("transportJob", () => {
@@ -36,17 +37,18 @@ export const useTransportJobStore = defineStore("transportJob", () => {
   const activeCustomerId = ref<number | null>(null)
   const status = ref<string | null>(null)
   const q = ref<string>("")
+  const createdBy = ref<number | null>(null)
 
   function buildParams(overrides: TransportJobFetchParams = {}): TransportJobFetchParams {
     return {
       page: overrides.page ?? page.value,
       per_page: overrides.per_page ?? perPage.value,
-
       customer_id: overrides.customer_id ?? activeCustomerId.value ?? undefined,
       mode_of_transport: overrides.mode_of_transport ?? activeMode.value ?? undefined,
       job_type: overrides.job_type ?? activeJobType.value ?? undefined,
       status: overrides.status ?? status.value ?? undefined,
       q: overrides.q ?? (q.value || undefined),
+      created_by: overrides.created_by ?? createdBy.value ?? undefined,
     }
   }
 
@@ -125,6 +127,29 @@ export const useTransportJobStore = defineStore("transportJob", () => {
     }
   }
 
+  async function collectionNotePreview(payload: CollectionNotePreviewPayload) {
+    loading.value = true
+    try {
+      return await transportJobs.collectionNotePreview(payload)
+    } finally {
+      loading.value = false
+    }
+  }
+
+  function setCreatedBy(value: number | null) {
+    createdBy.value = value
+  }
+
+  function resetFilters() {
+    activeMode.value = null
+    activeJobType.value = null
+    activeCustomerId.value = null
+    status.value = null
+    q.value = ""
+    createdBy.value = null
+    page.value = 1
+  }
+
   return {
     items,
     loading,
@@ -134,6 +159,7 @@ export const useTransportJobStore = defineStore("transportJob", () => {
     activeCustomerId,
     status,
     q,
+    createdBy,
 
     page,
     perPage,
@@ -145,5 +171,9 @@ export const useTransportJobStore = defineStore("transportJob", () => {
     create,
     update,
     remove,
+    collectionNotePreview,
+
+    setCreatedBy,
+    resetFilters,
   }
 })
