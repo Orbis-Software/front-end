@@ -37,11 +37,10 @@ const initials = computed(() => {
   return (a + b).toUpperCase() || "U"
 })
 
-const companyName = computed(() => auth.user?.company?.legal_name ?? "Orbis Software Ltd")
-
 function toggleUserDropdown() {
   userDropdownOpen.value = !userDropdownOpen.value
 }
+
 function closeUserDropdown() {
   userDropdownOpen.value = false
 }
@@ -60,15 +59,11 @@ onBeforeUnmount(() => document.removeEventListener("click", handleClickOutside))
 <template>
   <header class="app-header">
     <div class="header-inner">
-      <!-- Brand -->
       <div class="brand">
         <img class="brand-logo" :src="companyLogoSrc" alt="Company logo" />
-        <div class="brand-text">{{ companyName }}</div>
       </div>
 
-      <!-- Right controls -->
       <div class="controls">
-        <!-- TMS / WMS switch -->
         <div class="area-switch">
           <button
             class="area-btn"
@@ -78,6 +73,7 @@ onBeforeUnmount(() => document.removeEventListener("click", handleClickOutside))
           >
             TMS
           </button>
+
           <button
             class="area-btn"
             :class="{ active: area === 'wms' }"
@@ -88,21 +84,21 @@ onBeforeUnmount(() => document.removeEventListener("click", handleClickOutside))
           </button>
         </div>
 
-        <!-- User -->
         <div class="user-profile-container">
           <button class="user-profile" type="button" @click="toggleUserDropdown">
             <div class="user-avatar">{{ initials }}</div>
+
             <div class="user-meta">
               <div class="user-name">{{ userName }}</div>
               <div class="user-role">{{ userRole }}</div>
             </div>
+
             <i class="pi caret" :class="userDropdownOpen ? 'pi-chevron-up' : 'pi-chevron-down'" />
           </button>
 
           <UserDropdown v-if="userDropdownOpen" @close="closeUserDropdown" />
         </div>
 
-        <!-- Mobile nav toggle -->
         <button class="mobile-toggle" type="button" @click="emit('toggle-mobile-nav')">
           <i class="pi pi-bars" />
         </button>
@@ -113,8 +109,12 @@ onBeforeUnmount(() => document.removeEventListener("click", handleClickOutside))
 
 <style scoped>
 .app-header {
+  --shell-side-padding: clamp(40px, 5vw, 80px);
+  --shell-content-max: 1400px;
+
   width: 100%;
   background: #fff;
+  border-bottom: none;
 }
 
 .header-inner {
@@ -124,27 +124,26 @@ onBeforeUnmount(() => document.removeEventListener("click", handleClickOutside))
   justify-content: space-between;
 
   width: 100%;
-
-  padding: 0 6.2%;
+  max-width: calc(var(--shell-content-max) + (var(--shell-side-padding) * 2));
+  margin: 0 auto;
+  padding: 0 var(--shell-side-padding);
+  box-sizing: border-box;
 }
 
 .brand {
   display: flex;
   align-items: center;
-  gap: 12px;
+  justify-content: flex-start;
+  min-width: 0;
+  flex: 0 0 auto;
 }
 
 .brand-logo {
+  display: block;
   height: 36px;
-  max-width: 120px;
+  width: auto;
+  max-width: 140px;
   object-fit: contain;
-}
-
-.brand-text {
-  font-weight: 900;
-  font-size: 1.15rem;
-  color: var(--pc-text-main);
-  white-space: nowrap;
 }
 
 .controls {
@@ -153,7 +152,6 @@ onBeforeUnmount(() => document.removeEventListener("click", handleClickOutside))
   gap: 14px;
 }
 
-/* Switch */
 .area-switch {
   display: flex;
   padding: 4px;
@@ -188,7 +186,6 @@ onBeforeUnmount(() => document.removeEventListener("click", handleClickOutside))
   color: var(--pc-text-main);
 }
 
-/* User */
 .user-profile-container {
   position: relative;
 }
@@ -244,7 +241,6 @@ onBeforeUnmount(() => document.removeEventListener("click", handleClickOutside))
   color: var(--pc-text-muted);
 }
 
-/* Mobile button */
 .mobile-toggle {
   display: none;
   border: 1px solid rgba(0, 0, 0, 0.1);
@@ -260,9 +256,6 @@ onBeforeUnmount(() => document.removeEventListener("click", handleClickOutside))
 }
 
 @media (max-width: 1200px) {
-  .header-inner {
-    padding: 0 20px;
-  }
   .mobile-toggle {
     display: inline-grid;
     place-items: center;

@@ -81,7 +81,7 @@
             />
           </div>
 
-          <!-- Direct Permissions (GROUPED) -->
+          <!-- Direct Permissions -->
           <div class="sa-section">
             <div class="sa-section__header">
               <div>
@@ -108,7 +108,6 @@
               <div v-for="group in permissionGroups" :key="group.id" class="sa-group">
                 <div class="sa-group__header">
                   <div class="sa-group__title">
-                    <i v-if="group.icon" :class="group.icon" class="sa-group__icon" />
                     {{ group.label }}
                   </div>
 
@@ -142,7 +141,6 @@
 
                     <div class="sa-permRow__meta">
                       <div class="sa-permRow__label">
-                        <i v-if="item.icon" :class="item.icon" class="sa-permRow__icon" />
                         {{ item.label }}
                       </div>
 
@@ -154,7 +152,7 @@
                 </div>
               </div>
 
-              <!-- Any permissions not mapped by nav -->
+              <!-- Unmapped -->
               <div v-if="unmappedPermissions.length" class="sa-group">
                 <div class="sa-group__header">
                   <div class="sa-group__title">
@@ -163,12 +161,7 @@
                   </div>
 
                   <div class="sa-group__actions">
-                    <Button
-                      label="Select all"
-                      icon="pi pi-check-square"
-                      outlined
-                      @click="selectAllUnmapped"
-                    />
+                    <Button label="Select all" icon="pi pi-check-square" outlined @click="selectAllUnmapped" />
                     <Button label="Clear" icon="pi pi-times" outlined @click="clearAllUnmapped" />
                     <small class="sa-muted sa-group__count">
                       {{ countSelectedUnmapped }} / {{ unmappedPermissions.length }}
@@ -186,12 +179,11 @@
             </div>
           </div>
 
-          <!-- Effective Permissions (GROUPED, READ ONLY) -->
+          <!-- Effective Permissions -->
           <div class="sa-section">
             <div class="sa-section__title">Effective Permissions</div>
             <div class="sa-muted">
-              Effective = roles + direct. “Role” ones won’t be removed by unchecking direct
-              permissions.
+              Effective = roles + direct. “Role” ones won’t be removed by unchecking direct permissions.
             </div>
 
             <div v-if="!store.selected.effective_permissions.length" class="sa-muted">—</div>
@@ -199,7 +191,6 @@
             <div v-else class="sa-effective">
               <div v-for="group in effectiveGroups" :key="group.id" class="sa-effectiveGroup">
                 <div class="sa-effectiveGroup__title">
-                  <i v-if="group.icon" :class="group.icon" class="sa-effectiveGroup__icon" />
                   {{ group.label }}
                 </div>
 
@@ -208,19 +199,21 @@
                     <span class="sa-effItem__label">{{ p.label }}</span>
                     <span class="sa-effItem__code">{{ p.permission }}</span>
 
-                    <span v-if="p.source === 'direct'" class="sa-badge sa-badge--direct"
-                      >Direct</span
-                    >
-                    <span v-else class="sa-badge sa-badge--role">Role</span>
+                    <span v-if="p.source === 'direct'" class="sa-badge sa-badge--direct">
+                      Direct
+                    </span>
+                    <span v-else class="sa-badge sa-badge--role">
+                      Role
+                    </span>
                   </div>
                 </div>
               </div>
 
               <div v-if="effectiveUnmapped.length" class="sa-effectiveGroup">
                 <div class="sa-effectiveGroup__title">
-                  <i class="pi pi-ellipsis-h sa-effectiveGroup__icon" />
                   Other
                 </div>
+
                 <div class="sa-effectiveGroup__items">
                   <div v-for="p in effectiveUnmapped" :key="p" class="sa-effItem">
                     <span class="sa-effItem__label">{{ p }}</span>
@@ -234,7 +227,9 @@
 
         <div v-else class="sa-empty">
           <i class="pi pi-user sa-empty__icon" />
-          <div class="sa-empty__text">Select an employee from the left to manage access.</div>
+          <div class="sa-empty__text">
+            Select an employee from the left to manage access.
+          </div>
         </div>
       </div>
     </section>

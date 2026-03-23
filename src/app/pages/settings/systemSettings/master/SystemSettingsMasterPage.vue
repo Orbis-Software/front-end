@@ -389,8 +389,8 @@
 </template>
 
 <script setup lang="ts">
-import "./MasterSettingsPage.css"
-import { useMasterSettingsPage } from "./useMasterSettingsPage"
+import "./SystemSettingsMasterPage.css"
+import { useMasterSettingsPage } from "./SystemSettingsMasterPage"
 
 const {
   router,

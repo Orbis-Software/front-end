@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import "./ContactCustomerCharges.css"
 
-import { computed, onMounted, ref, watch } from "vue"
+import { computed, onMounted, onUnmounted, ref, watch } from "vue"
 import { useRoute } from "vue-router"
 
 import Button from "primevue/button"
@@ -36,6 +36,9 @@ const route = useRoute()
 const toast = useToast()
 const contactStore = useContactStore()
 
+const AUTOSAVE_DELAY = 900
+const SUCCESS_TOAST_COOLDOWN = 10000
+
 const contactId = computed<number | null>(() => {
   const id = Number(route.params.id)
   return Number.isFinite(id) && id > 0 ? id : null
@@ -52,8 +55,23 @@ const nextLineId = ref(1)
 const sheets = ref<ChargeSheet[]>([])
 const activeSheetId = ref<number | null>(null)
 
+const isHydrating = ref(false)
+const isDirty = ref(false)
+const saveError = ref<string | null>(null)
+const autosaveTimer = ref<ReturnType<typeof setTimeout> | null>(null)
+const lastSavedFingerprint = ref("")
+const lastSuccessToastAt = ref(0)
+
 const activeSheet = computed<ChargeSheet | null>(() => {
   return sheets.value.find(sheet => sheet.id === activeSheetId.value) ?? null
+})
+
+const autosaveStatus = computed(() => {
+  if (saving.value) return "Saving..."
+  if (saveError.value) return "Save failed"
+  if (isDirty.value) return "Unsaved changes"
+  if (activeSheet.value) return "All changes saved"
+  return ""
 })
 
 function showSuccess(summary: string, detail: string) {
@@ -61,7 +79,7 @@ function showSuccess(summary: string, detail: string) {
     severity: "success",
     summary,
     detail,
-    life: 3000,
+    life: 2500,
   })
 }
 
@@ -81,6 +99,14 @@ function showError(summary: string, detail: string) {
     detail,
     life: 4500,
   })
+}
+
+function maybeShowAutosaveToast() {
+  const now = Date.now()
+  if (now - lastSuccessToastAt.value < SUCCESS_TOAST_COOLDOWN) return
+
+  lastSuccessToastAt.value = now
+  showSuccess("Saved", "Changes were saved automatically.")
 }
 
 function extractErrorMessage(error: any, fallback: string): string {
@@ -136,21 +162,13 @@ function mapUomFromChargeBasis(value: string | null | undefined): UOM {
 
 function mapCurrency(value: string | null | undefined): CurrencyCode {
   const currency = String(value ?? "GBP").toUpperCase()
-
-  if (currency === "USD" || currency === "EUR") {
-    return currency
-  }
-
+  if (currency === "USD" || currency === "EUR") return currency
   return "GBP"
 }
 
 function mapTransportMode(value: string | null | undefined): TransportMode {
   const mode = String(value ?? "Road")
-
-  if (mode === "Air" || mode === "Sea") {
-    return mode
-  }
-
+  if (mode === "Air" || mode === "Sea") return mode
   return "Road"
 }
 
@@ -158,10 +176,7 @@ function parseDateString(value: string | null): Date | null {
   if (!value) return null
 
   const [year, month, day] = value.split("-").map(Number)
-
-  if (!year || !month || !day) {
-    return null
-  }
+  if (!year || !month || !day) return null
 
   return new Date(year, month - 1, day)
 }
@@ -262,39 +277,80 @@ function syncActiveSheetAfterDelete(previousIndex: number) {
   activeSheetId.value = fallbackSheet?.id ?? null
 }
 
+function clearAutosaveTimer() {
+  if (autosaveTimer.value) {
+    clearTimeout(autosaveTimer.value)
+    autosaveTimer.value = null
+  }
+}
+
+function fingerprintSheet(sheet: ChargeSheet | null): string {
+  if (!sheet) return ""
+
+  return JSON.stringify({
+    id: sheet.id,
+    name: sheet.name.trim(),
+    currency: sheet.currency,
+    valid_until: sheet.valid_until,
+    lines: sheet.lines.map(line => ({
+      id: line.id,
+      description: line.description.trim(),
+      uom: line.uom,
+      rate: line.rate ?? null,
+      transport_mode: line.transport_mode,
+    })),
+  })
+}
+
+function setSavedStateFromSheet(sheet: ChargeSheet | null) {
+  lastSavedFingerprint.value = fingerprintSheet(sheet)
+  isDirty.value = false
+  saveError.value = null
+}
+
 async function loadSheets() {
   if (!contactId.value) return
 
-  await contactStore.fetchChargeTables(contactId.value, {
-    charge_type: "customer_flat",
-    applies_to: "collection",
-    is_active: true,
-  })
+  isHydrating.value = true
 
-  console.log("chargeTables from store", contactStore.chargeTables)
+  try {
+    await contactStore.fetchChargeTables(contactId.value, {
+      charge_type: "customer_flat",
+      applies_to: "collection",
+      is_active: true,
+    })
 
-  sheets.value = (contactStore.chargeTables ?? []).map(tableToSheet)
+    sheets.value = (contactStore.chargeTables ?? []).map(tableToSheet)
 
-  console.log("mapped sheets", sheets.value)
+    const maxLineId = sheets.value.reduce((max, sheet) => {
+      const lineMax = sheet.lines.reduce(
+        (rowMax, line) => Math.max(rowMax, Number(line.id) || 0),
+        0,
+      )
+      return Math.max(max, lineMax)
+    }, 0)
 
-  const maxLineId = sheets.value.reduce((max, sheet) => {
-    const lineMax = sheet.lines.reduce((rowMax, line) => Math.max(rowMax, Number(line.id) || 0), 0)
-    return Math.max(max, lineMax)
-  }, 0)
+    nextLineId.value = maxLineId + 1
 
-  nextLineId.value = maxLineId + 1
+    if (!sheets.value.length) {
+      activeSheetId.value = null
+      setSavedStateFromSheet(null)
+      return
+    }
 
-  if (!sheets.value.length) {
-    activeSheetId.value = null
-    return
-  }
+    const hasActive =
+      activeSheetId.value !== null && sheets.value.some(sheet => sheet.id === activeSheetId.value)
 
-  const hasActive =
-    activeSheetId.value !== null && sheets.value.some(sheet => sheet.id === activeSheetId.value)
-  if (!hasActive) {
-    activeSheetId.value = sheets.value[0]?.id ?? null
+    if (!hasActive) {
+      activeSheetId.value = sheets.value[0]?.id ?? null
+    }
+
+    setSavedStateFromSheet(sheets.value.find(sheet => sheet.id === activeSheetId.value) ?? null)
+  } finally {
+    isHydrating.value = false
   }
 }
+
 function validateForCreate(name: string): boolean {
   if (!contactId.value) {
     showError(
@@ -312,22 +368,12 @@ function validateForCreate(name: string): boolean {
   return true
 }
 
-function validateForSave(sheet: ChargeSheet): boolean {
-  if (!contactId.value) {
-    showError("Contact not found", "Unable to save because the contact could not be identified.")
-    return false
-  }
-
-  if (!sheet.name.trim()) {
-    showWarn("Missing title", "Please enter a charge sheet title.")
-    return false
-  }
+function validateForAutoSave(sheet: ChargeSheet): boolean {
+  if (!contactId.value) return false
+  if (!sheet.name.trim()) return false
 
   const hasEmptyDescription = sheet.lines.some(line => !line.description.trim())
-  if (hasEmptyDescription) {
-    showWarn("Incomplete lines", "Please complete all line descriptions before saving.")
-    return false
-  }
+  if (hasEmptyDescription) return false
 
   return true
 }
@@ -351,29 +397,29 @@ async function createSheet() {
     await loadSheets()
     activeSheetId.value = normalized.id
     newSheetName.value = ""
+    setSavedStateFromSheet(normalized)
 
     showSuccess("Charge sheet created", "Draft charge sheet was created successfully.")
   } catch (error: any) {
-    console.error("Failed to create charge sheet:", error)
     showError("Create failed", extractErrorMessage(error, "Failed to create charge sheet."))
   } finally {
     creating.value = false
   }
 }
 
-async function saveActiveSheet() {
-  const sheet = activeSheet.value
+async function saveSheet(sheet: ChargeSheet, options?: { silentSuccess?: boolean }) {
+  if (!contactId.value) return
+  if (!validateForAutoSave(sheet)) return
 
-  if (!sheet) {
-    showWarn("No active sheet", "Please select a charge sheet first.")
-    return
-  }
+  const currentFingerprint = fingerprintSheet(sheet)
 
-  if (!validateForSave(sheet) || !contactId.value) {
+  if (currentFingerprint === lastSavedFingerprint.value) {
+    isDirty.value = false
     return
   }
 
   saving.value = true
+  saveError.value = null
 
   try {
     const payload = sheetToPayload(sheet)
@@ -381,31 +427,44 @@ async function saveActiveSheet() {
       table => Number(table.id) === Number(sheet.id),
     )
 
+    let normalized: ChargeSheet
+
     if (existingTable) {
       const updated = await contactStore.updateChargeTable(contactId.value, sheet.id, payload)
-      const normalized = tableToSheet(updated)
-
-      sheets.value = sheets.value.map(item => (item.id === sheet.id ? normalized : item))
-      activeSheetId.value = normalized.id
-
-      showSuccess("Charge sheet updated", "Customer charge sheet was updated successfully.")
+      normalized = tableToSheet(updated)
     } else {
       const created = await contactStore.createChargeTable(contactId.value, payload)
-      const normalized = tableToSheet(created)
-
-      sheets.value = sheets.value.map(item => (item.id === sheet.id ? normalized : item))
-      activeSheetId.value = normalized.id
-
-      showSuccess("Charge sheet saved", "Customer charge sheet was saved successfully.")
+      normalized = tableToSheet(created)
     }
 
-    await loadSheets()
+    sheets.value = sheets.value.map(item => (item.id === sheet.id ? normalized : item))
+    activeSheetId.value = normalized.id
+    lastSavedFingerprint.value = fingerprintSheet(normalized)
+    isDirty.value = false
+    saveError.value = null
+
+    if (!options?.silentSuccess) {
+      maybeShowAutosaveToast()
+    }
   } catch (error: any) {
-    console.error("Failed to save charge sheet:", error)
-    showError("Save failed", extractErrorMessage(error, "Failed to save charge sheet."))
+    const message = extractErrorMessage(error, "Failed to save charge sheet.")
+    saveError.value = message
+    showError("Autosave failed", message)
   } finally {
     saving.value = false
   }
+}
+
+function scheduleAutosave() {
+  clearAutosaveTimer()
+
+  if (!activeSheet.value) return
+  if (isHydrating.value) return
+
+  autosaveTimer.value = setTimeout(async () => {
+    if (!activeSheet.value) return
+    await saveSheet(activeSheet.value)
+  }, AUTOSAVE_DELAY)
 }
 
 async function deleteSheet() {
@@ -422,6 +481,7 @@ async function deleteSheet() {
   const previousIndex = sheets.value.findIndex(item => item.id === sheet.id)
 
   deleting.value = true
+  clearAutosaveTimer()
 
   try {
     if (existingTable && contactId.value) {
@@ -431,6 +491,9 @@ async function deleteSheet() {
     sheets.value = sheets.value.filter(item => item.id !== sheet.id)
     syncActiveSheetAfterDelete(previousIndex)
 
+    const nextActive = sheets.value.find(item => item.id === activeSheetId.value) ?? null
+    setSavedStateFromSheet(nextActive)
+
     if (existingTable) {
       await loadSheets()
       showSuccess("Charge sheet deleted", "Customer charge sheet was deleted successfully.")
@@ -438,7 +501,6 @@ async function deleteSheet() {
       showSuccess("Draft removed", "Unsaved charge sheet draft was removed.")
     }
   } catch (error: any) {
-    console.error("Failed to delete charge sheet:", error)
     showError("Delete failed", extractErrorMessage(error, "Failed to delete charge sheet."))
   } finally {
     deleting.value = false
@@ -447,19 +509,18 @@ async function deleteSheet() {
 
 function addLine() {
   if (!activeSheet.value) return
-
   activeSheet.value.lines.push(createEmptyLine())
 }
 
 function removeLine(id: number) {
   if (!activeSheet.value) return
-
   activeSheet.value.lines = activeSheet.value.lines.filter(line => line.id !== id)
 }
 
 watch(
   () => route.params.id,
   async () => {
+    clearAutosaveTimer()
     sheets.value = []
     activeSheetId.value = null
     contactStore.clearCurrentChargeTable()
@@ -467,8 +528,51 @@ watch(
   },
 )
 
+watch(activeSheet, sheet => {
+  if (isHydrating.value) return
+  setSavedStateFromSheet(sheet)
+})
+
+watch(
+  () =>
+    activeSheet.value
+      ? {
+          id: activeSheet.value.id,
+          name: activeSheet.value.name,
+          currency: activeSheet.value.currency,
+          valid_until: activeSheet.value.valid_until,
+          lines: activeSheet.value.lines.map(line => ({
+            id: line.id,
+            description: line.description,
+            uom: line.uom,
+            rate: line.rate,
+            transport_mode: line.transport_mode,
+          })),
+        }
+      : null,
+  value => {
+    if (!value || isHydrating.value) return
+
+    const currentFingerprint = JSON.stringify(value)
+
+    if (currentFingerprint === lastSavedFingerprint.value) {
+      isDirty.value = false
+      return
+    }
+
+    isDirty.value = true
+    saveError.value = null
+    scheduleAutosave()
+  },
+  { deep: true },
+)
+
 onMounted(async () => {
   await loadSheets()
+})
+
+onUnmounted(() => {
+  clearAutosaveTimer()
 })
 </script>
 
@@ -546,7 +650,10 @@ onMounted(async () => {
           <div class="content-section">
             <div class="content-section__head">
               <div class="content-section__title">Validity Date</div>
-              <span class="status-badge">Active</span>
+              <div class="flex items-center gap-2">
+                <span class="status-badge">Active</span>
+                <span class="field-note">{{ autosaveStatus }}</span>
+              </div>
             </div>
 
             <div class="validity-row">
@@ -659,18 +766,6 @@ onMounted(async () => {
                 label="+ Add New Charge Line"
                 class="btn btn--ghost"
                 @click="addLine"
-              />
-            </div>
-          </div>
-
-          <div class="content-section">
-            <div class="save-actions">
-              <Button
-                type="button"
-                :label="saving ? 'Saving...' : 'Save Charge Sheet'"
-                class="btn btn--primary"
-                :disabled="saving"
-                @click="saveActiveSheet"
               />
             </div>
           </div>

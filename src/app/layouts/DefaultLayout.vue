@@ -38,7 +38,6 @@ onBeforeUnmount(() => window.removeEventListener("resize", onResize))
     </div>
 
     <main class="app-content">
-      <!-- ✅ force remount on navigation -->
       <router-view :key="route.fullPath" />
     </main>
   </div>
@@ -46,13 +45,16 @@ onBeforeUnmount(() => window.removeEventListener("resize", onResize))
 
 <style scoped>
 .app-shell {
+  --shell-side-padding: clamp(14px, 2.2vw, 32px);
+  --shell-content-max: 1400px;
+
   min-height: 100vh;
   background: var(--bg-page);
   display: flex;
   flex-direction: column;
 }
 
-/* ✅ Header + Nav sticky (full width) */
+/* sticky header + nav */
 .sticky-chrome {
   position: sticky;
   top: 0;
@@ -61,24 +63,27 @@ onBeforeUnmount(() => window.removeEventListener("resize", onResize))
   width: 100%;
 }
 
-/* ✅ Content stays centered */
+/* content aligned with the same system */
 .app-content {
   width: 100%;
-  max-width: 1400px;
+  max-width: calc(var(--shell-content-max) + (var(--shell-side-padding) * 2));
   margin: 0 auto;
-  padding: 28px 32px;
+  padding: 28px var(--shell-side-padding);
   flex: 1;
+  box-sizing: border-box;
 }
 
 @media (max-width: 1280px) {
   .app-content {
-    padding: 22px 20px;
+    padding-top: 22px;
+    padding-bottom: 22px;
   }
 }
 
 @media (max-width: 1024px) {
   .app-content {
-    padding: 18px 14px;
+    padding-top: 18px;
+    padding-bottom: 18px;
   }
 }
 </style>

@@ -26,8 +26,8 @@ export type ExistingOrder = {
 
 export type OrderFormState = {
   type: string
-  collection_address: string | null
-  delivery_address: string | null
+  collection_address: number | null
+  delivery_address: number | null
   order_reference: string
   customer_ref: string
   collection_ref: string
@@ -158,25 +158,6 @@ export function badgeClass(status: ExistingOrder["status"]): string {
   if (status === "Confirmed") return "badge badge--confirmed"
   if (status === "Sent") return "badge badge--sent"
   return "badge badge--draft"
-}
-
-function formatAddressLine(item: any): string {
-  const countryName = typeof item?.country === "object" ? item.country?.name : item?.country
-
-  const parts = [
-    item?.label,
-    item?.name,
-    item?.address_line_1,
-    item?.address_line_2,
-    item?.address_line_3,
-    item?.address_line_4,
-    item?.city,
-    item?.county_state,
-    item?.postal_code,
-    countryName,
-  ].filter(Boolean)
-
-  return parts.join(", ")
 }
 
 function resolveContactId(form: any): number | null {
@@ -388,6 +369,23 @@ function buildChargeSummary(
   }
 }
 
+function buildSequenceReference(sequence: any | null | undefined, fallback: string): string {
+  if (!sequence) return fallback
+
+  const prefix = String(sequence?.prefix ?? "").trim()
+  const yearDigits = String(sequence?.year_digits ?? "").trim()
+  const nextNumberFormatted = String(sequence?.next_number_formatted ?? "").trim()
+
+  const parts = [prefix, yearDigits, nextNumberFormatted].filter(Boolean)
+  return parts.length ? parts.join("-") : fallback
+}
+
+function findReferenceSequence(company: any, type: string) {
+  return (
+    (company?.reference_sequences ?? []).find((sequence: any) => sequence?.type === type) ?? null
+  )
+}
+
 export function useJobTransportTab(form: any) {
   const contactStore = useContactStore()
   const companyStore = useCompanyStore()
@@ -397,8 +395,8 @@ export function useJobTransportTab(form: any) {
     transport: true,
   })
 
-  const collection = ref<OrderFormState>(createOrderForm("CO-2026-000003"))
-  const transport = ref<OrderFormState>(createOrderForm("TO-2026-000003"))
+  const collection = ref<OrderFormState>(createOrderForm(""))
+  const transport = ref<OrderFormState>(createOrderForm(""))
 
   const existingCollectionOrders = ref<ExistingOrder[]>([])
   const existingTransportOrders = ref<ExistingOrder[]>([])
@@ -419,26 +417,32 @@ export function useJobTransportTab(form: any) {
       }))
   })
 
-  const collectionAddressOptions = computed<Option[]>(() => {
-    const addresses = (selectedContact.value?.collection_addresses ?? []).filter((address: any) =>
-      Boolean(address?.is_collection),
-    )
+  const collectionAddressOptions = computed(() =>
+    (selectedContact.value?.collection_addresses ?? [])
+      .filter(a => a.is_collection)
+      .map(a => ({
+        label: a.label?.trim() || `Address #${a.id}`,
+        value: a.id,
+      })),
+  )
 
-    return addresses.map((address: any) => ({
-      label: formatAddressLine(address),
-      value: `collection-${address.id}`,
-    }))
+  const deliveryAddressOptions = computed(() =>
+    (selectedContact.value?.collection_addresses ?? [])
+      .filter(a => a.is_delivery)
+      .map(a => ({
+        label: a.label?.trim() || `Address #${a.id}`,
+        value: a.id,
+      })),
+  )
+
+  const collectionOrderReference = computed(() => {
+    const sequence = findReferenceSequence(companyStore.item, "collection_order")
+    return buildSequenceReference(sequence, "COL-26-000000001")
   })
 
-  const deliveryAddressOptions = computed<Option[]>(() => {
-    const addresses = (selectedContact.value?.collection_addresses ?? []).filter((address: any) =>
-      Boolean(address?.is_delivery),
-    )
-
-    return addresses.map((address: any) => ({
-      label: formatAddressLine(address),
-      value: `collection-${address.id}`,
-    }))
+  const transportOrderReference = computed(() => {
+    const sequence = findReferenceSequence(companyStore.item, "transport_order")
+    return buildSequenceReference(sequence, "TRN-26-000000001")
   })
 
   const allChargeTables = computed(() => {
@@ -512,6 +516,12 @@ export function useJobTransportTab(form: any) {
     await contactStore.fetch()
   }
 
+  async function loadCompany() {
+    if (!companyStore.item) {
+      await companyStore.fetch()
+    }
+  }
+
   async function createAddressForSelectedContact(payload: any) {
     if (!selectedContact.value?.id) return null
     const created = await contactStore.createCollectionAddress(selectedContact.value.id, payload)
@@ -520,8 +530,12 @@ export function useJobTransportTab(form: any) {
   }
 
   onMounted(async () => {
+    await loadCompany()
     await loadCarrierContacts()
     await loadSelectedContact()
+
+    collection.value.order_reference = collectionOrderReference.value
+    transport.value.order_reference = transportOrderReference.value
   })
 
   watch(

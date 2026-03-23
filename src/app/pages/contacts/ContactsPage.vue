@@ -10,16 +10,22 @@
       </div>
 
       <div class="right">
-        <span class="p-input-icon-left search">
-          <i class="pi pi-search" />
+        <div class="search-wrap">
+          <i class="pi pi-search search-icon" />
           <InputText
             :modelValue="search"
             @update:modelValue="v => onSearchInput(v ?? '')"
-            placeholder="Search company, address, EORI..."
+            placeholder="     Search company, address, EORI..."
+            class="search-input"
           />
-        </span>
+        </div>
 
-        <Button class="btn-primary" icon="pi pi-plus" label="New Contact" @click="onCreate" />
+        <Button
+          class="btn-primary new-btn"
+          icon="pi pi-plus"
+          label="New Contact"
+          @click="onCreate"
+        />
       </div>
     </div>
 
@@ -71,7 +77,7 @@
         :rowsPerPageOptions="[15, 25, 50, 100]"
         @page="onPage"
       >
-        <Column header="Company" style="width: 280px">
+        <Column header="Company" style="width: 300px">
           <template #body="{ data }">
             <button class="link-strong" type="button" @click="onOpenCompany(data.id)">
               {{ data.company_name || "—" }}
@@ -89,24 +95,25 @@
           </template>
         </Column>
 
-        <Column header="EORI" style="width: 220px">
+        <Column header="EORI" style="width: 240px">
           <template #body="{ data }">
             {{ data.eori || "—" }}
           </template>
         </Column>
 
-        <Column header="Types" style="width: 340px">
+        <Column header="Types" style="width: 360px">
           <template #body="{ data }">
             <div class="type-badges">
               <span v-for="t in data.contact_types || []" :key="t.id" class="badge">
                 {{ t.name }}
               </span>
+
               <span v-if="!(data.contact_types || []).length" class="badge muted">—</span>
             </div>
           </template>
         </Column>
 
-        <Column header="Status" style="width: 140px">
+        <Column header="Status" style="width: 150px">
           <template #body="{ data }">
             <span class="status" :class="data.status === 'active' ? 'ok' : 'off'">
               {{ data.status }}
@@ -114,7 +121,7 @@
           </template>
         </Column>
 
-        <Column header="" style="width: 200px">
+        <Column header="" style="width: 210px">
           <template #body="{ data }">
             <div class="row-actions">
               <Button text icon="pi pi-pencil" label="Edit" @click="onEdit(data.id)" />

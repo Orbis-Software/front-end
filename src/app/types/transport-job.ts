@@ -9,9 +9,18 @@ import type { JobFile } from "@/app/types/job-file"
 export type TransportMode = "air" | "sea" | "road" | "rail" | "consolidation"
 export type JobType = "import" | "export" | "cross_trade" | "domestic" | "multi_modal"
 
+export interface TransportJobCreator {
+  id: number
+  name: string | null
+  email: string | null
+}
+
 export interface TransportJob {
   id: number
   company_id: number
+
+  created_by?: number | null
+  creator?: TransportJobCreator | null
 
   customer_id?: number | null
 
@@ -31,7 +40,7 @@ export interface TransportJob {
 
   note?: string | null
 
-  // relations (because your API loads: files + customer_contact)
+  // relations
   customer_contact?: Contact | null
   files: JobFile[]
 
@@ -50,7 +59,7 @@ export interface BaseTransportJobCreatePayload {
 
   note?: string | null
 
-  // uploads (same as your request rules)
+  // uploads
   files?: File[]
   file_types?: (string | null)[]
 }
