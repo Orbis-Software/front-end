@@ -137,7 +137,9 @@ export function useSystemAccessPage() {
   const permissionGroups = computed<PermGroup[]>(() => {
     const effective = new Set(store.selected?.effective_permissions ?? [])
     const direct = new Set(store.selected?.direct_permissions ?? [])
-    const roleOnlyPermissions = new Set(Array.from(effective).filter(permission => !direct.has(permission)))
+    const roleOnlyPermissions = new Set(
+      Array.from(effective).filter(permission => !direct.has(permission)),
+    )
 
     const buildGroup = (id: string, label: string, items: NavItem[]): PermGroup => {
       const rows = flattenNavToPermRows(items)

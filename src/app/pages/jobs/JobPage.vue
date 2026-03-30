@@ -27,8 +27,7 @@
       <JobTypeSelector :items="JOB_TYPES" :selected="jobType" @select="selectJobType" />
     </section>
 
-    <!-- ✅ MODE: Only show when NOT Multi Modal -->
-    <section v-if="jobType && jobType !== 'multi_modal'" class="card section">
+    <section v-if="jobType && !isNoModeJobType" class="card section">
       <JobStepHeader
         :title="`Mode of Transport for ${jobTypeLabel}`"
         subtitle="Choose the transport mode"
@@ -36,20 +35,9 @@
       <ModeSelector :items="availableModes" :selected="mode" @select="selectMode" />
     </section>
 
-    <!-- ✅ MULTI MODAL: different display (empty placeholder for now) -->
-    <section v-else-if="jobType === 'multi_modal'" class="card section">
-      <JobStepHeader title="Multi Modal" subtitle="Multi-modal setup (coming soon)" />
-      <div style="height: 80px"></div>
-    </section>
-
-    <!-- ✅ META: show when jobType AND (mode OR multi_modal) -->
-    <section v-if="jobType && (jobType === 'multi_modal' || mode)" class="card section">
+    <section v-if="jobType && (isNoModeJobType || mode)" class="card section">
       <div class="meta-title">
-        {{
-          jobType === "multi_modal"
-            ? `New ${jobTypeLabel} Job`
-            : `New ${jobTypeLabel} Job — ${modeLabel}`
-        }}
+        {{ isNoModeJobType ? `New ${jobTypeLabel} Job` : `New ${jobTypeLabel} Job — ${modeLabel}` }}
       </div>
 
       <div class="grid-3">
@@ -104,9 +92,11 @@
         </div>
 
         <div class="field">
-          <label class="label">Mode of Transport</label>
+          <label class="label">
+            {{ isNoModeJobType ? "Job Type" : "Mode of Transport" }}
+          </label>
           <InputText
-            :modelValue="jobType === 'multi_modal' ? '' : modeLabel"
+            :modelValue="isNoModeJobType ? jobTypeLabel : modeLabel"
             class="control"
             readonly
           />
@@ -118,8 +108,7 @@
       </div>
     </section>
 
-    <!-- ✅ RIGHT SIDE ACTIONS: show when jobType AND (mode OR multi_modal) -->
-    <div v-if="jobType && (jobType === 'multi_modal' || mode)" class="two-col">
+    <div v-if="jobType && (isNoModeJobType || mode)" class="two-col">
       <section class="card section">
         <JobStepHeader
           title="Documents & Notes"
@@ -165,6 +154,10 @@
 <script setup lang="ts">
 import "@/app/pages/jobs/JobPage.css"
 import AutoComplete from "primevue/autocomplete"
+import InputText from "primevue/inputtext"
+import Calendar from "primevue/calendar"
+import Textarea from "primevue/textarea"
+import Button from "primevue/button"
 
 import JobStepHeader from "@/app/components/jobs/JobStepHeader.vue"
 import JobTypeSelector from "@/app/components/jobs/JobTypeSelector.vue"
@@ -174,11 +167,9 @@ import { onBeforeUnmount, onMounted } from "vue"
 import { useJobCreatePage } from "./JobPage.logic"
 
 const {
-  store,
-
   JOB_TYPES,
-  MODES,
   availableModes,
+  isNoModeJobType,
 
   jobType,
   mode,

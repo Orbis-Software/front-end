@@ -1,0 +1,46 @@
+.mode-coming {
+  display: flex;
+  justify-content: center;
+  padding: 40px 20px;
+}
+
+.mode-coming-card {
+  width: 100%;
+  max-width: 720px;
+  background: #ffffff;
+  border: 1px solid #e2e2e2;
+  border-radius: 14px;
+  padding: 24px 28px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+.mode-coming-header {
+  font-size: 18px;
+  font-weight: 800;
+  margin-bottom: 12px;
+  color: #111;
+}
+
+.mode-coming-body {
+  font-size: 14px;
+  color: #555;
+}
+
+.mode-coming-body p {
+  margin-bottom: 12px;
+}
+
+.mode-coming-body ul {
+  margin: 0 0 16px 18px;
+  padding: 0;
+}
+
+.mode-coming-body li {
+  margin-bottom: 6px;
+}
+
+.mode-coming-status {
+  margin-top: 10px;
+  font-weight: 700;
+  color: #f07a1a;
+}

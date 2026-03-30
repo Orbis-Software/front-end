@@ -36,7 +36,7 @@ export function useJobsListPage() {
   const jobTypeFilter = ref<JobTypeKey>("all")
   const modeFilter = ref<ModeKey>("all")
   const searchText = ref("")
-  const showAllJobs = ref(true)
+  const showAllJobs = ref(false)
 
   const items = computed(() => store.items)
   const loading = computed(() => store.loading)
