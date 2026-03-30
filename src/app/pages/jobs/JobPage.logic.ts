@@ -265,7 +265,7 @@ export function useJobCreatePage() {
       return {
         ...base,
         job_type: "multi_modal",
-        mode_of_transport: null,
+        mode_of_transport: "multi_modal",
       }
     }
 
@@ -273,7 +273,7 @@ export function useJobCreatePage() {
       return {
         ...base,
         job_type: "consolidation",
-        mode_of_transport: null,
+        mode_of_transport: "consolidation",
       }
     }
 
