@@ -1,78 +1,87 @@
 <template>
   <div class="cards">
     <button
-      v-for="it in items"
-      :key="it.key"
+      v-for="item in items"
+      :key="item.key"
       type="button"
       class="card-btn"
-      :class="{ active: selected === it.key }"
-      @click="$emit('select', it.key)"
+      :class="{ active: selected === item.key }"
+      @click="$emit('select', item.key)"
     >
       <div class="top">
-        <div class="t">{{ it.title }}</div>
+        <div class="ttl">{{ item.title }}</div>
         <i class="pi pi-angle-right" />
       </div>
-      <div class="s">{{ it.subtitle }}</div>
+
+      <div class="sub">{{ item.subtitle }}</div>
     </button>
   </div>
 </template>
 
 <script setup lang="ts">
-type CardItem<K extends string> = { key: K; title: string; subtitle: string }
+type CardItem = {
+  key: string
+  title: string
+  subtitle: string
+}
 
 defineProps<{
-  items: CardItem<string>[]
+  items: CardItem[]
   selected: string | null
 }>()
 
 defineEmits<{
-  (e: "select", key: any): void
+  (e: "select", value: string): void
 }>()
 </script>
 
 <style scoped>
 .cards {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 12px;
+  width: 100%;
 }
 
 .card-btn {
+  min-width: 0;
   text-align: left;
-  border: 1px solid #ededed;
+  border: 1px solid #dedede;
   border-radius: 12px;
   background: #fff;
-  padding: 12px 12px;
+  padding: 12px 14px;
   cursor: pointer;
   transition:
-    background 0.12s ease,
-    border-color 0.12s ease;
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .card-btn:hover {
-  background: #f7f7f7;
+  border-color: #ec691a;
 }
 
 .card-btn.active {
-  background: #fafafa;
-  border-color: #dcdcdc;
+  border-color: #ec691a;
+  box-shadow: 0 0 0 1px #ec691a inset;
 }
 
 .top {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: 10px;
+  gap: 8px;
 }
 
-.t {
+.ttl {
+  font-size: 14px;
   font-weight: 800;
-  font-size: 13px;
+  line-height: 1.2;
 }
 
-.s {
-  color: #666;
-  font-size: 11px;
+.sub {
   margin-top: 6px;
+  font-size: 12px;
+  color: #666;
+  line-height: 1.4;
 }
 </style>

@@ -18,10 +18,16 @@ defineProps<{
 
 <style scoped>
 .step-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
+  display: block;
+  width: 100%;
   margin-bottom: 12px;
+}
+
+.step-left {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
 }
 
 .badge {
@@ -39,11 +45,13 @@ defineProps<{
 .title {
   font-size: 14px;
   font-weight: 800;
+  line-height: 1.2;
 }
 
 .sub {
   font-size: 12px;
   color: #666;
   margin-top: 2px;
+  line-height: 1.4;
 }
 </style>
