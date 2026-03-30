@@ -4,18 +4,19 @@
   background: var(--bg-page, #f3f3f3);
 }
 
-/* header */
-.job-header {
+.job-header-card {
+  background: #fff;
+  border: 1px solid var(--border-color, #d9d9d9);
+  border-radius: 16px 16px 0 0;
+  overflow: hidden;
+}
+
+.job-header-main {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 0;
   padding: 18px 18px 16px;
-  background: #ffffff;
-  border: 1px solid var(--border-color, #d9d9d9);
-  border-radius: 14px 14px 0 0;
-  border-bottom: none;
 }
 
 .job-header-left {
@@ -43,77 +44,71 @@
   flex-wrap: wrap;
 }
 
-.job-actions .p-button {
-  height: 42px;
-  border-radius: 10px;
-  padding: 0 14px;
-  background: #ffffff;
-  border: 1px solid #d5d5d5;
-  color: #1d1d1d;
+.job-action-btn.p-button {
+  height: 46px;
+  border-radius: 12px;
+  padding: 0 16px;
+  background: #fff;
+  border: 1px solid #d8d8d8;
+  color: #1a1a1a;
   box-shadow: none;
 }
 
-.job-actions .p-button:hover {
-  background: #f8f8f8;
-  border-color: #c9c9c9;
-}
-
-.job-actions .p-button .p-button-label {
+.job-action-btn.p-button .p-button-label {
   font-weight: 700;
 }
 
-.job-actions .primary.p-button {
-  background: var(--primary, #ec691a);
-  border-color: var(--primary, #ec691a);
-  color: #ffffff;
+.job-action-btn.p-button:hover {
+  background: #f8f8f8;
+  border-color: #cccccc;
 }
 
-.job-actions .primary.p-button:hover {
+.job-action-btn--primary.p-button {
+  background: var(--primary, #ec691a);
+  border-color: var(--primary, #ec691a);
+  color: #fff;
+}
+
+.job-action-btn--primary.p-button:hover {
   background: var(--primary-hover, #d85f17);
   border-color: var(--primary-hover, #d85f17);
 }
 
-/* content wrapper under connected tabs */
-.job-content {
-  background: #ffffff;
+.job-content-shell {
+  background: #fff;
   border: 1px solid var(--border-color, #d9d9d9);
   border-top: none;
-  border-radius: 0 0 14px 14px;
+  border-radius: 0 0 16px 16px;
   padding: 18px;
   box-shadow: 0 1px 2px rgba(16, 24, 40, 0.03);
 }
 
-/* placeholder */
-.placeholder {
-  min-height: 300px;
-  border: 1px dashed #d8d8d8;
-  border-radius: 12px;
+.job-placeholder-card {
+  min-height: 360px;
+  border: 1px dashed #d9d9d9;
+  border-radius: 14px;
   display: flex;
-  align-items: center;
+  flex-direction: column;
   justify-content: center;
-  color: #777;
-  font-size: 14px;
-  font-weight: 600;
+  align-items: center;
+  gap: 8px;
   background: #fcfcfc;
 }
 
-/* make tabs visually connected with header + content */
-.job-details-page :deep(.job-tabs) {
-  margin: 0;
-  padding: 0 12px;
-  background: #ffffff;
-  border-left: 1px solid var(--border-color, #d9d9d9);
-  border-right: 1px solid var(--border-color, #d9d9d9);
-  border-bottom: 1px solid var(--border-color, #d9d9d9);
+.job-placeholder-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: #222;
 }
 
-.job-details-page :deep(.job-tab) {
-  margin-top: 0;
+.job-placeholder-text {
+  font-size: 14px;
+  color: #666;
+  text-align: center;
 }
 
-/* responsive */
 @media (max-width: 1100px) {
-  .job-header {
+  .job-header-main {
     flex-direction: column;
     align-items: flex-start;
   }
@@ -128,15 +123,12 @@
     padding: 12px 12px 24px;
   }
 
-  .job-header {
+  .job-header-main,
+  .job-content-shell {
     padding: 14px;
   }
 
-  .job-content {
-    padding: 14px;
-  }
-
-  .job-actions .p-button {
+  .job-action-btn.p-button {
     width: 100%;
   }
 }

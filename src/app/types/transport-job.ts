@@ -8,7 +8,14 @@ import type { JobFile } from "@/app/types/job-file"
  */
 export type JobType = "import" | "export" | "domestic" | "courier" | "multi_modal" | "consolidation"
 
-export type TransportMode = "air" | "rail" | "road" | "sea"
+export type TransportMode =
+  | "air"
+  | "rail"
+  | "road"
+  | "sea"
+  | "courier"
+  | "multi_modal"
+  | "consolidation"
 
 export interface TransportJobCreator {
   id: number
@@ -67,11 +74,11 @@ export interface BaseTransportJobCreatePayload {
 export type TransportJobCreatePayload =
   | (BaseTransportJobCreatePayload & {
       job_type: "multi_modal"
-      mode_of_transport: null
+      mode_of_transport: "multi_modal"
     })
   | (BaseTransportJobCreatePayload & {
       job_type: "consolidation"
-      mode_of_transport: null
+      mode_of_transport: "consolidation"
     })
   | (BaseTransportJobCreatePayload & {
       job_type: Exclude<JobType, "multi_modal" | "consolidation">

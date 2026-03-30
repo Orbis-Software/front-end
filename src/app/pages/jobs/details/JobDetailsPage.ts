@@ -1,4 +1,16 @@
-import { computed, reactive, ref } from "vue"
+import { computed, onMounted, onUnmounted, reactive, ref, watch } from "vue"
+import { useRoute } from "vue-router"
+import { useToast } from "primevue/usetoast"
+
+import { useTransportJobStore } from "@/app/stores/transport-job"
+import { useContactStore } from "@/app/stores/contact"
+
+import type {
+  TransportJob,
+  TransportJobUpdatePayload,
+  TransportMode,
+} from "@/app/types/transport-job"
+import type { Contact } from "@/app/types/contact"
 
 export type JobDetailsTabKey =
   | "overview"
@@ -7,6 +19,12 @@ export type JobDetailsTabKey =
   | "tracking"
   | "documents"
   | "reference_data"
+  | "milestones"
+  | "customs"
+  | "container"
+  | "awb"
+  | "routing"
+  | "notes"
 
 export type JobDetailsTabItem = {
   key: JobDetailsTabKey
@@ -15,196 +33,42 @@ export type JobDetailsTabItem = {
   badge?: number
 }
 
-export type ModeOfTransport = "road" | "air" | "sea" | "rail" | "courier" | "multi_modal"
-
-export type JobDetailsForm = {
-  id: number | null
-  job_number: string
-  status: string
-  mode_of_transport: ModeOfTransport
-  created_at_label: string
-
-  awb_no: string
-  customer_reference: string
-  our_reference: string
-
-  service_type: string | null
-  vehicle_trailer_type: string | null
-  incoterms: string | null
-  currency: string | null
-
-  declared_value: number | null
-  description_of_goods: string
-  commodity_code: string
-  hazmat_class: string
-  un_number: string
-  special_instructions: string
-
-  order_type: "local_collection" | "full_transport_order"
-
-  collection_company_name: string
-  collection_address_1: string
-  collection_address_2: string
-  collection_city: string
-  collection_county_state: string
-  collection_postcode: string
-  collection_country: string | null
-  collection_contact_name: string
-  collection_phone: string
-  collection_email: string
-  collection_date: string
-  collection_ready_time: string
-  latest_collection: string
-  loading_ref_bay: string
-  collection_instructions: string
-
-  delivery_company_name: string
-  delivery_address_1: string
-  delivery_address_2: string
-  delivery_city: string
-  delivery_county_state: string
-  delivery_postcode: string
-  delivery_country: string | null
-  delivery_contact_name: string
-  delivery_phone: string
-  delivery_email: string
-  delivery_date: string
-  delivery_from: string
-  delivery_by: string
-  delivery_booking_ref: string
-  delivery_instructions: string
+function toDateOrNull(v: any): Date | null {
+  if (!v) return null
+  const d = new Date(v)
+  return Number.isNaN(d.getTime()) ? null : d
 }
 
-export function useJobDetailsPage() {
-  const loading = ref(false)
-  const saving = ref(false)
+function toIsoDate(v: Date | null): string | null {
+  if (!v) return null
+  return v.toISOString().slice(0, 10)
+}
 
-  const activeTab = ref<JobDetailsTabKey>("overview")
-
-  const tabs = ref<JobDetailsTabItem[]>([
-    { key: "overview", label: "Job Details", icon: "pi pi-folder-open" },
-    { key: "packages", label: "Packages", icon: "pi pi-box", badge: 1 },
-    { key: "charges", label: "Charges", icon: "pi pi-dollar", badge: 0 },
-    { key: "tracking", label: "Tracking", icon: "pi pi-clock" },
-    { key: "documents", label: "Documents", icon: "pi pi-file" },
-    { key: "reference_data", label: "Reference Data", icon: "pi pi-book" },
-  ])
-
-  const form = reactive<JobDetailsForm>({
-    id: 421,
-    job_number: "JOB-2026-0421",
-    status: "Draft",
-    mode_of_transport: "road",
-    created_at_label: "Created 21 Mar 2026",
-
-    awb_no: "123-45678901",
-    customer_reference: "PO / Customer Ref",
-    our_reference: "Internal ref",
-
-    service_type: "FTL – Full Truck Load",
-    vehicle_trailer_type: "Standard Trailer (13.6m)",
-    incoterms: null,
-    currency: "GBP – £",
-
-    declared_value: 0,
-    description_of_goods: "General cargo / machinery / palletised goods...",
-    commodity_code: "e.g. 8471.30",
-    hazmat_class: "e.g. Class 3 – Flammable",
-    un_number: "UN1234",
-    special_instructions:
-      "Temperature requirements, handling notes, hazardous material details, access restrictions...",
-
-    order_type: "local_collection",
-
-    collection_company_name: "Company name",
-    collection_address_1: "Street address",
-    collection_address_2: "Unit / building",
-    collection_city: "City",
-    collection_county_state: "County",
-    collection_postcode: "Postcode",
-    collection_country: "United Kingdom",
-    collection_contact_name: "Contact name",
-    collection_phone: "+44 ...",
-    collection_email: "contact@company.com",
-    collection_date: "",
-    collection_ready_time: "09:00 am",
-    latest_collection: "05:00 pm",
-    loading_ref_bay: "Dock / bay ref",
-    collection_instructions: "Access codes, parking, dock height, forklift availability...",
-
-    delivery_company_name: "Company name",
-    delivery_address_1: "Street address",
-    delivery_address_2: "Unit / building",
-    delivery_city: "City",
-    delivery_county_state: "County",
-    delivery_postcode: "Postcode",
-    delivery_country: "United Kingdom",
-    delivery_contact_name: "Contact name",
-    delivery_phone: "+44 ...",
-    delivery_email: "contact@company.com",
-    delivery_date: "",
-    delivery_from: "08:00 am",
-    delivery_by: "05:00 pm",
-    delivery_booking_ref: "Booking / delivery ref",
-    delivery_instructions: "Access codes, parking, unloading notes, POD requirements...",
+function formatCreatedDate(v: any): string {
+  if (!v) return ""
+  const d = new Date(v)
+  if (Number.isNaN(d.getTime())) return ""
+  return d.toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
   })
-
-  const headerTitle = computed(() => form.job_number || "Job")
-  const headerMeta = computed(
-    () => `${formatModeLabel(form.mode_of_transport)} · ${form.created_at_label}`,
-  )
-
-  async function onSave() {
-    saving.value = true
-
-    try {
-      await fakeWait(700)
-      console.log("saving job", JSON.parse(JSON.stringify(form)))
-    } finally {
-      saving.value = false
-    }
-  }
-
-  async function onPrint() {
-    console.log("print job", form.id)
-  }
-
-  async function onExportPdf() {
-    console.log("export pdf", form.id)
-  }
-
-  async function onBookJob() {
-    console.log("book job", form.id)
-  }
-
-  return {
-    loading,
-    saving,
-
-    form,
-    headerTitle,
-    headerMeta,
-
-    tabs,
-    activeTab,
-
-    onSave,
-    onPrint,
-    onExportPdf,
-    onBookJob,
-  }
 }
 
-function formatModeLabel(mode: ModeOfTransport): string {
+function contactDisplayName(c: any) {
+  return c?.company_name ?? c?.name ?? [c?.first_name, c?.last_name].filter(Boolean).join(" ") ?? ""
+}
+
+function toTitleCaseMode(mode: TransportMode | null): string {
   switch (mode) {
     case "road":
-      return "Road Freight"
-    case "air":
-      return "Air Freight"
+      return "Road"
     case "sea":
-      return "Sea Freight"
+      return "Sea"
+    case "air":
+      return "Air"
     case "rail":
-      return "Rail Freight"
+      return "Rail"
     case "courier":
       return "Courier"
     case "multi_modal":
@@ -214,6 +78,450 @@ function formatModeLabel(mode: ModeOfTransport): string {
   }
 }
 
-function fakeWait(ms: number) {
-  return new Promise(resolve => setTimeout(resolve, ms))
+export function useJobDetailsPage() {
+  const route = useRoute()
+  const toast = useToast()
+
+  const transportJobsStore = useTransportJobStore()
+  const contactStore = useContactStore()
+
+  const jobId = computed<number | null>(() => {
+    const raw = route.params.id
+    const n = Number(Array.isArray(raw) ? raw[0] : raw)
+    return Number.isFinite(n) && n > 0 ? n : null
+  })
+
+  const job = ref<TransportJob | null>(null)
+  const loading = computed(() => transportJobsStore.loading)
+  const saving = ref(false)
+
+  const prevTypeId = ref<number | null>(null)
+  const prevSearch = ref("")
+
+  const form = reactive({
+    // real existing fields
+    customer_id: null as number | null,
+    quote_ref: "" as string,
+    job_date: null as Date | null,
+
+    account_number: "" as string,
+    customer_name: "" as string,
+    job_number: "" as string,
+    mode_of_transport: null as TransportMode | null,
+
+    // header/meta
+    status: "Draft" as string,
+    created_label: "" as string,
+
+    // road ui fields
+    awb_no: "" as string,
+    customer_reference: "" as string,
+    our_reference: "" as string,
+
+    service_type: "" as string,
+    vehicle_trailer_type: "" as string,
+    incoterms: "" as string,
+    currency: "" as string,
+    declared_value: "" as string,
+    description_of_goods: "" as string,
+    commodity_code: "" as string,
+    hazmat_class: "" as string,
+    un_number: "" as string,
+    special_instructions: "" as string,
+
+    order_type: "local_collection" as "local_collection" | "full_transport_order",
+
+    collection_type: "On-Demand" as string,
+    priority_service_level: "Standard" as string,
+    vehicle_required: "Motorbike Courier" as string,
+    zone_area: "" as string,
+    est_distance_miles: "0" as string,
+    est_duration_hours: "0.0" as string,
+    rate_per_mile: "0.00" as string,
+    estimated_mileage_cost: "" as string,
+    round_trip: "no" as "yes" | "no",
+    signature_required: "yes" as "yes" | "no",
+    pod_method: "Paper POD" as string,
+    parking_access_code: "" as string,
+    time_critical: "no" as "yes" | "no",
+    exact_delivery_time: "" as string,
+    driver_assigned: "" as string,
+    driver_mobile: "" as string,
+    local_collection_notes: "" as string,
+
+    collection_company_name: "" as string,
+    collection_address_1: "" as string,
+    collection_address_2: "" as string,
+    collection_city: "" as string,
+    collection_county_state: "" as string,
+    collection_postcode: "" as string,
+    collection_country: "United Kingdom" as string,
+    collection_contact_name: "" as string,
+    collection_phone: "" as string,
+    collection_email: "" as string,
+    collection_date_ui: null as Date | null,
+    collection_ready_time: "" as string,
+    latest_collection: "" as string,
+    loading_ref_bay: "" as string,
+    collection_instructions: "" as string,
+
+    delivery_company_name: "" as string,
+    delivery_address_1: "" as string,
+    delivery_address_2: "" as string,
+    delivery_city: "" as string,
+    delivery_county_state: "" as string,
+    delivery_postcode: "" as string,
+    delivery_country: "United Kingdom" as string,
+    delivery_contact_name: "" as string,
+    delivery_phone: "" as string,
+    delivery_email: "" as string,
+    delivery_date_ui: null as Date | null,
+    delivery_from: "" as string,
+    delivery_by: "" as string,
+    delivery_booking_ref: "" as string,
+    delivery_instructions: "" as string,
+
+    carrier_name: "" as string,
+    carrier_driver_name: "" as string,
+    carrier_driver_mobile: "" as string,
+    vehicle_registration: "" as string,
+    trailer_container_no: "" as string,
+    seal_number: "" as string,
+    cmr_waybill_no: "" as string,
+    route_via: "" as string,
+
+    // air / sea placeholder support
+    flight_no: "" as string,
+    origin_airport: "" as string,
+    destination_airport: "" as string,
+    airline: "" as string,
+    vessel_name: "" as string,
+    voyage_no: "" as string,
+    port_of_loading: "" as string,
+    port_of_discharge: "" as string,
+  })
+
+  const customerTypeId = computed<number | null>(() => {
+    const t = (contactStore.types ?? []).find((x: any) => {
+      const name = String(x?.name ?? "").toLowerCase()
+      return name === "customer"
+    })
+    return t?.id ?? null
+  })
+
+  const customerOptions = computed(() => {
+    const items: Contact[] = (contactStore.items ?? []) as any
+    return items.map((c: any) => ({
+      label: contactDisplayName(c),
+      value: Number(c.id),
+    }))
+  })
+
+  const tabs = computed<JobDetailsTabItem[]>(() => {
+    switch (form.mode_of_transport) {
+      case "road":
+        return [
+          { key: "overview", label: "Job Details", icon: "pi pi-folder-open" },
+          { key: "packages", label: "Packages", icon: "pi pi-box", badge: 1 },
+          { key: "charges", label: "Charges", icon: "pi pi-dollar", badge: 0 },
+          { key: "tracking", label: "Tracking", icon: "pi pi-clock" },
+          { key: "documents", label: "Documents", icon: "pi pi-file" },
+          { key: "reference_data", label: "Reference Data", icon: "pi pi-book" },
+        ]
+
+      case "air":
+        return [
+          { key: "overview", label: "Air Job", icon: "pi pi-send" },
+          { key: "awb", label: "AWB", icon: "pi pi-ticket" },
+          { key: "routing", label: "Routing", icon: "pi pi-map" },
+          { key: "charges", label: "Charges", icon: "pi pi-dollar", badge: 0 },
+          { key: "documents", label: "Documents", icon: "pi pi-file" },
+          { key: "reference_data", label: "Reference Data", icon: "pi pi-book" },
+        ]
+
+      case "sea":
+        return [
+          { key: "overview", label: "Sea Job", icon: "pi pi-directions-alt" },
+          { key: "container", label: "Containers", icon: "pi pi-box" },
+          { key: "routing", label: "Routing", icon: "pi pi-map" },
+          { key: "customs", label: "Customs", icon: "pi pi-globe" },
+          { key: "documents", label: "Documents", icon: "pi pi-file" },
+          { key: "reference_data", label: "Reference Data", icon: "pi pi-book" },
+        ]
+
+      default:
+        return [
+          { key: "overview", label: "Overview", icon: "pi pi-folder-open" },
+          { key: "documents", label: "Documents", icon: "pi pi-file" },
+          { key: "reference_data", label: "Reference Data", icon: "pi pi-book" },
+        ]
+    }
+  })
+
+  const activeTab = ref<JobDetailsTabKey>("overview")
+
+  const validTabKeys = computed(() => tabs.value.map(tab => tab.key))
+
+  watch(
+    validTabKeys,
+    keys => {
+      if (!keys.includes(activeTab.value)) {
+        activeTab.value = (keys[0] as JobDetailsTabKey) ?? "overview"
+      }
+    },
+    { immediate: true },
+  )
+
+  const headerTitle = computed(() => form.job_number || "Job")
+  const headerMeta = computed(() => {
+    const mode = toTitleCaseMode(form.mode_of_transport)
+    const status = form.status || "Draft"
+    return `${mode.toUpperCase()} · ${status}`
+  })
+
+  async function initCustomerFilter() {
+    prevTypeId.value = (contactStore as any).activeTypeId ?? null
+    prevSearch.value = (contactStore as any).search ?? ""
+
+    await contactStore.fetchTypes()
+
+    if (typeof (contactStore as any).setTypeId === "function") {
+      await (contactStore as any).setTypeId(customerTypeId.value ?? null)
+    } else {
+      ;(contactStore as any).activeTypeId = customerTypeId.value ?? null
+    }
+
+    if (typeof (contactStore as any).setSearch === "function") {
+      await (contactStore as any).setSearch("")
+    } else {
+      ;(contactStore as any).search = ""
+    }
+
+    if (typeof (contactStore as any).fetch === "function") {
+      await (contactStore as any).fetch()
+    }
+  }
+
+  function cleanupCustomerFilter() {
+    ;(contactStore as any).activeTypeId = prevTypeId.value
+    ;(contactStore as any).search = prevSearch.value
+  }
+
+  async function onCustomerFilter(e: any) {
+    const q = String(e?.value ?? e?.query ?? "").trim()
+
+    if (typeof (contactStore as any).setSearch === "function") {
+      await (contactStore as any).setSearch(q)
+    } else {
+      ;(contactStore as any).search = q
+    }
+
+    if (typeof (contactStore as any).fetch === "function") {
+      await (contactStore as any).fetch()
+    }
+  }
+
+  function hydrateFromJob(j: TransportJob) {
+    form.customer_id = j.customer_id ?? null
+    form.quote_ref = (j as any).quote_ref ?? ""
+    form.job_date = toDateOrNull(j.job_date)
+
+    form.job_number = j.job_number ?? ""
+    form.mode_of_transport = (j.mode_of_transport ?? null) as any
+
+    form.customer_name = contactDisplayName((j as any).customer_contact)
+    form.account_number =
+      (j as any).account_number ?? (j as any).customer_contact?.account_number ?? ""
+
+    form.status = String((j as any).status ?? "Draft")
+    form.created_label = formatCreatedDate((j as any).created_at)
+
+    form.awb_no = (j as any).awb_no ?? (j as any).consignment_no ?? ""
+    form.customer_reference = (j as any).customer_reference ?? (j as any).quote_ref ?? ""
+    form.our_reference = (j as any).our_reference ?? ""
+    form.service_type = (j as any).service_type ?? ""
+    form.vehicle_trailer_type = (j as any).vehicle_trailer_type ?? ""
+    form.incoterms = (j as any).incoterms ?? ""
+    form.currency = (j as any).currency ?? ""
+    form.declared_value = String((j as any).declared_value ?? "")
+    form.description_of_goods = (j as any).description_of_goods ?? ""
+    form.commodity_code = (j as any).commodity_code ?? ""
+    form.hazmat_class = (j as any).hazmat_class ?? ""
+    form.un_number = (j as any).un_number ?? ""
+    form.special_instructions = (j as any).special_instructions ?? ""
+
+    form.order_type =
+      (j as any).order_type === "full_transport_order" ? "full_transport_order" : "local_collection"
+
+    form.collection_type = (j as any).collection_type ?? "On-Demand"
+    form.priority_service_level = (j as any).priority_service_level ?? "Standard"
+    form.vehicle_required = (j as any).vehicle_required ?? "Motorbike Courier"
+    form.zone_area = (j as any).zone_area ?? ""
+    form.est_distance_miles = String((j as any).est_distance_miles ?? "0")
+    form.est_duration_hours = String((j as any).est_duration_hours ?? "0.0")
+    form.rate_per_mile = String((j as any).rate_per_mile ?? "0.00")
+    form.estimated_mileage_cost = String((j as any).estimated_mileage_cost ?? "")
+    form.round_trip = (j as any).round_trip === "yes" ? "yes" : "no"
+    form.signature_required = (j as any).signature_required === "no" ? "no" : "yes"
+    form.pod_method = (j as any).pod_method ?? "Paper POD"
+    form.parking_access_code = (j as any).parking_access_code ?? ""
+    form.time_critical = (j as any).time_critical === "yes" ? "yes" : "no"
+    form.exact_delivery_time = (j as any).exact_delivery_time ?? ""
+    form.driver_assigned = (j as any).driver_assigned ?? ""
+    form.driver_mobile = (j as any).driver_mobile ?? ""
+    form.local_collection_notes = (j as any).local_collection_notes ?? ""
+
+    form.collection_company_name = (j as any).collection_company_name ?? ""
+    form.collection_address_1 = (j as any).collection_address_1 ?? ""
+    form.collection_address_2 = (j as any).collection_address_2 ?? ""
+    form.collection_city = (j as any).collection_city ?? ""
+    form.collection_county_state = (j as any).collection_county_state ?? ""
+    form.collection_postcode = (j as any).collection_postcode ?? ""
+    form.collection_country = (j as any).collection_country ?? "United Kingdom"
+    form.collection_contact_name = (j as any).collection_contact_name ?? ""
+    form.collection_phone = (j as any).collection_phone ?? ""
+    form.collection_email = (j as any).collection_email ?? ""
+    form.collection_date_ui = toDateOrNull((j as any).collection_date)
+    form.collection_ready_time = (j as any).collection_ready_time ?? ""
+    form.latest_collection = (j as any).latest_collection ?? ""
+    form.loading_ref_bay = (j as any).loading_ref_bay ?? ""
+    form.collection_instructions = (j as any).collection_instructions ?? ""
+
+    form.delivery_company_name = (j as any).delivery_company_name ?? ""
+    form.delivery_address_1 = (j as any).delivery_address_1 ?? ""
+    form.delivery_address_2 = (j as any).delivery_address_2 ?? ""
+    form.delivery_city = (j as any).delivery_city ?? ""
+    form.delivery_county_state = (j as any).delivery_county_state ?? ""
+    form.delivery_postcode = (j as any).delivery_postcode ?? ""
+    form.delivery_country = (j as any).delivery_country ?? "United Kingdom"
+    form.delivery_contact_name = (j as any).delivery_contact_name ?? ""
+    form.delivery_phone = (j as any).delivery_phone ?? ""
+    form.delivery_email = (j as any).delivery_email ?? ""
+    form.delivery_date_ui = toDateOrNull((j as any).delivery_date)
+    form.delivery_from = (j as any).delivery_from ?? ""
+    form.delivery_by = (j as any).delivery_by ?? ""
+    form.delivery_booking_ref = (j as any).delivery_booking_ref ?? ""
+    form.delivery_instructions = (j as any).delivery_instructions ?? ""
+
+    form.carrier_name = (j as any).carrier_name ?? ""
+    form.carrier_driver_name = (j as any).carrier_driver_name ?? ""
+    form.carrier_driver_mobile = (j as any).carrier_driver_mobile ?? ""
+    form.vehicle_registration = (j as any).vehicle_registration ?? ""
+    form.trailer_container_no = (j as any).trailer_container_no ?? ""
+    form.seal_number = (j as any).seal_number ?? ""
+    form.cmr_waybill_no = (j as any).cmr_waybill_no ?? ""
+    form.route_via = (j as any).route_via ?? ""
+
+    form.flight_no = (j as any).flight_no ?? ""
+    form.origin_airport = (j as any).origin_airport ?? ""
+    form.destination_airport = (j as any).destination_airport ?? ""
+    form.airline = (j as any).airline ?? ""
+    form.vessel_name = (j as any).vessel_name ?? ""
+    form.voyage_no = (j as any).voyage_no ?? ""
+    form.port_of_loading = (j as any).port_of_loading ?? ""
+    form.port_of_discharge = (j as any).port_of_discharge ?? ""
+  }
+
+  async function load() {
+    if (!jobId.value) return
+    const j = await transportJobsStore.show(jobId.value)
+    job.value = j
+    hydrateFromJob(j)
+  }
+
+  watch(
+    () => form.customer_id,
+    id => {
+      if (!id) {
+        form.account_number = ""
+        form.customer_name = ""
+        return
+      }
+
+      const c = (contactStore.items ?? []).find((x: any) => Number(x.id) === Number(id)) as any
+      if (c) {
+        form.account_number = c.account_number ?? ""
+        form.customer_name = contactDisplayName(c)
+      }
+    },
+  )
+
+  async function onSave() {
+    if (!jobId.value) return
+
+    saving.value = true
+    try {
+      const payload: TransportJobUpdatePayload = {
+        customer_id: form.customer_id ?? null,
+        quote_ref: form.quote_ref || null,
+        job_date: toIsoDate(form.job_date),
+        mode_of_transport: (form.mode_of_transport ?? "road") as any,
+      }
+
+      const updated = await transportJobsStore.update(jobId.value, payload)
+      job.value = updated
+      hydrateFromJob(updated)
+
+      toast.add({
+        severity: "success",
+        summary: "Saved",
+        detail: "Job updated",
+        life: 2200,
+      })
+
+      await load()
+    } catch (e: any) {
+      const msg = String(e?.response?.data?.message ?? e?.message ?? "Unable to save job")
+      toast.add({
+        severity: "error",
+        summary: "Failed",
+        detail: msg,
+        life: 4000,
+      })
+      throw e
+    } finally {
+      saving.value = false
+    }
+  }
+
+  function onPrint() {}
+  function onExportPdf() {}
+  function onBookJob() {}
+
+  onMounted(async () => {
+    await initCustomerFilter()
+    await load()
+  })
+
+  onUnmounted(() => {
+    cleanupCustomerFilter()
+  })
+
+  watch(jobId, async () => {
+    await initCustomerFilter()
+    await load()
+  })
+
+  return {
+    job,
+    jobId,
+
+    loading,
+    saving,
+
+    headerTitle,
+    headerMeta,
+    form,
+
+    tabs,
+    activeTab,
+
+    customerOptions,
+    onCustomerFilter,
+
+    onSave,
+    onPrint,
+    onExportPdf,
+    onBookJob,
+  }
 }

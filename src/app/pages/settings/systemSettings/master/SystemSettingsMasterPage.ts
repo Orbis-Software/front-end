@@ -45,6 +45,8 @@ export function useMasterSettingsPage() {
   const addCurrencyInput = ref("")
   const toast = useToast()
 
+  const isEditable = ref(false)
+
   const form = reactive({
     legal_name: "",
     trading_name: "",
@@ -77,6 +79,10 @@ export function useMasterSettingsPage() {
 
     refs: [] as RefForm[],
   })
+
+  function setEditable(value: boolean) {
+    isEditable.value = value
+  }
 
   function digitsMax9(v: string) {
     return (v ?? "").replace(/\D/g, "").slice(0, 9)
@@ -343,5 +349,8 @@ export function useMasterSettingsPage() {
 
     onRefresh,
     onSave,
+
+    isEditable,
+    setEditable,
   }
 }

@@ -12,7 +12,10 @@ const AuthLayout = () => import("@/app/layouts/AuthLayout/AuthLayout.vue")
 const LoginPage = () => import("@/app/pages/auth/loginPage/loginPage.vue")
 const DashboardPage = () => import("@/app/pages/dashboard/DashboardPage.vue")
 const PlaceholderPage = () => import("@/app/pages/default/PlaceholderPage.vue")
-const QuoteCreatePage = () => import("@/app/pages/quotes/QuoteCreatePage.vue")
+
+const QuoteListPage = () => import("@/app/pages/quotes/list/QuoteListPage.vue")
+const QuoteCreatePage = () => import("@/app/pages/quotes/create/QuoteCreatePage.vue")
+
 const JobPage = () => import("@/app/pages/jobs/JobPage.vue")
 const JobsListPage = () => import("@/app/pages/jobs/list/JobsListPage.vue")
 const ContactsPage = () => import("@/app/pages/contacts/ContactsPage.vue")
@@ -87,11 +90,28 @@ export const routes: RouteRecordRaw[] = [
         meta: { title: "Jobs • Details" },
       },
 
+      /**
+       * ============================
+       * Quotes
+       * ============================
+       */
       {
         path: "quotes",
         name: "tms.quotes.index",
-        component: QuoteCreatePage,
+        component: QuoteListPage,
         meta: { title: "Quotes" },
+      },
+      {
+        path: "quotes/new",
+        name: "tms.quotes.create",
+        component: QuoteCreatePage,
+        meta: { title: "Quotes • New" },
+      },
+      {
+        path: "quotes/:id",
+        name: "tms.quotes.show",
+        component: QuoteCreatePage,
+        meta: { title: "Quotes • Details" },
       },
 
       /**
