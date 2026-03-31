@@ -119,6 +119,19 @@
           </template>
         </Column>
 
+        <Column header="Created by" style="width: 280px">
+          <template #body="{ data }">
+            <div class="customer-cell">
+              <div class="customer-name">
+                {{ data.creator?.name ?? "—" }}
+              </div>
+              <div class="cell-subtext">
+                {{ data.customer_contact?.email ?? "" }}
+              </div>
+            </div>
+          </template>
+        </Column>
+
         <Column header="Quote Ref" style="width: 180px">
           <template #body="{ data }">
             <span class="plain-value">{{ data.quote_ref || "—" }}</span>
