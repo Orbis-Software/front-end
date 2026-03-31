@@ -1,0 +1,107 @@
+.job-progress-stepper {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 14px 18px 12px;
+  background: #f7f7f7;
+  border-top: 1px solid #ededed;
+  border-bottom: 1px solid #dddddd;
+  overflow-x: auto;
+}
+
+.job-progress-step {
+  display: flex;
+  align-items: center;
+  flex: 1 0 auto;
+  min-width: 150px;
+}
+
+.job-progress-step__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.job-progress-step__dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #d0d0d0;
+  background: #f2f2f2;
+  color: #8a8a8a;
+  font-size: 11px;
+  font-weight: 800;
+  flex: 0 0 auto;
+}
+
+.job-progress-step__text {
+  min-width: 0;
+  line-height: 1.15;
+}
+
+.job-progress-step__title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #4a4a4a;
+  white-space: nowrap;
+}
+
+.job-progress-step__subtitle {
+  font-size: 12px;
+  color: #8b8b8b;
+  margin-top: 2px;
+  white-space: nowrap;
+}
+
+.job-progress-step__line {
+  width: 34px;
+  height: 1px;
+  background: #d4d4d4;
+  margin: 0 12px;
+  flex: 0 0 auto;
+}
+
+.job-progress-step.is-done .job-progress-step__dot {
+  background: #1f7a45;
+  border-color: #1f7a45;
+  color: #fff;
+}
+
+.job-progress-step.is-done .job-progress-step__title {
+  color: #2c2c2c;
+}
+
+.job-progress-step.is-active .job-progress-step__dot {
+  background: #ec691a;
+  border-color: #ec691a;
+  color: #fff;
+}
+
+.job-progress-step.is-active .job-progress-step__title {
+  color: #222;
+}
+
+.job-progress-step.is-active .job-progress-step__subtitle {
+  color: #5e5e5e;
+}
+
+@media (max-width: 768px) {
+  .job-progress-stepper {
+    padding: 12px 14px 10px;
+  }
+
+  .job-progress-step {
+    min-width: 135px;
+  }
+
+  .job-progress-step__title {
+    font-size: 12px;
+  }
+
+  .job-progress-step__subtitle {
+    font-size: 11px;
+  }
+}

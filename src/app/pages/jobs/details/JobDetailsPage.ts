@@ -14,6 +14,7 @@ import type { Contact } from "@/app/types/contact"
 
 export type JobDetailsTabKey =
   | "overview"
+  | "job_details"
   | "packages"
   | "charges"
   | "tracking"
@@ -25,6 +26,21 @@ export type JobDetailsTabKey =
   | "awb"
   | "routing"
   | "notes"
+  | "collection"
+  | "delivery"
+  | "history"
+  | "rail_details"
+  | "parties"
+  | "activity"
+  | "core_details"
+  | "carrier_vessel"
+  | "routing_dates"
+  | "cargo_customs"
+  | "supplier_invoices"
+  | "collection_orders"
+  | "consolidated_invoice"
+  | "customer_invoice"
+  | "goods_in_out_wms"
 
 export type JobDetailsTabItem = {
   key: JobDetailsTabKey
@@ -221,9 +237,9 @@ export function useJobDetailsPage() {
     switch (form.mode_of_transport) {
       case "road":
         return [
-          { key: "overview", label: "Job Details", icon: "pi pi-folder-open" },
-          { key: "packages", label: "Packages", icon: "pi pi-box", badge: 1 },
-          { key: "charges", label: "Charges", icon: "pi pi-dollar", badge: 0 },
+          { key: "job_details", label: "Job Details", icon: "pi pi-folder-open" },
+          { key: "packages", label: "Packages", icon: "pi pi-box" },
+          { key: "charges", label: "Charges", icon: "pi pi-dollar" },
           { key: "tracking", label: "Tracking", icon: "pi pi-clock" },
           { key: "documents", label: "Documents", icon: "pi pi-file" },
           { key: "reference_data", label: "Reference Data", icon: "pi pi-book" },
@@ -231,29 +247,67 @@ export function useJobDetailsPage() {
 
       case "air":
         return [
-          { key: "overview", label: "Air Job", icon: "pi pi-send" },
-          { key: "awb", label: "AWB", icon: "pi pi-ticket" },
-          { key: "routing", label: "Routing", icon: "pi pi-map" },
-          { key: "charges", label: "Charges", icon: "pi pi-dollar", badge: 0 },
+          { key: "job_details", label: "Job Details", icon: "pi pi-folder-open" },
+          { key: "packages", label: "Packages", icon: "pi pi-box" },
+          { key: "charges", label: "Charges", icon: "pi pi-dollar" },
+          { key: "documents", label: "Documents", icon: "pi pi-file" },
+          { key: "notes", label: "Notes", icon: "pi pi-pencil" },
+        ]
+
+      case "courier":
+        return [
+          { key: "overview", label: "Overview", icon: "pi pi-home" },
+          { key: "collection", label: "Collection", icon: "pi pi-arrow-down-left" },
+          { key: "delivery", label: "Delivery", icon: "pi pi-arrow-up-right" },
+          { key: "packages", label: "Packages", icon: "pi pi-box" },
+          { key: "charges", label: "Charges", icon: "pi pi-dollar" },
+          { key: "documents", label: "Documents", icon: "pi pi-file" },
+          { key: "history", label: "History", icon: "pi pi-history" },
+        ]
+
+      case "rail":
+        return [
+          { key: "rail_details", label: "Rail Details", icon: "pi pi-folder-open" },
+          { key: "parties", label: "Parties", icon: "pi pi-users" },
+          { key: "packages", label: "Packages", icon: "pi pi-box" },
+          { key: "charges", label: "Charges", icon: "pi pi-dollar" },
           { key: "documents", label: "Documents", icon: "pi pi-file" },
           { key: "reference_data", label: "Reference Data", icon: "pi pi-book" },
+          { key: "activity", label: "Activity", icon: "pi pi-clock" },
         ]
 
       case "sea":
         return [
-          { key: "overview", label: "Sea Job", icon: "pi pi-directions-alt" },
-          { key: "container", label: "Containers", icon: "pi pi-box" },
+          { key: "core_details", label: "Core Details", icon: "pi pi-folder-open" },
+          { key: "carrier_vessel", label: "Carrier and Vessel", icon: "pi pi-send" },
+          { key: "routing_dates", label: "Routing and Dates", icon: "pi pi-map" },
+          { key: "cargo_customs", label: "Cargo and Customs", icon: "pi pi-briefcase" },
+        ]
+
+      case "multi_modal":
+        return [
+          { key: "job_details", label: "Job Details", icon: "pi pi-folder-open" },
           { key: "routing", label: "Routing", icon: "pi pi-map" },
-          { key: "customs", label: "Customs", icon: "pi pi-globe" },
+          { key: "packages", label: "Packages", icon: "pi pi-box" },
+          { key: "charges", label: "Charges", icon: "pi pi-dollar" },
           { key: "documents", label: "Documents", icon: "pi pi-file" },
-          { key: "reference_data", label: "Reference Data", icon: "pi pi-book" },
+          { key: "activity", label: "Activity", icon: "pi pi-clock" },
+        ]
+
+      case "consolidation":
+        return [
+          { key: "overview", label: "Overview", icon: "pi pi-home" },
+          { key: "supplier_invoices", label: "Supplier Invoices", icon: "pi pi-receipt" },
+          { key: "collection_orders", label: "Collection Orders", icon: "pi pi-truck" },
+          { key: "consolidated_invoice", label: "Consolidated Invoice", icon: "pi pi-file" },
+          { key: "customer_invoice", label: "Customer Invoice", icon: "pi pi-wallet" },
+          { key: "goods_in_out_wms", label: "Goods In/Out WMS", icon: "pi pi-box" },
         ]
 
       default:
         return [
           { key: "overview", label: "Overview", icon: "pi pi-folder-open" },
           { key: "documents", label: "Documents", icon: "pi pi-file" },
-          { key: "reference_data", label: "Reference Data", icon: "pi pi-book" },
         ]
     }
   })
