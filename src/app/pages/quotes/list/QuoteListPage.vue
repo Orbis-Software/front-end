@@ -3,7 +3,6 @@
     <div class="page-header">
       <div>
         <h1 class="page-title">Quotations</h1>
-        <p class="page-subtitle">Manage all quotations</p>
       </div>
 
       <div class="page-actions">

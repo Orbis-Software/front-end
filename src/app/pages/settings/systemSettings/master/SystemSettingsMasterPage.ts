@@ -1,6 +1,7 @@
-import { computed, onMounted, reactive, ref } from "vue"
+import { computed, onMounted, reactive, ref, watch } from "vue"
 import { useRouter } from "vue-router"
 import { useCompanyStore } from "@/app/stores/company"
+import { useSystemSettingsStore } from "@/app/stores/system-settings"
 import type {
   Company,
   CompanyAddress,
@@ -34,6 +35,7 @@ const refCatalog: Array<{ type: CompanyReferenceType; title: string; defaultPref
 export function useMasterSettingsPage() {
   const router = useRouter()
   const companyStore = useCompanyStore()
+  const systemSettingsStore = useSystemSettingsStore()
 
   const company = computed(() => companyStore.item)
   const loading = computed(() => companyStore.loading)
@@ -125,14 +127,18 @@ export function useMasterSettingsPage() {
     form.contact_email = c.primary_contact?.email ?? ""
     form.contact_mobile = c.primary_contact?.mobile ?? ""
     form.contact_telephones = Array.isArray(c.primary_contact?.telephones)
-      ? [...c.primary_contact!.telephones]
+      ? [...c.primary_contact.telephones]
       : []
 
     form.settings_time_zone = c.settings?.time_zone ?? c.time_zone ?? ""
     form.settings_main_currency_code =
       c.settings?.main_currency_code ?? c.default_currency_code ?? ""
     form.settings_start_period = c.settings?.start_period ?? ""
-    form.settings_invoicing_period = (c.settings?.invoicing_period ?? "monthly") as any
+    form.settings_invoicing_period = (c.settings?.invoicing_period ?? "monthly") as
+      | "monthly"
+      | "weekly"
+      | "quarterly"
+      | "annually"
 
     form.additional_currencies = Array.isArray(c.additional_currencies)
       ? [...c.additional_currencies]
@@ -160,6 +166,8 @@ export function useMasterSettingsPage() {
         use_system: Boolean(seq?.use_system ?? true),
       }
     })
+
+    systemSettingsStore.setEoriNumber(form.eori_number)
   }
 
   const globalUseSystem = computed({
@@ -178,12 +186,10 @@ export function useMasterSettingsPage() {
     const width = Math.max(1, Number(r.min_width ?? raw.length ?? 1))
     const num = padLeft(raw || "1", width)
 
-    // ✅ account numbers: NO year, NO dash
     if (r.type === "account") {
       return `${prefix}${num}`
     }
 
-    // ✅ others: prefix + YY + "-" + number
     const yy = year2(r.year_digits)
     return `${prefix}${yy}-${num}`
   }
@@ -200,14 +206,10 @@ export function useMasterSettingsPage() {
     for (const r of form.refs) {
       if (r.type === src.type) continue
 
-      // copy these
       r.prefix = src.prefix
       r.start_number = src.start_number
       r.min_width = src.min_width
       r.use_system = src.use_system
-
-      // ✅ do NOT copy year (it’s display-only anyway, and account doesn't use it)
-      // r.year_digits stays as-is
     }
   }
 
@@ -283,7 +285,7 @@ export function useMasterSettingsPage() {
       reference_sequences: form.refs.map(r => ({
         type: r.type,
         prefix: r.prefix,
-        year_digits: r.type === "account" ? null : (r.year_digits ?? null), // ✅ account has no year
+        year_digits: r.type === "account" ? null : (r.year_digits ?? null),
         start_number: digitsMax9(r.start_number || "") || null,
         use_system: r.use_system,
       })),
@@ -317,6 +319,14 @@ export function useMasterSettingsPage() {
       throw e
     }
   }
+
+  watch(
+    () => form.eori_number,
+    value => {
+      systemSettingsStore.setEoriNumber(value)
+    },
+    { immediate: true },
+  )
 
   onMounted(async () => {
     await onRefresh()

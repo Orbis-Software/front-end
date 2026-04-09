@@ -1,0 +1,661 @@
+.awb-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.awb-page__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.awb-page__title {
+  margin: 0;
+  font-family: "IBM Plex Sans", sans-serif;
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.awb-page__subtitle {
+  margin: 6px 0 0;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.awb-page__eori {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.awb-page__actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.awb-summary {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.awb-summary__card,
+.awb-empty-card,
+.awb-airline-card {
+  background: var(--bg-card);
+  border: 1px solid #c7c7c7;
+  border-radius: 12px;
+}
+
+.awb-summary__card {
+  padding: 14px 18px;
+}
+
+.awb-summary__label {
+  margin-bottom: 4px;
+  font-family: "IBM Plex Sans", sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.awb-summary__value {
+  font-family: "IBM Plex Sans", sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.awb-summary__value--orange {
+  color: var(--primary);
+}
+
+.awb-empty-card {
+  padding: 32px 20px;
+  text-align: center;
+}
+
+.awb-empty-card__title {
+  font-family: "IBM Plex Sans", sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.awb-empty-card__text {
+  margin-top: 6px;
+  color: var(--text-muted);
+}
+
+.awb-airline-card {
+  overflow: hidden;
+}
+
+.awb-airline-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+  background: #fafafa;
+  border-bottom: 1px solid #c7c7c7;
+}
+
+.awb-airline-card__header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  flex: 1;
+  cursor: pointer;
+}
+
+.awb-airline-card__badge {
+  min-width: 52px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: var(--primary);
+  color: #fff;
+  text-align: center;
+  font-family: "IBM Plex Sans", sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.awb-airline-card__name {
+  font-family: "IBM Plex Sans", sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.awb-airline-card__meta {
+  margin-top: 2px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.awb-airline-card__stats {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.awb-airline-card__header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.awb-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.awb-pill--total {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.awb-pill--available {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.awb-pill--used {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.awb-pill--reserved {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.awb-chevron {
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  transition: transform 0.2s ease;
+}
+
+.awb-chevron--open {
+  transform: rotate(180deg);
+}
+
+.awb-airline-card__body {
+  padding: 16px 18px;
+}
+
+.awb-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.awb-toolbar__left,
+.awb-toolbar__right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.awb-input {
+  width: 100%;
+  min-height: 38px;
+  padding: 8px 10px;
+  border: 1px solid #c7c7c7;
+  border-radius: 6px;
+  background: #fff;
+  color: var(--text);
+  font-size: 13px;
+  outline: none;
+}
+
+.awb-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(236, 105, 26, 0.12);
+}
+
+.awb-input--readonly {
+  background: #f5f5f5;
+  color: var(--text-muted);
+}
+
+.awb-search {
+  width: 220px;
+}
+
+.awb-select {
+  width: 140px;
+}
+
+.awb-textarea {
+  min-height: 78px;
+  resize: vertical;
+  padding-top: 10px;
+}
+
+.awb-textarea--lg {
+  min-height: 120px;
+}
+
+.awb-table-wrap {
+  overflow-x: auto;
+  border: 1px solid #c7c7c7;
+  border-radius: 8px;
+}
+
+.awb-table {
+  width: 100%;
+  min-width: 860px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.awb-table thead tr {
+  background: #f5f5f5;
+}
+
+.awb-table th {
+  padding: 10px 12px;
+  text-align: left;
+  font-family: "IBM Plex Sans", sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  border-bottom: 1px solid #c7c7c7;
+}
+
+.awb-table tbody tr {
+  border-bottom: 1px solid #ebebeb;
+}
+
+.awb-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.awb-table tbody tr:hover {
+  background: #fafafa;
+}
+
+.awb-table td {
+  padding: 10px 12px;
+  vertical-align: middle;
+}
+
+.awb-table__actions-head {
+  text-align: right;
+}
+
+.awb-number {
+  font-family: "IBM Plex Sans", sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+}
+
+.awb-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.awb-status::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.awb-status--available {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.awb-status--available::before {
+  background: #16a34a;
+}
+
+.awb-status--used {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.awb-status--used::before {
+  background: #dc2626;
+}
+
+.awb-status--reserved {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.awb-status--reserved::before {
+  background: #d97706;
+}
+
+.awb-status--voided {
+  background: #f4f4f5;
+  color: #71717a;
+}
+
+.awb-status--voided::before {
+  background: #a1a1aa;
+}
+
+.awb-job-link {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.awb-muted {
+  color: #c7c7c7;
+}
+
+.awb-notes {
+  max-width: 220px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text-muted);
+}
+
+.awb-action-cell {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 4px;
+}
+
+.awb-row-count {
+  padding-top: 8px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.awb-empty-table {
+  padding: 30px 20px;
+  text-align: center;
+}
+
+.awb-empty-table__text {
+  color: var(--text-muted);
+}
+
+.awb-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 38px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.15s ease;
+  white-space: nowrap;
+}
+
+.awb-btn--sm {
+  min-height: 30px;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.awb-btn--primary {
+  background: var(--primary);
+  color: #fff;
+}
+
+.awb-btn--primary:hover {
+  background: var(--primary-hover);
+}
+
+.awb-btn--secondary {
+  background: #e5e5e5;
+  color: var(--text);
+  border-color: #c7c7c7;
+}
+
+.awb-btn--secondary:hover {
+  background: #d9d9d9;
+}
+
+.awb-btn--danger {
+  background: transparent;
+  color: #b91c1c;
+  border-color: #fecaca;
+}
+
+.awb-btn--danger:hover {
+  background: #fef2f2;
+}
+
+.awb-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.awb-modal {
+  width: 100%;
+  max-width: 520px;
+  background: #fff;
+  border: 1px solid #c7c7c7;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+}
+
+.awb-modal--wide {
+  max-width: 560px;
+}
+
+.awb-modal--sm {
+  max-width: 440px;
+}
+
+.awb-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid #ebebeb;
+}
+
+.awb-modal__header h3 {
+  margin: 0;
+  font-family: "IBM Plex Sans", sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.awb-modal__close {
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.awb-modal__body {
+  padding: 20px;
+}
+
+.awb-modal__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 14px 20px;
+  border-top: 1px solid #ebebeb;
+}
+
+.awb-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.awb-form-group {
+  margin-bottom: 16px;
+}
+
+.awb-form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-family: "IBM Plex Sans", sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.awb-form-hint {
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.awb-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid #ebebeb;
+}
+
+.awb-tab {
+  position: relative;
+  bottom: -1px;
+  padding: 8px 16px;
+  border: 1px solid #c7c7c7;
+  border-bottom: none;
+  border-radius: 6px 6px 0 0;
+  background: #f5f5f5;
+  color: var(--text-muted);
+  font-family: "IBM Plex Sans", sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.awb-tab--active {
+  background: var(--bg-page);
+  color: var(--text);
+  border-bottom: 1px solid var(--bg-page);
+}
+
+.awb-toast-wrap {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 1100;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.awb-toast {
+  min-width: 220px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.awb-toast--success {
+  background: #16a34a;
+}
+
+.awb-toast--error {
+  background: #dc2626;
+}
+
+.awb-toast--info {
+  background: #2563eb;
+}
+
+@media (max-width: 1200px) {
+  .awb-summary {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .awb-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .awb-form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .awb-airline-card__header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .awb-airline-card__stats,
+  .awb-airline-card__header-actions {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 640px) {
+  .awb-page__header {
+    flex-direction: column;
+  }
+
+  .awb-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .awb-search,
+  .awb-select {
+    width: 100%;
+  }
+
+  .awb-toolbar__left {
+    width: 100%;
+  }
+
+  .awb-toolbar__left > * {
+    flex: 1 1 100%;
+  }
+}

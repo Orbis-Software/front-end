@@ -9,14 +9,8 @@
 
 .accounts-page__header {
   display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.accounts-page__header-main {
-  display: flex;
+  align-items: center;
   justify-content: space-between;
-  align-items: flex-start;
   gap: 16px;
   flex-wrap: wrap;
 }
@@ -45,33 +39,73 @@
   flex-wrap: wrap;
 }
 
+/* Same integrated card feel as Settings */
+.accounts-page__card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  overflow: hidden;
+}
+
 .accounts-page__tabs {
   display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 2px;
+  padding: 0 14px;
+  background: #efefef;
+  border-top: 1px solid #ededed;
+  border-bottom: 1px solid #d9d9d9;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
 }
 
 .accounts-page__tab {
-  border: 1px solid var(--border);
-  background: var(--tab-inactive);
-  color: var(--text);
-  border-radius: 8px;
-  padding: 10px 14px;
-  font: inherit;
-  font-weight: 600;
+  appearance: none;
+  -webkit-appearance: none;
+  border: 1px solid transparent;
+  border-bottom: none;
+  outline: none;
+  box-shadow: none;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 16px;
+  margin-top: 8px;
+
+  border-radius: 10px 10px 0 0;
+  background: transparent;
+  color: #5c5c5c;
   cursor: pointer;
-  transition: 0.2s ease;
+  white-space: nowrap;
+
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
 }
 
 .accounts-page__tab:hover {
-  border-color: var(--primary);
-  color: var(--primary);
+  color: #222;
+  background: rgba(255, 255, 255, 0.45);
 }
 
 .accounts-page__tab--active {
-  background: #ffffff;
-  border-color: var(--border);
-  color: var(--text);
+  background: #fff;
+  color: #141414;
+  border-color: #d9d9d9;
+  position: relative;
+  top: 1px;
+}
+
+.accounts-page__content {
+  padding: 16px;
 }
 
 .accounts-page__body {
@@ -85,6 +119,11 @@
   padding: 24px;
 }
 
+/* optional cleanup so first sections do not feel double-wrapped too tightly */
+.accounts-page__content > *:first-child {
+  margin-top: 0;
+}
+
 @media (max-width: 768px) {
   .accounts-page {
     padding: 16px;
@@ -92,5 +131,20 @@
 
   .accounts-page__title {
     font-size: 22px;
+  }
+
+  .accounts-page__tabs {
+    padding: 0 10px;
+  }
+
+  .accounts-page__tab {
+    height: 40px;
+    padding: 0 14px;
+    margin-top: 6px;
+    font-size: 12px;
+  }
+
+  .accounts-page__content {
+    padding: 12px;
   }
 }

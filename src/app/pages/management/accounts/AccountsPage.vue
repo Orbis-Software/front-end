@@ -78,32 +78,27 @@ function printCurrentView() {
 <template>
   <div class="accounts-page">
     <section class="accounts-page__header">
-      <div class="accounts-page__header-main">
-        <div class="accounts-page__header-text">
-          <h1 class="accounts-page__title">TMS Accounts</h1>
-          <p class="accounts-page__subtitle">
-            API-ready finance demo for freight forwarding workflows with sales invoicing, supplier
-            payments, reporting, credit control, exchange rates, nominal codes, tax codes and bank
-            master data.
-          </p>
-        </div>
-
-        <div class="accounts-page__actions">
-          <Button
-            label="Export JSON"
-            icon="pi pi-download"
-            class="btn btn--ghost"
-            @click="exportJson"
-          />
-          <Button
-            label="Print Current View"
-            icon="pi pi-print"
-            class="btn btn--primary"
-            @click="printCurrentView"
-          />
-        </div>
+      <div class="accounts-page__header-text">
+        <h1 class="accounts-page__title">TMS Accounts</h1>
       </div>
 
+      <div class="accounts-page__actions">
+        <Button
+          label="Export JSON"
+          icon="pi pi-download"
+          class="btn btn--ghost"
+          @click="exportJson"
+        />
+        <Button
+          label="Print Current View"
+          icon="pi pi-print"
+          class="btn btn--primary"
+          @click="printCurrentView"
+        />
+      </div>
+    </section>
+
+    <section class="accounts-page__card">
       <div class="accounts-page__tabs">
         <button
           v-for="tab in tabs"
@@ -116,21 +111,23 @@ function printCurrentView() {
           {{ tab.label }}
         </button>
       </div>
-    </section>
 
-    <section class="accounts-page__body">
-      <AccountsOverviewSection v-if="activeTab === 'overview'" />
-      <AccountsInvoicingSection v-else-if="activeTab === 'invoicing'" />
-      <AccountsSupplierPaymentsSection v-else-if="activeTab === 'supplier-payments'" />
-      <AccountsReportingSection v-else-if="activeTab === 'reporting'" />
-      <AccountsCreditControlSection v-else-if="activeTab === 'credit-control'" />
-      <AccountsExchangeRatesSection v-else-if="activeTab === 'exchange-rates'" />
-      <AccountsChargeCodesSection v-else-if="activeTab === 'charge-codes'" />
-      <AccountsTaxCodesSection v-else-if="activeTab === 'tax-codes'" />
-      <AccountsClientBankDetailsSection v-else-if="activeTab === 'client-bank-details'" />
+      <div class="accounts-page__content">
+        <section class="accounts-page__body">
+          <AccountsOverviewSection v-if="activeTab === 'overview'" />
+          <AccountsInvoicingSection v-else-if="activeTab === 'invoicing'" />
+          <AccountsSupplierPaymentsSection v-else-if="activeTab === 'supplier-payments'" />
+          <AccountsReportingSection v-else-if="activeTab === 'reporting'" />
+          <AccountsCreditControlSection v-else-if="activeTab === 'credit-control'" />
+          <AccountsExchangeRatesSection v-else-if="activeTab === 'exchange-rates'" />
+          <AccountsChargeCodesSection v-else-if="activeTab === 'charge-codes'" />
+          <AccountsTaxCodesSection v-else-if="activeTab === 'tax-codes'" />
+          <AccountsClientBankDetailsSection v-else-if="activeTab === 'client-bank-details'" />
 
-      <div v-else class="accounts-page__fallback">
-        <h2>{{ currentTabLabel }}</h2>
+          <div v-else class="accounts-page__fallback">
+            <h2>{{ currentTabLabel }}</h2>
+          </div>
+        </section>
       </div>
     </section>
   </div>
