@@ -14,9 +14,7 @@
       </div>
 
       <fieldset :disabled="!isEditable" class="ms-fieldset">
-        <!-- 2-column cards -->
         <div class="ms-grid">
-          <!-- Company Information -->
           <section class="ms-card">
             <div class="ms-card-head">
               <div>
@@ -73,6 +71,9 @@
                     class="ms-input"
                     placeholder="Economic Operators Registration Num"
                   />
+                  <div class="ms-help">
+                    When this field has a value, the AWB Manager tab will appear in System Settings.
+                  </div>
                 </div>
                 <div class="ms-field">
                   <div class="ms-label">IATA Code</div>
@@ -82,7 +83,6 @@
             </div>
           </section>
 
-          <!-- Trading Address -->
           <section class="ms-card">
             <div class="ms-card-head">
               <div>
@@ -159,7 +159,6 @@
             </div>
           </section>
 
-          <!-- Contact Information -->
           <section class="ms-card">
             <div class="ms-card-head">
               <div>
@@ -213,7 +212,6 @@
             </div>
           </section>
 
-          <!-- System Settings -->
           <section class="ms-card">
             <div class="ms-card-head">
               <div>
@@ -289,7 +287,6 @@
           </section>
         </div>
 
-        <!-- Reference Numbers -->
         <section class="ms-card ms-wide">
           <div class="ms-card-head ms-wide-head">
             <div>
@@ -304,7 +301,6 @@
             <div class="ref-card" v-for="r in form.refs" :key="r.type">
               <div class="ref-title">{{ r.title }}</div>
 
-              <!-- Non-account refs: show Year (display-only) -->
               <div class="ref-cols" v-if="r.type !== 'account'">
                 <div class="ref-col">
                   <div class="ref-label">Prefix</div>
@@ -336,7 +332,6 @@
                 </div>
               </div>
 
-              <!-- Account Numbers: no Year -->
               <div class="ref-cols ref-cols-account" v-else>
                 <div class="ref-col">
                   <div class="ref-label">Prefix</div>
@@ -359,7 +354,6 @@
                 </div>
               </div>
 
-              <!-- Checkbox ONLY under Account Numbers -->
               <div class="ref-bottom" v-if="r.type === 'account'">
                 <label class="chk">
                   <input type="checkbox" v-model="globalUseSystem" />
@@ -371,7 +365,6 @@
         </section>
       </fieldset>
 
-      <!-- Bottom actions -->
       <div class="ms-actions">
         <button class="ms-back" type="button" @click="router.back()">← Back</button>
 

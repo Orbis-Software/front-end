@@ -5,7 +5,6 @@
     <div class="page-header">
       <div>
         <h1 class="page-title">Jobs</h1>
-        <p class="page-subtitle">Manage all transport jobs</p>
       </div>
 
       <div class="page-actions">

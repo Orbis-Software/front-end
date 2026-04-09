@@ -40,28 +40,43 @@
   overflow: hidden;
 }
 
+/* Match Jobs tab strip */
 .system-settings-page__tabs {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  padding: 1rem 1rem 0;
-  border-bottom: 1px solid var(--border);
-  background: #fff;
+  align-items: flex-end;
+  gap: 2px;
+  padding: 0 14px;
+  background: #efefef;
+  border-top: 1px solid #ededed;
+  border-bottom: 1px solid #d9d9d9;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
 }
 
 .system-settings-page__tab {
+  appearance: none;
+  -webkit-appearance: none;
+  border: 1px solid transparent;
+  border-bottom: none;
+  outline: none;
+  box-shadow: none;
+
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 42px;
-  padding: 0.7rem 1rem;
-  border: 1px solid var(--border);
-  border-bottom: none;
-  border-radius: 12px 12px 0 0;
-  background: #f8f8f8;
-  color: var(--text-muted);
+  min-height: 44px;
+  height: 44px;
+  padding: 0 16px;
+  margin-top: 8px;
+
+  border-radius: 10px 10px 0 0;
+  background: transparent;
+  color: #5c5c5c;
   text-decoration: none;
-  font-weight: 600;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 700;
   transition:
     background 0.2s ease,
     color 0.2s ease,
@@ -69,14 +84,16 @@
 }
 
 .system-settings-page__tab:hover {
-  background: #f2f2f2;
-  color: var(--text);
+  color: #222;
+  background: rgba(255, 255, 255, 0.45);
 }
 
 .system-settings-page__tab--active {
-  background: var(--primary);
-  border-color: var(--primary);
-  color: #fff;
+  background: #fff;
+  color: #141414;
+  border-color: #d9d9d9;
+  position: relative;
+  top: 1px;
 }
 
 .system-settings-page__content {
@@ -89,7 +106,7 @@
   }
 
   .system-settings-page__tabs {
-    padding: 0.75rem 0.75rem 0;
+    padding: 0 10px;
   }
 
   .system-settings-page__content {
@@ -97,12 +114,10 @@
   }
 
   .system-settings-page__tab {
-    width: 100%;
-    border-radius: 12px;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .system-settings-page__tab--active {
-    border-color: var(--primary);
+    min-height: 40px;
+    height: 40px;
+    padding: 0 14px;
+    margin-top: 6px;
+    font-size: 12px;
   }
 }

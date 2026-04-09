@@ -42,6 +42,8 @@ const SystemSettingsShortcutsPage = () =>
   import("@/app/pages/settings/systemSettings/shortcuts/SystemSettingsShortcutsPage.vue")
 const MasterSettingsPage = () =>
   import("@/app/pages/settings/systemSettings/master/SystemSettingsMasterPage.vue")
+const SystemSettingsAwbManagerPage = () =>
+  import("@/app/pages/settings/systemSettings/awbManager/SystemSettingsAwbManagerPage.vue")
 
 export const routes: RouteRecordRaw[] = [
   {
@@ -237,6 +239,12 @@ export const routes: RouteRecordRaw[] = [
             name: "settings.system.master",
             component: MasterSettingsPage,
             meta: { title: "System Settings • Master Settings" },
+          },
+          {
+            path: "awb-manager",
+            name: "settings.system.awb_manager",
+            component: SystemSettingsAwbManagerPage,
+            meta: { title: "System Settings • AWB Manager" },
           },
         ],
       },
