@@ -100,9 +100,9 @@ export function useTopNavItems(): {
         ],
       },
       {
-        id: "employees",
-        label: "Employees",
-        to: "/employees",
+        id: "users",
+        label: "Employee",
+        to: "/management/users",
         anyPermissions: [
           "mgmt.employees.view",
           "mgmt.employees.manage",

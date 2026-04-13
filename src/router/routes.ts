@@ -28,6 +28,7 @@ const ContactDetailsPage = () => import("@/app/pages/contacts/details/ContactDet
 const EmployeeListPage = () => import("@/app/pages/employees/EmployeeListPage.vue")
 const SystemAccessPage = () => import("@/app/pages/system-access/SystemAccessPage.vue")
 const AccountsPage = () => import("@/app/pages/management/accounts/AccountsPage.vue")
+const ManagementUsersPage = () => import("@/app/pages/management/users/ManagementUsersPage.vue")
 
 /* =========================
    System Settings Pages
@@ -183,18 +184,36 @@ export const routes: RouteRecordRaw[] = [
         component: AccountsPage,
         meta: { title: "Accounts" },
       },
+
+      /**
+       * ============================
+       * User Management
+       * ============================
+       */
       {
-        path: "employees",
-        name: "mgmt.employees",
-        component: EmployeeListPage,
-        meta: { title: "Employees (Logins & Roles)" },
+        path: "management/users",
+        component: ManagementUsersPage,
+        meta: { title: "User Management" },
+        children: [
+          {
+            path: "",
+            redirect: { name: "mgmt.users.employees" },
+          },
+          {
+            path: "employees",
+            name: "mgmt.users.employees",
+            component: EmployeeListPage,
+            meta: { title: "User Management • Employee List" },
+          },
+          {
+            path: "system-access",
+            name: "mgmt.users.system-access",
+            component: SystemAccessPage,
+            meta: { title: "User Management • System Access" },
+          },
+        ],
       },
-      {
-        path: "system-access",
-        name: "mgmt.system-access",
-        component: SystemAccessPage,
-        meta: { title: "System Access" },
-      },
+
       {
         path: "settings",
         name: "app.settings",

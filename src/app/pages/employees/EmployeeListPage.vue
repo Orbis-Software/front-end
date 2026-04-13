@@ -3,7 +3,6 @@
     <section class="emp-header">
       <div>
         <h1 class="emp-title">Employee List</h1>
-        <p class="emp-subtitle">List, create, and update employees in your company.</p>
       </div>
 
       <Button
