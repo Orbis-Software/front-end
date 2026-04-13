@@ -1,29 +1,33 @@
 <script setup lang="ts">
 import "./AirJobDetails.css"
 
+import AirJobInformationSection from "./sections/AirJobInformationSection.vue"
+import AirPackagesTab from "./sections/AirPackagesTab.vue"
+import AirChargesTab from "./sections/AirChargesTab.vue"
+import AirDocumentsTab from "./sections/AirDocumentsTab.vue"
+import AirNotesTab from "./sections/AirNotesTab.vue"
+
 defineProps<{
   form: any
+  activeTab: string
+  disabled?: boolean
 }>()
 </script>
 
 <template>
-  <div class="mode-coming">
-    <div class="mode-coming-card">
-      <div class="mode-coming-header">✈️ Air Freight Module</div>
+  <div class="air-details">
+    <AirJobInformationSection
+      v-if="activeTab === 'job_details'"
+      :form="form"
+      :disabled="disabled"
+    />
 
-      <div class="mode-coming-body">
-        <p>This section will handle full air shipment workflows including:</p>
+    <AirPackagesTab v-else-if="activeTab === 'packages'" :form="form" :disabled="disabled" />
 
-        <ul>
-          <li>Air Waybill (AWB) management</li>
-          <li>Flight scheduling and routing</li>
-          <li>Shipper / Consignee details</li>
-          <li>Cargo and weight breakdown</li>
-          <li>Airline integrations</li>
-        </ul>
+    <AirChargesTab v-else-if="activeTab === 'charges'" :form="form" :disabled="disabled" />
 
-        <div class="mode-coming-status">🚧 Currently under development</div>
-      </div>
-    </div>
+    <AirDocumentsTab v-else-if="activeTab === 'documents'" :form="form" :disabled="disabled" />
+
+    <AirNotesTab v-else-if="activeTab === 'notes'" :form="form" :disabled="disabled" />
   </div>
 </template>
