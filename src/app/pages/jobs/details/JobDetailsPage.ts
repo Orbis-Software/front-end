@@ -265,7 +265,6 @@ export function useJobDetailsPage() {
           { key: "packages", label: "Packages", icon: "pi pi-box" },
           { key: "charges", label: "Charges", icon: "pi pi-dollar" },
           { key: "documents", label: "Documents", icon: "pi pi-file" },
-          { key: "reference_data", label: "Reference Data", icon: "pi pi-book" },
         ]
 
       case "sea":

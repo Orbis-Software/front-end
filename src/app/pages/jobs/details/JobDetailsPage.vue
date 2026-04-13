@@ -8,6 +8,7 @@ import Button from "primevue/button"
 import {
   JobDetailsTabs,
   RoadJobDetails,
+  RailJobDetails,
   AirJobDetails,
   SeaJobDetails,
 } from "@/app/components/jobs/details"
@@ -141,6 +142,13 @@ const progressSteps = computed(() => [
     <div class="job-content-shell">
       <RoadJobDetails
         v-if="form.mode_of_transport === 'road'"
+        :form="form"
+        :active-tab="activeTab"
+        :disabled="loading"
+      />
+
+      <RailJobDetails
+        v-else-if="form.mode_of_transport === 'rail'"
         :form="form"
         :active-tab="activeTab"
         :disabled="loading"
