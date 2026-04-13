@@ -29,12 +29,7 @@
           @click="onImportContacts"
         />
 
-        <Button
-          class="btn-primary new-btn"
-          icon="pi pi-plus"
-          label="New Job"
-          @click="onNewJob"
-        />
+        <Button class="btn-primary new-btn" icon="pi pi-plus" label="New Job" @click="onNewJob" />
       </div>
     </div>
 
