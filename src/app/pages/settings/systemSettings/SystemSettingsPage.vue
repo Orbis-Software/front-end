@@ -11,9 +11,6 @@ const { tabs, isActive } = useSystemSettingsPage()
     <header class="system-settings-page__header">
       <div class="system-settings-page__title-wrap">
         <h1 class="system-settings-page__title">System Settings</h1>
-        <p class="system-settings-page__subtitle">
-          Manage company, branding, shortcuts, and master settings.
-        </p>
       </div>
     </header>
 
