@@ -86,12 +86,12 @@ function resolveHref(path?: string) {
 
 <style scoped>
 .top-nav {
-  --shell-side-padding: clamp(36px, 4vw, 72px);
+  --shell-side-padding: clamp(40px, 5vw, 80px);
   --shell-content-max: 1400px;
 
   width: 100%;
   background: #fff;
-  border-bottom: none;
+  border-bottom: 1px solid var(--border);
 }
 
 .nav-inner {
@@ -106,10 +106,11 @@ function resolveHref(path?: string) {
   display: flex;
   list-style: none;
   margin: 0;
-  padding: 0;
+  padding: 10px 0;
   width: 100%;
   justify-content: flex-start;
   align-items: center;
+  gap: 6px;
   flex-wrap: nowrap;
   white-space: nowrap;
   overflow: visible;
@@ -125,17 +126,19 @@ function resolveHref(path?: string) {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 16px 18px;
+  padding: 10px 14px;
+  border-radius: 10px;
   background: transparent;
-  border: none;
+  border: 1px solid transparent;
   cursor: pointer;
   text-decoration: none;
-  font-weight: 700;
+  font-weight: 600;
   font-size: 0.95rem;
-  color: #1f2937;
+  color: var(--text);
   transition:
     background-color 0.15s ease,
-    color 0.15s ease;
+    color 0.15s ease,
+    border-color 0.15s ease;
 }
 
 .nav-link:visited,
@@ -145,37 +148,24 @@ function resolveHref(path?: string) {
 }
 
 .nav-link:hover {
-  background-color: #f5f5f5;
+  background: rgba(236, 105, 26, 0.08);
   color: var(--primary);
 }
 
 .nav-link.active {
-  background: rgba(0, 0, 0, 0.04);
+  background: rgba(236, 105, 26, 0.12);
   color: var(--primary);
+  border-color: rgba(236, 105, 26, 0.18);
 }
 
 .nav-link.active::after {
-  content: "";
-  position: absolute;
-  left: 14px;
-  right: 14px;
-  bottom: -1px;
-  height: 3px;
-  background-color: var(--primary);
-  border-radius: 2px;
-}
-
-@media (max-width: 1400px) {
-  .nav-link {
-    padding: 14px 14px;
-    font-size: 0.92rem;
-  }
+  display: none;
 }
 
 @media (max-width: 1280px) {
   .nav-link {
-    padding: 12px 10px;
-    font-size: 0.88rem;
+    padding: 9px 12px;
+    font-size: 0.9rem;
   }
 }
 
@@ -192,18 +182,21 @@ function resolveHref(path?: string) {
     z-index: 55;
     overflow: visible;
     white-space: normal;
+    padding: 10px;
+    gap: 4px;
+    border-top: 1px solid var(--border);
+    box-shadow: 0 18px 45px rgba(0, 0, 0, 0.12);
   }
 
   .nav-list.show {
     display: flex;
-    box-shadow: 0 18px 45px rgba(0, 0, 0, 0.12);
   }
 
   .nav-link {
     width: 100%;
     justify-content: flex-start;
-    padding: 16px 18px;
-    border-radius: 0;
+    padding: 14px 16px;
+    border-radius: 10px;
   }
 }
 </style>

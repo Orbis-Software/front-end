@@ -115,7 +115,6 @@ export function useJobDetailsPage() {
   const prevSearch = ref("")
 
   const form = reactive({
-    // real existing fields
     customer_id: null as number | null,
     quote_ref: "" as string,
     job_date: null as Date | null,
@@ -125,11 +124,9 @@ export function useJobDetailsPage() {
     job_number: "" as string,
     mode_of_transport: null as TransportMode | null,
 
-    // header/meta
     status: "Draft" as string,
     created_label: "" as string,
 
-    // road ui fields
     awb_no: "" as string,
     customer_reference: "" as string,
     our_reference: "" as string,
@@ -206,7 +203,6 @@ export function useJobDetailsPage() {
     cmr_waybill_no: "" as string,
     route_via: "" as string,
 
-    // air / sea placeholder support
     flight_no: "" as string,
     origin_airport: "" as string,
     destination_airport: "" as string,
@@ -240,9 +236,7 @@ export function useJobDetailsPage() {
           { key: "job_details", label: "Job Details", icon: "pi pi-folder-open" },
           { key: "packages", label: "Packages", icon: "pi pi-box" },
           { key: "charges", label: "Charges", icon: "pi pi-dollar" },
-          { key: "tracking", label: "Tracking", icon: "pi pi-clock" },
           { key: "documents", label: "Documents", icon: "pi pi-file" },
-          { key: "reference_data", label: "Reference Data", icon: "pi pi-book" },
         ]
 
       case "air":
@@ -262,7 +256,6 @@ export function useJobDetailsPage() {
           { key: "packages", label: "Packages", icon: "pi pi-box" },
           { key: "charges", label: "Charges", icon: "pi pi-dollar" },
           { key: "documents", label: "Documents", icon: "pi pi-file" },
-          { key: "history", label: "History", icon: "pi pi-history" },
         ]
 
       case "rail":
@@ -273,7 +266,6 @@ export function useJobDetailsPage() {
           { key: "charges", label: "Charges", icon: "pi pi-dollar" },
           { key: "documents", label: "Documents", icon: "pi pi-file" },
           { key: "reference_data", label: "Reference Data", icon: "pi pi-book" },
-          { key: "activity", label: "Activity", icon: "pi pi-clock" },
         ]
 
       case "sea":
@@ -291,7 +283,6 @@ export function useJobDetailsPage() {
           { key: "packages", label: "Packages", icon: "pi pi-box" },
           { key: "charges", label: "Charges", icon: "pi pi-dollar" },
           { key: "documents", label: "Documents", icon: "pi pi-file" },
-          { key: "activity", label: "Activity", icon: "pi pi-clock" },
         ]
 
       case "consolidation":
@@ -327,6 +318,7 @@ export function useJobDetailsPage() {
   )
 
   const headerTitle = computed(() => form.job_number || "Job")
+
   const headerMeta = computed(() => {
     const mode = toTitleCaseMode(form.mode_of_transport)
     const status = form.status || "Draft"
@@ -493,6 +485,7 @@ export function useJobDetailsPage() {
       }
 
       const c = (contactStore.items ?? []).find((x: any) => Number(x.id) === Number(id)) as any
+
       if (c) {
         form.account_number = c.account_number ?? ""
         form.customer_name = contactDisplayName(c)
@@ -504,6 +497,7 @@ export function useJobDetailsPage() {
     if (!jobId.value) return
 
     saving.value = true
+
     try {
       const payload: TransportJobUpdatePayload = {
         customer_id: form.customer_id ?? null,
@@ -526,12 +520,14 @@ export function useJobDetailsPage() {
       await load()
     } catch (e: any) {
       const msg = String(e?.response?.data?.message ?? e?.message ?? "Unable to save job")
+
       toast.add({
         severity: "error",
         summary: "Failed",
         detail: msg,
         life: 4000,
       })
+
       throw e
     } finally {
       saving.value = false
