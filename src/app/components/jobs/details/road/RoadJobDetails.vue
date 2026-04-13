@@ -1,9 +1,18 @@
 <script setup lang="ts">
 import "./RoadJobDetails.css"
 
-import JobInformationSection from "./sections/JobInformationSection.vue"
-import OrderTypeSection from "./sections/OrderTypeSection.vue"
-import LocalCollectionSection from "./sections/LocalCollectionSection.vue"
+import RoadJobInformationSection from "./sections/RoadJobInformationSection.vue"
+import RoadOrderTypeSection from "./sections/RoadOrderTypeSection.vue"
+import RoadLocalCollectionSection from "./sections/RoadLocalCollectionSection.vue"
+import RoadFullTransportSection from "./sections/RoadFullTransportSection.vue"
+import RoadCollectionSection from "./sections/RoadCollectionSection.vue"
+import RoadDeliverySection from "./sections/RoadDeliverySection.vue"
+import RoadCarrierSection from "./sections/RoadCarrierSection.vue"
+import RoadPackagesTab from "./sections/RoadPackagesTab.vue"
+import RoadChargesTab from "./sections/RoadChargesTab.vue"
+import RoadTrackingTab from "./sections/RoadTrackingTab.vue"
+import RoadDocumentsTab from "./sections/RoadDocumentsTab.vue"
+import RoadReferenceDataTab from "./sections/RoadReferenceDataTab.vue"
 
 defineProps<{
   form: any
@@ -15,34 +24,37 @@ defineProps<{
 <template>
   <div class="road-details">
     <template v-if="activeTab === 'job_details'">
-      <JobInformationSection :form="form" :disabled="disabled" />
-      <OrderTypeSection :form="form" :disabled="disabled" />
-      <LocalCollectionSection :form="form" :disabled="disabled" />
+      <RoadJobInformationSection :form="form" :disabled="disabled" />
+      <RoadOrderTypeSection :form="form" :disabled="disabled" />
+
+      <RoadLocalCollectionSection
+        v-if="form.order_type === 'local_collection'"
+        :form="form"
+        :disabled="disabled"
+      />
+
+      <RoadFullTransportSection v-else :form="form" :disabled="disabled" />
+
+      <div class="road-two-col">
+        <RoadCollectionSection :form="form" :disabled="disabled" />
+        <RoadDeliverySection :form="form" :disabled="disabled" />
+      </div>
+
+      <RoadCarrierSection :form="form" :disabled="disabled" />
     </template>
 
-    <div v-else-if="activeTab === 'packages'" class="card">
-      <div class="section-title">Packages</div>
-      <div class="placeholder-text">Road packages section here.</div>
-    </div>
+    <RoadPackagesTab v-else-if="activeTab === 'packages'" :form="form" :disabled="disabled" />
 
-    <div v-else-if="activeTab === 'charges'" class="card">
-      <div class="section-title">Charges</div>
-      <div class="placeholder-text">Road charges section here.</div>
-    </div>
+    <RoadChargesTab v-else-if="activeTab === 'charges'" :form="form" :disabled="disabled" />
 
-    <div v-else-if="activeTab === 'tracking'" class="card">
-      <div class="section-title">Tracking</div>
-      <div class="placeholder-text">Road tracking section here.</div>
-    </div>
+    <RoadTrackingTab v-else-if="activeTab === 'tracking'" :form="form" :disabled="disabled" />
 
-    <div v-else-if="activeTab === 'documents'" class="card">
-      <div class="section-title">Documents</div>
-      <div class="placeholder-text">Road documents section here.</div>
-    </div>
+    <RoadDocumentsTab v-else-if="activeTab === 'documents'" :form="form" :disabled="disabled" />
 
-    <div v-else-if="activeTab === 'reference_data'" class="card">
-      <div class="section-title">Reference Data</div>
-      <div class="placeholder-text">Road reference data section here.</div>
-    </div>
+    <RoadReferenceDataTab
+      v-else-if="activeTab === 'reference_data'"
+      :form="form"
+      :disabled="disabled"
+    />
   </div>
 </template>

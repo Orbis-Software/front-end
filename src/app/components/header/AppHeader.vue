@@ -1,21 +1,30 @@
 <script setup lang="ts">
 import { computed, onMounted, onBeforeUnmount, ref } from "vue"
+import { RouterLink, useRoute } from "vue-router"
 import UserDropdown from "@/app/components/nav/UserDropdown.vue"
 import { useAuthStore } from "@/app/stores/auth"
+import { useUiStore } from "@/app/stores/ui"
 import type { AppArea } from "@/app/stores/ui"
+import { useTopNavItems, type NavItem } from "@/app/components/nav/topNavItems"
 
 type Props = {
   area: AppArea
+  mobileOpen: boolean
 }
 
-defineProps<Props>()
+const props = defineProps<Props>()
 
 const emit = defineEmits<{
   (e: "switch-area", v: AppArea): void
   (e: "toggle-mobile-nav"): void
+  (e: "close-mobile"): void
 }>()
 
 const auth = useAuthStore()
+const ui = useUiStore()
+const route = useRoute()
+const items = useTopNavItems()
+
 const userDropdownOpen = ref(false)
 
 const userName = computed(() => auth.user?.name ?? "User")
@@ -52,6 +61,40 @@ function handleClickOutside(e: MouseEvent) {
   }
 }
 
+function canAccess(item: NavItem): boolean {
+  if (item.devOnly && !auth.isDev) return false
+  if (item.adminOnly && !auth.isAdmin) return false
+
+  if (item.roles?.length && item.roles.some(role => auth.hasRole(role))) {
+    return true
+  }
+
+  if (item.permission) return auth.hasPermission(item.permission)
+
+  if (item.anyPermissions?.length) {
+    return item.anyPermissions.some(permission => auth.hasPermission(permission))
+  }
+
+  return true
+}
+
+const canSeeManagement = computed(() => {
+  return auth.permissions.some(permission => permission.startsWith("mgmt."))
+})
+
+const menu = computed(() => {
+  const base = props.area === "tms" ? items.tms : items.wms
+  const combined =
+    ui.canSeeManagement || canSeeManagement.value ? [...base, ...items.management] : base
+
+  return combined.filter(canAccess)
+})
+
+function matchPath(path?: string) {
+  if (!path) return false
+  return route.path === path || route.path.startsWith(path + "/")
+}
+
 onMounted(() => document.addEventListener("click", handleClickOutside))
 onBeforeUnmount(() => document.removeEventListener("click", handleClickOutside))
 </script>
@@ -59,8 +102,25 @@ onBeforeUnmount(() => document.removeEventListener("click", handleClickOutside))
 <template>
   <header class="app-header">
     <div class="header-inner">
-      <div class="brand">
-        <img class="brand-logo" :src="companyLogoSrc" alt="Company logo" />
+      <div class="header-left">
+        <div class="brand">
+          <img class="brand-logo" :src="companyLogoSrc" alt="Company logo" />
+        </div>
+
+        <nav class="top-nav" role="navigation" aria-label="Primary">
+          <ul class="nav-list" :class="{ show: mobileOpen }">
+            <li v-for="item in menu" :key="item.id" class="nav-item">
+              <RouterLink
+                class="nav-link"
+                :class="{ active: matchPath(item.to) }"
+                :to="item.to || '/'"
+                @click="emit('close-mobile')"
+              >
+                {{ item.label }}
+              </RouterLink>
+            </li>
+          </ul>
+        </nav>
       </div>
 
       <div class="controls">
@@ -109,55 +169,111 @@ onBeforeUnmount(() => document.removeEventListener("click", handleClickOutside))
 
 <style scoped>
 .app-header {
-  --shell-side-padding: clamp(40px, 5vw, 80px);
+  --shell-side-padding: clamp(20px, 2.4vw, 32px);
   --shell-content-max: 1400px;
 
   width: 100%;
   background: #fff;
-  border-bottom: none;
 }
 
 .header-inner {
-  height: 70px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
   width: 100%;
   max-width: calc(var(--shell-content-max) + (var(--shell-side-padding) * 2));
   margin: 0 auto;
   padding: 0 var(--shell-side-padding);
+  height: 78px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
   box-sizing: border-box;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 26px;
+  min-width: 0;
+  flex: 1;
 }
 
 .brand {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
-  min-width: 0;
   flex: 0 0 auto;
 }
 
 .brand-logo {
   display: block;
-  height: 36px;
+  height: 38px;
   width: auto;
   max-width: 140px;
   object-fit: contain;
+}
+
+.top-nav {
+  min-width: 0;
+  flex: 1;
+}
+
+.nav-list {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.nav-item {
+  flex: 0 0 auto;
+}
+
+.nav-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 14px;
+  border-radius: 10px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--text);
+  border: 1px solid transparent;
+  transition:
+    background-color 0.16s ease,
+    color 0.16s ease,
+    border-color 0.16s ease;
+}
+
+.nav-link:hover {
+  background: rgba(236, 105, 26, 0.08);
+  color: var(--primary);
+}
+
+.nav-link.active {
+  background: rgba(236, 105, 26, 0.12);
+  color: var(--primary);
+  border-color: rgba(236, 105, 26, 0.2);
 }
 
 .controls {
   display: flex;
   align-items: center;
   gap: 14px;
+  flex: 0 0 auto;
 }
 
 .area-switch {
   display: flex;
   padding: 4px;
   border-radius: 12px;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  background: rgba(0, 0, 0, 0.03);
+  border: 1px solid var(--border);
+  background: #f7f7f7;
 }
 
 .area-btn {
@@ -166,8 +282,8 @@ onBeforeUnmount(() => document.removeEventListener("click", handleClickOutside))
   padding: 8px 16px;
   border-radius: 10px;
   cursor: pointer;
-  font-weight: 900;
-  color: var(--pc-text-muted);
+  font-weight: 700;
+  color: var(--text-muted);
   transition:
     background 0.16s ease,
     border-color 0.16s ease,
@@ -176,14 +292,13 @@ onBeforeUnmount(() => document.removeEventListener("click", handleClickOutside))
 
 .area-btn:hover {
   background: rgba(236, 105, 26, 0.08);
-  border-color: rgba(236, 105, 26, 0.2);
-  color: var(--pc-primary);
+  color: var(--primary);
 }
 
 .area-btn.active {
   background: #fff;
-  border-color: rgba(0, 0, 0, 0.12);
-  color: var(--pc-text-main);
+  border-color: rgba(236, 105, 26, 0.18);
+  color: var(--primary);
 }
 
 .user-profile-container {
@@ -199,14 +314,11 @@ onBeforeUnmount(() => document.removeEventListener("click", handleClickOutside))
   border: 1px solid transparent;
   background: transparent;
   cursor: pointer;
-  transition:
-    background 0.16s ease,
-    border-color 0.16s ease;
 }
 
 .user-profile:hover {
-  background: rgba(0, 0, 0, 0.03);
-  border-color: rgba(0, 0, 0, 0.08);
+  background: #f8f8f8;
+  border-color: var(--border);
 }
 
 .user-avatar {
@@ -215,9 +327,9 @@ onBeforeUnmount(() => document.removeEventListener("click", handleClickOutside))
   border-radius: 999px;
   display: grid;
   place-items: center;
-  background: rgba(0, 0, 0, 0.06);
-  font-weight: 900;
-  color: var(--pc-text-main);
+  background: rgba(236, 105, 26, 0.12);
+  font-weight: 800;
+  color: var(--primary);
 }
 
 .user-meta {
@@ -228,34 +340,39 @@ onBeforeUnmount(() => document.removeEventListener("click", handleClickOutside))
 }
 
 .user-name {
-  font-weight: 900;
+  font-weight: 800;
   font-size: 0.95rem;
+  color: var(--text);
 }
 
 .user-role {
   font-size: 0.8rem;
-  color: var(--pc-text-muted);
+  color: var(--text-muted);
 }
 
 .caret {
-  color: var(--pc-text-muted);
+  color: var(--text-muted);
 }
 
 .mobile-toggle {
   display: none;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  background: #fff;
-  cursor: pointer;
   width: 40px;
   height: 40px;
   border-radius: 12px;
+  border: 1px solid var(--border);
+  background: #fff;
+  cursor: pointer;
 }
 
 .mobile-toggle:hover {
-  background: rgba(0, 0, 0, 0.03);
+  background: #f8f8f8;
 }
 
 @media (max-width: 1200px) {
+  .nav-list {
+    display: none;
+  }
+
   .mobile-toggle {
     display: inline-grid;
     place-items: center;
@@ -263,7 +380,8 @@ onBeforeUnmount(() => document.removeEventListener("click", handleClickOutside))
 }
 
 @media (max-width: 768px) {
-  .area-switch {
+  .area-switch,
+  .user-meta {
     display: none;
   }
 }
