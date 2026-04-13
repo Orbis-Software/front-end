@@ -76,14 +76,16 @@ export function useJobsListPage() {
       job_type: toJobTypeParam(),
       mode_of_transport: toModeParam(),
       q: searchText.value.trim() || undefined,
-
-      // ✅ THIS IS THE KEY PART
       created_by: showAllJobs.value ? undefined : currentUserId.value || undefined,
     })
   }
 
   function onNewJob() {
     router.push("/jobs/new")
+  }
+
+  function onImportContacts() {
+    router.push("/contacts/import")
   }
 
   function onEdit(id: number) {
@@ -159,6 +161,7 @@ export function useJobsListPage() {
     modeOptions,
 
     onNewJob,
+    onImportContacts,
     onEdit,
     onDelete,
     onPage,

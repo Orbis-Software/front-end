@@ -1,13 +1,20 @@
 .jobs-list-page {
-  padding: 22px 24px;
+  padding: 20px;
 }
 
 .page-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 16px;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.page-heading {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
 }
 
 .page-title {
@@ -15,32 +22,22 @@
   font-weight: 800;
   color: var(--text);
   margin: 0;
-}
-
-.page-subtitle {
-  font-size: 13px;
-  color: var(--text-muted);
-  margin: 4px 0 0;
+  line-height: 1.15;
 }
 
 .page-actions {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: flex-end;
-  gap: 12px;
-  min-width: 520px;
-}
-
-.search-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  flex: 1 1 auto;
+  gap: 10px;
+  flex-wrap: wrap;
+  min-width: 0;
 }
 
 .search-wrap {
   position: relative;
-  width: 100%;
+  width: 240px;
+  min-width: 240px;
 }
 
 .search-icon {
@@ -56,12 +53,13 @@
 
 .search-wrap :deep(.p-inputtext) {
   width: 100%;
-  height: 46px;
+  height: 42px;
   border-radius: 10px;
   border: 1px solid #d9dee7;
   background: #fff;
   box-shadow: none;
-  padding-left: 40px;
+  padding-left: 38px;
+  padding-right: 12px;
   font-size: 14px;
 }
 
@@ -70,13 +68,33 @@
   box-shadow: 0 0 0 3px rgba(236, 105, 26, 0.12);
 }
 
-.btn-primary {
-  height: 46px;
+.toggle-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 42px;
+  padding: 0 2px;
+}
+
+.toggle-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.btn-primary,
+.btn-secondary {
+  height: 42px;
   border-radius: 10px !important;
-  background: var(--primary) !important;
-  border: 1px solid var(--primary) !important;
   font-weight: 700 !important;
   box-shadow: none !important;
+  white-space: nowrap;
+}
+
+.btn-primary {
+  background: var(--primary) !important;
+  border: 1px solid var(--primary) !important;
 }
 
 .btn-primary:hover {
@@ -84,23 +102,30 @@
   border-color: var(--primary-hover) !important;
 }
 
-.new-btn {
-  white-space: nowrap;
+.btn-secondary {
+  background: #fff !important;
+  color: var(--text) !important;
+  border: 1px solid #d9dee7 !important;
+}
+
+.btn-secondary:hover {
+  border-color: var(--primary) !important;
+  color: var(--primary) !important;
 }
 
 .filters-wrap {
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .filters-row {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
 .filters-row.secondary {
-  margin-top: 10px;
+  margin-top: 8px;
 }
 
 .filter-pill {
@@ -110,9 +135,10 @@
   font-size: 12px;
   font-weight: 800;
   border-radius: 10px;
-  padding: 10px 16px;
+  padding: 9px 14px;
   cursor: pointer;
   transition: all 0.2s ease;
+  line-height: 1;
 }
 
 .filter-pill:hover {
@@ -126,26 +152,10 @@
   color: var(--primary);
 }
 
-.toggle-under-search {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 10px;
-  min-height: 24px;
-  padding-left: 2px;
-}
-
-.toggle-label {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--text);
-  white-space: nowrap;
-}
-
 .table-card {
   background: #fff;
   border: 1px solid #dfe5ec;
-  border-radius: 18px;
+  border-radius: 16px;
   overflow: hidden;
 }
 
@@ -156,7 +166,7 @@
   font-weight: 800;
   border: 0;
   border-bottom: 1px solid #e5eaf1;
-  padding: 18px 18px;
+  padding: 16px 16px;
 }
 
 .jobs-table :deep(.p-datatable-tbody > tr) {
@@ -166,13 +176,13 @@
 .jobs-table :deep(.p-datatable-tbody > tr > td) {
   border: 0;
   border-bottom: 1px solid #e9edf3;
-  padding: 14px 18px;
+  padding: 12px 16px;
   vertical-align: middle;
 }
 
 .jobs-table :deep(.p-paginator) {
   border: 0;
-  padding: 14px 18px 18px;
+  padding: 12px 16px 16px;
   background: #fff;
 }
 
@@ -181,7 +191,7 @@
 .creator-cell {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
 }
 
 .cell-link {
@@ -193,6 +203,7 @@
   font-weight: 700;
   color: #22324a;
   cursor: pointer;
+  line-height: 1.2;
 }
 
 .cell-link:hover {
@@ -210,6 +221,7 @@
 .cell-subtext {
   font-size: 12px;
   color: #6b7280;
+  line-height: 1.25;
 }
 
 .plain-value {
@@ -221,8 +233,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 30px;
-  padding: 6px 12px;
+  min-height: 28px;
+  padding: 5px 12px;
   border-radius: 999px;
   border: 1px solid #d9dee7;
   background: #f8fafc;
@@ -235,7 +247,7 @@
 .row-actions {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .edit-btn {
@@ -249,7 +261,7 @@
 }
 
 .empty-state {
-  padding: 40px 16px;
+  padding: 36px 16px;
   text-align: center;
 }
 
@@ -302,15 +314,12 @@
   }
 
   .page-actions {
-    min-width: 0;
-    width: 100%;
-    flex-wrap: wrap;
     justify-content: flex-start;
+    width: 100%;
   }
 
-  .search-group {
-    max-width: 100%;
-    flex: 1 1 100%;
+  .search-wrap {
+    width: 100%;
   }
 }
 
@@ -324,17 +333,14 @@
     align-items: stretch;
   }
 
-  .search-group {
-    min-width: 0;
-    max-width: 100%;
-  }
-
-  .toggle-under-search {
-    justify-content: space-between;
+  .search-wrap,
+  .import-btn,
+  .new-btn {
     width: 100%;
   }
 
-  .new-btn {
+  .toggle-inline {
+    justify-content: space-between;
     width: 100%;
   }
 

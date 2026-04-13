@@ -3,26 +3,31 @@
     <ConfirmDialog />
 
     <div class="page-header">
-      <div>
+      <div class="page-heading">
         <h1 class="page-title">Jobs</h1>
       </div>
 
       <div class="page-actions">
-        <div class="search-group">
-          <div class="search-wrap">
-            <i class="pi pi-search search-icon" />
-            <InputText
-              v-model="searchText"
-              class="search-input"
-              placeholder="     Search job number, customer..."
-            />
-          </div>
-
-          <div class="toggle-under-search">
-            <span class="toggle-label">Show All Jobs</span>
-            <ToggleSwitch v-model="showAllJobs" class="jobs-switch" />
-          </div>
+        <div class="search-wrap">
+          <i class="pi pi-search search-icon" />
+          <InputText
+            v-model="searchText"
+            class="search-input"
+            placeholder="     Search job number, customer..."
+          />
         </div>
+
+        <div class="toggle-inline">
+          <span class="toggle-label">Show All Jobs</span>
+          <ToggleSwitch v-model="showAllJobs" class="jobs-switch" />
+        </div>
+
+        <Button
+          class="btn-secondary import-btn"
+          icon="pi pi-upload"
+          label="Import Contacts"
+          @click="onImportContacts"
+        />
 
         <Button class="btn-primary new-btn" icon="pi pi-plus" label="New Job" @click="onNewJob" />
       </div>
@@ -199,6 +204,7 @@ const {
   showAllJobs,
   onPage,
   onNewJob,
+  onImportContacts,
   onEdit,
   onDelete,
   prettify,

@@ -6,7 +6,6 @@
     <div class="contacts-header">
       <div class="left">
         <h1 class="title">{{ headerTitle }}</h1>
-        <p class="subtitle">Manage all contacts</p>
       </div>
 
       <div class="right">
