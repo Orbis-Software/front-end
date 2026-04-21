@@ -76,9 +76,9 @@ function printCurrentView() {
 </script>
 
 <template>
-  <div class="accounts-page">
-    <section class="accounts-page__header">
-      <div class="accounts-page__header-text">
+  <section class="accounts-page">
+    <header class="accounts-page__header">
+      <div class="accounts-page__title-wrap">
         <h1 class="accounts-page__title">TMS Accounts</h1>
       </div>
 
@@ -86,20 +86,21 @@ function printCurrentView() {
         <Button
           label="Export JSON"
           icon="pi pi-download"
-          class="btn btn--ghost"
+          text
+          class="accounts-page__action accounts-page__action--text"
           @click="exportJson"
         />
         <Button
           label="Print Current View"
           icon="pi pi-print"
-          class="btn btn--primary"
+          class="accounts-page__action accounts-page__action--primary"
           @click="printCurrentView"
         />
       </div>
-    </section>
+    </header>
 
-    <section class="accounts-page__card">
-      <div class="accounts-page__tabs">
+    <div class="accounts-page__card">
+      <nav class="accounts-page__tabs">
         <button
           v-for="tab in tabs"
           :key="tab.id"
@@ -110,7 +111,7 @@ function printCurrentView() {
         >
           {{ tab.label }}
         </button>
-      </div>
+      </nav>
 
       <div class="accounts-page__content">
         <section class="accounts-page__body">
@@ -129,6 +130,6 @@ function printCurrentView() {
           </div>
         </section>
       </div>
-    </section>
-  </div>
+    </div>
+  </section>
 </template>

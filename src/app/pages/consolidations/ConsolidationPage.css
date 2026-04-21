@@ -1,7 +1,10 @@
 .con-page {
-  padding: 18px 18px 40px;
-  max-width: 1180px;
-  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.25rem;
+  min-height: 100%;
+  background: var(--bg-page);
 }
 
 .muted {
@@ -31,7 +34,6 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 14px;
 }
 
 .crumbline {
@@ -93,14 +95,13 @@
 .panel {
   border-radius: 14px;
   box-shadow: 0 1px 0 rgba(0, 0, 0, 0.03);
-  margin-bottom: 14px;
 }
 
 .panel-head,
 .summary-head,
 .section-head {
   display: flex;
-  align-items: flex-start; /* same feel as Summary */
+  align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
 }
@@ -109,10 +110,12 @@
 .inv-actions {
   display: flex;
   align-items: center;
-  gap: 10px; /* spacing between buttons */
-  flex-wrap: nowrap; /* ❗ keep buttons on one row */
+  gap: 10px;
+  flex-wrap: nowrap;
 }
-.inv-actions .p-button {
+
+.inv-actions .p-button,
+.panel-actions .p-button {
   white-space: nowrap;
 }
 
@@ -182,41 +185,105 @@
   margin-left: 4px;
 }
 
-/* Tabs (lightweight, like screenshot) */
-.tabs {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  border-radius: 999px;
-  background: #fff;
-  margin-bottom: 14px;
-  overflow-x: auto;
+/* Tabs card layout like ManagementUsersPage */
+.con-tabs-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  overflow: hidden;
 }
 
-.tab {
-  border: 0;
-  background: transparent;
-  padding: 8px 12px;
-  border-radius: 999px;
-  font-weight: 650;
-  font-size: 13px;
-  color: rgba(0, 0, 0, 0.65);
+.con-tabs-bar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 14px;
+  background: #efefef;
+  border-top: 1px solid #ededed;
+  border-bottom: 1px solid #d9d9d9;
+}
+
+.con-tabs-nav {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.con-tab {
+  appearance: none;
+  -webkit-appearance: none;
+  border: 1px solid transparent;
+  border-bottom: none;
+  outline: none;
+  box-shadow: none;
+  cursor: pointer;
+
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  cursor: pointer;
+  justify-content: center;
+  min-height: 44px;
+  height: 44px;
+  padding: 0 16px;
+  margin-top: 8px;
+
+  border-radius: 10px 10px 0 0;
+  background: transparent;
+  color: #5c5c5c;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 700;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.con-tab:hover {
+  color: #222;
+  background: rgba(255, 255, 255, 0.45);
+}
+
+.con-tab--active {
+  background: #fff;
+  color: #141414;
+  border-color: #d9d9d9;
+  position: relative;
+  top: 1px;
+}
+
+.con-tabs-tools {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex: 0 0 auto;
+  padding: 8px 0 8px 12px;
+}
+
+.con-tabs-mode {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.con-tabs-mode__label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #4b4b4b;
   white-space: nowrap;
 }
 
-.tab:hover {
-  background: rgba(0, 0, 0, 0.04);
+.con-tabs-mode__dropdown {
+  min-width: 170px;
 }
 
-.tab.active {
-  background: rgba(0, 0, 0, 0.06);
-  color: rgba(0, 0, 0, 0.85);
+.con-tabs-content {
+  padding: 1rem;
 }
 
 /* Datatable */
@@ -253,7 +320,6 @@
   letter-spacing: 0.02em;
 }
 
-/* ✅ make CurrencyPills styles work even with <style scoped> */
 :deep(.pills) {
   display: inline-flex;
   gap: 6px;
@@ -370,7 +436,6 @@
   font-weight: 800;
 }
 
-/* Placeholder */
 .placeholder {
   border: 1px dashed rgba(0, 0, 0, 0.18);
   border-radius: 14px;
@@ -386,9 +451,6 @@
   color: rgba(0, 0, 0, 0.7);
 }
 
-/* --- add these at the end of your existing ConsolidationPage.css --- */
-
-/* Keeps supplier pill-like chip in table, like your screenshot */
 .chip-inline {
   display: inline-flex;
   align-items: center;
@@ -401,62 +463,75 @@
   white-space: nowrap;
 }
 
-/* Optional: make invoice actions align tighter like your screenshot */
-.inv-actions {
-  gap: 12px;
-}
-
-/* If you want the Import to look like a filled primary later,
-   keep class orbis-primary on Button and style it in your global theme */
-.chip-inline {
-  display: inline-flex;
-  align-items: center;
-  padding: 6px 10px;
-  border-radius: 999px;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  background: rgba(0, 0, 0, 0.02);
-  font-size: 12px;
-  font-weight: 650;
-  white-space: nowrap;
-}
-
-/* Make SectionHead text block match Summary’s text block */
 .section-text {
   display: flex;
   flex-direction: column;
-  gap: 2px; /* same vertical spacing as summary */
+  gap: 2px;
 }
 
-/* Ensure the whole header aligns like Summary */
 .section-head {
   display: flex;
-  align-items: flex-start; /* title+subtitle top aligned */
+  align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
 }
 
-/* Keep actions visible + aligned */
-.panel-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: nowrap;
-}
-
-.panel-actions .p-button {
-  white-space: nowrap;
-}
-
-/* Responsive */
 @media (max-width: 1020px) {
   .formgrid {
     grid-template-columns: repeat(2, 1fr);
   }
+
   .span-2 {
     grid-column: span 2;
   }
+
   .tiles {
     grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .con-tabs-bar {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 0 10px 10px;
+  }
+
+  .con-tabs-nav {
+    width: 100%;
+  }
+
+  .con-tabs-tools {
+    width: 100%;
+    justify-content: flex-start;
+    padding: 0;
+  }
+
+  .con-tabs-mode {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .con-tabs-mode__dropdown {
+    min-width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .con-page {
+    padding: 1rem;
+  }
+
+  .con-tabs-content {
+    padding: 0.75rem;
+  }
+
+  .con-tab {
+    min-height: 40px;
+    height: 40px;
+    padding: 0 14px;
+    margin-top: 6px;
+    font-size: 12px;
   }
 }
 

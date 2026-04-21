@@ -4,7 +4,15 @@ import { useTransportJobStore } from "@/app/stores/transport-job"
 import { useAuthStore } from "@/app/stores/auth"
 import type { JobType, TransportMode } from "@/app/types/transport-job"
 
-export type JobTypeKey = "all" | "import" | "export" | "domestic" | "cross_trade"
+export type JobTypeKey =
+  | "all"
+  | "import"
+  | "export"
+  | "domestic"
+  | "courier"
+  | "multi_modal"
+  | "consolidation"
+
 export type ModeKey = "all" | "air" | "sea" | "road" | "rail"
 
 type Option<T> = {
@@ -22,7 +30,9 @@ export function useJobsListPage() {
     { label: "Import", value: "import" },
     { label: "Export", value: "export" },
     { label: "Domestic", value: "domestic" },
-    { label: "Cross-trade", value: "cross_trade" },
+    { label: "Courier", value: "courier" },
+    { label: "Multi Modal", value: "multi_modal" },
+    { label: "Consolidation", value: "consolidation" },
   ]
 
   const modeOptions: Option<ModeKey>[] = [
@@ -57,12 +67,12 @@ export function useJobsListPage() {
 
   function toJobTypeParam(): JobType | undefined {
     if (jobTypeFilter.value === "all") return undefined
-    return jobTypeFilter.value as unknown as JobType
+    return jobTypeFilter.value as JobType
   }
 
   function toModeParam(): TransportMode | undefined {
     if (modeFilter.value === "all") return undefined
-    return modeFilter.value as unknown as TransportMode
+    return modeFilter.value as TransportMode
   }
 
   async function fetchNow(resetPage = true) {
@@ -82,10 +92,6 @@ export function useJobsListPage() {
 
   function onNewJob() {
     router.push("/jobs/new")
-  }
-
-  function onImportContacts() {
-    router.push("/contacts/import")
   }
 
   function onEdit(id: number) {
@@ -161,7 +167,6 @@ export function useJobsListPage() {
     modeOptions,
 
     onNewJob,
-    onImportContacts,
     onEdit,
     onDelete,
     onPage,
