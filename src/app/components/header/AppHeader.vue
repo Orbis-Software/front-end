@@ -35,15 +35,15 @@ const userRole = computed(() => {
 })
 
 const companyLogoSrc = computed(() => {
-  const c: any = auth.user?.company
-  return c?.logo_url ?? c?.logo ?? "/orbis-logo.png"
+  const company: any = auth.user?.company
+  return company?.logo_url ?? company?.logo ?? "/orbis-logo.png"
 })
 
 const initials = computed(() => {
   const parts = userName.value.trim().split(/\s+/).filter(Boolean)
-  const a = parts[0]?.[0] ?? ""
-  const b = parts[1]?.[0] ?? ""
-  return (a + b).toUpperCase() || "U"
+  const first = parts[0]?.[0] ?? ""
+  const second = parts[1]?.[0] ?? ""
+  return (first + second).toUpperCase() || "U"
 })
 
 function toggleUserDropdown() {
@@ -54,9 +54,9 @@ function closeUserDropdown() {
   userDropdownOpen.value = false
 }
 
-function handleClickOutside(e: MouseEvent) {
-  const el = document.querySelector(".user-profile-container")
-  if (userDropdownOpen.value && el && !el.contains(e.target as Node)) {
+function handleClickOutside(event: MouseEvent) {
+  const element = document.querySelector(".user-profile-container")
+  if (userDropdownOpen.value && element && !element.contains(event.target as Node)) {
     closeUserDropdown()
   }
 }
@@ -65,11 +65,13 @@ function canAccess(item: NavItem): boolean {
   if (item.devOnly && !auth.isDev) return false
   if (item.adminOnly && !auth.isAdmin) return false
 
-  if (item.roles?.length && item.roles.some(role => auth.hasRole(role))) {
-    return true
+  if (item.roles?.length) {
+    return item.roles.some(role => auth.hasRole(role))
   }
 
-  if (item.permission) return auth.hasPermission(item.permission)
+  if (item.permission) {
+    return auth.hasPermission(item.permission)
+  }
 
   if (item.anyPermissions?.length) {
     return item.anyPermissions.some(permission => auth.hasPermission(permission))
@@ -83,11 +85,14 @@ const canSeeManagement = computed(() => {
 })
 
 const menu = computed(() => {
-  const base = props.area === "tms" ? items.tms : items.wms
-  const combined =
-    ui.canSeeManagement || canSeeManagement.value ? [...base, ...items.management] : base
+  if (props.area === "wms") {
+    return items.wms.filter(canAccess)
+  }
 
-  return combined.filter(canAccess)
+  const tmsMenu = items.tms
+  const managementMenu = ui.canSeeManagement || canSeeManagement.value ? items.management : []
+
+  return [...tmsMenu, ...managementMenu].filter(canAccess)
 })
 
 function matchPath(path?: string) {
