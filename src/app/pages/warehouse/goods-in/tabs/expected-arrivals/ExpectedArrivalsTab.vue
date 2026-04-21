@@ -1,15 +1,24 @@
 <script setup lang="ts">
 import "./ExpectedArrivalsTab.css"
 import Button from "primevue/button"
+import AddExpectedArrivalModal from "@/app/components/warehouse/goods-in/AddExpectedArrivalModal.vue"
+
 import { useExpectedArrivalsTab } from "./ExpectedArrivalsTab"
 
-const { rows, onAddExpectedArrival } = useExpectedArrivalsTab()
+const {
+  rows,
+  expectedArrivalOpen,
+  onAddExpectedArrival,
+  onCloseExpectedArrival,
+  onSavedExpectedArrival,
+} = useExpectedArrivalsTab()
 </script>
 
 <template>
   <section class="expected-arrivals-tab">
     <div class="expected-arrivals-tab__toolbar">
       <div class="expected-arrivals-tab__spacer" />
+
       <Button label="+ Add Expected Arrival" @click="onAddExpectedArrival" />
     </div>
 
@@ -36,9 +45,13 @@ const { rows, onAddExpectedArrival } = useExpectedArrivalsTab()
             <td>{{ row.date }}</td>
             <td>{{ row.qty }}</td>
             <td>{{ row.ref }}</td>
+
             <td>
-              <span class="expected-arrivals-tab__status"> Expected </span>
+              <span class="expected-arrivals-tab__status">
+                {{ row.status }}
+              </span>
             </td>
+
             <td class="expected-arrivals-tab__actions">
               <Button label="Receive" size="small" />
               <Button icon="pi pi-times" size="small" severity="danger" text />
@@ -47,5 +60,12 @@ const { rows, onAddExpectedArrival } = useExpectedArrivalsTab()
         </tbody>
       </table>
     </div>
+
+    <!-- Modal -->
+    <AddExpectedArrivalModal
+      :visible="expectedArrivalOpen"
+      @close="onCloseExpectedArrival"
+      @saved="onSavedExpectedArrival"
+    />
   </section>
 </template>
