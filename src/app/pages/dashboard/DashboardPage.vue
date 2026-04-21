@@ -5,7 +5,7 @@
       <template #content>
         <div class="dash-hero__inner">
           <div class="dash-hero__content">
-            <div class="dash-eyebrow">ORBIS TMS / DASHBOARD</div>
+            <div class="dash-eyebrow">DASHBOARD</div>
             <h1 class="dash-title">
               {{ isManagement ? "Management Dashboard" : "Transport Management Dashboard" }}
             </h1>

@@ -2,7 +2,7 @@ import { defineStore } from "pinia"
 import { computed, ref } from "vue"
 import { useAuthStore } from "@/app/stores/auth"
 
-export type AppArea = "tms" | "wms"
+export type AppArea = "tms" | "wms" | "management"
 
 export const useUiStore = defineStore("ui", () => {
   const auth = useAuthStore()
@@ -13,15 +13,20 @@ export const useUiStore = defineStore("ui", () => {
   const isDesktop = ref(true)
 
   /**
-   * ✅ Management visibility is role-based (no manual switch)
-   * - admins/dev can see it
-   * - company-manager can see it
-   * - company-employee cannot
+   * Management visibility is role / permission based.
+   * This only controls whether the user is allowed to access
+   * management-related sections at all.
+   *
+   * It should NOT be used to merge management nav items into WMS or TMS.
    */
   const canSeeManagement = computed(() => {
     if (!auth.isAuthenticated) return false
+
     if (auth.isAdmin || auth.isDev) return true
-    return auth.hasRole("company-manager")
+
+    if (auth.hasRole("company-manager")) return true
+
+    return auth.permissions.some(permission => permission.startsWith("mgmt."))
   })
 
   function setArea(next: AppArea) {
@@ -32,8 +37,16 @@ export const useUiStore = defineStore("ui", () => {
     mobileNavOpen.value = !mobileNavOpen.value
   }
 
-  function setDesktop(v: boolean) {
-    isDesktop.value = v
+  function closeMobileNav() {
+    mobileNavOpen.value = false
+  }
+
+  function openMobileNav() {
+    mobileNavOpen.value = true
+  }
+
+  function setDesktop(value: boolean) {
+    isDesktop.value = value
   }
 
   return {
@@ -43,6 +56,8 @@ export const useUiStore = defineStore("ui", () => {
     isDesktop,
     setArea,
     toggleMobileNav,
+    closeMobileNav,
+    openMobileNav,
     setDesktop,
   }
 })

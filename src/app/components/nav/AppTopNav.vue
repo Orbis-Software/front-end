@@ -2,8 +2,8 @@
 import { computed } from "vue"
 import { RouterLink, useRoute, useRouter } from "vue-router"
 import type { AppArea } from "@/app/stores/ui"
-import { useUiStore } from "@/app/stores/ui"
 import { useAuthStore } from "@/app/stores/auth"
+import { useUiStore } from "@/app/stores/ui"
 import { useTopNavItems, type NavItem } from "./topNavItems"
 
 type Props = {
@@ -16,19 +16,21 @@ const emit = defineEmits<{ (e: "close-mobile"): void }>()
 
 const route = useRoute()
 const router = useRouter()
-const ui = useUiStore()
 const auth = useAuthStore()
+const ui = useUiStore()
 const items = useTopNavItems()
 
 function canAccess(item: NavItem): boolean {
   if (item.devOnly && !auth.isDev) return false
   if (item.adminOnly && !auth.isAdmin) return false
 
-  if (item.roles?.length && item.roles.some(role => auth.hasRole(role))) {
-    return true
+  if (item.roles?.length) {
+    return item.roles.some(role => auth.hasRole(role))
   }
 
-  if (item.permission) return auth.hasPermission(item.permission)
+  if (item.permission) {
+    return auth.hasPermission(item.permission)
+  }
 
   if (item.anyPermissions?.length) {
     return item.anyPermissions.some(permission => auth.hasPermission(permission))
@@ -37,20 +39,22 @@ function canAccess(item: NavItem): boolean {
   return true
 }
 
-function filterNav(list: NavItem[]): NavItem[] {
-  return list.filter(canAccess)
-}
-
 const canSeeManagement = computed(() => {
+  if (!auth.isAuthenticated) return false
+  if (auth.isAdmin || auth.isDev) return true
+  if (auth.hasRole("company-manager")) return true
   return auth.permissions.some(permission => permission.startsWith("mgmt."))
 })
 
 const menu = computed(() => {
-  const base = props.area === "tms" ? items.tms : items.wms
-  const combined =
-    ui.canSeeManagement || canSeeManagement.value ? [...base, ...items.management] : base
+  if (props.area === "wms") {
+    return items.wms
+  }
 
-  return filterNav(combined)
+  const tmsMenu = items.tms.filter(canAccess)
+  const managementMenu = canSeeManagement.value ? items.management.filter(canAccess) : []
+
+  return [...tmsMenu, ...managementMenu]
 })
 
 function matchPath(path?: string) {

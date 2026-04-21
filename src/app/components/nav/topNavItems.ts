@@ -18,7 +18,7 @@ export function useTopNavItems(): {
     tms: [
       {
         id: "tms-dashboard",
-        label: "TMS Dashboard",
+        label: "Dashboard",
         to: "/dashboard",
         permission: "tms.dashboard.view",
       },
@@ -40,47 +40,48 @@ export function useTopNavItems(): {
         to: "/contacts",
         anyPermissions: ["tms.contacts.view", "tms.contacts.create", "tms.contacts.import_export"],
       },
-      // {
-      //   id: "crm",
-      //   label: "CRM",
-      //   to: "/crm",
-      //   permission: "tms.crm.view",
-      // },
-      // {
-      //   id: "reports",
-      //   label: "Reports",
-      //   to: "/reports",
-      //   permission: "tms.reports.view",
-      // },
     ],
 
     wms: [
       {
         id: "wms-dashboard",
-        label: "WMS Dashboard",
+        label: "Dashboard",
         to: "/wms",
-        permission: "wms.dashboard.view",
       },
       {
-        id: "warehouse",
-        label: "Warehouse",
-        to: "/warehouse/jobs",
-        anyPermissions: [
-          "wms.warehouse.jobs.view",
-          "wms.warehouse.goods_in.create",
-          "wms.warehouse.goods_out.create",
-        ],
+        id: "wms-goods-in",
+        label: "Goods In",
+        to: "/warehouse/goods-in",
       },
       {
-        id: "inventory",
-        label: "Inventory",
+        id: "wms-stock",
+        label: "Stock",
         to: "/inventory/stock",
-        anyPermissions: [
-          "wms.inventory.stock_on_hand.view",
-          "wms.inventory.aged_stock.view",
-          "wms.inventory.space_utilisation.view",
-          "wms.inventory.exceptions.view",
-        ],
+      },
+      {
+        id: "wms-storage",
+        label: "Storage",
+        to: "/warehouse/storage",
+      },
+      {
+        id: "wms-goods-out",
+        label: "Goods Out",
+        to: "/warehouse/goods-out",
+      },
+      {
+        id: "wms-consolidation",
+        label: "Consolidation",
+        to: "/warehouse/consolidation",
+      },
+      {
+        id: "wms-reports",
+        label: "Reports",
+        to: "/inventory/reports",
+      },
+      {
+        id: "wms-admin-lists",
+        label: "Admin Lists",
+        to: "/wms/admin",
       },
     ],
 

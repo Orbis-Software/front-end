@@ -1,0 +1,116 @@
+.warehouse-storage-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.25rem;
+  min-height: 100%;
+  background: var(--bg-page);
+}
+
+.warehouse-storage-page__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.warehouse-storage-page__title-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.warehouse-storage-page__title {
+  margin: 0;
+  font-family: var(--font-accent);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.warehouse-storage-page__card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+.warehouse-storage-page__tabs {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  padding: 0 14px;
+  background: #efefef;
+  border-top: 1px solid #ededed;
+  border-bottom: 1px solid #d9d9d9;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+}
+
+.warehouse-storage-page__tab {
+  appearance: none;
+  -webkit-appearance: none;
+  border: 1px solid transparent;
+  border-bottom: none;
+  outline: none;
+  box-shadow: none;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  height: 44px;
+  padding: 0 16px;
+  margin-top: 8px;
+
+  border-radius: 10px 10px 0 0;
+  background: transparent;
+  color: #5c5c5c;
+  text-decoration: none;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 700;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.warehouse-storage-page__tab:hover {
+  color: #222;
+  background: rgba(255, 255, 255, 0.45);
+}
+
+.warehouse-storage-page__tab--active {
+  background: #fff;
+  color: #141414;
+  border-color: #d9d9d9;
+  position: relative;
+  top: 1px;
+}
+
+.warehouse-storage-page__content {
+  padding: 1rem;
+}
+
+@media (max-width: 768px) {
+  .warehouse-storage-page {
+    padding: 1rem;
+  }
+
+  .warehouse-storage-page__tabs {
+    padding: 0 10px;
+  }
+
+  .warehouse-storage-page__content {
+    padding: 0.75rem;
+  }
+
+  .warehouse-storage-page__tab {
+    min-height: 40px;
+    height: 40px;
+    padding: 0 14px;
+    margin-top: 6px;
+    font-size: 12px;
+  }
+}
