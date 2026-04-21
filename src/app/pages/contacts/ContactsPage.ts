@@ -15,7 +15,7 @@ function debounce<T extends (...args: any[]) => void>(fn: T, wait = 350) {
 type DataTablePageEvent = {
   first: number
   rows: number
-  page: number // 0-based
+  page: number
   pageCount: number
 }
 
@@ -32,7 +32,13 @@ export function useContactsPage() {
     return t?.name ?? "Contacts"
   })
 
-  // PrimeVue paginator "first" (0-based index)
+  const filterTabs = computed(() => {
+    return store.types.map(type => ({
+      id: type.id,
+      label: type.name,
+    }))
+  })
+
   const firstRow = computed(() => (store.page - 1) * store.perPage)
 
   onMounted(async () => {
@@ -61,6 +67,10 @@ export function useContactsPage() {
     router.push(`/contacts/${id}/edit`)
   }
 
+  function onImportContacts() {
+    router.push("/contacts/import")
+  }
+
   function onOpenCompany(id: number) {
     const routeData = router.resolve({
       name: "crm.contacts.show",
@@ -86,7 +96,7 @@ export function useContactsPage() {
 
   async function onPage(e: DataTablePageEvent) {
     const nextPerPage = e.rows
-    const nextPage = e.page + 1 // convert to 1-based
+    const nextPage = e.page + 1
 
     if (nextPerPage !== store.perPage) {
       await store.setPerPage(nextPerPage)
@@ -100,6 +110,7 @@ export function useContactsPage() {
     store,
     search,
     headerTitle,
+    filterTabs,
     firstRow,
     onPage,
     onSearchInput,
@@ -108,5 +119,6 @@ export function useContactsPage() {
     onEdit,
     onDelete,
     onOpenCompany,
+    onImportContacts,
   }
 }

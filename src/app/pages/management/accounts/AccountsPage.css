@@ -1,45 +1,62 @@
 .accounts-page {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 20px;
-  background: var(--bg-page);
+  gap: 0.5rem;
+  padding: 1.25rem;
   min-height: 100%;
+  background: var(--bg-page);
 }
 
 .accounts-page__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
 }
 
-.accounts-page__header-text {
-  min-width: 0;
+.accounts-page__title-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
 }
 
 .accounts-page__title {
   margin: 0;
-  font-size: 24px;
+  font-family: var(--font-accent);
+  font-size: 1.5rem;
   font-weight: 700;
   color: var(--text);
 }
 
-.accounts-page__subtitle {
-  margin: 6px 0 0;
-  color: var(--text-muted);
-  max-width: 980px;
-  line-height: 1.4;
-}
-
 .accounts-page__actions {
   display: flex;
+  align-items: center;
   gap: 10px;
   flex-wrap: wrap;
 }
 
-/* Same integrated card feel as Settings */
+.accounts-page__action {
+  border-radius: 10px !important;
+}
+
+.accounts-page__action--text.p-button {
+  color: var(--primary) !important;
+}
+
+.accounts-page__action--text.p-button:hover {
+  background: rgba(236, 105, 26, 0.08) !important;
+}
+
+.accounts-page__action--primary.p-button {
+  background: var(--primary) !important;
+  border-color: var(--primary) !important;
+  color: #fff !important;
+}
+
+.accounts-page__action--primary.p-button:hover {
+  background: var(--primary-hover) !important;
+  border-color: var(--primary-hover) !important;
+}
+
 .accounts-page__card {
   background: var(--bg-card);
   border: 1px solid var(--border);
@@ -71,7 +88,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  min-height: 44px;
   height: 44px;
   padding: 0 16px;
   margin-top: 8px;
@@ -79,10 +96,8 @@
   border-radius: 10px 10px 0 0;
   background: transparent;
   color: #5c5c5c;
-  cursor: pointer;
+  text-decoration: none;
   white-space: nowrap;
-
-  font: inherit;
   font-size: 13px;
   font-weight: 700;
   transition:
@@ -105,7 +120,7 @@
 }
 
 .accounts-page__content {
-  padding: 16px;
+  padding: 1rem;
 }
 
 .accounts-page__body {
@@ -115,36 +130,49 @@
 .accounts-page__fallback {
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 24px;
+  border-radius: 10px;
+  padding: 20px;
 }
 
-/* optional cleanup so first sections do not feel double-wrapped too tightly */
-.accounts-page__content > *:first-child {
-  margin-top: 0;
+.accounts-page__fallback h2 {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text);
 }
 
 @media (max-width: 768px) {
   .accounts-page {
-    padding: 16px;
+    padding: 1rem;
   }
 
-  .accounts-page__title {
-    font-size: 22px;
+  .accounts-page__header {
+    align-items: flex-start;
+    gap: 12px;
+    flex-wrap: wrap;
   }
 
   .accounts-page__tabs {
     padding: 0 10px;
   }
 
+  .accounts-page__content {
+    padding: 0.75rem;
+  }
+
   .accounts-page__tab {
+    min-height: 40px;
     height: 40px;
     padding: 0 14px;
     margin-top: 6px;
     font-size: 12px;
   }
 
-  .accounts-page__content {
-    padding: 12px;
+  .accounts-page__actions {
+    width: 100%;
+  }
+
+  .accounts-page__actions > * {
+    flex: 1 1 auto;
   }
 }

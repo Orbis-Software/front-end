@@ -1,176 +1,182 @@
 <template>
-  <div class="jobs-list-page">
+  <section class="jobs-list-page">
     <ConfirmDialog />
 
-    <div class="page-header">
-      <div class="page-heading">
-        <h1 class="page-title">Jobs</h1>
+    <header class="jobs-list-page__header">
+      <div class="jobs-list-page__title-wrap">
+        <h1 class="jobs-list-page__title">Jobs</h1>
       </div>
 
-      <div class="page-actions">
-        <div class="search-wrap">
-          <i class="pi pi-search search-icon" />
+      <div class="jobs-list-page__header-actions">
+        <div class="jobs-list-page__search-wrap">
+          <i class="pi pi-search jobs-list-page__search-icon" />
           <InputText
             v-model="searchText"
-            class="search-input"
+            class="jobs-list-page__search-input"
             placeholder="     Search job number, customer..."
           />
         </div>
 
-        <div class="toggle-inline">
-          <span class="toggle-label">Show All Jobs</span>
-          <ToggleSwitch v-model="showAllJobs" class="jobs-switch" />
+        <div class="jobs-list-page__toggle-inline">
+          <span class="jobs-list-page__toggle-label">Show All Jobs</span>
+          <ToggleSwitch v-model="showAllJobs" class="jobs-list-page__switch" />
         </div>
 
         <Button
-          class="btn-secondary import-btn"
-          icon="pi pi-upload"
-          label="Import Contacts"
-          @click="onImportContacts"
+          class="jobs-list-page__new-btn"
+          icon="pi pi-plus"
+          label="New Job"
+          @click="onNewJob"
         />
-
-        <Button class="btn-primary new-btn" icon="pi pi-plus" label="New Job" @click="onNewJob" />
       </div>
-    </div>
+    </header>
 
-    <div class="filters-wrap">
-      <div class="filters-row">
-        <button
-          v-for="option in jobTypeOptions"
-          :key="option.value"
-          class="filter-pill"
-          :class="{ active: jobTypeFilter === option.value }"
-          type="button"
-          @click="jobTypeFilter = option.value"
-        >
-          {{ option.label.toUpperCase() }}
-        </button>
-      </div>
+    <div class="jobs-list-page__card">
+      <div class="jobs-list-page__tabs-bar">
+        <nav class="jobs-list-page__tabs">
+          <button
+            v-for="option in jobTypeOptions"
+            :key="option.value"
+            class="jobs-list-page__tab"
+            :class="{ 'jobs-list-page__tab--active': jobTypeFilter === option.value }"
+            type="button"
+            @click="jobTypeFilter = option.value"
+          >
+            {{ option.label }}
+          </button>
+        </nav>
 
-      <div class="filters-row secondary">
-        <button
-          v-for="option in modeOptions"
-          :key="option.value"
-          class="filter-pill"
-          :class="{ active: modeFilter === option.value }"
-          type="button"
-          @click="modeFilter = option.value"
-        >
-          {{ option.label.toUpperCase() }}
-        </button>
-      </div>
-    </div>
+        <div class="jobs-list-page__tabs-tools">
+          <div class="jobs-list-page__mode-filter">
+            <span class="jobs-list-page__mode-filter-label">Mode of Transport</span>
 
-    <div class="table-card">
-      <DataTable
-        :value="items"
-        :loading="loading"
-        dataKey="id"
-        responsiveLayout="scroll"
-        class="jobs-table"
-        paginator
-        lazy
-        :rows="perPage"
-        :totalRecords="total"
-        :first="firstRow"
-        :rowsPerPageOptions="[15, 25, 50, 100]"
-        @page="onPage"
-      >
-        <template #empty>
-          <div class="empty-state">
-            <div class="empty-title">No jobs found</div>
-            <div class="empty-subtitle">Try changing filters or search terms.</div>
+            <Dropdown
+              v-model="modeFilter"
+              :options="modeOptions"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Select mode"
+              class="jobs-list-page__mode-dropdown"
+            />
           </div>
-        </template>
+        </div>
+      </div>
 
-        <Column header="Job" style="width: 280px">
-          <template #body="{ data }">
-            <div class="job-cell">
-              <button class="cell-link" type="button" @click="onEdit(data.id)">
-                {{ data.job_number || "—" }}
-              </button>
-              <div class="cell-subtext">#{{ data.id }}</div>
-            </div>
-          </template>
-        </Column>
-
-        <Column header="Type" style="width: 180px">
-          <template #body="{ data }">
-            <span class="info-chip">
-              {{ prettify(data.job_type) || "—" }}
-            </span>
-          </template>
-        </Column>
-
-        <Column header="Mode" style="width: 180px">
-          <template #body="{ data }">
-            <span class="info-chip">
-              {{ prettify(data.mode_of_transport) || "—" }}
-            </span>
-          </template>
-        </Column>
-
-        <Column header="Customer" style="width: 280px">
-          <template #body="{ data }">
-            <div class="customer-cell">
-              <div class="customer-name">
-                {{ data.customer_contact?.company_name ?? "—" }}
+      <div class="jobs-list-page__content">
+        <div class="jobs-list-page__table-card">
+          <DataTable
+            :value="items"
+            :loading="loading"
+            dataKey="id"
+            responsiveLayout="scroll"
+            class="jobs-table"
+            paginator
+            lazy
+            :rows="perPage"
+            :totalRecords="total"
+            :first="firstRow"
+            :rowsPerPageOptions="[15, 25, 50, 100]"
+            @page="onPage"
+          >
+            <template #empty>
+              <div class="jobs-list-page__empty-state">
+                <div class="jobs-list-page__empty-title">No jobs found</div>
+                <div class="jobs-list-page__empty-subtitle">
+                  Try changing filters or search terms.
+                </div>
               </div>
-              <div class="cell-subtext">
-                {{ data.customer_contact?.account_number ?? "" }}
-              </div>
-            </div>
-          </template>
-        </Column>
+            </template>
 
-        <Column header="Created by" style="width: 280px">
-          <template #body="{ data }">
-            <div class="customer-cell">
-              <div class="customer-name">
-                {{ data.creator?.name ?? "—" }}
-              </div>
-              <div class="cell-subtext">
-                {{ data.customer_contact?.email ?? "" }}
-              </div>
-            </div>
-          </template>
-        </Column>
+            <Column header="Job" style="width: 280px">
+              <template #body="{ data }">
+                <div class="jobs-list-page__job-cell">
+                  <button class="jobs-list-page__cell-link" type="button" @click="onEdit(data.id)">
+                    {{ data.job_number || "—" }}
+                  </button>
+                  <div class="jobs-list-page__cell-subtext">#{{ data.id }}</div>
+                </div>
+              </template>
+            </Column>
 
-        <Column header="Quote Ref" style="width: 180px">
-          <template #body="{ data }">
-            <span class="plain-value">{{ data.quote_ref || "—" }}</span>
-          </template>
-        </Column>
+            <Column header="Type" style="width: 180px">
+              <template #body="{ data }">
+                <span class="jobs-list-page__info-chip">
+                  {{ prettify(data.job_type) || "—" }}
+                </span>
+              </template>
+            </Column>
 
-        <Column header="Date" style="width: 160px">
-          <template #body="{ data }">
-            <span class="plain-value">{{ data.job_date || "—" }}</span>
-          </template>
-        </Column>
+            <Column header="Mode" style="width: 180px">
+              <template #body="{ data }">
+                <span class="jobs-list-page__info-chip">
+                  {{ prettify(data.mode_of_transport) || "—" }}
+                </span>
+              </template>
+            </Column>
 
-        <Column header="" style="width: 190px">
-          <template #body="{ data }">
-            <div class="row-actions">
-              <Button
-                text
-                class="edit-btn"
-                icon="pi pi-pencil"
-                label="Edit"
-                @click="onEdit(data.id)"
-              />
-              <Button
-                text
-                class="delete-btn"
-                icon="pi pi-trash"
-                label="Delete"
-                @click="confirmDelete(data.id)"
-              />
-            </div>
-          </template>
-        </Column>
-      </DataTable>
+            <Column header="Customer" style="width: 280px">
+              <template #body="{ data }">
+                <div class="jobs-list-page__customer-cell">
+                  <div class="jobs-list-page__customer-name">
+                    {{ data.customer_contact?.company_name ?? "—" }}
+                  </div>
+                  <div class="jobs-list-page__cell-subtext">
+                    {{ data.customer_contact?.account_number ?? "" }}
+                  </div>
+                </div>
+              </template>
+            </Column>
+
+            <Column header="Created by" style="width: 280px">
+              <template #body="{ data }">
+                <div class="jobs-list-page__creator-cell">
+                  <div class="jobs-list-page__creator-name">
+                    {{ data.creator?.name ?? "—" }}
+                  </div>
+                  <div class="jobs-list-page__cell-subtext">
+                    {{ data.customer_contact?.email ?? "" }}
+                  </div>
+                </div>
+              </template>
+            </Column>
+
+            <Column header="Quote Ref" style="width: 180px">
+              <template #body="{ data }">
+                <span class="jobs-list-page__plain-value">{{ data.quote_ref || "—" }}</span>
+              </template>
+            </Column>
+
+            <Column header="Date" style="width: 160px">
+              <template #body="{ data }">
+                <span class="jobs-list-page__plain-value">{{ data.job_date || "—" }}</span>
+              </template>
+            </Column>
+
+            <Column header="" style="width: 190px">
+              <template #body="{ data }">
+                <div class="jobs-list-page__row-actions">
+                  <Button
+                    text
+                    class="jobs-list-page__edit-btn"
+                    icon="pi pi-pencil"
+                    label="Edit"
+                    @click="onEdit(data.id)"
+                  />
+                  <Button
+                    text
+                    class="jobs-list-page__delete-btn"
+                    icon="pi pi-trash"
+                    label="Delete"
+                    @click="confirmDelete(data.id)"
+                  />
+                </div>
+              </template>
+            </Column>
+          </DataTable>
+        </div>
+      </div>
     </div>
-  </div>
+  </section>
 </template>
 
 <script setup lang="ts">
@@ -178,6 +184,7 @@ import "./JobsListPage.css"
 
 import InputText from "primevue/inputtext"
 import Button from "primevue/button"
+import Dropdown from "primevue/dropdown"
 import DataTable from "primevue/datatable"
 import Column from "primevue/column"
 import ConfirmDialog from "primevue/confirmdialog"
@@ -204,7 +211,6 @@ const {
   showAllJobs,
   onPage,
   onNewJob,
-  onImportContacts,
   onEdit,
   onDelete,
   prettify,

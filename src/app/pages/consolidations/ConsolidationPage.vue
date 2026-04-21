@@ -155,238 +155,276 @@
       </template>
     </Card>
 
-    <!-- Tabs -->
-    <div class="tabs">
-      <button
-        class="tab"
-        :class="{ active: activeTab === 'goodsin' }"
-        @click="activeTab = 'goodsin'"
-      >
-        <i class="pi pi-box" /> Goods In (WMS)
-      </button>
-      <button class="tab" :class="{ active: activeTab === 'co' }" @click="activeTab = 'co'">
-        <i class="pi pi-truck" /> Collection Orders
-      </button>
-      <button class="tab" :class="{ active: activeTab === 'so' }" @click="activeTab = 'so'">
-        <i class="pi pi-link" /> Supplier Orders
-      </button>
-      <button class="tab" :class="{ active: activeTab === 'inv' }" @click="activeTab = 'inv'">
-        <i class="pi pi-file" /> Customer Invoices
-      </button>
+    <!-- Tabs Card -->
+    <div class="con-tabs-card">
+      <div class="con-tabs-bar">
+        <nav class="con-tabs-nav">
+          <button
+            class="con-tab"
+            :class="{ 'con-tab--active': activeTab === 'draft' }"
+            @click="activeTab = 'draft'"
+            type="button"
+          >
+            Draft
+          </button>
+
+          <button
+            class="con-tab"
+            :class="{ 'con-tab--active': activeTab === 'sent' }"
+            @click="activeTab = 'sent'"
+            type="button"
+          >
+            Sent
+          </button>
+
+          <button
+            class="con-tab"
+            :class="{ 'con-tab--active': activeTab === 'approved' }"
+            @click="activeTab = 'approved'"
+            type="button"
+          >
+            Approved
+          </button>
+
+          <button
+            class="con-tab"
+            :class="{ 'con-tab--active': activeTab === 'rejected' }"
+            @click="activeTab = 'rejected'"
+            type="button"
+          >
+            Rejected
+          </button>
+        </nav>
+
+        <div class="con-tabs-tools">
+          <div class="con-tabs-mode">
+            <span class="con-tabs-mode__label">Mode of Transport</span>
+            <Dropdown
+              v-model="selectedTabMode"
+              :options="modeOptions"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Select mode"
+              class="con-tabs-mode__dropdown"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div class="con-tabs-content">
+        <!-- Draft -->
+        <Card v-if="activeTab === 'draft'" class="panel">
+          <template #content>
+            <SectionHead
+              title="Draft"
+              subtitle="Draft consolidation invoices and working records for review."
+            >
+              <template #actions>
+                <Button
+                  label="Generate from GRNs"
+                  icon="pi pi-bolt"
+                  class="p-button-outlined orbis-primary"
+                />
+                <Button
+                  label="Import"
+                  icon="pi pi-upload"
+                  class="p-button-outlined orbis-primary"
+                />
+              </template>
+            </SectionHead>
+
+            <div class="invoice-toprow">
+              <div class="currency-switch">
+                <div class="label">INVOICE CURRENCY</div>
+                <CurrencyPills v-model="invoiceCurrency" :options="invoiceCurrencies" />
+              </div>
+
+              <div class="totals-mini">
+                <div>
+                  <span class="muted">Total:</span> <b>{{ activeCurrencyTotalLabel }}</b>
+                </div>
+                <div>
+                  <span class="muted">Base:</span> <b>£{{ fmt(activeCurrencyBaseTotalGbp) }}</b>
+                </div>
+              </div>
+            </div>
+
+            <div class="invoice-box">
+              <div class="subhead">TOTALS BY CURRENCY (ALL DRAFTS)</div>
+              <div class="totals-row">
+                <div class="totchip" v-for="t in totalsByCurrency" :key="t.currency">
+                  <span class="muted">{{ t.currency }}:</span> <b>{{ t.totalLabel }}</b>
+                </div>
+              </div>
+            </div>
+
+            <div class="invoice-box" v-if="supplierBreakdown.length">
+              <div class="subhead">SUPPLIER BREAKDOWN (AUDIT) — {{ invoiceCurrency }}</div>
+              <div class="chips">
+                <span class="chip" v-for="s in supplierBreakdown" :key="s.supplier">
+                  {{ s.supplier }}: {{ s.totalLabel }}
+                </span>
+              </div>
+            </div>
+
+            <DataTable :value="invoiceLinesFiltered" class="datatable" responsiveLayout="scroll">
+              <Column field="shippingLabel" header="Shipping Label" />
+              <Column field="description" header="Description" />
+              <Column field="qty" header="Qty" />
+              <Column field="uom" header="UOM" />
+              <Column field="coo" header="COO" />
+              <Column field="hsCode" header="HS Code" />
+
+              <Column header="Unit Value">
+                <template #body="{ data }">
+                  {{ money(data.currency, data.unitValue) }}
+                </template>
+              </Column>
+
+              <Column header="Total Value">
+                <template #body="{ data }">
+                  <b>{{ money(data.currency, data.totalValue) }}</b>
+                </template>
+              </Column>
+
+              <Column field="currency" header="Currency" />
+
+              <Column header="Supplier">
+                <template #body="{ data }">
+                  <span v-if="data.supplier" class="chip-inline">{{ data.supplier }}</span>
+                  <span v-else>—</span>
+                </template>
+              </Column>
+
+              <Column field="grn" header="GRN" />
+
+              <Column header="FX → GBP">
+                <template #body="{ data }">
+                  <span v-if="data.currency === 'GBP'">—</span>
+                  <b v-else>{{ Number(data.fxToGbp || 0).toFixed(4) }}</b>
+                </template>
+              </Column>
+
+              <Column header="Total (Base)">
+                <template #body="{ data }">
+                  <b>£{{ fmt(lineBaseTotalGbp(data)) }}</b>
+                </template>
+              </Column>
+            </DataTable>
+
+            <div class="invoice-foot">
+              <div class="tip muted">
+                Tip: Shipping Label lines are what you'll print/store; invoices pull from these plus
+                customs fields.
+              </div>
+              <div class="base-total">
+                <div class="bt-label">ACTIVE DRAFT BASE TOTAL</div>
+                <div class="bt-value">£{{ fmt(activeCurrencyBaseTotalGbp) }}</div>
+              </div>
+            </div>
+          </template>
+        </Card>
+
+        <!-- Sent -->
+        <Card v-if="activeTab === 'sent'" class="panel">
+          <template #content>
+            <SectionHead
+              title="Sent"
+              subtitle="Invoices or documents that have been issued and sent to the customer."
+            >
+              <template #actions>
+                <Button label="Resend" icon="pi pi-send" class="p-button-outlined orbis-primary" />
+              </template>
+            </SectionHead>
+
+            <DataTable :value="invoiceLinesFiltered" class="datatable" responsiveLayout="scroll">
+              <Column field="shippingLabel" header="Shipping Label" />
+              <Column field="description" header="Description" />
+              <Column field="qty" header="Qty" />
+              <Column field="currency" header="Currency" />
+              <Column header="Total Value">
+                <template #body="{ data }">
+                  <b>{{ money(data.currency, data.totalValue) }}</b>
+                </template>
+              </Column>
+              <Column header="Supplier">
+                <template #body="{ data }">
+                  <span v-if="data.supplier" class="chip-inline">{{ data.supplier }}</span>
+                  <span v-else>—</span>
+                </template>
+              </Column>
+            </DataTable>
+          </template>
+        </Card>
+
+        <!-- Approved -->
+        <Card v-if="activeTab === 'approved'" class="panel">
+          <template #content>
+            <SectionHead
+              title="Approved"
+              subtitle="Approved records ready for posting and downstream accounting processes."
+            >
+              <template #actions>
+                <Button
+                  label="Post Invoices"
+                  icon="pi pi-check"
+                  class="p-button-outlined orbis-primary"
+                />
+              </template>
+            </SectionHead>
+
+            <DataTable :value="invoiceLinesFiltered" class="datatable" responsiveLayout="scroll">
+              <Column field="shippingLabel" header="Shipping Label" />
+              <Column field="description" header="Description" />
+              <Column field="qty" header="Qty" />
+              <Column field="currency" header="Currency" />
+              <Column header="Total Value">
+                <template #body="{ data }">
+                  <b>{{ money(data.currency, data.totalValue) }}</b>
+                </template>
+              </Column>
+              <Column field="grn" header="GRN" />
+            </DataTable>
+          </template>
+        </Card>
+
+        <!-- Rejected -->
+        <Card v-if="activeTab === 'rejected'" class="panel">
+          <template #content>
+            <SectionHead
+              title="Rejected"
+              subtitle="Rejected items that need correction before they can proceed."
+            >
+              <template #actions>
+                <Button
+                  label="Return to Draft"
+                  icon="pi pi-undo"
+                  class="p-button-outlined orbis-primary"
+                />
+              </template>
+            </SectionHead>
+
+            <DataTable :value="invoiceLinesFiltered" class="datatable" responsiveLayout="scroll">
+              <Column field="shippingLabel" header="Shipping Label" />
+              <Column field="description" header="Description" />
+              <Column field="qty" header="Qty" />
+              <Column field="currency" header="Currency" />
+              <Column header="Total Value">
+                <template #body="{ data }">
+                  <b>{{ money(data.currency, data.totalValue) }}</b>
+                </template>
+              </Column>
+              <Column header="Supplier">
+                <template #body="{ data }">
+                  <span v-if="data.supplier" class="chip-inline">{{ data.supplier }}</span>
+                  <span v-else>—</span>
+                </template>
+              </Column>
+            </DataTable>
+          </template>
+        </Card>
+      </div>
     </div>
-
-    <!-- Goods In -->
-    <Card v-if="activeTab === 'goodsin'" class="panel">
-      <template #content>
-        <SectionHead title="Goods In" subtitle="WMS GRNs (read-only) from multiple suppliers.">
-          <template #actions>
-            <Button label="Open WMS" icon="pi pi-box" class="p-button-outlined orbis-primary" />
-          </template>
-        </SectionHead>
-
-        <DataTable :value="goodsInRows" class="datatable" responsiveLayout="scroll">
-          <Column field="grn" header="GRN" />
-          <Column field="supplier" header="Supplier" />
-          <Column field="supplierInv" header="Supplier Inv" />
-          <Column field="poRef" header="PO Ref" />
-          <Column field="partNo" header="Part No" />
-          <Column field="description" header="Description" />
-          <Column field="pcs" header="Pcs" />
-          <Column field="weight" header="Weight" />
-          <Column field="cbm" header="CBM" />
-          <Column field="location" header="Location" />
-          <Column header="Status">
-            <template #body="{ data }">
-              <span class="status-text">{{ data.status }}</span>
-            </template>
-          </Column>
-        </DataTable>
-      </template>
-    </Card>
-
-    <!-- Collection Orders -->
-    <Card v-if="activeTab === 'co'" class="panel">
-      <template #content>
-        <SectionHead
-          title="Collection Orders"
-          subtitle="Inbound collections bringing supplier goods into storage."
-        >
-          <template #actions>
-            <Button label="New CO" icon="pi pi-plus" class="p-button-outlined orbis-primary" />
-          </template>
-        </SectionHead>
-
-        <DataTable :value="collectionOrders" class="datatable" responsiveLayout="scroll">
-          <Column field="ref" header="CO Ref" />
-          <Column field="supplier" header="Supplier" />
-          <Column field="pickupDate" header="Pickup Date" />
-          <Column field="pickupTime" header="Pickup Time" />
-          <Column field="vehicle" header="Vehicle" />
-          <Column field="pieces" header="Pieces" />
-          <Column field="weight" header="Weight" />
-          <Column header="Status">
-            <template #body="{ data }">
-              <Tag :value="data.status" :severity="coSeverity(data.status)" />
-            </template>
-          </Column>
-        </DataTable>
-      </template>
-    </Card>
-
-    <!-- Supplier Orders -->
-    <Card v-if="activeTab === 'so'" class="panel">
-      <template #content>
-        <SectionHead
-          title="Supplier Orders"
-          subtitle="Supplier orders linked to this customer consolidation."
-        >
-          <template #actions>
-            <Button
-              label="Link Existing"
-              icon="pi pi-plus"
-              class="p-button-outlined orbis-primary"
-            />
-          </template>
-        </SectionHead>
-
-        <DataTable :value="supplierOrders" class="datatable" responsiveLayout="scroll">
-          <Column field="orderRef" header="Order Ref" />
-          <Column field="supplier" header="Supplier" />
-          <Column field="customer" header="Customer" />
-          <Column field="pcs" header="Pcs" />
-          <Column field="weight" header="Weight" />
-          <Column field="cbm" header="CBM" />
-          <Column field="currency" header="Currency" />
-          <Column header="Lock">
-            <template #body="{ data }">
-              <Tag
-                :value="data.locked ? 'Locked' : 'Unlocked'"
-                :severity="data.locked ? 'danger' : 'success'"
-              />
-            </template>
-          </Column>
-        </DataTable>
-      </template>
-    </Card>
-
-    <!-- Customer Invoices -->
-    <Card v-if="activeTab === 'inv'" class="panel">
-      <template #content>
-        <div class="section-head">
-          <div>
-            <div class="h2">Customer Invoices</div>
-            <div class="muted">
-              Separate invoices per currency. Each line includes Shipping Label, UOM, COO, HS Code,
-              unit &amp; total values.
-            </div>
-          </div>
-
-          <div class="inv-actions">
-            <Button
-              label="Generate from GRNs"
-              icon="pi pi-bolt"
-              class="p-button-outlined orbis-primary"
-            />
-            <Button label="Import" icon="pi pi-upload" class="p-button-outlined orbis-primary" />
-            <Button
-              label="Add Shipping Label"
-              icon="pi pi-tag"
-              class="p-button-outlined orbis-primary"
-            />
-          </div>
-        </div>
-
-        <div class="invoice-toprow">
-          <div class="currency-switch">
-            <div class="label">INVOICE CURRENCY</div>
-            <CurrencyPills v-model="invoiceCurrency" :options="invoiceCurrencies" />
-          </div>
-
-          <div class="totals-mini">
-            <div>
-              <span class="muted">Total:</span> <b>{{ activeCurrencyTotalLabel }}</b>
-            </div>
-            <div>
-              <span class="muted">Base:</span> <b>£{{ fmt(activeCurrencyBaseTotalGbp) }}</b>
-            </div>
-          </div>
-        </div>
-
-        <div class="invoice-box">
-          <div class="subhead">TOTALS BY CURRENCY (ALL INVOICES)</div>
-          <div class="totals-row">
-            <div class="totchip" v-for="t in totalsByCurrency" :key="t.currency">
-              <span class="muted">{{ t.currency }}:</span> <b>{{ t.totalLabel }}</b>
-            </div>
-          </div>
-        </div>
-
-        <div class="invoice-box" v-if="supplierBreakdown.length">
-          <div class="subhead">SUPPLIER BREAKDOWN (AUDIT) — {{ invoiceCurrency }}</div>
-          <div class="chips">
-            <span class="chip" v-for="s in supplierBreakdown" :key="s.supplier">
-              {{ s.supplier }}: {{ s.totalLabel }}
-            </span>
-          </div>
-        </div>
-
-        <DataTable :value="invoiceLinesFiltered" class="datatable" responsiveLayout="scroll">
-          <Column field="shippingLabel" header="Shipping Label" />
-          <Column field="description" header="Description" />
-          <Column field="qty" header="Qty" />
-          <Column field="uom" header="UOM" />
-          <Column field="coo" header="COO" />
-          <Column field="hsCode" header="HS Code" />
-
-          <Column header="Unit Value">
-            <template #body="{ data }">
-              {{ money(data.currency, data.unitValue) }}
-            </template>
-          </Column>
-
-          <Column header="Total Value">
-            <template #body="{ data }">
-              <b>{{ money(data.currency, data.totalValue) }}</b>
-            </template>
-          </Column>
-
-          <Column field="currency" header="Currency" />
-
-          <Column header="Supplier">
-            <template #body="{ data }">
-              <span v-if="data.supplier" class="chip-inline">{{ data.supplier }}</span>
-              <span v-else>—</span>
-            </template>
-          </Column>
-
-          <Column field="grn" header="GRN" />
-
-          <Column header="FX → GBP">
-            <template #body="{ data }">
-              <span v-if="data.currency === 'GBP'">—</span>
-              <b v-else>{{ Number(data.fxToGbp || 0).toFixed(4) }}</b>
-            </template>
-          </Column>
-
-          <Column header="Total (Base)">
-            <template #body="{ data }">
-              <b>£{{ fmt(lineBaseTotalGbp(data)) }}</b>
-            </template>
-          </Column>
-        </DataTable>
-
-        <div class="invoice-foot">
-          <div class="tip muted">
-            Tip: Shipping Label lines are what you'll print/store; invoices pull from these plus
-            customs fields.
-          </div>
-          <div class="base-total">
-            <div class="bt-label">ACTIVE INVOICE BASE TOTAL</div>
-            <div class="bt-value">£{{ fmt(activeCurrencyBaseTotalGbp) }}</div>
-          </div>
-        </div>
-      </template>
-    </Card>
   </div>
 </template>
 
@@ -395,12 +433,10 @@ import { computed, reactive, ref } from "vue"
 import SectionHead from "@/app/components/consolidations/SectionHead.vue"
 import CurrencyPills from "@/app/components/consolidations/CurrencyPills.vue"
 
-/* =========================
-   Types
-========================= */
 type Currency = "GBP" | "USD" | "EUR"
 type ConsolidationStatus = "Open" | "Locked" | "Closed"
 type Mode = "Air" | "Sea" | "Road"
+type StatusTab = "draft" | "sent" | "approved" | "rejected"
 
 type InvoiceLine = {
   shippingLabel: string
@@ -417,9 +453,6 @@ type InvoiceLine = {
   fxToGbp?: number
 }
 
-/* =========================
-   Options
-========================= */
 const statusOptions: Array<{ label: string; value: ConsolidationStatus }> = [
   { label: "Open", value: "Open" },
   { label: "Locked", value: "Locked" },
@@ -432,9 +465,6 @@ const modeOptions: Array<{ label: string; value: Mode }> = [
   { label: "Road", value: "Road" },
 ]
 
-/* =========================
-   State
-========================= */
 const consolidation = reactive({
   masterRef: "CON-PE-000245",
   status: "Open" as ConsolidationStatus,
@@ -458,115 +488,13 @@ const summary = reactive({
   marginPct: 0.28,
 })
 
-const activeTab = ref<"goodsin" | "co" | "so" | "inv">("inv")
+const activeTab = ref<StatusTab>("draft")
+const selectedTabMode = ref<Mode>("Air")
 
-/* Goods-in / CO / SO are mock lists; typing not required for build errors */
-const goodsInRows = ref([
-  {
-    grn: "GRN-8812",
-    supplier: "Shenzhen ABC Components Co., Ltd.",
-    supplierInv: "INV-SZ-10441",
-    poRef: "PO-PE245-01",
-    partNo: "IC-74HC595",
-    description: "Integrated Circuits",
-    pcs: 3000,
-    weight: "45 kg",
-    cbm: 0.18,
-    location: "RACK A2",
-    status: "Received",
-  },
-  {
-    grn: "GRN-8831",
-    supplier: "Guangzhou DEF Plastics Ltd.",
-    supplierInv: "INV-GZ-88912",
-    poRef: "PO-PE246-02",
-    partNo: "PL-AB-12",
-    description: "Plastic Housings",
-    pcs: 1200,
-    weight: "62 kg",
-    cbm: 0.26,
-    location: "RACK B1",
-    status: "Received",
-  },
-  {
-    grn: "GRN-8879",
-    supplier: "Ningbo GHI Metals",
-    supplierInv: "INV-NB-55301",
-    poRef: "PO-PE247-01",
-    partNo: "AL-BKT-9",
-    description: "Aluminium Brackets",
-    pcs: 500,
-    weight: "78 kg",
-    cbm: 0.31,
-    location: "BULK 03",
-    status: "Received",
-  },
-])
-
-const collectionOrders = ref([
-  {
-    ref: "CO-771",
-    supplier: "DHL",
-    pickupDate: "12/03/26",
-    pickupTime: "09:30",
-    vehicle: "7.5t",
-    pieces: 0,
-    weight: "800 kg",
-    status: "Booked",
-  },
-  {
-    ref: "CO-812",
-    supplier: "Kuehne+Nagel",
-    pickupDate: "12/03/26",
-    pickupTime: "14:00",
-    vehicle: "Van",
-    pieces: 0,
-    weight: "120 kg",
-    status: "Pending",
-  },
-])
-
-const supplierOrders = ref([
-  {
-    orderRef: "PE245",
-    supplier: "Shenzhen ABC Components Co., Ltd.",
-    customer: "Far East Trading (HK)",
-    pcs: 3000,
-    weight: "45 kg",
-    cbm: 0.18,
-    currency: "USD",
-    locked: false,
-  },
-  {
-    orderRef: "PE246",
-    supplier: "Guangzhou DEF Plastics Ltd.",
-    customer: "Far East Trading (HK)",
-    pcs: 1200,
-    weight: "62 kg",
-    cbm: 0.26,
-    currency: "USD",
-    locked: true,
-  },
-  {
-    orderRef: "PE247",
-    supplier: "Ningbo GHI Metals",
-    customer: "Far East Trading (HK)",
-    pcs: 500,
-    weight: "78 kg",
-    cbm: 0.31,
-    currency: "USD",
-    locked: false,
-  },
-])
-
-/* =========================
-   Invoices
-========================= */
 const invoiceCurrencies = ["GBP", "USD", "EUR"] as const
 const invoiceCurrency = ref<Currency>("USD")
 
 const invoiceLines = ref<InvoiceLine[]>([
-  // USD
   {
     shippingLabel: "LBL-USD-0001",
     description: "Integrated Circuits (IC-74HC595)",
@@ -609,8 +537,6 @@ const invoiceLines = ref<InvoiceLine[]>([
     grn: "GRN-8879",
     fxToGbp: 0.79,
   },
-
-  // GBP
   {
     shippingLabel: "LBL-GBP-SERV",
     description: "Handling & Storage (consolidation period)",
@@ -639,8 +565,6 @@ const invoiceLines = ref<InvoiceLine[]>([
     grn: "",
     fxToGbp: 1,
   },
-
-  // EUR
   {
     shippingLabel: "LBL-EUR-0001",
     description: "EU-sourced Components (assorted)",
@@ -707,9 +631,6 @@ const supplierBreakdown = computed<Array<{ supplier: string; total: number; tota
   },
 )
 
-/* =========================
-   Helpers
-========================= */
 function fmt(n: number): string {
   return Number(n || 0).toLocaleString(undefined, {
     minimumFractionDigits: 2,
@@ -734,12 +655,6 @@ function statusSeverity(s: ConsolidationStatus) {
   if (s === "Open") return "success"
   if (s === "Locked") return "warning"
   if (s === "Closed") return "secondary"
-  return "secondary"
-}
-
-function coSeverity(s: string) {
-  if (s === "Booked") return "success"
-  if (s === "Pending") return "warning"
   return "secondary"
 }
 </script>
