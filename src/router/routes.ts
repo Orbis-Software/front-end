@@ -66,6 +66,16 @@ const SystemSettingsAwbManagerPage = () =>
 const WmsDashboardPage = () => import("@/app/pages/wms/dashboard/WmsDashboardPage.vue")
 
 const WarehouseGoodsInPage = () => import("@/app/pages/warehouse/goods-in/WarehouseGoodsInPage.vue")
+
+const ArrivalLogTab = () =>
+  import("@/app/pages/warehouse/goods-in/tabs/arrival-log/ArrivalLogTab.vue")
+
+const ExpectedArrivalsTab = () =>
+  import("@/app/pages/warehouse/goods-in/tabs/expected-arrivals/ExpectedArrivalsTab.vue")
+
+const WarehouseReceiptsTab = () =>
+  import("@/app/pages/warehouse/goods-in/tabs/warehouse-receipts/WarehouseReceiptsTab.vue")
+
 const WarehouseStoragePage = () => import("@/app/pages/warehouse/storage/WarehouseStoragePage.vue")
 const WarehouseGoodsOutPage = () =>
   import("@/app/pages/warehouse/goods-out/WarehouseGoodsOutPage.vue")
@@ -231,6 +241,7 @@ export const routes: RouteRecordRaw[] = [
       {
         path: "warehouse/goods-in",
         component: WarehouseGoodsInPage,
+        meta: { title: "Goods In" },
         children: [
           {
             path: "",
@@ -239,21 +250,23 @@ export const routes: RouteRecordRaw[] = [
           {
             path: "arrival-log",
             name: "warehouse-goods-in-arrival-log",
-            component: () => import("@/app/pages/warehouse/goods-in/tabs/ArrivalLogTab.vue"),
+            component: ArrivalLogTab,
+            meta: { title: "Goods In • Arrival Log" },
           },
           {
             path: "expected-arrivals",
             name: "warehouse-goods-in-expected-arrivals",
-            component: () => import("@/app/pages/warehouse/goods-in/tabs/ExpectedArrivalsTab.vue"),
+            component: ExpectedArrivalsTab,
+            meta: { title: "Goods In • Expected Arrivals" },
           },
           {
             path: "warehouse-receipts",
             name: "warehouse-goods-in-receipts",
-            component: () => import("@/app/pages/warehouse/goods-in/tabs/WarehouseReceiptsTab.vue"),
+            component: WarehouseReceiptsTab,
+            meta: { title: "Goods In • Warehouse Receipts" },
           },
         ],
       },
-
       /* =========================
          Warehouse • Storage
       ========================= */

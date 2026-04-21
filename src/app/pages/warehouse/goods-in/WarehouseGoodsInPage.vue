@@ -2,8 +2,16 @@
 import "./WarehouseGoodsInPage.css"
 import { RouterLink, RouterView } from "vue-router"
 import { useWarehouseGoodsInPage } from "./WarehouseGoodsInPage"
+import ReceiveConsignmentModal from "@/app/components/warehouse/goods-in/ReceiveConsignmentModal.vue"
 
-const { tabs, isActive, onOpenReceiveConsignment } = useWarehouseGoodsInPage()
+const {
+  tabs,
+  isActive,
+  receiveConsignmentOpen,
+  onOpenReceiveConsignment,
+  onCloseReceiveConsignment,
+  onSavedReceiveConsignment,
+} = useWarehouseGoodsInPage()
 </script>
 
 <template>
@@ -44,5 +52,11 @@ const { tabs, isActive, onOpenReceiveConsignment } = useWarehouseGoodsInPage()
         <RouterView />
       </div>
     </div>
+
+    <ReceiveConsignmentModal
+      :visible="receiveConsignmentOpen"
+      @close="onCloseReceiveConsignment"
+      @saved="onSavedReceiveConsignment"
+    />
   </section>
 </template>

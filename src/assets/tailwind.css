@@ -41,6 +41,76 @@ body {
 }
 
 /* =========================
+   ORBIS BUTTON SYSTEM
+========================= */
+
+/* Primary button */
+.p-button {
+  border-radius: 10px !important;
+  font-weight: 600;
+  font-size: 0.85rem;
+  padding: 0.45rem 0.85rem;
+  transition: all 0.15s ease;
+}
+
+/* Default (Primary) */
+.p-button:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(
+    .p-button-danger
+  ) {
+  background: var(--primary) !important;
+  border: 1px solid var(--primary) !important;
+  color: #fff !important;
+}
+
+.p-button:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(
+    .p-button-danger
+  ):hover {
+  background: var(--primary-hover) !important;
+  border-color: var(--primary-hover) !important;
+}
+
+/* Secondary (outlined grey) */
+.p-button.p-button-secondary.p-button-outlined {
+  background: #fff !important;
+  border: 1px solid var(--border) !important;
+  color: var(--text) !important;
+}
+
+.p-button.p-button-secondary.p-button-outlined:hover {
+  background: #f6f6f6 !important;
+  border-color: #d0d0d0 !important;
+}
+
+/* Text button (like X delete icon) */
+.p-button.p-button-text {
+  background: transparent !important;
+  border: none !important;
+  color: var(--text-muted) !important;
+}
+
+.p-button.p-button-text:hover {
+  background: rgba(0, 0, 0, 0.05) !important;
+  color: var(--text) !important;
+}
+
+/* Danger button */
+.p-button.p-button-danger {
+  background: #e53935 !important;
+  border-color: #e53935 !important;
+  color: #fff !important;
+}
+
+.p-button.p-button-danger:hover {
+  background: #c62828 !important;
+  border-color: #c62828 !important;
+}
+
+/* Small buttons tweak */
+.p-button.p-button-sm {
+  font-size: 0.75rem;
+  padding: 0.35rem 0.7rem;
+}
+/* =========================
    PRIMEVUE — UNIVERSAL BUTTONS
    ========================= */
 @layer components {

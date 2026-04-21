@@ -1,13 +1,26 @@
 <script setup lang="ts">
 import "./WarehouseReceiptsTab.css"
 import Button from "primevue/button"
+import WarehouseReceiptModal from "@/app/components/warehouse/goods-in/WarehouseReceiptModal.vue"
+
 import { useWarehouseReceiptsTab } from "./WarehouseReceiptsTab"
 
-const { rows } = useWarehouseReceiptsTab()
+const {
+  rows,
+  warehouseReceiptOpen,
+  onOpenWarehouseReceipt,
+  onCloseWarehouseReceipt,
+  onSavedWarehouseReceipt,
+} = useWarehouseReceiptsTab()
 </script>
 
 <template>
   <section class="warehouse-receipts-tab">
+    <div class="warehouse-receipts-tab__toolbar">
+      <div class="warehouse-receipts-tab__spacer" />
+      <Button label="+ Warehouse Receipt" @click="onOpenWarehouseReceipt" />
+    </div>
+
     <div v-if="!rows.length" class="warehouse-receipts-tab__empty">
       No warehouse receipts yet. Open a consignment in the Arrival Log and click
       <strong>Receipt</strong> to create one.
@@ -47,12 +60,18 @@ const { rows } = useWarehouseReceiptsTab()
               <span v-else class="warehouse-receipts-tab__muted">None</span>
             </td>
             <td class="warehouse-receipts-tab__actions">
-              <Button icon="pi pi-pencil" size="small" text />
+              <Button icon="pi pi-pencil" size="small" text @click="onOpenWarehouseReceipt" />
               <Button label="Print" size="small" outlined />
             </td>
           </tr>
         </tbody>
       </table>
     </div>
+
+    <WarehouseReceiptModal
+      :visible="warehouseReceiptOpen"
+      @close="onCloseWarehouseReceipt"
+      @saved="onSavedWarehouseReceipt"
+    />
   </section>
 </template>
