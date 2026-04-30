@@ -36,6 +36,20 @@ const ContactsImportPage = () => import("@/app/pages/contacts/import/ContactsImp
 const ConsolidationPage = () => import("@/app/pages/consolidations/ConsolidationPage.vue")
 const SettingsPage = () => import("@/app/pages/general-settings/GeneralSettingsPage.vue")
 
+const MeasurementsUnitsTab = () =>
+  import("@/app/pages/general-settings/tabs/MeasurementsUnitsTab.vue")
+
+const FreightCargoTab = () => import("@/app/pages/general-settings/tabs/FreightCargoTab.vue")
+
+const OperationsTab = () => import("@/app/pages/general-settings/tabs/OperationsTab.vue")
+
+const WarehouseTab = () => import("@/app/pages/general-settings/tabs/WarehouseTab.vue")
+
+const DocumentationTab = () => import("@/app/pages/general-settings/tabs/DocumentationTab.vue")
+
+const ContactsAddressesTab = () =>
+  import("@/app/pages/general-settings/tabs/ContactsAddressesTab.vue")
+
 /* =========================
    Management Pages
 ========================= */
@@ -559,11 +573,62 @@ export const routes: RouteRecordRaw[] = [
       /* =========================
          General Settings
       ========================= */
+      /* =========================
+   General Settings
+========================= */
       {
         path: "settings",
-        name: "app.settings",
         component: SettingsPage,
         meta: { title: "Settings" },
+
+        children: [
+          {
+            path: "",
+            redirect: { name: "general-settings.measurements" },
+          },
+
+          {
+            path: "measurements",
+            name: "general-settings.measurements",
+            component: MeasurementsUnitsTab,
+            meta: { title: "Measurements & Units" },
+          },
+
+          {
+            path: "freight-cargo",
+            name: "general-settings.freight-cargo",
+            component: FreightCargoTab,
+            meta: { title: "Freight & Cargo" },
+          },
+
+          {
+            path: "operations",
+            name: "general-settings.operations",
+            component: OperationsTab,
+            meta: { title: "Operations" },
+          },
+
+          {
+            path: "warehouse",
+            name: "general-settings.warehouse",
+            component: WarehouseTab,
+            meta: { title: "Warehouse" },
+          },
+
+          {
+            path: "documentation",
+            name: "general-settings.documentation",
+            component: DocumentationTab,
+            meta: { title: "Documentation" },
+          },
+
+          {
+            path: "contacts-addresses",
+            name: "general-settings.contacts-addresses",
+            component: ContactsAddressesTab,
+            meta: { title: "Contacts & Addresses" },
+          },
+        ],
       },
 
       /* =========================
