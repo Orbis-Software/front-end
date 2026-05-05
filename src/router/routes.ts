@@ -25,6 +25,14 @@ const JobPage = () => import("@/app/pages/jobs/JobPage.vue")
 const JobsListPage = () => import("@/app/pages/jobs/list/JobsListPage.vue")
 const JobDetailsPage = () => import("@/app/pages/jobs/details/JobDetailsPage.vue")
 
+const JobOverviewTab = () => import("@/app/pages/jobs/details/tabs/Overview/JobOverviewTab.vue")
+
+const JobPackagesTab = () => import("@/app/pages/jobs/details/tabs/Packages/JobPackagesTab.vue")
+
+const JobTransportTab = () => import("@/app/pages/jobs/details/tabs/Transport/JobTransportTab.vue")
+
+const JobCostsTab = () => import("@/app/pages/jobs/details/tabs/Costs/JobCostsTab.vue")
+
 const QuoteListPage = () => import("@/app/pages/quotes/list/QuoteListPage.vue")
 const QuoteCreatePage = () => import("@/app/pages/quotes/create/QuoteCreatePage.vue")
 
@@ -155,6 +163,32 @@ export const routes: RouteRecordRaw[] = [
         name: "tms.jobs.show",
         component: JobDetailsPage,
         meta: { title: "Jobs • Details" },
+
+        // 🔥 IMPORTANT
+        redirect: { name: "tms.jobs.show.overview" },
+
+        children: [
+          {
+            path: "overview",
+            name: "tms.jobs.show.overview",
+            component: JobOverviewTab,
+          },
+          {
+            path: "packages",
+            name: "tms.jobs.show.packages",
+            component: JobPackagesTab,
+          },
+          {
+            path: "transport",
+            name: "tms.jobs.show.transport",
+            component: JobTransportTab,
+          },
+          {
+            path: "costs",
+            name: "tms.jobs.show.costs",
+            component: JobCostsTab,
+          },
+        ],
       },
 
       /* =========================
