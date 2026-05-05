@@ -1,0 +1,146 @@
+.job-overview-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.job-overview-tab__section {
+  background: #fff;
+  border: 1px solid #e6e6e6;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.job-overview-tab__section-header {
+  padding: 12px 14px;
+  background: #f7f7f5;
+  border-bottom: 1px solid #e6e6e6;
+}
+
+.job-overview-tab__section-header h2 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 800;
+  color: #1a1a18;
+}
+
+.job-overview-tab__grid {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+}
+
+.job-overview-tab__grid--2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.job-overview-tab__grid--4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.job-overview-tab__field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.job-overview-tab__field span {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #737373;
+}
+
+.job-overview-tab__field input,
+.job-overview-tab__field select,
+.job-overview-tab__field textarea {
+  width: 100%;
+  min-height: 36px;
+  border: 1px solid #d9d9d9;
+  border-radius: 8px;
+  background: #fff;
+  padding: 0 10px;
+  font-size: 12px;
+  color: #1a1a18;
+  outline: none;
+}
+
+.job-overview-tab__field textarea {
+  min-height: 82px;
+  padding: 9px 10px;
+  resize: vertical;
+}
+
+.job-overview-tab__field input:focus,
+.job-overview-tab__field select:focus,
+.job-overview-tab__field textarea:focus {
+  border-color: #ec691a;
+  box-shadow: 0 0 0 2px rgba(236, 105, 26, 0.12);
+}
+
+.job-overview-tab__field--span-2 {
+  grid-column: span 2;
+}
+
+.job-overview-tab__field--span-4 {
+  grid-column: span 4;
+}
+
+.job-overview-tab__split {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  padding: 14px;
+}
+
+.job-overview-tab__split .job-overview-tab__grid {
+  padding: 0;
+}
+
+.job-overview-tab__subheading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 10px;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #737373;
+}
+
+.job-overview-tab__subheading::before,
+.job-overview-tab__subheading::after {
+  content: "";
+  height: 1px;
+  flex: 1;
+  background: #e6e6e6;
+}
+
+@media (max-width: 1100px) {
+  .job-overview-tab__grid--4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .job-overview-tab__field--span-4 {
+    grid-column: span 2;
+  }
+
+  .job-overview-tab__split {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .job-overview-tab__grid--2,
+  .job-overview-tab__grid--4 {
+    grid-template-columns: 1fr;
+  }
+
+  .job-overview-tab__field--span-2,
+  .job-overview-tab__field--span-4 {
+    grid-column: span 1;
+  }
+}

@@ -1,35 +1,27 @@
 <script setup lang="ts">
 import "./JobDetailsPage.css"
 import { computed } from "vue"
-import { useJobDetailsPage } from "./JobDetailsPage"
+import { RouterLink, RouterView } from "vue-router"
 
 import Button from "primevue/button"
-
-import {
-  JobDetailsTabs,
-  RoadJobDetails,
-  RailJobDetails,
-  AirJobDetails,
-  SeaJobDetails,
-} from "@/app/components/jobs/details"
+import Dropdown from "primevue/dropdown"
+import InputText from "primevue/inputtext"
+import Calendar from "primevue/calendar"
 
 import JobProgressStepper from "@/app/components/jobs/details/JobProgressStepper.vue"
+import { useJobDetailsPage } from "./JobDetailsPage.logic"
 
 const {
+  tabs,
+  isActive,
+  getTabCount,
+  title,
+  subtitle,
+  form,
+  customerOptions,
   loading,
   saving,
-
-  form,
-  headerTitle,
-  headerMeta,
-
-  tabs,
-  activeTab,
-
-  onSave,
-  onPrint,
-  onExportPdf,
-  onBookJob,
+  save,
 } = useJobDetailsPage()
 
 const progressSteps = computed(() => [
@@ -90,15 +82,50 @@ const progressSteps = computed(() => [
     active: false,
   },
 ])
+
+const modeOptions = [
+  { label: "Air Freight", value: "air" },
+  { label: "Sea Freight", value: "sea" },
+  { label: "Road Freight", value: "road" },
+  { label: "Rail Freight", value: "rail" },
+  { label: "Courier", value: "courier" },
+  { label: "Multi Modal", value: "multi_modal" },
+  { label: "Consolidation", value: "consolidation" },
+]
+
+const statusOptions = [
+  { label: "Draft", value: "Draft" },
+  { label: "Booked", value: "Booked" },
+  { label: "In Transit", value: "In Transit" },
+  { label: "Delivered", value: "Delivered" },
+  { label: "Cancelled", value: "Cancelled" },
+]
+
+function onPrint() {
+  window.print()
+}
+
+function onExportPdf() {
+  window.print()
+}
+
+function onBookJob() {
+  save()
+}
 </script>
 
 <template>
-  <div class="job-details-page">
+  <section class="job-details-page">
     <div class="job-header-card">
       <div class="job-header-main">
         <div class="job-header-left">
-          <div class="job-title">{{ headerTitle }}</div>
-          <div class="job-meta">{{ headerMeta }}</div>
+          <div class="job-title">
+            {{ title }}
+          </div>
+
+          <div class="job-meta">
+            {{ subtitle }}
+          </div>
         </div>
 
         <div class="job-actions">
@@ -109,6 +136,7 @@ const progressSteps = computed(() => [
             :disabled="loading"
             @click="onPrint"
           />
+
           <Button
             class="job-action-btn"
             icon="pi pi-download"
@@ -116,68 +144,137 @@ const progressSteps = computed(() => [
             :disabled="loading"
             @click="onExportPdf"
           />
+
           <Button
             class="job-action-btn"
             icon="pi pi-save"
-            label="Save"
+            :label="saving ? 'Saving...' : 'Save'"
             :loading="saving"
             :disabled="loading"
-            @click="onSave"
+            @click="save"
           />
+
           <Button
             class="job-action-btn job-action-btn--primary"
             icon="pi pi-check"
             label="Book Job"
-            :disabled="loading"
+            :disabled="loading || saving"
             @click="onBookJob"
           />
         </div>
       </div>
 
+      <div class="job-header-form">
+        <div class="job-header-form__grid">
+          <label class="job-header-form__field">
+            <span>Customer Name <strong>*</strong></span>
+
+            <Dropdown
+              v-model="form.customer_id"
+              :options="customerOptions"
+              option-label="label"
+              option-value="value"
+              placeholder="— Select Customer —"
+              filter
+              show-clear
+              class="job-header-form__prime"
+              :disabled="loading"
+            />
+          </label>
+
+          <label class="job-header-form__field">
+            <span>Customer Quote Ref</span>
+
+            <InputText
+              v-model="form.quote_ref"
+              placeholder="Optional"
+              class="job-header-form__prime"
+              :disabled="loading"
+            />
+          </label>
+
+          <label class="job-header-form__field">
+            <span>Job Date <strong>*</strong></span>
+
+            <Calendar
+              v-model="form.job_date"
+              date-format="dd/mm/yy"
+              placeholder="Select date..."
+              show-icon
+              class="job-header-form__prime"
+              :disabled="loading"
+            />
+          </label>
+
+          <label class="job-header-form__field">
+            <span>Account No.</span>
+
+            <InputText
+              v-model="form.account_number"
+              placeholder="Auto"
+              readonly
+              class="job-header-form__prime"
+            />
+          </label>
+
+          <label class="job-header-form__field">
+            <span>Job Number</span>
+
+            <InputText v-model="form.job_number" readonly class="job-header-form__prime" />
+          </label>
+
+          <label class="job-header-form__field">
+            <span>Mode of Transport <strong>*</strong></span>
+
+            <Dropdown
+              v-model="form.mode_of_transport"
+              :options="modeOptions"
+              option-label="label"
+              option-value="value"
+              placeholder="— Select MOT —"
+              class="job-header-form__prime"
+              :disabled="loading"
+            />
+          </label>
+
+          <label class="job-header-form__field">
+            <span>Status</span>
+
+            <Dropdown
+              v-model="form.status"
+              :options="statusOptions"
+              option-label="label"
+              option-value="value"
+              class="job-header-form__prime"
+              :disabled="loading"
+            />
+          </label>
+        </div>
+      </div>
+
       <JobProgressStepper :steps="progressSteps" />
 
-      <JobDetailsTabs v-model="activeTab" :tabs="tabs" :disabled="loading" />
+      <nav class="job-details-page__tabs">
+        <RouterLink
+          v-for="tab in tabs"
+          :key="tab.name"
+          :to="{ name: tab.name, params: $route.params }"
+          class="job-details-page__tab"
+          :class="{ 'job-details-page__tab--active': isActive(tab.name) }"
+        >
+          <span>{{ tab.label }}</span>
+
+          <span v-if="tab.showCount" class="job-details-page__tab-count">
+            {{ getTabCount(tab.key) }}
+          </span>
+        </RouterLink>
+      </nav>
     </div>
 
     <div class="job-content-shell">
-      <RoadJobDetails
-        v-if="form.mode_of_transport === 'road'"
-        :form="form"
-        :active-tab="activeTab"
-        :disabled="loading"
-      />
+      <div v-if="loading" class="job-details-page__loading">Loading job details...</div>
 
-      <RailJobDetails
-        v-else-if="form.mode_of_transport === 'rail'"
-        :form="form"
-        :active-tab="activeTab"
-        :disabled="loading"
-      />
-
-      <AirJobDetails
-        v-else-if="form.mode_of_transport === 'air'"
-        :form="form"
-        :active-tab="activeTab"
-        :disabled="loading"
-      />
-
-      <SeaJobDetails
-        v-else-if="form.mode_of_transport === 'sea'"
-        :form="form"
-        :active-tab="activeTab"
-        :disabled="loading"
-      />
-
-      <div v-else class="job-placeholder-card">
-        <div class="job-placeholder-title">
-          {{ tabs.find(tab => tab.key === activeTab)?.label || "Section" }}
-        </div>
-        <div class="job-placeholder-text">
-          This section will be built specifically for
-          <strong>{{ form.mode_of_transport || "this mode" }}</strong
-          >.
-        </div>
-      </div>
+      <RouterView v-else />
     </div>
-  </div>
+  </section>
 </template>
