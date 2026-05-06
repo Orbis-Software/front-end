@@ -3,7 +3,6 @@
   width: 100%;
 }
 
-/* Top header row */
 .quote-page .quote-top {
   display: flex;
   align-items: center;
@@ -23,13 +22,13 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  flex-wrap: wrap;
 }
 
 .quote-page .btn {
   border-radius: 10px;
 }
 
-/* Shared page look */
 .quote-page .card {
   background: #fff;
   border: 1px solid #e8e8e8;
@@ -42,29 +41,37 @@
   margin-bottom: 14px;
 }
 
-/* Meta section */
 .quote-page .meta-title {
   font-weight: 800;
   font-size: 16px;
   margin-bottom: 12px;
 }
 
-/* fields */
-.quote-page .grid-3 {
+.quote-page .grid-3,
+.quote-page .grid-4 {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
   gap: 12px;
+}
+
+.quote-page .grid-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.quote-page .grid-4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .quote-page .field {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  min-width: 0;
 }
 
 .quote-page .label {
   font-size: 12px;
   font-weight: 700;
+  color: #525252;
 }
 
 .quote-page .control {
@@ -72,64 +79,324 @@
 }
 
 .quote-page .textarea {
-  min-height: 110px;
+  min-height: 130px;
 }
 
-/* Two column row */
-.quote-page .two-col {
-  display: grid;
-  grid-template-columns: 1.4fr 0.9fr;
-  gap: 14px;
-  align-items: start;
+.quote-page .small-textarea {
+  min-height: 76px;
 }
 
-/* Right actions card */
-.quote-page .actions {
+.quote-page .mt-12 {
+  margin-top: 12px;
+}
+
+.quote-page .mt-16 {
+  margin-top: 16px;
+}
+
+.quote-page .status-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid #d4d4d4;
+  border-radius: 999px;
+  background: #f5f5f5;
+  color: #525252;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.quote-page .status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: #737373;
+}
+
+.quote-page .summary-tiles {
   display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 10px;
-  align-content: start;
 }
 
-/* Big orange button full width */
-.quote-page .create-btn {
-  width: 100%;
-  justify-content: center;
+.quote-page .summary-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 12px;
+  border: 1px solid #e5e5e5;
+  border-radius: 12px;
+  background: #fafafa;
+  min-width: 0;
+}
+
+.quote-page .summary-tile .tile-label {
+  font-size: 10px;
+  font-weight: 800;
+  color: #737373;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.quote-page .summary-tile strong {
+  font-size: 16px;
+  color: #262626;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.quote-page .summary-tile small {
+  font-size: 11px;
+  color: #737373;
+}
+
+.quote-page .section-subtitle {
+  font-size: 12px;
+  font-weight: 800;
+  color: #737373;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.quote-page .table-head-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 18px;
+  margin-bottom: 10px;
+}
+
+.quote-page .btn-add {
+  border-color: #ec691a;
+  color: #ec691a;
   border-radius: 10px;
-  padding: 12px 14px;
 }
 
-/* Cancel link centered under button */
-.quote-page .cancel-link {
-  border: none;
-  background: transparent;
-  color: #b42318;
-  cursor: pointer;
+.quote-page .table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.quote-page .quote-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  min-width: 980px;
+}
+
+.quote-page .quote-table thead tr {
+  background: #f5f5f5;
+  border-bottom: 1px solid #d4d4d4;
+}
+
+.quote-page .quote-table th {
+  padding: 9px 10px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 800;
+  color: #737373;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  white-space: nowrap;
+}
+
+.quote-page .quote-table td {
+  padding: 7px 10px;
+  border-bottom: 1px solid #eeeeee;
+  vertical-align: middle;
+}
+
+.quote-page .quote-table tbody tr:hover {
+  background: #fafafa;
+}
+
+.quote-page .table-input {
+  width: 86px;
+  height: 34px;
+}
+
+.quote-page .table-select {
+  width: 130px;
+}
+
+.quote-page .table-select.wide {
+  width: 240px;
+}
+
+.quote-page .text-right {
+  text-align: right;
+}
+
+.quote-page .haz-row {
+  display: flex;
+  align-items: center;
+}
+
+.quote-page .toggle-line {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+}
+
+.quote-page .toggle-line strong {
+  color: #737373;
+}
+
+.quote-page .haz-box {
+  display: grid;
+  grid-template-columns: auto minmax(220px, 1fr) minmax(150px, 0.6fr) minmax(150px, 0.6fr);
+  align-items: end;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid #f59e0b;
+  border-radius: 12px;
+  background: #fffbeb;
+}
+
+.quote-page .haz-badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 10px;
+  height: 38px;
+  padding: 0 12px;
+  border: 1px solid #f59e0b;
   border-radius: 10px;
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.quote-page .bottom-section {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 18px;
+  align-items: start;
+  margin-top: 20px;
+}
+
+.quote-page .conditions-box {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.quote-page .totals-card {
+  min-width: 0;
+}
+
+.quote-page .totals-box {
+  overflow: hidden;
+  border: 1px solid #e5e5e5;
+  border-radius: 12px;
+  background: #fafafa;
+}
+
+.quote-page .totals-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 42px;
+  padding: 9px 14px;
+  border-bottom: 1px solid #e5e5e5;
+  font-size: 12px;
+}
+
+.quote-page .totals-row:last-child {
+  border-bottom: none;
+}
+
+.quote-page .totals-row span {
+  color: #737373;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.quote-page .totals-row strong {
+  font-size: 13px;
+  color: #262626;
+}
+
+.quote-page .totals-row.grand {
+  background: #ec691a;
+}
+
+.quote-page .totals-row.grand span,
+.quote-page .totals-row.grand strong {
+  color: #fff;
+}
+
+.quote-page .totals-row.profit {
+  background: #f0fdf4;
+}
+
+.quote-page .totals-row.profit span,
+.quote-page .totals-row.profit strong {
+  color: #16a34a;
+}
+
+.quote-page .totals-input {
+  width: 110px;
+  height: 32px;
+  text-align: right;
+}
+
+.quote-page .totals-select {
+  width: 170px;
+}
+
+.quote-page .final-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.quote-page :deep(.p-inputtext),
+.quote-page :deep(.p-select),
+.quote-page :deep(.p-autocomplete),
+.quote-page :deep(.p-inputnumber),
+.quote-page :deep(.p-datepicker),
+.quote-page :deep(.p-textarea) {
   width: 100%;
 }
 
-.quote-page .cancel-link:hover {
-  background: #fdecec;
+.quote-page :deep(.p-inputtext),
+.quote-page :deep(.p-select-label) {
+  min-height: 38px;
 }
 
-/* Responsive */
-@media (max-width: 1100px) {
-  .quote-page .grid-3 {
-    grid-template-columns: repeat(2, 1fr);
+.quote-page :deep(.p-inputtext[readonly]) {
+  background: #f5f5f5;
+  color: #737373;
+}
+
+@media (max-width: 1250px) {
+  .quote-page .summary-tiles {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
-  .quote-page .two-col {
+  .quote-page .grid-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .quote-page .bottom-section {
     grid-template-columns: 1fr;
   }
 }
 
-@media (max-width: 700px) {
-  .quote-page {
-    padding: 16px;
+@media (max-width: 900px) {
+  .quote-page .grid-3,
+  .quote-page .grid-4,
+  .quote-page .summary-tiles,
+  .quote-page .haz-box {
+    grid-template-columns: 1fr;
   }
 
   .quote-page .quote-top {
@@ -138,10 +405,21 @@
   }
 
   .quote-page .quote-actions {
-    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 700px) {
+  .quote-page {
+    padding: 16px;
   }
 
-  .quote-page .grid-3 {
-    grid-template-columns: 1fr;
+  .quote-page .final-actions {
+    flex-direction: column;
+  }
+
+  .quote-page .final-actions .btn {
+    width: 100%;
+    justify-content: center;
   }
 }
