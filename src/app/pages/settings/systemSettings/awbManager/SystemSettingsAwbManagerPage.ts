@@ -1,39 +1,21 @@
 import { computed, reactive, ref } from "vue"
 import { useRouter } from "vue-router"
+import { storeToRefs } from "pinia"
 import { useSystemSettingsStore } from "@/app/stores/system-settings"
+import { useAwbManagerStore } from "@/app/stores/awb-manager"
+import type { AwbAirline, AwbStatus } from "@/app/types/awb-manager"
 
-type AwbStatus = "available" | "used" | "reserved" | "voided"
+type ToastType = "success" | "error" | "info"
 type AwbTab = "single" | "range" | "bulk"
 
-type AwbItem = {
+interface ToastItem {
   id: string
-  number: string
-  status: AwbStatus
-  notes: string
-  jobNumber: string
-  dateUsed: string
-  assignNotes: string
-}
-
-type AirlineItem = {
-  id: string
-  name: string
-  code: string
-  prefix: string
-  contract: string
-  notes: string
-  collapsed: boolean
-  awbs: AwbItem[]
-}
-
-type ToastItem = {
-  id: string
+  type: ToastType
   message: string
-  type: "success" | "error" | "info"
 }
 
-type AirlineForm = {
-  id: string
+interface AirlineForm {
+  id: number | null
   name: string
   code: string
   prefix: string
@@ -41,82 +23,45 @@ type AirlineForm = {
   notes: string
 }
 
-type SingleAwbForm = {
+interface SingleAwbForm {
   number: string
   status: "available" | "reserved"
   notes: string
 }
 
-type RangeAwbForm = {
+interface RangeAwbForm {
   from: string
   to: string
 }
 
-type BulkAwbForm = {
+interface BulkAwbForm {
   text: string
 }
 
-type AssignForm = {
-  airlineId: string
-  awbId: string
+interface AssignForm {
+  airlineId: number | null
+  awbId: number | null
   awbDisplay: string
   jobNumber: string
   dateUsed: string
   notes: string
 }
 
-const STORAGE_KEY = "awbManager"
-
 function genId() {
   return `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`
 }
 
-function normalizeStatus(value: string): AwbStatus {
-  if (value === "available" || value === "used" || value === "reserved" || value === "voided") {
-    return value
-  }
-
-  return "available"
-}
-
-function safeParseStorage(): AirlineItem[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return []
-
-    const parsed = JSON.parse(raw)
-    if (!parsed || !Array.isArray(parsed.airlines)) return []
-
-    return parsed.airlines.map((airline: any) => ({
-      id: String(airline.id ?? genId()),
-      name: String(airline.name ?? ""),
-      code: String(airline.code ?? ""),
-      prefix: String(airline.prefix ?? ""),
-      contract: String(airline.contract ?? ""),
-      notes: String(airline.notes ?? ""),
-      collapsed: Boolean(airline.collapsed),
-      awbs: Array.isArray(airline.awbs)
-        ? airline.awbs.map((awb: any) => ({
-            id: String(awb.id ?? genId()),
-            number: String(awb.number ?? ""),
-            status: normalizeStatus(String(awb.status ?? "available")),
-            notes: String(awb.notes ?? ""),
-            jobNumber: String(awb.jobNumber ?? ""),
-            dateUsed: String(awb.dateUsed ?? ""),
-            assignNotes: String(awb.assignNotes ?? ""),
-          }))
-        : [],
-    }))
-  } catch {
-    return []
-  }
+function todayDate() {
+  return new Date().toISOString().slice(0, 10)
 }
 
 export function useSystemSettingsAwbManagerPage() {
   const router = useRouter()
   const systemSettingsStore = useSystemSettingsStore()
+  const awbManagerStore = useAwbManagerStore()
 
-  const airlines = ref<AirlineItem[]>(safeParseStorage())
+  const { airlines, summary } = storeToRefs(awbManagerStore)
+
   const toasts = ref<ToastItem[]>([])
 
   const showAirlineModal = ref(false)
@@ -124,13 +69,13 @@ export function useSystemSettingsAwbManagerPage() {
   const showAssignModal = ref(false)
 
   const currentAwbTab = ref<AwbTab>("single")
-  const awbTargetAirlineId = ref("")
+  const awbTargetAirlineId = ref<number | null>(null)
 
-  const airlineSearch = reactive<Record<string, string>>({})
-  const airlineFilter = reactive<Record<string, "all" | AwbStatus>>({})
+  const airlineSearch = reactive<Record<number, string>>({})
+  const airlineFilter = reactive<Record<number, "all" | AwbStatus>>({})
 
   const airlineForm = reactive<AirlineForm>({
-    id: "",
+    id: null,
     name: "",
     code: "",
     prefix: "",
@@ -154,169 +99,64 @@ export function useSystemSettingsAwbManagerPage() {
   })
 
   const assignForm = reactive<AssignForm>({
-    airlineId: "",
-    awbId: "",
+    airlineId: null,
+    awbId: null,
     awbDisplay: "",
     jobNumber: "",
-    dateUsed: "",
+    dateUsed: todayDate(),
     notes: "",
   })
 
   const eoriNumber = computed(() => systemSettingsStore.eoriNumber)
   const hasEoriNumber = computed(() => systemSettingsStore.hasEoriNumber)
 
-  function persist() {
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify({
-        airlines: airlines.value,
-      }),
-    )
-  }
-
-  function pushToast(message: string, type: "success" | "error" | "info" = "info") {
+  function pushToast(message: string, type: ToastType = "info") {
     const id = genId()
-    toasts.value.push({ id, message, type })
+
+    toasts.value.push({
+      id,
+      type,
+      message,
+    })
 
     window.setTimeout(() => {
       toasts.value = toasts.value.filter(item => item.id !== id)
-    }, 3500)
+    }, 3000)
   }
 
-  function ensureAccess() {
+  async function ensureAccess() {
     if (!hasEoriNumber.value) {
-      router.replace({ name: "settings.system.master" })
+      router.push({ name: "system-settings.company" })
+      return
+    }
+
+    try {
+      await awbManagerStore.fetch()
+    } catch {
+      pushToast("Unable to load AWB Manager data.", "error")
     }
   }
 
-  function seedDemoIfEmpty() {
-    if (airlines.value.length > 0) return
+  function statusLabel(status: AwbStatus) {
+    if (status === "available") return "Available"
+    if (status === "used") return "Used"
+    if (status === "reserved") return "Reserved"
 
-    airlines.value = [
-      {
-        id: genId(),
-        name: "Lufthansa Cargo",
-        code: "LH",
-        prefix: "020",
-        contract: "LH-2024-001",
-        notes: "Annual stock agreement",
-        collapsed: false,
-        awbs: [
-          {
-            id: genId(),
-            number: "020-12345678",
-            status: "available",
-            notes: "",
-            jobNumber: "",
-            dateUsed: "",
-            assignNotes: "",
-          },
-          {
-            id: genId(),
-            number: "020-12345679",
-            status: "used",
-            notes: "",
-            jobNumber: "JOB-2024-0041",
-            dateUsed: "2024-11-15",
-            assignNotes: "Frankfurt shipment",
-          },
-          {
-            id: genId(),
-            number: "020-12345680",
-            status: "used",
-            notes: "",
-            jobNumber: "JOB-2024-0048",
-            dateUsed: "2024-12-01",
-            assignNotes: "",
-          },
-          {
-            id: genId(),
-            number: "020-12345681",
-            status: "available",
-            notes: "",
-            jobNumber: "",
-            dateUsed: "",
-            assignNotes: "",
-          },
-          {
-            id: genId(),
-            number: "020-12345682",
-            status: "reserved",
-            notes: "Hold for January shipment",
-            jobNumber: "",
-            dateUsed: "",
-            assignNotes: "",
-          },
-        ],
-      },
-      {
-        id: genId(),
-        name: "Emirates SkyCargo",
-        code: "EK",
-        prefix: "176",
-        contract: "EK-2024-SC-009",
-        notes: "",
-        collapsed: false,
-        awbs: [
-          {
-            id: genId(),
-            number: "176-87654321",
-            status: "available",
-            notes: "",
-            jobNumber: "",
-            dateUsed: "",
-            assignNotes: "",
-          },
-          {
-            id: genId(),
-            number: "176-87654322",
-            status: "available",
-            notes: "",
-            jobNumber: "",
-            dateUsed: "",
-            assignNotes: "",
-          },
-          {
-            id: genId(),
-            number: "176-87654323",
-            status: "used",
-            notes: "",
-            jobNumber: "JOB-2024-0055",
-            dateUsed: "2024-12-10",
-            assignNotes: "Dubai to Sydney perishables",
-          },
-        ],
-      },
-    ]
-
-    persist()
+    return "Voided"
   }
 
-  const summary = computed(() => {
-    let total = 0
-    let available = 0
-    let used = 0
-    let reserved = 0
+  function formatDate(date: string | null) {
+    if (!date) return ""
 
-    for (const airline of airlines.value) {
-      for (const awb of airline.awbs) {
-        total += 1
-        if (awb.status === "available") available += 1
-        if (awb.status === "used") used += 1
-        if (awb.status === "reserved") reserved += 1
-      }
-    }
+    const cleanDate = date.slice(0, 10)
+    const parts = cleanDate.split("-")
 
-    return {
-      airlines: airlines.value.length,
-      total,
-      available,
-      used,
-      reserved,
-    }
-  })
+    if (parts.length !== 3) return date
 
-  function getFilteredAwbs(airline: AirlineItem) {
+    return `${parts[2]}/${parts[1]}/${parts[0]}`
+  }
+
+  function getFilteredAwbs(airline: AwbAirline) {
     const search = (airlineSearch[airline.id] ?? "").trim().toLowerCase()
     const filter = airlineFilter[airline.id] ?? "all"
 
@@ -330,9 +170,9 @@ export function useSystemSettingsAwbManagerPage() {
       items = items.filter(item => {
         return (
           item.number.toLowerCase().includes(search) ||
-          item.jobNumber.toLowerCase().includes(search) ||
-          item.notes.toLowerCase().includes(search) ||
-          item.assignNotes.toLowerCase().includes(search)
+          (item.jobNumber ?? "").toLowerCase().includes(search) ||
+          (item.notes ?? "").toLowerCase().includes(search) ||
+          (item.assignNotes ?? "").toLowerCase().includes(search)
         )
       })
     }
@@ -340,42 +180,29 @@ export function useSystemSettingsAwbManagerPage() {
     return items
   }
 
-  function getAirlineCounts(airline: AirlineItem) {
+  function getAirlineCounts(airline: AwbAirline) {
     return {
       total: airline.awbs.length,
       available: airline.awbs.filter(item => item.status === "available").length,
       used: airline.awbs.filter(item => item.status === "used").length,
       reserved: airline.awbs.filter(item => item.status === "reserved").length,
+      voided: airline.awbs.filter(item => item.status === "voided").length,
     }
   }
 
-  function statusLabel(status: AwbStatus) {
-    if (status === "available") return "Available"
-    if (status === "used") return "Used"
-    if (status === "reserved") return "Reserved"
-    return "Voided"
-  }
-
-  function formatDate(date: string) {
-    if (!date) return ""
-    const parts = date.split("-")
-    if (parts.length !== 3) return date
-    return `${parts[2]}/${parts[1]}/${parts[0]}`
-  }
-
-  function openAddAirlineModal(id?: string) {
+  function openAddAirlineModal(id?: number) {
     if (id) {
       const airline = airlines.value.find(item => item.id === id)
       if (!airline) return
 
       airlineForm.id = airline.id
       airlineForm.name = airline.name
-      airlineForm.code = airline.code
+      airlineForm.code = airline.code ?? ""
       airlineForm.prefix = airline.prefix
-      airlineForm.contract = airline.contract
-      airlineForm.notes = airline.notes
+      airlineForm.contract = airline.contract ?? ""
+      airlineForm.notes = airline.notes ?? ""
     } else {
-      airlineForm.id = ""
+      airlineForm.id = null
       airlineForm.name = ""
       airlineForm.code = ""
       airlineForm.prefix = ""
@@ -390,10 +217,12 @@ export function useSystemSettingsAwbManagerPage() {
     showAirlineModal.value = false
   }
 
-  function saveAirline() {
+  async function saveAirline() {
     const name = airlineForm.name.trim()
     const prefix = airlineForm.prefix.trim()
     const code = airlineForm.code.trim().toUpperCase()
+    const contract = airlineForm.contract.trim()
+    const notes = airlineForm.notes.trim()
 
     if (!name) {
       pushToast("Airline name is required.", "error")
@@ -405,59 +234,62 @@ export function useSystemSettingsAwbManagerPage() {
       return
     }
 
-    if (airlineForm.id) {
-      const airline = airlines.value.find(item => item.id === airlineForm.id)
-      if (!airline) return
-
-      airline.name = name
-      airline.code = code
-      airline.prefix = prefix
-      airline.contract = airlineForm.contract.trim()
-      airline.notes = airlineForm.notes.trim()
-
-      pushToast("Airline updated.", "success")
-    } else {
-      airlines.value.push({
-        id: genId(),
-        name,
-        code,
-        prefix,
-        contract: airlineForm.contract.trim(),
-        notes: airlineForm.notes.trim(),
-        collapsed: false,
-        awbs: [],
-      })
-
-      pushToast("Airline added.", "success")
+    if (prefix.length !== 3) {
+      pushToast("AWB prefix must be exactly 3 digits.", "error")
+      return
     }
 
-    persist()
-    closeAirlineModal()
+    try {
+      const payload = {
+        name,
+        code: code || null,
+        prefix,
+        contract_ref: contract || null,
+        contractRef: contract || null,
+        notes: notes || null,
+        is_active: true,
+      }
+
+      if (airlineForm.id) {
+        await awbManagerStore.updateAirline(airlineForm.id, payload)
+        pushToast("Airline updated.", "success")
+      } else {
+        await awbManagerStore.createAirline(payload)
+        pushToast("Airline added.", "success")
+      }
+
+      closeAirlineModal()
+    } catch {
+      pushToast("Unable to save airline.", "error")
+    }
   }
 
-  function deleteAirline(id: string) {
+  async function deleteAirline(id: number) {
     const airline = airlines.value.find(item => item.id === id)
     if (!airline) return
 
     const confirmed = window.confirm(
       `Delete "${airline.name}" and all ${airline.awbs.length} AWB(s)? This cannot be undone.`,
     )
+
     if (!confirmed) return
 
-    airlines.value = airlines.value.filter(item => item.id !== id)
-    persist()
-    pushToast("Airline removed.", "info")
+    try {
+      await awbManagerStore.deleteAirline(id)
+      pushToast("Airline removed.", "info")
+    } catch {
+      pushToast("Unable to delete airline.", "error")
+    }
   }
 
-  function toggleCollapse(id: string) {
+  function toggleCollapse(id: number) {
     const airline = airlines.value.find(item => item.id === id)
     if (!airline) return
 
     airline.collapsed = !airline.collapsed
-    persist()
   }
 
-  function openAddAwbModal(airlineId: string) {
+  function openAddAwbModal(airlineId: number) {
     awbTargetAirlineId.value = airlineId
     currentAwbTab.value = "single"
 
@@ -481,116 +313,96 @@ export function useSystemSettingsAwbManagerPage() {
     currentAwbTab.value = tab
   }
 
-  function saveAwbs() {
-    const airline = airlines.value.find(item => item.id === awbTargetAirlineId.value)
-    if (!airline) return
+  async function saveAwbs() {
+    if (!awbTargetAirlineId.value) return
 
-    let toAdd: AwbItem[] = []
+    try {
+      if (currentAwbTab.value === "single") {
+        const awbNumber = singleAwbForm.number.trim()
 
-    if (currentAwbTab.value === "single") {
-      const number = singleAwbForm.number.trim()
-      if (!number) {
-        pushToast("AWB number is required.", "error")
-        return
-      }
+        if (!awbNumber) {
+          pushToast("AWB number is required.", "error")
+          return
+        }
 
-      toAdd.push({
-        id: genId(),
-        number,
-        status: singleAwbForm.status,
-        notes: singleAwbForm.notes.trim(),
-        jobNumber: "",
-        dateUsed: "",
-        assignNotes: "",
-      })
-    }
-
-    if (currentAwbTab.value === "range") {
-      const from = Number(rangeAwbForm.from.trim())
-      const to = Number(rangeAwbForm.to.trim())
-
-      if (Number.isNaN(from) || Number.isNaN(to)) {
-        pushToast("Enter valid serial numbers.", "error")
-        return
-      }
-
-      if (to < from) {
-        pushToast('"To" must be greater than or equal to "From".', "error")
-        return
-      }
-
-      if (to - from > 199) {
-        pushToast("Maximum 200 AWBs per batch.", "error")
-        return
-      }
-
-      for (let i = from; i <= to; i += 1) {
-        toAdd.push({
-          id: genId(),
-          number: `${airline.prefix}-${String(i).padStart(8, "0")}`,
-          status: "available",
-          notes: "",
-          jobNumber: "",
-          dateUsed: "",
-          assignNotes: "",
+        await awbManagerStore.createSingleAwb(awbTargetAirlineId.value, {
+          number: awbNumber,
+          status: singleAwbForm.status,
+          notes: singleAwbForm.notes.trim() || null,
         })
-      }
-    }
 
-    if (currentAwbTab.value === "bulk") {
-      const lines = bulkAwbForm.text
-        .split("\n")
-        .map(line => line.trim())
-        .filter(Boolean)
-
-      if (!lines.length) {
-        pushToast("Paste at least one AWB number.", "error")
-        return
+        pushToast("AWB added.", "success")
       }
 
-      if (lines.length > 500) {
-        pushToast("Maximum 500 AWBs per paste.", "error")
-        return
+      if (currentAwbTab.value === "range") {
+        const from = Number(rangeAwbForm.from)
+        const to = Number(rangeAwbForm.to)
+
+        if (!from || !to) {
+          pushToast("Serial from and serial to are required.", "error")
+          return
+        }
+
+        if (to < from) {
+          pushToast("Serial to must be greater than or equal to serial from.", "error")
+          return
+        }
+
+        if (to - from > 199) {
+          pushToast("Maximum 200 AWBs per batch.", "error")
+          return
+        }
+
+        await awbManagerStore.createRangeAwbs(awbTargetAirlineId.value, {
+          from,
+          to,
+        })
+
+        pushToast("AWB range added.", "success")
       }
 
-      toAdd = lines.map(number => ({
-        id: genId(),
-        number,
-        status: "available",
-        notes: "",
-        jobNumber: "",
-        dateUsed: "",
-        assignNotes: "",
-      }))
+      if (currentAwbTab.value === "bulk") {
+        const numbers = bulkAwbForm.text
+          .split(/\r?\n/)
+          .map(item => item.trim())
+          .filter(Boolean)
+
+        if (!numbers.length) {
+          pushToast("Paste at least one AWB number.", "error")
+          return
+        }
+
+        if (numbers.length > 500) {
+          pushToast("Maximum 500 AWBs per bulk upload.", "error")
+          return
+        }
+
+        await awbManagerStore.createBulkAwbs(awbTargetAirlineId.value, {
+          numbers,
+        })
+
+        pushToast("Bulk AWBs added.", "success")
+      }
+
+      closeAwbModal()
+    } catch {
+      pushToast("Unable to save AWB numbers.", "error")
     }
-
-    const existing = new Set(airline.awbs.map(item => item.number))
-    const duplicates = toAdd.filter(item => existing.has(item.number))
-    const unique = toAdd.filter(item => !existing.has(item.number))
-
-    airline.awbs.push(...unique)
-    persist()
-    closeAwbModal()
-
-    let message = `${unique.length} AWB(s) added.`
-    if (duplicates.length) {
-      message += ` ${duplicates.length} duplicate(s) skipped.`
-    }
-
-    pushToast(message, "success")
   }
 
-  function openAssignModal(airlineId: string, awbId: string) {
+  function openAssignModal(airlineId: number, awbId: number) {
     const airline = airlines.value.find(item => item.id === airlineId)
-    const awb = airline?.awbs.find(item => item.id === awbId)
-    if (!airline || !awb) return
+    if (!airline) return
+
+    const awb = airline.awbs.find(item => item.id === awbId)
+    if (!awb) return
 
     assignForm.airlineId = airlineId
     assignForm.awbId = awbId
     assignForm.awbDisplay = awb.number
-    assignForm.jobNumber = awb.jobNumber
-    assignForm.dateUsed = awb.dateUsed || new Date().toISOString().slice(0, 10)
-    assignForm.notes = awb.assignNotes
+    assignForm.jobNumber = awb.transport_job_id ? String(awb.transport_job_id) : ""
+    assignForm.dateUsed = awb.dateUsed ?? todayDate()
+    assignForm.notes = awb.assignNotes ?? awb.notes ?? ""
 
     showAssignModal.value = true
   }
@@ -599,84 +411,88 @@ export function useSystemSettingsAwbManagerPage() {
     showAssignModal.value = false
   }
 
-  function confirmAssign() {
-    const airline = airlines.value.find(item => item.id === assignForm.airlineId)
-    const awb = airline?.awbs.find(item => item.id === assignForm.awbId)
-    if (!airline || !awb) return
+  async function confirmAssign() {
+    if (!assignForm.awbId) return
 
-    if (!assignForm.jobNumber.trim()) {
-      pushToast("Job number is required.", "error")
+    const transportJobId = Number(assignForm.jobNumber)
+    const dateUsed = assignForm.dateUsed.trim()
+
+    if (!transportJobId) {
+      pushToast("Transport job ID is required.", "error")
       return
     }
 
-    if (!assignForm.dateUsed.trim()) {
-      pushToast("Date is required.", "error")
+    if (!dateUsed) {
+      pushToast("Date used is required.", "error")
       return
     }
 
-    awb.jobNumber = assignForm.jobNumber.trim()
-    awb.dateUsed = assignForm.dateUsed.trim()
-    awb.assignNotes = assignForm.notes.trim()
-    awb.status = "used"
+    try {
+      await awbManagerStore.assignAwb(assignForm.awbId, {
+        transport_job_id: transportJobId,
+        date_used: dateUsed,
+        notes: assignForm.notes.trim() || null,
+      })
 
-    persist()
-    closeAssignModal()
-    pushToast(`AWB assigned to ${awb.jobNumber}`, "success")
+      closeAssignModal()
+      pushToast("AWB assigned.", "success")
+    } catch {
+      pushToast("Unable to assign AWB.", "error")
+    }
   }
 
-  function unassignAwb(airlineId: string, awbId: string) {
-    const confirmed = window.confirm("Remove job assignment from this AWB and mark it available?")
+  async function unassignAwb(_airlineId: number, awbId: number) {
+    const confirmed = window.confirm("Unassign this AWB from the job?")
     if (!confirmed) return
 
-    const airline = airlines.value.find(item => item.id === airlineId)
-    const awb = airline?.awbs.find(item => item.id === awbId)
-    if (!airline || !awb) return
-
-    awb.jobNumber = ""
-    awb.dateUsed = ""
-    awb.assignNotes = ""
-    awb.status = "available"
-
-    persist()
-    pushToast("AWB unassigned.", "info")
+    try {
+      await awbManagerStore.unassignAwb(awbId)
+      pushToast("AWB unassigned.", "info")
+    } catch {
+      pushToast("Unable to unassign AWB.", "error")
+    }
   }
 
-  function setAwbStatus(airlineId: string, awbId: string, status: AwbStatus) {
-    const airline = airlines.value.find(item => item.id === airlineId)
-    const awb = airline?.awbs.find(item => item.id === awbId)
-    if (!airline || !awb) return
-
+  async function setAwbStatus(_airlineId: number, awbId: number, status: AwbStatus) {
     if (status === "voided") {
-      const confirmed = window.confirm("Mark this AWB as voided? It will no longer be available.")
+      const confirmed = window.confirm(
+        "Void this AWB? This action should only be used when needed.",
+      )
       if (!confirmed) return
     }
 
-    awb.status = status
+    try {
+      await awbManagerStore.setAwbStatus(awbId, status)
 
-    if (status !== "used") {
-      awb.jobNumber = ""
-      awb.dateUsed = ""
+      if (status === "reserved") {
+        pushToast("AWB reserved.", "success")
+      } else if (status === "available") {
+        pushToast("AWB unreserved.", "info")
+      } else if (status === "voided") {
+        pushToast("AWB voided.", "info")
+      }
+    } catch {
+      pushToast("Unable to update AWB status.", "error")
     }
-
-    persist()
   }
 
-  function deleteAwb(airlineId: string, awbId: string) {
+  async function deleteAwb(_airlineId: number, awbId: number) {
     const confirmed = window.confirm("Delete this AWB? This cannot be undone.")
     if (!confirmed) return
 
-    const airline = airlines.value.find(item => item.id === airlineId)
-    if (!airline) return
-
-    airline.awbs = airline.awbs.filter(item => item.id !== awbId)
-    persist()
-    pushToast("AWB deleted.", "info")
+    try {
+      await awbManagerStore.deleteAwb(awbId)
+      pushToast("AWB deleted.", "info")
+    } catch {
+      pushToast("Unable to delete AWB.", "error")
+    }
   }
 
   function downloadCsv(rows: string[][], filename: string) {
     const csv = rows
       .map(row => row.map(cell => `"${String(cell ?? "").replace(/"/g, '""')}"`).join(","))
       .join("\n")
+
     const blob = new Blob([csv], { type: "text/csv" })
     const link = document.createElement("a")
 
@@ -685,17 +501,24 @@ export function useSystemSettingsAwbManagerPage() {
     link.click()
 
     URL.revokeObjectURL(link.href)
+
     pushToast("CSV downloaded.", "success")
   }
 
-  function exportAirlineCsv(airlineId: string) {
+  function exportAirlineCsv(airlineId: number) {
     const airline = airlines.value.find(item => item.id === airlineId)
     if (!airline) return
 
     const rows: string[][] = [["AWB Number", "Status", "Job Number", "Date Used", "Notes"]]
 
     for (const awb of airline.awbs) {
-      rows.push([awb.number, awb.status, awb.jobNumber, awb.dateUsed, awb.notes || awb.assignNotes])
+      rows.push([
+        awb.number,
+        awb.status,
+        awb.jobNumber ?? "",
+        awb.dateUsed ?? "",
+        awb.notes || awb.assignNotes || "",
+      ])
     }
 
     downloadCsv(rows, `${airline.name.replace(/\s+/g, "_")}_AWBs.csv`)
@@ -713,9 +536,9 @@ export function useSystemSettingsAwbManagerPage() {
           airline.prefix,
           awb.number,
           awb.status,
-          awb.jobNumber,
-          awb.dateUsed,
-          awb.notes || awb.assignNotes,
+          awb.jobNumber ?? "",
+          awb.dateUsed ?? "",
+          awb.notes || awb.assignNotes || "",
         ])
       }
     }
@@ -723,18 +546,15 @@ export function useSystemSettingsAwbManagerPage() {
     downloadCsv(rows, "AWB_Stock_Export.csv")
   }
 
-  seedDemoIfEmpty()
-
   return {
     eoriNumber,
     hasEoriNumber,
 
     airlines,
     toasts,
-
     summary,
-    currentAwbTab,
 
+    currentAwbTab,
     airlineSearch,
     airlineFilter,
 
