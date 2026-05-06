@@ -28,6 +28,7 @@ export const JOB_TYPES: CardItem<JobType>[] = [
   { key: "export", title: "Export", subtitle: "Create an Export job" },
   { key: "domestic", title: "Domestic", subtitle: "Create a Domestic job" },
   { key: "courier", title: "Courier", subtitle: "Create a Courier job" },
+  { key: "cross_trade", title: "Cross Trade", subtitle: "Create a Cross Trade job" },
   { key: "multi_modal", title: "Multi Modal", subtitle: "Create a Multi Modal job" },
   { key: "consolidation", title: "Consolidation", subtitle: "Create a Consolidation job" },
 ]

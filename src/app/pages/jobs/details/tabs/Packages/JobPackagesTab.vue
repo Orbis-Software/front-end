@@ -2,7 +2,7 @@
 import "./JobPackagesTab.css"
 import { useJobPackagesTab } from "./JobPackagesTab.logic"
 
-const { rows, totals, addRow, removeRow, calculateRow } = useJobPackagesTab()
+const { rows, totals, addRow, removeRow, calculateRow, packageTypeOptions } = useJobPackagesTab()
 </script>
 
 <template>
@@ -39,17 +39,19 @@ const { rows, totals, addRow, removeRow, calculateRow } = useJobPackagesTab()
 
           <tbody>
             <tr v-for="(row, index) in rows" :key="row.id">
-              <td class="job-packages-tab__number">{{ index + 1 }}</td>
+              <td class="job-packages-tab__number">
+                {{ index + 1 }}
+              </td>
 
               <td>
-                <select v-model="row.type">
-                  <option>Pallet</option>
-                  <option>Carton</option>
-                  <option>Crate</option>
-                  <option>Drum</option>
-                  <option>Bundle</option>
-                  <option>Bag</option>
-                  <option>Loose</option>
+                <select v-model="row.package_type">
+                  <option
+                    v-for="option in packageTypeOptions"
+                    :key="option.value"
+                    :value="option.value"
+                  >
+                    {{ option.label }}
+                  </option>
                 </select>
               </td>
 

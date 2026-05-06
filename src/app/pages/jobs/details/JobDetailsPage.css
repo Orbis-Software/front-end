@@ -56,7 +56,7 @@
 }
 
 .job-action-btn {
-  height: 36px;
+  height: 38px;
   font-size: 12px;
   font-weight: 700;
 }
@@ -70,13 +70,31 @@
    HEADER FORM
 ========================================= */
 .job-header-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
   padding: 0 1rem 1rem;
 }
 
 .job-header-form__grid {
   display: grid;
-  grid-template-columns: repeat(7, minmax(130px, 1fr));
-  gap: 0.75rem;
+  gap: 12px;
+  align-items: end;
+}
+
+.job-header-form__grid--top {
+  grid-template-columns:
+    minmax(280px, 1.4fr)
+    minmax(190px, 1fr)
+    minmax(190px, 1fr)
+    minmax(230px, 1fr);
+}
+
+.job-header-form__grid--bottom {
+  grid-template-columns:
+    minmax(180px, 220px)
+    minmax(220px, 260px)
+    minmax(180px, 220px);
 }
 
 .job-header-form__field {
@@ -103,33 +121,82 @@
 ========================================= */
 .job-header-form__prime {
   width: 100%;
+  height: 38px;
 }
 
 .job-header-form__field :deep(.p-dropdown),
-.job-header-form__field :deep(.p-inputtext),
-.job-header-form__field :deep(.p-calendar) {
+.job-header-form__field :deep(.p-calendar),
+.job-header-form__field :deep(.p-inputtext) {
   width: 100%;
+  height: 38px !important;
+  min-height: 38px !important;
+  box-sizing: border-box;
 }
 
-.job-header-form__field :deep(.p-dropdown),
-.job-header-form__field :deep(.p-inputtext),
-.job-header-form__field :deep(.p-calendar .p-inputtext) {
-  min-height: 36px;
-  height: 36px;
+/* InputText */
+.job-header-form__field :deep(.p-inputtext) {
+  width: 100%;
+  height: 38px !important;
+  min-height: 38px !important;
+  padding: 0 10px;
   border-radius: 8px;
   font-size: 12px;
+  line-height: 38px;
+}
+
+/* Dropdown */
+.job-header-form__field :deep(.p-dropdown) {
+  display: flex;
+  align-items: center;
+  border-radius: 8px;
+  overflow: hidden;
 }
 
 .job-header-form__field :deep(.p-dropdown-label) {
   display: flex;
   align-items: center;
-  font-size: 12px;
-}
-
-.job-header-form__field :deep(.p-inputtext) {
+  height: 38px !important;
+  min-height: 38px !important;
   padding: 0 10px;
+  font-size: 12px;
+  line-height: 38px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
+.job-header-form__field :deep(.p-dropdown-trigger) {
+  width: 38px;
+  min-width: 38px;
+  height: 38px !important;
+  min-height: 38px !important;
+  flex-shrink: 0;
+}
+
+/* Calendar */
+.job-header-form__field :deep(.p-calendar) {
+  width: 100%;
+  display: flex;
+}
+
+.job-header-form__field :deep(.p-calendar .p-inputtext) {
+  width: 100%;
+  height: 38px !important;
+  min-height: 38px !important;
+  padding-right: 36px;
+  border-radius: 8px;
+  line-height: 38px;
+}
+
+.job-header-form__field :deep(.p-datepicker-trigger) {
+  width: 36px;
+  min-width: 36px;
+  height: 38px !important;
+  min-height: 38px !important;
+  border-radius: 0 8px 8px 0;
+}
+
+/* Focus */
 .job-header-form__field :deep(.p-dropdown:not(.p-disabled).p-focus),
 .job-header-form__field :deep(.p-inputtext:enabled:focus),
 .job-header-form__field :deep(.p-calendar .p-inputtext:enabled:focus) {
@@ -137,6 +204,7 @@
   box-shadow: 0 0 0 2px rgba(236, 105, 26, 0.12);
 }
 
+/* Readonly / Disabled */
 .job-header-form__field :deep(.p-disabled),
 .job-header-form__field :deep(input[readonly]) {
   background: #f8f8f8;
@@ -178,6 +246,7 @@
   white-space: nowrap;
   font-size: 13px;
   font-weight: 700;
+  transition: all 0.2s ease;
 }
 
 .job-details-page__tab:hover {
@@ -233,15 +302,13 @@
 /* =========================================
    RESPONSIVE
 ========================================= */
-@media (max-width: 1300px) {
-  .job-header-form__grid {
-    grid-template-columns: repeat(4, minmax(130px, 1fr));
+@media (max-width: 1200px) {
+  .job-header-form__grid--top {
+    grid-template-columns: repeat(2, minmax(220px, 1fr));
   }
-}
 
-@media (max-width: 900px) {
-  .job-header-form__grid {
-    grid-template-columns: repeat(2, minmax(130px, 1fr));
+  .job-header-form__grid--bottom {
+    grid-template-columns: repeat(2, minmax(220px, 1fr));
   }
 }
 
@@ -258,6 +325,11 @@
     justify-content: flex-start;
   }
 
+  .job-header-form__grid--top,
+  .job-header-form__grid--bottom {
+    grid-template-columns: 1fr;
+  }
+
   .job-details-page__tabs {
     padding: 0 10px;
   }
@@ -272,11 +344,5 @@
 
   .job-content-shell {
     padding: 0.75rem;
-  }
-}
-
-@media (max-width: 560px) {
-  .job-header-form__grid {
-    grid-template-columns: 1fr;
   }
 }

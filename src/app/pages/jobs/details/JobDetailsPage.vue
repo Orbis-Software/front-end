@@ -19,6 +19,8 @@ const {
   subtitle,
   form,
   customerOptions,
+  modeOptions,
+  statusOptions,
   loading,
   saving,
   save,
@@ -83,24 +85,6 @@ const progressSteps = computed(() => [
   },
 ])
 
-const modeOptions = [
-  { label: "Air Freight", value: "air" },
-  { label: "Sea Freight", value: "sea" },
-  { label: "Road Freight", value: "road" },
-  { label: "Rail Freight", value: "rail" },
-  { label: "Courier", value: "courier" },
-  { label: "Multi Modal", value: "multi_modal" },
-  { label: "Consolidation", value: "consolidation" },
-]
-
-const statusOptions = [
-  { label: "Draft", value: "Draft" },
-  { label: "Booked", value: "Booked" },
-  { label: "In Transit", value: "In Transit" },
-  { label: "Delivered", value: "Delivered" },
-  { label: "Cancelled", value: "Cancelled" },
-]
-
 function onPrint() {
   window.print()
 }
@@ -110,6 +94,7 @@ function onExportPdf() {
 }
 
 function onBookJob() {
+  form.status = "Booked"
   save()
 }
 </script>
@@ -165,7 +150,7 @@ function onBookJob() {
       </div>
 
       <div class="job-header-form">
-        <div class="job-header-form__grid">
+        <div class="job-header-form__grid job-header-form__grid--top">
           <label class="job-header-form__field">
             <span>Customer Name <strong>*</strong></span>
 
@@ -200,12 +185,28 @@ function onBookJob() {
               v-model="form.job_date"
               date-format="dd/mm/yy"
               placeholder="Select date..."
-              show-icon
+              showIcon
               class="job-header-form__prime"
               :disabled="loading"
             />
           </label>
 
+          <label class="job-header-form__field">
+            <span>Mode of Transport <strong>*</strong></span>
+
+            <Dropdown
+              v-model="form.mode_of_transport"
+              :options="modeOptions"
+              option-label="label"
+              option-value="value"
+              placeholder="— Select MOT —"
+              class="job-header-form__prime"
+              :disabled="loading"
+            />
+          </label>
+        </div>
+
+        <div class="job-header-form__grid job-header-form__grid--bottom">
           <label class="job-header-form__field">
             <span>Account No.</span>
 
@@ -224,20 +225,6 @@ function onBookJob() {
           </label>
 
           <label class="job-header-form__field">
-            <span>Mode of Transport <strong>*</strong></span>
-
-            <Dropdown
-              v-model="form.mode_of_transport"
-              :options="modeOptions"
-              option-label="label"
-              option-value="value"
-              placeholder="— Select MOT —"
-              class="job-header-form__prime"
-              :disabled="loading"
-            />
-          </label>
-
-          <label class="job-header-form__field">
             <span>Status</span>
 
             <Dropdown
@@ -245,6 +232,7 @@ function onBookJob() {
               :options="statusOptions"
               option-label="label"
               option-value="value"
+              placeholder="— Select Status —"
               class="job-header-form__prime"
               :disabled="loading"
             />
