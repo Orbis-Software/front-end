@@ -1,5 +1,41 @@
 <script setup lang="ts">
 import "./JobOverviewTab.css"
+import { inject } from "vue"
+
+import Dropdown from "primevue/dropdown"
+import InputText from "primevue/inputtext"
+import InputNumber from "primevue/inputnumber"
+import Textarea from "primevue/textarea"
+
+import type { JobDetailsContext } from "../../JobDetailsPage.logic"
+
+const context = inject<JobDetailsContext>("jobDetails")
+
+if (!context) {
+  throw new Error("JobOverviewTab must be used inside JobDetailsPage.")
+}
+
+const { form, referenceOptions, loading } = context
+
+const {
+  serviceTypeOptions,
+  incotermOptions,
+  currencyOptions,
+  commodityTypeOptions,
+  insuranceLevelOptions,
+} = referenceOptions
+
+const hazardousOptions = [
+  { label: "No", value: "No" },
+  { label: "Yes – ADR/IMDG", value: "Yes – ADR/IMDG" },
+]
+
+const temperatureOptions = [
+  { label: "No", value: "No" },
+  { label: "Chilled (2–8°C)", value: "Chilled (2–8°C)" },
+  { label: "Frozen (-18°C)", value: "Frozen (-18°C)" },
+  { label: "Ambient Controlled", value: "Ambient Controlled" },
+]
 </script>
 
 <template>
@@ -12,67 +48,96 @@ import "./JobOverviewTab.css"
       <div class="job-overview-tab__grid job-overview-tab__grid--4">
         <label class="job-overview-tab__field">
           <span>Service Type</span>
-          <select>
-            <option>Standard</option>
-            <option>Express</option>
-            <option>Economy</option>
-            <option>Premium</option>
-            <option>Time-Critical</option>
-            <option>Temperature Controlled</option>
-          </select>
+
+          <Dropdown
+            v-model="form.service_type"
+            :options="serviceTypeOptions"
+            option-label="label"
+            option-value="value"
+            placeholder="— Select —"
+            show-clear
+            :disabled="loading"
+          />
         </label>
 
         <label class="job-overview-tab__field">
           <span>Incoterms</span>
-          <select>
-            <option value="">— Select —</option>
-            <option>EXW – Ex Works</option>
-            <option>FCA – Free Carrier</option>
-            <option>CPT – Carriage Paid To</option>
-            <option>CIP – Carriage & Insurance Paid</option>
-            <option>DAP – Delivered At Place</option>
-            <option>DPU – Delivered At Place Unloaded</option>
-            <option>DDP – Delivered Duty Paid</option>
-            <option>FOB – Free On Board</option>
-            <option>CFR – Cost and Freight</option>
-            <option>CIF – Cost, Insurance & Freight</option>
-          </select>
+
+          <Dropdown
+            v-model="form.incoterms"
+            :options="incotermOptions"
+            option-label="label"
+            option-value="value"
+            placeholder="— Select —"
+            show-clear
+            :disabled="loading"
+          />
         </label>
 
         <label class="job-overview-tab__field">
           <span>Currency</span>
-          <select>
-            <option>GBP – £</option>
-            <option>EUR – €</option>
-            <option>USD – $</option>
-            <option>PLN – zł</option>
-            <option>CHF – Fr</option>
-          </select>
+
+          <Dropdown
+            v-model="form.currency"
+            :options="currencyOptions"
+            option-label="label"
+            option-value="value"
+            placeholder="— Select —"
+            show-clear
+            :disabled="loading"
+          />
         </label>
 
         <label class="job-overview-tab__field">
           <span>Declared Value</span>
-          <input type="number" placeholder="0.00" />
+
+          <InputNumber
+            v-model="form.declared_value"
+            mode="decimal"
+            :min-fraction-digits="2"
+            :max-fraction-digits="2"
+            placeholder="0.00"
+            :disabled="loading"
+          />
         </label>
 
         <label class="job-overview-tab__field job-overview-tab__field--span-2">
           <span>Description of Goods</span>
-          <input type="text" placeholder="General cargo / machinery / palletised goods..." />
+
+          <InputText
+            v-model="form.description_of_goods"
+            placeholder="General cargo / machinery / palletised goods..."
+            :disabled="loading"
+          />
         </label>
 
         <label class="job-overview-tab__field">
-          <span>Commodity Code</span>
-          <input type="text" placeholder="e.g. 8471.30" />
+          <span>Commodity Type</span>
+
+          <Dropdown
+            v-model="form.commodity_code"
+            :options="commodityTypeOptions"
+            option-label="label"
+            option-value="value"
+            placeholder="— Select —"
+            show-clear
+            filter
+            :disabled="loading"
+          />
         </label>
 
         <label class="job-overview-tab__field">
           <span>Insurance Level</span>
-          <select>
-            <option>Standard Conditions</option>
-            <option>Enhanced Cover</option>
-            <option>Full Declared Value</option>
-            <option>Customer's Own Insurance</option>
-          </select>
+
+          <Dropdown
+            v-model="form.insurance_level"
+            :options="insuranceLevelOptions"
+            option-label="label"
+            option-value="value"
+            placeholder="— Select —"
+            show-clear
+            :disabled="loading"
+          />
         </label>
       </div>
     </div>
@@ -85,143 +150,75 @@ import "./JobOverviewTab.css"
       <div class="job-overview-tab__grid job-overview-tab__grid--4">
         <label class="job-overview-tab__field">
           <span>Customer PO Number</span>
-          <input type="text" placeholder="Purchase order ref" />
+
+          <InputText
+            v-model="form.customer_po_number"
+            placeholder="Purchase order ref"
+            :disabled="loading"
+          />
         </label>
 
         <label class="job-overview-tab__field">
           <span>Customer Booking Ref</span>
-          <input type="text" placeholder="Booking reference" />
+
+          <InputText
+            v-model="form.customer_booking_ref"
+            placeholder="Booking reference"
+            :disabled="loading"
+          />
         </label>
 
         <label class="job-overview-tab__field">
           <span>Our Reference</span>
-          <input type="text" placeholder="Internal ref" />
+
+          <InputText v-model="form.our_reference" placeholder="Internal ref" :disabled="loading" />
         </label>
 
         <label class="job-overview-tab__field">
           <span>Supplier Ref</span>
-          <input type="text" placeholder="Haulier / carrier ref" />
+
+          <InputText
+            v-model="form.supplier_ref"
+            placeholder="Haulier / carrier ref"
+            :disabled="loading"
+          />
         </label>
 
         <label class="job-overview-tab__field">
           <span>Consignee Name</span>
-          <input type="text" placeholder="Recipient company" />
+
+          <InputText
+            v-model="form.consignee_name"
+            placeholder="Recipient company"
+            :disabled="loading"
+          />
         </label>
 
         <label class="job-overview-tab__field">
           <span>Consignee Contact</span>
-          <input type="text" placeholder="Contact name" />
+
+          <InputText
+            v-model="form.consignee_contact"
+            placeholder="Contact name"
+            :disabled="loading"
+          />
         </label>
 
         <label class="job-overview-tab__field">
           <span>Consignee Phone</span>
-          <input type="tel" placeholder="+44 ..." />
+
+          <InputText v-model="form.consignee_phone" placeholder="+44 ..." :disabled="loading" />
         </label>
 
         <label class="job-overview-tab__field">
           <span>Consignee Email</span>
-          <input type="email" placeholder="email@example.com" />
+
+          <InputText
+            v-model="form.consignee_email"
+            placeholder="email@example.com"
+            :disabled="loading"
+          />
         </label>
-      </div>
-    </div>
-
-    <div class="job-overview-tab__section">
-      <header class="job-overview-tab__section-header">
-        <h2>Origin & Destination</h2>
-      </header>
-
-      <div class="job-overview-tab__split">
-        <div>
-          <h3 class="job-overview-tab__subheading">Origin / Collection</h3>
-
-          <div class="job-overview-tab__grid job-overview-tab__grid--2">
-            <label class="job-overview-tab__field job-overview-tab__field--span-2">
-              <span>Company / Site</span>
-              <input type="text" placeholder="Warehouse / depot name" />
-            </label>
-
-            <label class="job-overview-tab__field job-overview-tab__field--span-2">
-              <span>Address</span>
-              <input type="text" placeholder="Street address" />
-            </label>
-
-            <label class="job-overview-tab__field">
-              <span>City</span>
-              <input type="text" placeholder="City" />
-            </label>
-
-            <label class="job-overview-tab__field">
-              <span>Postcode</span>
-              <input type="text" placeholder="Postcode / ZIP" />
-            </label>
-
-            <label class="job-overview-tab__field">
-              <span>Country</span>
-              <input type="text" placeholder="Country" />
-            </label>
-
-            <label class="job-overview-tab__field">
-              <span>Contact</span>
-              <input type="text" placeholder="Name / phone" />
-            </label>
-
-            <label class="job-overview-tab__field">
-              <span>Collection Date</span>
-              <input type="date" />
-            </label>
-
-            <label class="job-overview-tab__field">
-              <span>Collection Time</span>
-              <input type="time" />
-            </label>
-          </div>
-        </div>
-
-        <div>
-          <h3 class="job-overview-tab__subheading">Destination / Delivery</h3>
-
-          <div class="job-overview-tab__grid job-overview-tab__grid--2">
-            <label class="job-overview-tab__field job-overview-tab__field--span-2">
-              <span>Company / Site</span>
-              <input type="text" placeholder="Delivery location name" />
-            </label>
-
-            <label class="job-overview-tab__field job-overview-tab__field--span-2">
-              <span>Address</span>
-              <input type="text" placeholder="Street address" />
-            </label>
-
-            <label class="job-overview-tab__field">
-              <span>City</span>
-              <input type="text" placeholder="City" />
-            </label>
-
-            <label class="job-overview-tab__field">
-              <span>Postcode</span>
-              <input type="text" placeholder="Postcode / ZIP" />
-            </label>
-
-            <label class="job-overview-tab__field">
-              <span>Country</span>
-              <input type="text" placeholder="Country" />
-            </label>
-
-            <label class="job-overview-tab__field">
-              <span>Contact</span>
-              <input type="text" placeholder="Name / phone" />
-            </label>
-
-            <label class="job-overview-tab__field">
-              <span>Delivery Date</span>
-              <input type="date" />
-            </label>
-
-            <label class="job-overview-tab__field">
-              <span>Delivery Time</span>
-              <input type="time" />
-            </label>
-          </div>
-        </div>
       </div>
     </div>
 
@@ -233,36 +230,48 @@ import "./JobOverviewTab.css"
       <div class="job-overview-tab__grid job-overview-tab__grid--4">
         <label class="job-overview-tab__field">
           <span>Hazardous?</span>
-          <select>
-            <option>No</option>
-            <option>Yes – ADR/IMDG</option>
-          </select>
+
+          <Dropdown
+            :options="hazardousOptions"
+            option-label="label"
+            option-value="value"
+            placeholder="— Select —"
+            :disabled="loading"
+          />
         </label>
 
         <label class="job-overview-tab__field">
           <span>ADR / Hazmat Class</span>
-          <input type="text" placeholder="e.g. Class 3" />
+
+          <InputText placeholder="e.g. Class 3" :disabled="loading" />
         </label>
 
         <label class="job-overview-tab__field">
           <span>UN Number</span>
-          <input type="text" placeholder="UN1234" />
+
+          <InputText placeholder="UN1234" :disabled="loading" />
         </label>
 
         <label class="job-overview-tab__field">
           <span>Temperature Controlled?</span>
-          <select>
-            <option>No</option>
-            <option>Chilled (2–8°C)</option>
-            <option>Frozen (-18°C)</option>
-            <option>Ambient Controlled</option>
-          </select>
+
+          <Dropdown
+            :options="temperatureOptions"
+            option-label="label"
+            option-value="value"
+            placeholder="— Select —"
+            :disabled="loading"
+          />
         </label>
 
         <label class="job-overview-tab__field job-overview-tab__field--span-4">
           <span>Special Instructions / Notes</span>
-          <textarea
+
+          <Textarea
+            v-model="form.note"
+            rows="4"
             placeholder="Temperature requirements, handling notes, access restrictions..."
+            :disabled="loading"
           />
         </label>
       </div>

@@ -1,9 +1,13 @@
-import { computed, ref } from "vue"
+import { computed, inject } from "vue"
+
+import { useReferenceDataStore } from "@/app/stores/reference-data"
+
+import type { JobDetailsContext } from "../../JobDetailsPage.logic"
 
 export type PackageRow = {
-  id: number
-  type: string
-  description: string
+  id: number | string
+  package_type: string | null
+  description: string | null
   quantity: number
   lengthCm: number
   widthCm: number
@@ -13,12 +17,10 @@ export type PackageRow = {
   cbm: number
 }
 
-let nextId = 1
-
-function createRow(): PackageRow {
+function createRow(defaultPackageType: string | null = "Pallet"): PackageRow {
   return {
-    id: nextId++,
-    type: "Pallet",
+    id: `new-${Date.now()}-${Math.random()}`,
+    package_type: defaultPackageType,
     description: "",
     quantity: 1,
     lengthCm: 0,
@@ -30,38 +32,75 @@ function createRow(): PackageRow {
   }
 }
 
+function cleanReferenceName(value: string): string {
+  return String(value ?? "")
+    .replace(/\*$/, "")
+    .trim()
+}
+
 export function useJobPackagesTab() {
-  const rows = ref<PackageRow[]>([createRow()])
+  const context = inject<JobDetailsContext>("jobDetails")
+
+  if (!context) {
+    throw new Error("JobPackagesTab must be used inside JobDetailsPage.")
+  }
+
+  const referenceDataStore = useReferenceDataStore()
+  const { form } = context
+
+  const packageTypeOptions = computed(() => {
+    const category =
+      referenceDataStore.getByKey("package_types") ?? referenceDataStore.getByKey("packaging_types")
+
+    return (category?.options ?? []).map((option: any) => ({
+      label: cleanReferenceName(option.name),
+      value: cleanReferenceName(option.name),
+    }))
+  })
+
+  const rows = computed<PackageRow[]>({
+    get() {
+      return form.packages as PackageRow[]
+    },
+    set(value) {
+      form.packages = value
+    },
+  })
 
   function calculateRow(row: PackageRow) {
-    const quantity = Number(row.quantity || 0)
+    const qty = Number(row.quantity || 0)
     const length = Number(row.lengthCm || 0)
     const width = Number(row.widthCm || 0)
     const height = Number(row.heightCm || 0)
 
-    row.volumeWeightKg = ((length * width * height) / 5000) * quantity
-    row.cbm = ((length * width * height) / 1000000) * quantity
+    const cbmPerPiece = (length * width * height) / 1_000_000
+
+    row.cbm = cbmPerPiece * qty
+    row.volumeWeightKg = ((length * width * height) / 6000) * qty
   }
 
   function addRow() {
-    rows.value.push(createRow())
+    const firstType = packageTypeOptions.value[0]?.value ?? "Pallet"
+    const row = createRow(firstType)
+
+    calculateRow(row)
+
+    rows.value = [...rows.value, row]
   }
 
-  function removeRow(id: number) {
+  function removeRow(id: number | string) {
     rows.value = rows.value.filter(row => row.id !== id)
   }
 
   const totals = computed(() => {
     return rows.value.reduce(
-      (carry, row) => {
-        const quantity = Number(row.quantity || 0)
+      (total, row) => {
+        total.totalPieces += Number(row.quantity || 0)
+        total.totalGrossWeightKg += Number(row.grossWeightKg || 0) * Number(row.quantity || 0)
+        total.totalVolumeWeightKg += Number(row.volumeWeightKg || 0)
+        total.totalCbm += Number(row.cbm || 0)
 
-        return {
-          totalPieces: carry.totalPieces + quantity,
-          totalGrossWeightKg: carry.totalGrossWeightKg + Number(row.grossWeightKg || 0) * quantity,
-          totalVolumeWeightKg: carry.totalVolumeWeightKg + Number(row.volumeWeightKg || 0),
-          totalCbm: carry.totalCbm + Number(row.cbm || 0),
-        }
+        return total
       },
       {
         totalPieces: 0,
@@ -78,5 +117,6 @@ export function useJobPackagesTab() {
     addRow,
     removeRow,
     calculateRow,
+    packageTypeOptions,
   }
 }

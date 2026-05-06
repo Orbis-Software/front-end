@@ -54,9 +54,9 @@ export const useTransportJobStore = defineStore("transportJob", () => {
 
   async function fetch(overrides: TransportJobFetchParams = {}) {
     loading.value = true
+
     try {
       const params = buildParams(overrides)
-
       const res: PaginatedResponse<TransportJob> = await transportJobs.list(params)
 
       items.value = res.data
@@ -76,12 +76,17 @@ export const useTransportJobStore = defineStore("transportJob", () => {
 
   async function show(id: number) {
     loading.value = true
+
     try {
       const job = await transportJobs.show(id)
 
       const idx = items.value.findIndex(x => x.id === job.id)
-      if (idx >= 0) items.value[idx] = job
-      else items.value.unshift(job)
+
+      if (idx >= 0) {
+        items.value[idx] = job
+      } else {
+        items.value.unshift(job)
+      }
 
       return job
     } finally {
@@ -91,10 +96,13 @@ export const useTransportJobStore = defineStore("transportJob", () => {
 
   async function create(payload: TransportJobCreatePayload) {
     loading.value = true
+
     try {
       const job = await transportJobs.create(payload)
+
       items.value.unshift(job)
       total.value += 1
+
       return job
     } finally {
       loading.value = false
@@ -103,11 +111,15 @@ export const useTransportJobStore = defineStore("transportJob", () => {
 
   async function update(id: number, payload: TransportJobUpdatePayload) {
     loading.value = true
+
     try {
       const job = await transportJobs.update(id, payload)
 
       const idx = items.value.findIndex(x => x.id === job.id)
-      if (idx >= 0) items.value[idx] = job
+
+      if (idx >= 0) {
+        items.value[idx] = job
+      }
 
       return job
     } finally {
@@ -117,10 +129,13 @@ export const useTransportJobStore = defineStore("transportJob", () => {
 
   async function remove(id: number) {
     loading.value = true
+
     try {
       await transportJobs.remove(id)
+
       items.value = items.value.filter(x => x.id !== id)
       total.value = Math.max(0, total.value - 1)
+
       return true
     } finally {
       loading.value = false
@@ -129,6 +144,7 @@ export const useTransportJobStore = defineStore("transportJob", () => {
 
   async function collectionNotePreview(payload: CollectionNotePreviewPayload) {
     loading.value = true
+
     try {
       return await transportJobs.collectionNotePreview(payload)
     } finally {
