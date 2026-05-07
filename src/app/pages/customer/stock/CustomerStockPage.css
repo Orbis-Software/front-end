@@ -1,0 +1,76 @@
+@import "../shipments/CustomerShipmentsPage.css";
+
+.actions {
+  display: flex;
+  gap: 10px;
+}
+
+.secondary-btn {
+  border: none;
+  border-radius: 10px;
+  background: #e5e5e5;
+  color: #262626;
+  padding: 10px 18px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.capacity-card {
+  background: #fff;
+  border: 1px solid #c7c7c7;
+  border-radius: 14px;
+  padding: 20px;
+}
+
+.capacity-head {
+  display: flex;
+  justify-content: space-between;
+  color: #262626;
+  margin-bottom: 12px;
+}
+
+.capacity-head span {
+  color: #737373;
+}
+
+.progress {
+  height: 10px;
+  border-radius: 999px;
+  background: #f0f0f0;
+  overflow: hidden;
+}
+
+.progress.mini {
+  width: 90px;
+  height: 7px;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: #ec691a;
+}
+
+.progress-fill.green {
+  background: #16a34a;
+}
+
+.progress-fill.amber {
+  background: #d97706;
+}
+
+.progress-fill.red {
+  background: #dc2626;
+}
+
+.stock-level {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.table-title {
+  padding: 16px 20px;
+  border-bottom: 1px solid #ececec;
+  font-weight: 800;
+}

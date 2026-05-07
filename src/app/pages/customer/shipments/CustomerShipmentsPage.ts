@@ -1,0 +1,46 @@
+export const shipmentStats = [
+  { label: "In Transit", value: "4" },
+  { label: "In Customs", value: "1" },
+  { label: "Arrived", value: "2" },
+  { label: "Pending Pickup", value: "1" },
+  { label: "Delivered (MTD)", value: "14" },
+]
+
+export const shipments = [
+  {
+    reference: "SHP-2041",
+    origin: "Shanghai, China",
+    destination: "Manchester, UK",
+    mode: "Sea FCL",
+    modeColor: "blue",
+    carrier: "COSCO Shipping",
+    vessel: "COSCO Fortune",
+    eta: "28 Mar 2026",
+    status: "In Transit",
+    statusColor: "amber",
+  },
+  {
+    reference: "SHP-2040",
+    origin: "Hong Kong",
+    destination: "Liverpool, UK",
+    mode: "Sea LCL",
+    modeColor: "blue",
+    carrier: "Hapag-Lloyd",
+    vessel: "HL COLUMBO",
+    eta: "26 Mar 2026",
+    status: "Customs",
+    statusColor: "orange",
+  },
+  {
+    reference: "SHP-2039",
+    origin: "Shenzhen, China",
+    destination: "Heathrow, UK",
+    mode: "Air",
+    modeColor: "purple",
+    carrier: "Cathay Pacific Cargo",
+    vessel: "CX-284",
+    eta: "25 Mar 2026",
+    status: "Arrived",
+    statusColor: "green",
+  },
+]

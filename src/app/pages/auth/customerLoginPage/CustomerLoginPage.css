@@ -1,0 +1,173 @@
+.customer-auth-card {
+  width: 100%;
+  max-width: 520px;
+}
+
+:deep(.customer-auth-card.p-card) {
+  background: rgba(255, 255, 255, 0.96);
+  border: none;
+  border-radius: 18px;
+  overflow: hidden;
+
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.28);
+
+  backdrop-filter: blur(14px);
+}
+
+:deep(.customer-auth-card .p-card-content) {
+  padding: 40px;
+}
+
+.customer-auth-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.customer-auth-logo {
+  width: 150px;
+  height: auto;
+  margin-bottom: 18px;
+}
+
+.customer-auth-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 6px 12px;
+  border-radius: 999px;
+
+  background: rgba(255, 103, 0, 0.12);
+
+  color: #ff6700;
+
+  font-size: 12px;
+  font-weight: 700;
+
+  margin-bottom: 16px;
+}
+
+.customer-auth-title {
+  margin: 0;
+  font-size: 32px;
+  font-weight: 800;
+
+  color: #0f172a;
+}
+
+.customer-auth-subtitle {
+  margin-top: 10px;
+
+  color: rgba(15, 23, 42, 0.65);
+
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.customer-auth-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 18px;
+}
+
+.form-label {
+  margin-bottom: 8px;
+
+  font-size: 13px;
+  font-weight: 700;
+
+  color: rgba(15, 23, 42, 0.8);
+}
+
+.form-label.required::before {
+  content: "* ";
+  color: #ff6700;
+}
+
+:deep(.customer-auth-input.p-inputtext) {
+  width: 100%;
+  height: 46px;
+
+  border-radius: 12px;
+
+  border: 1px solid rgba(15, 23, 42, 0.14);
+
+  padding: 12px 14px;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+:deep(.customer-auth-input.p-inputtext:focus) {
+  border-color: #ff6700;
+
+  box-shadow: 0 0 0 4px rgba(255, 103, 0, 0.16);
+}
+
+:deep(.customer-auth-password.p-password) {
+  width: 100%;
+}
+
+:deep(.customer-auth-password .p-password-input) {
+  width: 100%;
+  height: 46px;
+
+  border-radius: 12px;
+
+  border: 1px solid rgba(15, 23, 42, 0.14);
+
+  padding: 12px 14px;
+}
+
+:deep(.customer-auth-password .p-password-input:focus) {
+  border-color: #ff6700;
+
+  box-shadow: 0 0 0 4px rgba(255, 103, 0, 0.16);
+}
+
+.field-error {
+  margin-top: 6px;
+
+  color: #ef4444;
+
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.customer-auth-actions {
+  margin-top: 8px;
+}
+
+:deep(.customer-auth-btn.p-button) {
+  width: 100%;
+  height: 46px;
+
+  border: none;
+  border-radius: 12px;
+
+  background: #ff6700;
+
+  font-weight: 700;
+}
+
+:deep(.customer-auth-btn.p-button:hover) {
+  background: #ff7f2a;
+}
+
+.customer-auth-footer {
+  margin-top: 22px;
+  text-align: center;
+}
+
+.customer-auth-link {
+  font-size: 13px;
+  font-weight: 600;
+
+  color: #ff6700;
+}

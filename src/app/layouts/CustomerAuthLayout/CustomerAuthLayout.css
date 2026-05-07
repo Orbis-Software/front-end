@@ -1,0 +1,43 @@
+.customer-auth-layout {
+  position: fixed;
+  inset: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background-image: url("/auth-bg.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+
+  overflow: hidden;
+}
+
+/* Darker overlay for customer portal */
+.customer-auth-layout::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+
+  background: rgba(15, 23, 42, 0.58);
+}
+
+.customer-auth-layout-container {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  position: relative;
+  z-index: 1;
+
+  background: transparent;
+}
+
+@media (max-width: 720px) {
+  .customer-auth-layout-container {
+    max-width: 520px;
+    padding: 16px;
+  }
+}
