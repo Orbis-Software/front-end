@@ -1,0 +1,75 @@
+export const stockStats = [
+  { label: "Total Units", value: "1,284", note: "↑ 142 received this week", color: "green-text" },
+  { label: "Allocated", value: "400", note: "Across 3 orders" },
+  { label: "Available", value: "884", note: "Ready to ship", color: "green-text" },
+  { label: "Warehouse Area", value: "42 m²", note: "68% capacity used", color: "amber-text" },
+]
+
+export const stockItems = [
+  {
+    sku: "SKU-001",
+    product: "Widget Type A",
+    batch: "LOT-2024-08A",
+    onHand: 542,
+    allocated: 80,
+    available: 462,
+    location: "Bay 3A, Shelf 2",
+    level: "77%",
+    status: "OK",
+    color: "green",
+  },
+  {
+    sku: "SKU-002",
+    product: "Component Pack B",
+    batch: "LOT-2024-12C",
+    onHand: 386,
+    allocated: 120,
+    available: 266,
+    location: "Bay 1C, Shelf 1",
+    level: "43%",
+    status: "Low",
+    color: "amber",
+  },
+  {
+    sku: "SKU-003",
+    product: "Assembly Kit C",
+    batch: "LOT-2025-01A",
+    onHand: 356,
+    allocated: 200,
+    available: 156,
+    location: "Bay 2B, Shelf 3",
+    level: "22%",
+    status: "Critical",
+    color: "red",
+  },
+]
+
+export const stockMovementHistory = [
+  {
+    date: "22 Mar 2026",
+    sku: "SKU-001",
+    product: "Widget Type A",
+    type: "Goods In",
+    qty: "+142",
+    reference: "SHP-2039",
+    color: "green",
+  },
+  {
+    date: "20 Mar 2026",
+    sku: "SKU-002",
+    product: "Component Pack B",
+    type: "Goods Out",
+    qty: "-40",
+    reference: "ORD-0091",
+    color: "red",
+  },
+  {
+    date: "18 Mar 2026",
+    sku: "SKU-003",
+    product: "Assembly Kit C",
+    type: "Goods In",
+    qty: "+200",
+    reference: "SHP-2035",
+    color: "green",
+  },
+]

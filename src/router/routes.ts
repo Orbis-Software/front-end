@@ -5,6 +5,7 @@ import type { RouteRecordRaw } from "vue-router"
 ========================= */
 const DefaultLayout = () => import("@/app/layouts/DefaultLayout.vue")
 const AuthLayout = () => import("@/app/layouts/AuthLayout/AuthLayout.vue")
+const CustomerAuthLayout = () => import("@/app/layouts/CustomerAuthLayout/CustomerAuthLayout.vue")
 
 /* =========================
    Shared / Generic Pages
@@ -15,6 +16,7 @@ const PlaceholderPage = () => import("@/app/pages/default/PlaceholderPage.vue")
    Auth
 ========================= */
 const LoginPage = () => import("@/app/pages/auth/loginPage/loginPage.vue")
+const CustomerLoginPage = () => import("@/app/pages/auth/customerLoginPage/CustomerLoginPage.vue")
 
 /* =========================
    TMS Pages
@@ -119,6 +121,70 @@ export const routes: RouteRecordRaw[] = [
         path: "",
         name: "auth.login",
         component: LoginPage,
+      },
+    ],
+  },
+
+  {
+    path: "/customer/login",
+    component: CustomerAuthLayout,
+    meta: { guestOnly: true },
+    children: [
+      {
+        path: "",
+        name: "auth.customer.login",
+        component: CustomerLoginPage,
+      },
+    ],
+  },
+
+  {
+    path: "/customer",
+    component: () => import("@/app/layouts/CustomerDefaultLayout.vue"),
+    meta: {
+      requiresAuth: true,
+    },
+    children: [
+      {
+        path: "",
+        redirect: {
+          name: "customer.dashboard",
+        },
+      },
+      {
+        path: "dashboard",
+        name: "customer.dashboard",
+        component: () => import("@/app/pages/customer/dashboard/CustomerDashboardPage.vue"),
+      },
+      {
+        path: "shipments",
+        name: "customer.shipments",
+        component: () => import("@/app/pages/customer/shipments/CustomerShipmentsPage.vue"),
+      },
+      {
+        path: "stock",
+        name: "customer.stock",
+        component: () => import("@/app/pages/customer/stock/CustomerStockPage.vue"),
+      },
+      {
+        path: "quotes",
+        name: "customer.quotes",
+        component: () => import("@/app/pages/customer/quotes/CustomerQuotesPage.vue"),
+      },
+      {
+        path: "documents",
+        name: "customer.documents",
+        component: () => import("@/app/pages/customer/documents/CustomerDocumentsPage.vue"),
+      },
+      {
+        path: "reports",
+        name: "customer.reports",
+        component: () => import("@/app/pages/customer/reports/CustomerReportsPage.vue"),
+      },
+      {
+        path: "settings",
+        name: "customer.settings",
+        component: () => import("@/app/pages/customer/settings/CustomerSettingsPage.vue"),
       },
     ],
   },

@@ -1,0 +1,45 @@
+export const quoteStats = [
+  { label: "Pending Response", value: "1" },
+  { label: "Awaiting Quote", value: "2" },
+  { label: "Accepted (MTD)", value: "4" },
+  { label: "Total Quoted (MTD)", value: "£12,480" },
+]
+
+export const quotes = [
+  {
+    reference: "QT-0088",
+    route: "Shanghai → Manchester",
+    mode: "Sea FCL",
+    cargo: "General Cargo",
+    weight: "12,400 kg",
+    cbm: "28.4",
+    amount: "£3,240",
+    status: "Pending",
+    statusColor: "amber",
+    submitted: "20 Mar 2026",
+  },
+  {
+    reference: "QT-0087",
+    route: "Hong Kong → Leeds",
+    mode: "Sea LCL",
+    cargo: "Electronics",
+    weight: "3,200 kg",
+    cbm: "8.2",
+    amount: "£1,850",
+    status: "Accepted",
+    statusColor: "green",
+    submitted: "15 Mar 2026",
+  },
+  {
+    reference: "QT-0085",
+    route: "Mumbai → Manchester",
+    mode: "Sea FCL",
+    cargo: "Machinery",
+    weight: "18,000 kg",
+    cbm: "38.0",
+    amount: null,
+    status: "Awaiting Quote",
+    statusColor: "blue",
+    submitted: "23 Mar 2026",
+  },
+]

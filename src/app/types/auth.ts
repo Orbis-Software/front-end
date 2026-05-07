@@ -1,10 +1,5 @@
-import type { User } from "./user"
-
-/**
- * ============
- * Auth Payloads
- * ============
- */
+import type { User } from "@/app/types/user"
+import type { CustomerAccount } from "@/app/types/customer"
 
 export interface LoginPayload {
   email: string
@@ -13,5 +8,10 @@ export interface LoginPayload {
 
 export interface LoginResult {
   user: User
+  token: string
+}
+
+export interface CustomerLoginResult {
+  customer: CustomerAccount
   token: string
 }
