@@ -6,6 +6,7 @@ import type { RouteRecordRaw } from "vue-router"
 const DefaultLayout = () => import("@/app/layouts/DefaultLayout.vue")
 const AuthLayout = () => import("@/app/layouts/AuthLayout/AuthLayout.vue")
 const CustomerAuthLayout = () => import("@/app/layouts/CustomerAuthLayout/CustomerAuthLayout.vue")
+const CustomerDefaultLayout = () => import("@/app/layouts/CustomerDefaultLayout.vue")
 
 /* =========================
    Shared / Generic Pages
@@ -28,11 +29,8 @@ const JobsListPage = () => import("@/app/pages/jobs/list/JobsListPage.vue")
 const JobDetailsPage = () => import("@/app/pages/jobs/details/JobDetailsPage.vue")
 
 const JobOverviewTab = () => import("@/app/pages/jobs/details/tabs/Overview/JobOverviewTab.vue")
-
 const JobPackagesTab = () => import("@/app/pages/jobs/details/tabs/Packages/JobPackagesTab.vue")
-
 const JobTransportTab = () => import("@/app/pages/jobs/details/tabs/Transport/JobTransportTab.vue")
-
 const JobCostsTab = () => import("@/app/pages/jobs/details/tabs/Costs/JobCostsTab.vue")
 
 const QuoteListPage = () => import("@/app/pages/quotes/list/QuoteListPage.vue")
@@ -48,15 +46,10 @@ const SettingsPage = () => import("@/app/pages/general-settings/GeneralSettingsP
 
 const MeasurementsUnitsTab = () =>
   import("@/app/pages/general-settings/tabs/MeasurementsUnitsTab.vue")
-
 const FreightCargoTab = () => import("@/app/pages/general-settings/tabs/FreightCargoTab.vue")
-
 const OperationsTab = () => import("@/app/pages/general-settings/tabs/OperationsTab.vue")
-
 const WarehouseTab = () => import("@/app/pages/general-settings/tabs/WarehouseTab.vue")
-
 const DocumentationTab = () => import("@/app/pages/general-settings/tabs/DocumentationTab.vue")
-
 const ContactsAddressesTab = () =>
   import("@/app/pages/general-settings/tabs/ContactsAddressesTab.vue")
 
@@ -90,13 +83,10 @@ const SystemSettingsAwbManagerPage = () =>
 const WmsDashboardPage = () => import("@/app/pages/wms/dashboard/WmsDashboardPage.vue")
 
 const WarehouseGoodsInPage = () => import("@/app/pages/warehouse/goods-in/WarehouseGoodsInPage.vue")
-
 const ArrivalLogTab = () =>
   import("@/app/pages/warehouse/goods-in/tabs/arrival-log/ArrivalLogTab.vue")
-
 const ExpectedArrivalsTab = () =>
   import("@/app/pages/warehouse/goods-in/tabs/expected-arrivals/ExpectedArrivalsTab.vue")
-
 const WarehouseReceiptsTab = () =>
   import("@/app/pages/warehouse/goods-in/tabs/warehouse-receipts/WarehouseReceiptsTab.vue")
 
@@ -115,7 +105,10 @@ export const routes: RouteRecordRaw[] = [
   {
     path: "/login",
     component: AuthLayout,
-    meta: { guestOnly: true },
+    meta: {
+      guestOnly: true,
+      title: "Login",
+    },
     children: [
       {
         path: "",
@@ -128,7 +121,10 @@ export const routes: RouteRecordRaw[] = [
   {
     path: "/customer/login",
     component: CustomerAuthLayout,
-    meta: { guestOnly: true },
+    meta: {
+      guestOnly: true,
+      title: "Customer Login",
+    },
     children: [
       {
         path: "",
@@ -140,9 +136,10 @@ export const routes: RouteRecordRaw[] = [
 
   {
     path: "/customer",
-    component: () => import("@/app/layouts/CustomerDefaultLayout.vue"),
+    component: CustomerDefaultLayout,
     meta: {
       requiresAuth: true,
+      authType: "customer",
     },
     children: [
       {
@@ -155,36 +152,43 @@ export const routes: RouteRecordRaw[] = [
         path: "dashboard",
         name: "customer.dashboard",
         component: () => import("@/app/pages/customer/dashboard/CustomerDashboardPage.vue"),
+        meta: { title: "Customer Dashboard" },
       },
       {
         path: "shipments",
         name: "customer.shipments",
         component: () => import("@/app/pages/customer/shipments/CustomerShipmentsPage.vue"),
+        meta: { title: "Customer Shipments" },
       },
       {
         path: "stock",
         name: "customer.stock",
         component: () => import("@/app/pages/customer/stock/CustomerStockPage.vue"),
+        meta: { title: "Customer Stock" },
       },
       {
         path: "quotes",
         name: "customer.quotes",
         component: () => import("@/app/pages/customer/quotes/CustomerQuotesPage.vue"),
+        meta: { title: "Customer Quotes" },
       },
       {
         path: "documents",
         name: "customer.documents",
         component: () => import("@/app/pages/customer/documents/CustomerDocumentsPage.vue"),
+        meta: { title: "Customer Documents" },
       },
       {
         path: "reports",
         name: "customer.reports",
         component: () => import("@/app/pages/customer/reports/CustomerReportsPage.vue"),
+        meta: { title: "Customer Reports" },
       },
       {
         path: "settings",
         name: "customer.settings",
         component: () => import("@/app/pages/customer/settings/CustomerSettingsPage.vue"),
+        meta: { title: "Customer Settings" },
       },
     ],
   },
@@ -192,16 +196,16 @@ export const routes: RouteRecordRaw[] = [
   {
     path: "/",
     component: DefaultLayout,
-    meta: { requiresAuth: true },
+    meta: {
+      requiresAuth: true,
+      authType: "user",
+    },
     children: [
       {
         path: "",
         redirect: "/dashboard",
       },
 
-      /* =========================
-         TMS Dashboard
-      ========================= */
       {
         path: "dashboard",
         name: "app.dashboard",
@@ -209,9 +213,6 @@ export const routes: RouteRecordRaw[] = [
         meta: { title: "Dashboard" },
       },
 
-      /* =========================
-         Jobs
-      ========================= */
       {
         path: "jobs",
         name: "tms.jobs.index",
@@ -229,10 +230,7 @@ export const routes: RouteRecordRaw[] = [
         name: "tms.jobs.show",
         component: JobDetailsPage,
         meta: { title: "Jobs • Details" },
-
-        // 🔥 IMPORTANT
         redirect: { name: "tms.jobs.show.overview" },
-
         children: [
           {
             path: "overview",
@@ -257,9 +255,6 @@ export const routes: RouteRecordRaw[] = [
         ],
       },
 
-      /* =========================
-         Quotes
-      ========================= */
       {
         path: "quotes",
         name: "tms.quotes.index",
@@ -279,9 +274,6 @@ export const routes: RouteRecordRaw[] = [
         meta: { title: "Quotes • Details" },
       },
 
-      /* =========================
-         Contacts
-      ========================= */
       {
         path: "contacts",
         name: "crm.contacts.index",
@@ -313,9 +305,6 @@ export const routes: RouteRecordRaw[] = [
         meta: { title: "Contacts • Import" },
       },
 
-      /* =========================
-         TMS Consolidations
-      ========================= */
       {
         path: "consolidations",
         name: "tms.consolidations.show",
@@ -323,9 +312,6 @@ export const routes: RouteRecordRaw[] = [
         meta: { title: "Consolidation" },
       },
 
-      /* =========================
-         Legacy / Generic Pages
-      ========================= */
       {
         path: "invoices",
         name: "acc.invoices",
@@ -339,9 +325,6 @@ export const routes: RouteRecordRaw[] = [
         meta: { title: "Reports" },
       },
 
-      /* =========================
-         WMS Dashboard
-      ========================= */
       {
         path: "wms",
         name: "wms.dashboard",
@@ -349,9 +332,6 @@ export const routes: RouteRecordRaw[] = [
         meta: { title: "WMS Dashboard" },
       },
 
-      /* =========================
-         Warehouse • Goods In
-      ========================= */
       {
         path: "warehouse/goods-in",
         component: WarehouseGoodsInPage,
@@ -381,9 +361,7 @@ export const routes: RouteRecordRaw[] = [
           },
         ],
       },
-      /* =========================
-         Warehouse • Storage
-      ========================= */
+
       {
         path: "warehouse/storage",
         component: WarehouseStoragePage,
@@ -414,9 +392,6 @@ export const routes: RouteRecordRaw[] = [
         ],
       },
 
-      /* =========================
-         Warehouse • Goods Out
-      ========================= */
       {
         path: "warehouse/goods-out",
         component: WarehouseGoodsOutPage,
@@ -447,9 +422,6 @@ export const routes: RouteRecordRaw[] = [
         ],
       },
 
-      /* =========================
-         Warehouse • Consolidation
-      ========================= */
       {
         path: "warehouse/consolidation",
         component: WarehouseConsolidationPage,
@@ -474,9 +446,6 @@ export const routes: RouteRecordRaw[] = [
         ],
       },
 
-      /* =========================
-         Inventory • Stock
-      ========================= */
       {
         path: "inventory/stock",
         component: InventoryStockPage,
@@ -525,9 +494,6 @@ export const routes: RouteRecordRaw[] = [
         ],
       },
 
-      /* =========================
-         Inventory • Reports
-      ========================= */
       {
         path: "inventory/reports",
         component: InventoryReportsPage,
@@ -570,9 +536,6 @@ export const routes: RouteRecordRaw[] = [
         ],
       },
 
-      /* =========================
-         WMS Admin
-      ========================= */
       {
         path: "wms/admin",
         component: WmsAdminPage,
@@ -633,9 +596,6 @@ export const routes: RouteRecordRaw[] = [
         ],
       },
 
-      /* =========================
-         Accounts
-      ========================= */
       {
         path: "accounts",
         name: "acc.accounts",
@@ -643,9 +603,6 @@ export const routes: RouteRecordRaw[] = [
         meta: { title: "Accounts" },
       },
 
-      /* =========================
-         User Management
-      ========================= */
       {
         path: "management/users",
         component: ManagementUsersPage,
@@ -670,70 +627,64 @@ export const routes: RouteRecordRaw[] = [
         ],
       },
 
-      /* =========================
-         General Settings
-      ========================= */
-      /* =========================
-   General Settings
-========================= */
       {
         path: "settings",
         component: SettingsPage,
         meta: { title: "Settings" },
-
         children: [
           {
             path: "",
             redirect: { name: "general-settings.measurements" },
           },
-
           {
             path: "measurements",
             name: "general-settings.measurements",
             component: MeasurementsUnitsTab,
             meta: { title: "Measurements & Units" },
           },
-
           {
             path: "freight-cargo",
             name: "general-settings.freight-cargo",
             component: FreightCargoTab,
             meta: { title: "Freight & Cargo" },
           },
-
           {
             path: "operations",
             name: "general-settings.operations",
             component: OperationsTab,
             meta: { title: "Operations" },
           },
-
           {
             path: "warehouse",
             name: "general-settings.warehouse",
             component: WarehouseTab,
             meta: { title: "Warehouse" },
           },
-
           {
             path: "documentation",
             name: "general-settings.documentation",
             component: DocumentationTab,
             meta: { title: "Documentation" },
           },
-
           {
             path: "contacts-addresses",
             name: "general-settings.contacts-addresses",
             component: ContactsAddressesTab,
             meta: { title: "Contacts & Addresses" },
           },
+          {
+            path: "global-reference-data",
+            name: "general-settings.global-reference-data",
+            component: () =>
+              import("@/app/pages/general-settings/globalReferenceData/GlobalReferenceDataPage.vue"),
+            meta: {
+              title: "Global Reference Data",
+              requiresAuth: true,
+            },
+          },
         ],
       },
 
-      /* =========================
-         System Settings
-      ========================= */
       {
         path: "settings/system",
         component: SystemSettingsPage,

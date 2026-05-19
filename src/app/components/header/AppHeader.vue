@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, onBeforeUnmount, ref } from "vue"
-import { RouterLink, useRoute } from "vue-router"
+import { RouterLink, useRoute, useRouter } from "vue-router"
 import UserDropdown from "@/app/components/nav/UserDropdown.vue"
 import { useAuthStore } from "@/app/stores/auth"
 import { useUiStore } from "@/app/stores/ui"
@@ -23,6 +23,7 @@ const emit = defineEmits<{
 const auth = useAuthStore()
 const ui = useUiStore()
 const route = useRoute()
+const router = useRouter()
 const items = useTopNavItems()
 
 const userDropdownOpen = ref(false)
@@ -45,6 +46,24 @@ const initials = computed(() => {
   const second = parts[1]?.[0] ?? ""
   return (first + second).toUpperCase() || "U"
 })
+
+const dashboardRoute = computed(() => {
+  return props.area === "wms" ? { name: "wms.dashboard" } : { name: "app.dashboard" }
+})
+
+function goToDashboard() {
+  router.push(dashboardRoute.value)
+  emit("close-mobile")
+}
+
+function switchArea(area: AppArea) {
+  emit("switch-area", area)
+  emit("close-mobile")
+
+  router.push({
+    name: area === "wms" ? "wms.dashboard" : "app.dashboard",
+  })
+}
 
 function toggleUserDropdown() {
   userDropdownOpen.value = !userDropdownOpen.value
@@ -108,9 +127,9 @@ onBeforeUnmount(() => document.removeEventListener("click", handleClickOutside))
   <header class="app-header">
     <div class="header-inner">
       <div class="header-left">
-        <div class="brand">
+        <button class="brand" type="button" @click="goToDashboard">
           <img class="brand-logo" :src="companyLogoSrc" alt="Company logo" />
-        </div>
+        </button>
 
         <nav class="top-nav" role="navigation" aria-label="Primary">
           <ul class="nav-list" :class="{ show: mobileOpen }">
@@ -134,7 +153,7 @@ onBeforeUnmount(() => document.removeEventListener("click", handleClickOutside))
             class="area-btn"
             :class="{ active: area === 'tms' }"
             type="button"
-            @click="emit('switch-area', 'tms')"
+            @click="switchArea('tms')"
           >
             TMS
           </button>
@@ -143,7 +162,7 @@ onBeforeUnmount(() => document.removeEventListener("click", handleClickOutside))
             class="area-btn"
             :class="{ active: area === 'wms' }"
             type="button"
-            @click="emit('switch-area', 'wms')"
+            @click="switchArea('wms')"
           >
             WMS
           </button>
@@ -206,6 +225,10 @@ onBeforeUnmount(() => document.removeEventListener("click", handleClickOutside))
   display: flex;
   align-items: center;
   flex: 0 0 auto;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
 }
 
 .brand-logo {

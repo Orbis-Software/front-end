@@ -5,7 +5,8 @@ import { useReferenceDataStore } from "@/app/stores/reference-data"
 export type GeneralSettingsTab = {
   label: string
   name: string
-  group: string
+  group?: string
+  count?: number
 }
 
 export function useGeneralSettingsPage() {
@@ -43,6 +44,11 @@ export function useGeneralSettingsPage() {
       name: "general-settings.contacts-addresses",
       group: "Contacts & addresses",
     },
+    {
+      label: "Global Reference Data",
+      name: "general-settings.global-reference-data",
+      count: 3,
+    },
   ]
 
   const currentRouteName = computed(() => String(route.name ?? ""))
@@ -51,8 +57,16 @@ export function useGeneralSettingsPage() {
     return currentRouteName.value === name
   }
 
-  function getTabCount(group: string) {
-    const categories = referenceDataStore.getByGroup(group)
+  function getTabCount(tab: GeneralSettingsTab) {
+    if (typeof tab.count === "number") {
+      return tab.count
+    }
+
+    if (!tab.group) {
+      return 0
+    }
+
+    const categories = referenceDataStore.getByGroup(tab.group)
 
     return categories.reduce((total, category) => {
       return total + category.options.length

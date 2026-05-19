@@ -16,18 +16,34 @@ router.beforeEach(async to => {
     await authStore.hydrate()
   }
 
-  if (to.meta.requiresAuth && !authStore.isAuthenticated) {
+  const requiresAuth = to.meta.requiresAuth === true
+  const guestOnly = to.meta.guestOnly === true
+  const userOnly = to.meta.authType === "user"
+  const customerOnly = to.meta.authType === "customer"
+
+  if (requiresAuth && !authStore.isAuthenticated) {
     return { name: "auth.login" }
   }
 
-  if (to.meta.guestOnly && authStore.isAuthenticated) {
+  if (guestOnly && authStore.isAuthenticated) {
+    if (authStore.isCustomer) {
+      return { name: "customer.dashboard" }
+    }
+
+    return { name: "app.dashboard" }
+  }
+
+  if (userOnly && !authStore.isUser) {
+    return { name: "customer.dashboard" }
+  }
+
+  if (customerOnly && !authStore.isCustomer) {
     return { name: "app.dashboard" }
   }
 })
 
 router.afterEach(to => {
   const pageTitle = to.meta.title as string | undefined
-
   document.title = pageTitle ? `${pageTitle} - ${APP_NAME}` : APP_NAME
 })
 
