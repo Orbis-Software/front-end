@@ -24,8 +24,9 @@ const { tabs, isActive, getTabCount } = useGeneralSettingsPage()
           :class="{ 'general-settings-page__tab--active': isActive(tab.name) }"
         >
           <span>{{ tab.label }}</span>
+
           <span class="general-settings-page__tab-count">
-            {{ getTabCount(tab.group) }}
+            {{ getTabCount(tab) }}
           </span>
         </RouterLink>
       </nav>

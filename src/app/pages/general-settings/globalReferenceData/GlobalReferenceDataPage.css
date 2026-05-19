@@ -1,0 +1,413 @@
+.global-reference-page {
+  width: 100%;
+  background: var(--bg-card);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+/* ========================================
+   TABS — SAME DESIGN AS GENERAL SETTINGS
+======================================== */
+
+.global-reference-page__tabs {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  padding: 0 14px;
+  background: #efefef;
+  border-top: 1px solid #ededed;
+  border-bottom: 1px solid #d9d9d9;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+}
+
+.global-reference-page__tabs::-webkit-scrollbar {
+  height: 6px;
+}
+
+.global-reference-page__tab {
+  border: 1px solid transparent;
+  border-bottom: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 44px;
+  height: 44px;
+  padding: 0 16px;
+  margin-top: 8px;
+  border-radius: 10px 10px 0 0;
+  background: transparent;
+  color: #5c5c5c;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.global-reference-page__tab:hover {
+  color: #222;
+  background: rgba(255, 255, 255, 0.45);
+}
+
+.global-reference-page__tab--active {
+  background: #fff;
+  color: #141414;
+  border-color: #d9d9d9;
+  position: relative;
+  top: 1px;
+}
+
+.global-reference-page__tab-count {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: #e3e3e3;
+  color: #555;
+  font-size: 11px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.global-reference-page__tab--active .global-reference-page__tab-count {
+  background: #e3e3e3;
+  color: #555;
+}
+
+/* ========================================
+   CONTROLS
+======================================== */
+
+.global-reference-page__controls {
+  padding: 16px 18px;
+  background: #fff;
+  border-bottom: 1px solid var(--border);
+  display: grid;
+  grid-template-columns:
+    minmax(260px, 1fr)
+    repeat(3, minmax(120px, 140px))
+    auto
+    auto
+    auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.global-reference-page__search {
+  position: relative;
+  min-width: 0;
+}
+
+.global-reference-page__search span {
+  position: absolute;
+  left: 11px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.global-reference-page__search input,
+.global-reference-page__controls select {
+  width: 100%;
+  height: 38px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--text);
+  font-size: 13px;
+  outline: none;
+}
+
+.global-reference-page__search input {
+  padding: 0 12px 0 34px;
+}
+
+.global-reference-page__controls select {
+  padding: 0 10px;
+}
+
+.global-reference-page__search input:focus,
+.global-reference-page__controls select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(236, 105, 26, 0.1);
+}
+
+.global-reference-page__btn {
+  height: 38px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--text);
+  border-radius: 10px;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.global-reference-page__btn:hover {
+  background: var(--tab-inactive);
+}
+
+.global-reference-page__btn--primary {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+.global-reference-page__btn--primary:hover {
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
+}
+
+.global-reference-page__count {
+  font-size: 12px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.global-reference-page__count strong {
+  color: var(--primary);
+  font-size: 14px;
+}
+
+/* ========================================
+   TABLE
+======================================== */
+
+.global-reference-page__table-wrap {
+  padding: 16px 18px 20px;
+  background: #fff;
+  overflow-x: auto;
+}
+
+.global-reference-page__table-wrap::-webkit-scrollbar {
+  height: 8px;
+}
+
+.global-reference-page__table-wrap::-webkit-scrollbar-thumb {
+  background: #d1d1d1;
+  border-radius: 999px;
+}
+
+.global-reference-page__table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: #fff;
+  font-size: 12px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.05);
+}
+
+.global-reference-page__table thead tr {
+  background: #1a1a18;
+  color: #fff;
+}
+
+.global-reference-page__table th {
+  padding: 11px 12px;
+  text-align: left;
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.45px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s ease;
+}
+
+.global-reference-page__table th:first-child {
+  border-top-left-radius: 14px;
+}
+
+.global-reference-page__table th:last-child {
+  border-top-right-radius: 14px;
+}
+
+.global-reference-page__table th:hover {
+  background: var(--primary);
+}
+
+.global-reference-page__table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #eeeeee;
+  color: var(--text);
+  vertical-align: middle;
+}
+
+.global-reference-page__table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.global-reference-page__table tbody tr:nth-child(even) {
+  background: #fafafa;
+}
+
+.global-reference-page__table tbody tr:hover {
+  background: #fff7ed;
+}
+
+.global-reference-page__table td:nth-child(4),
+.global-reference-page__table th:nth-child(4) {
+  max-width: 320px;
+}
+
+.global-reference-page__table td:nth-child(4) {
+  white-space: normal;
+  line-height: 1.35;
+}
+
+.global-reference-page__table td:not(:nth-child(4)) {
+  white-space: nowrap;
+}
+
+/* ========================================
+   BADGES
+======================================== */
+
+.global-reference-page__badge,
+.global-reference-page__status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.global-reference-page__badge--airport {
+  background: #e8f1ff;
+  color: #2563eb;
+}
+
+.global-reference-page__badge--seaport {
+  background: #e6f8ef;
+  color: #047857;
+}
+
+.global-reference-page__badge--rail {
+  background: #fff4d8;
+  color: #a16207;
+}
+
+.global-reference-page__badge--road {
+  background: #f1ebff;
+  color: #6d28d9;
+}
+
+.global-reference-page__status--active {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.global-reference-page__status--inactive {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.global-reference-page__status--construction {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.global-reference-page__status--planned {
+  background: #ede9fe;
+  color: #5b21b6;
+}
+
+.global-reference-page__code {
+  font-family: "Courier New", monospace;
+  font-weight: 800;
+  color: var(--primary);
+}
+
+.global-reference-page__coords {
+  font-family: "Courier New", monospace;
+  font-size: 10.5px;
+  color: var(--text-muted);
+}
+
+/* ========================================
+   EMPTY STATE
+======================================== */
+
+.global-reference-page__empty {
+  background: #fff;
+  border: 1px dashed #cbd5e1;
+  border-radius: 14px;
+  text-align: center;
+  padding: 48px;
+  color: var(--text-muted);
+}
+
+.global-reference-page__empty div {
+  font-size: 36px;
+  margin-bottom: 10px;
+}
+
+.global-reference-page__empty h3 {
+  margin: 0 0 6px;
+  color: var(--text);
+  font-size: 15px;
+}
+
+.global-reference-page__empty p {
+  margin: 0;
+  font-size: 13px;
+}
+
+/* ========================================
+   RESPONSIVE
+======================================== */
+
+@media (max-width: 1200px) {
+  .global-reference-page__controls {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+
+  .global-reference-page__search {
+    grid-column: 1 / -1;
+  }
+
+  .global-reference-page__count {
+    grid-column: 1 / -1;
+  }
+
+  .global-reference-page__table {
+    min-width: 980px;
+  }
+}
+
+@media (max-width: 768px) {
+  .global-reference-page__tabs {
+    padding: 0 10px;
+  }
+
+  .global-reference-page__tab {
+    min-height: 40px;
+    height: 40px;
+    padding: 0 14px;
+    margin-top: 6px;
+    font-size: 12px;
+  }
+
+  .global-reference-page__controls {
+    grid-template-columns: 1fr;
+    padding: 14px;
+  }
+
+  .global-reference-page__table-wrap {
+    padding: 14px;
+  }
+}
