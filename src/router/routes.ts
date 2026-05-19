@@ -35,6 +35,7 @@ const JobCostsTab = () => import("@/app/pages/jobs/details/tabs/Costs/JobCostsTa
 
 const QuoteListPage = () => import("@/app/pages/quotes/list/QuoteListPage.vue")
 const QuoteCreatePage = () => import("@/app/pages/quotes/create/QuoteCreatePage.vue")
+const QuoteDetailsPage = () => import("@/app/pages/quotes/details/QuoteDetailsPage.vue")
 
 const ContactsPage = () => import("@/app/pages/contacts/ContactsPage.vue")
 const ContactCreatePage = () => import("@/app/pages/contacts/create/ContactCreatePage.vue")
@@ -270,8 +271,14 @@ export const routes: RouteRecordRaw[] = [
       {
         path: "quotes/:id",
         name: "tms.quotes.show",
-        component: QuoteCreatePage,
+        component: QuoteDetailsPage,
         meta: { title: "Quotes • Details" },
+      },
+      {
+        path: "quotes/:id/edit",
+        name: "tms.quotes.edit",
+        component: QuoteCreatePage,
+        meta: { title: "Quotes • Edit" },
       },
 
       {

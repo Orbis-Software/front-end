@@ -1,5 +1,7 @@
 <template>
   <section class="quotes-list-page">
+    <Toast />
+
     <header class="quotes-list-page__header">
       <div class="quotes-list-page__title-wrap">
         <h1 class="quotes-list-page__title">Quotations</h1>
@@ -84,7 +86,7 @@
                   <button
                     class="quotes-list-page__cell-link"
                     type="button"
-                    @click="onEdit(data.id)"
+                    @click="onView(data.id)"
                   >
                     {{ data.quote_number }}
                   </button>
@@ -140,23 +142,64 @@
               </template>
             </Column>
 
-            <Column header="" style="width: 180px">
+            <Column header="Actions" style="width: 260px">
               <template #body="{ data }">
                 <div class="quotes-list-page__row-actions">
-                  <Button
-                    text
-                    class="quotes-list-page__edit-btn"
-                    icon="pi pi-pencil"
-                    label="Edit"
-                    @click="onEdit(data.id)"
-                  />
-                  <Button
-                    text
-                    class="quotes-list-page__delete-btn"
-                    icon="pi pi-trash"
-                    label="Delete"
-                    @click="onDelete(data.id)"
-                  />
+                  <template v-if="data.status === 'draft'">
+                    <Button
+                      text
+                      class="quotes-list-page__edit-btn"
+                      icon="pi pi-pencil"
+                      label="Edit"
+                      @click="onEdit(data.id)"
+                    />
+
+                    <Button
+                      text
+                      class="quotes-list-page__sent-btn"
+                      icon="pi pi-send"
+                      label="Sent"
+                      @click="openSentModal(data)"
+                    />
+                  </template>
+
+                  <template v-else-if="data.status === 'sent'">
+                    <Button
+                      text
+                      class="quotes-list-page__approve-btn"
+                      icon="pi pi-check"
+                      label="Approve"
+                      @click="openApprovalModal(data)"
+                    />
+
+                    <Button
+                      text
+                      class="quotes-list-page__decline-btn"
+                      icon="pi pi-times"
+                      label="Decline"
+                      @click="openDeclineModal(data)"
+                    />
+                  </template>
+
+                  <template v-else-if="data.status === 'approved'">
+                    <Button
+                      text
+                      class="quotes-list-page__convert-btn"
+                      icon="pi pi-briefcase"
+                      label="Convert to Job"
+                      @click="openConvertModal(data)"
+                    />
+                  </template>
+
+                  <template v-else-if="data.status === 'declined'">
+                    <Button
+                      text
+                      class="quotes-list-page__delete-btn"
+                      icon="pi pi-trash"
+                      label="Delete"
+                      @click="openDeleteModal(data)"
+                    />
+                  </template>
                 </div>
               </template>
             </Column>
@@ -164,6 +207,56 @@
         </div>
       </div>
     </div>
+
+    <Dialog
+      v-model:visible="actionDialogVisible"
+      modal
+      class="quotes-list-page__action-dialog"
+      :header="actionDialogTitle"
+      :style="{ width: '440px' }"
+    >
+      <div class="quotes-list-page__dialog-body">
+        <p class="quotes-list-page__dialog-message">
+          {{ actionDialogMessage }}
+        </p>
+
+        <div v-if="selectedQuote" class="quotes-list-page__dialog-summary">
+          <div>
+            <span>Quotation</span>
+            <strong>{{ selectedQuote.quote_number }}</strong>
+          </div>
+
+          <div>
+            <span>Customer</span>
+            <strong>{{ selectedQuote.customer_name }}</strong>
+          </div>
+
+          <div>
+            <span>Amount</span>
+            <strong>{{ selectedQuote.currency }} {{ formatAmount(selectedQuote.amount) }}</strong>
+          </div>
+        </div>
+
+        <div
+          v-if="selectedAction === 'approve' || selectedAction === 'decline'"
+          class="quotes-list-page__dialog-field"
+        >
+          <label>Notes</label>
+          <Textarea v-model="actionNotes" rows="4" autoResize placeholder="Add optional notes..." />
+        </div>
+      </div>
+
+      <template #footer>
+        <Button label="Cancel" severity="secondary" outlined @click="closeActionDialog" />
+
+        <Button
+          :label="actionConfirmLabel"
+          :icon="actionConfirmIcon"
+          :class="actionConfirmClass"
+          @click="confirmQuoteAction"
+        />
+      </template>
+    </Dialog>
   </section>
 </template>
 
@@ -175,6 +268,9 @@ import Button from "primevue/button"
 import Dropdown from "primevue/dropdown"
 import DataTable from "primevue/datatable"
 import Column from "primevue/column"
+import Dialog from "primevue/dialog"
+import Toast from "primevue/toast"
+import Textarea from "primevue/textarea"
 
 import { useQuoteListPage } from "./QuoteListPage"
 
@@ -188,10 +284,26 @@ const {
   paginatedItems,
   rows,
   firstRow,
+  actionDialogVisible,
+  selectedQuote,
+  selectedAction,
+  actionNotes,
+  actionDialogTitle,
+  actionDialogMessage,
+  actionConfirmLabel,
+  actionConfirmIcon,
+  actionConfirmClass,
   onPage,
   onNewQuotation,
+  onView,
   onEdit,
-  onDelete,
+  openSentModal,
+  openApprovalModal,
+  openDeclineModal,
+  openConvertModal,
+  openDeleteModal,
+  closeActionDialog,
+  confirmQuoteAction,
   prettify,
   formatAmount,
   statusClass,

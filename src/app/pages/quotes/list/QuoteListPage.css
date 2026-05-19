@@ -121,7 +121,6 @@
   outline: none;
   box-shadow: none;
   cursor: pointer;
-
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -129,7 +128,6 @@
   height: 44px;
   padding: 0 16px;
   margin-top: 8px;
-
   border-radius: 10px 10px 0 0;
   background: transparent;
   color: #5c5c5c;
@@ -290,7 +288,7 @@
   color: #047857;
 }
 
-.status-rejected {
+.status-declined {
   background: #fef2f2;
   border-color: #fecaca;
   color: #dc2626;
@@ -303,13 +301,184 @@
 }
 
 .quotes-list-page__edit-btn {
-  color: #10b981 !important;
-  font-weight: 700 !important;
+  color: #f97316 !important;
+  font-weight: 800 !important;
+}
+
+.quotes-list-page__sent-btn {
+  color: #2563eb !important;
+  font-weight: 800 !important;
+}
+
+.quotes-list-page__approve-btn {
+  color: #047857 !important;
+  font-weight: 800 !important;
+}
+
+.quotes-list-page__decline-btn {
+  color: #dc2626 !important;
+  font-weight: 800 !important;
+}
+
+.quotes-list-page__convert-btn {
+  color: var(--primary) !important;
+  font-weight: 800 !important;
 }
 
 .quotes-list-page__delete-btn {
-  color: #ff5a4f !important;
-  font-weight: 700 !important;
+  color: #dc2626 !important;
+  font-weight: 800 !important;
+}
+
+.quotes-list-page__dialog-sent-btn {
+  background: #2563eb !important;
+  border-color: #2563eb !important;
+  color: #fff !important;
+  font-weight: 800 !important;
+}
+
+.quotes-list-page__dialog-approve-btn {
+  background: #047857 !important;
+  border-color: #047857 !important;
+  color: #fff !important;
+  font-weight: 800 !important;
+}
+
+.quotes-list-page__dialog-decline-btn {
+  background: #dc2626 !important;
+  border-color: #dc2626 !important;
+  color: #fff !important;
+  font-weight: 800 !important;
+}
+
+.quotes-list-page__dialog-convert-btn {
+  background: var(--primary) !important;
+  border-color: var(--primary) !important;
+  color: #fff !important;
+  font-weight: 800 !important;
+}
+
+.quotes-list-page__dialog-delete-btn {
+  background: #dc2626 !important;
+  border-color: #dc2626 !important;
+  color: #fff !important;
+  font-weight: 800 !important;
+}
+
+.quotes-list-page__approve-btn:disabled,
+.quotes-list-page__decline-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.quotes-list-page__action-dialog :deep(.p-dialog-header) {
+  padding: 20px 22px 12px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.quotes-list-page__action-dialog :deep(.p-dialog-title) {
+  font-family: var(--font-accent);
+  font-size: 18px;
+  font-weight: 800;
+  color: #22324a;
+}
+
+.quotes-list-page__action-dialog :deep(.p-dialog-content) {
+  padding: 18px 22px;
+}
+
+.quotes-list-page__action-dialog :deep(.p-dialog-footer) {
+  padding: 12px 22px 20px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.quotes-list-page__dialog-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.quotes-list-page__dialog-message {
+  margin: 0;
+  color: #475569;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.quotes-list-page__dialog-summary {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid #e5eaf1;
+  background: #f8fafc;
+}
+
+.quotes-list-page__dialog-summary div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.quotes-list-page__dialog-summary span {
+  font-size: 12px;
+  font-weight: 700;
+  color: #64748b;
+}
+
+.quotes-list-page__dialog-summary strong {
+  font-size: 13px;
+  font-weight: 800;
+  color: #22324a;
+  text-align: right;
+}
+
+.quotes-list-page__dialog-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.quotes-list-page__dialog-field label {
+  font-size: 12px;
+  font-weight: 800;
+  color: #475569;
+}
+
+.quotes-list-page__dialog-field :deep(.p-textarea) {
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid #d9dee7;
+  font-size: 14px;
+}
+
+.quotes-list-page__dialog-field :deep(.p-textarea:focus) {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(236, 105, 26, 0.12);
+}
+
+.quotes-list-page__dialog-approve-btn {
+  background: #047857 !important;
+  border-color: #047857 !important;
+  color: #fff !important;
+  font-weight: 800 !important;
+}
+
+.quotes-list-page__dialog-approve-btn:hover {
+  background: #065f46 !important;
+  border-color: #065f46 !important;
+}
+
+.quotes-list-page__dialog-decline-btn {
+  background: #dc2626 !important;
+  border-color: #dc2626 !important;
+  color: #fff !important;
+  font-weight: 800 !important;
+}
+
+.quotes-list-page__dialog-decline-btn:hover {
+  background: #b91c1c !important;
+  border-color: #b91c1c !important;
 }
 
 .quotes-list-page__empty-state {
