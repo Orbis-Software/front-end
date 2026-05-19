@@ -1,8 +1,10 @@
 import { computed, ref, watch } from "vue"
 import { useRouter } from "vue-router"
+import { useToast } from "primevue/usetoast"
 
-export type QuoteStatusKey = "all" | "draft" | "sent" | "approved" | "rejected"
+export type QuoteStatusKey = "all" | "draft" | "sent" | "approved" | "declined"
 export type ModeKey = "all" | "air" | "sea" | "road" | "rail"
+export type QuoteAction = "sent" | "approve" | "decline" | "convert" | "delete"
 
 type Option<T> = {
   label: string
@@ -16,21 +18,23 @@ type QuoteItem = {
   account_number: string
   quote_type: "import" | "export" | "domestic" | "cross_trade"
   mode_of_transport: "air" | "sea" | "road" | "rail"
-  status: "draft" | "sent" | "approved" | "rejected"
+  status: "draft" | "sent" | "approved" | "declined"
   valid_until: string
   currency: "GBP" | "USD" | "EUR"
   amount: number
+  action_notes?: string
 }
 
 export function useQuoteListPage() {
   const router = useRouter()
+  const toast = useToast()
 
   const statusOptions: Option<QuoteStatusKey>[] = [
     { label: "All", value: "all" },
     { label: "Draft", value: "draft" },
     { label: "Sent", value: "sent" },
     { label: "Approved", value: "approved" },
-    { label: "Rejected", value: "rejected" },
+    { label: "Declined", value: "declined" },
   ]
 
   const modeOptions: Option<ModeKey>[] = [
@@ -47,6 +51,11 @@ export function useQuoteListPage() {
 
   const page = ref(1)
   const rows = ref(10)
+
+  const actionDialogVisible = ref(false)
+  const selectedQuote = ref<QuoteItem | null>(null)
+  const selectedAction = ref<QuoteAction | null>(null)
+  const actionNotes = ref("")
 
   const items = ref<QuoteItem[]>([
     {
@@ -92,7 +101,7 @@ export function useQuoteListPage() {
       account_number: "CUS-0004",
       quote_type: "cross_trade",
       mode_of_transport: "rail",
-      status: "rejected",
+      status: "declined",
       valid_until: "2026-04-10",
       currency: "EUR",
       amount: 2140,
@@ -127,10 +136,8 @@ export function useQuoteListPage() {
     const keyword = searchText.value.trim().toLowerCase()
 
     return items.value.filter(item => {
-      const matchStatus = statusFilter.value === "all" ? true : item.status === statusFilter.value
-
-      const matchMode =
-        modeFilter.value === "all" ? true : item.mode_of_transport === modeFilter.value
+      const matchStatus = statusFilter.value === "all" || item.status === statusFilter.value
+      const matchMode = modeFilter.value === "all" || item.mode_of_transport === modeFilter.value
 
       const matchSearch =
         !keyword ||
@@ -147,7 +154,93 @@ export function useQuoteListPage() {
   const paginatedItems = computed(() => {
     const start = firstRow.value
     const end = start + rows.value
+
     return filteredItems.value.slice(start, end)
+  })
+
+  const actionDialogTitle = computed(() => {
+    switch (selectedAction.value) {
+      case "sent":
+        return "Mark Quotation as Sent"
+      case "approve":
+        return "Approve Quotation"
+      case "decline":
+        return "Decline Quotation"
+      case "convert":
+        return "Convert to Job"
+      case "delete":
+        return "Delete Quotation"
+      default:
+        return "Confirm Action"
+    }
+  })
+
+  const actionDialogMessage = computed(() => {
+    switch (selectedAction.value) {
+      case "sent":
+        return "Are you sure you want to mark this draft quotation as sent?"
+      case "approve":
+        return "Are you sure you want to approve this quotation?"
+      case "decline":
+        return "Are you sure you want to decline this quotation?"
+      case "convert":
+        return "This will convert the approved quotation into a job. Continue?"
+      case "delete":
+        return "Are you sure you want to delete this declined quotation? This action cannot be undone."
+      default:
+        return "Are you sure you want to continue?"
+    }
+  })
+
+  const actionConfirmLabel = computed(() => {
+    switch (selectedAction.value) {
+      case "sent":
+        return "Mark as Sent"
+      case "approve":
+        return "Approve"
+      case "decline":
+        return "Decline"
+      case "convert":
+        return "Convert to Job"
+      case "delete":
+        return "Delete"
+      default:
+        return "Confirm"
+    }
+  })
+
+  const actionConfirmIcon = computed(() => {
+    switch (selectedAction.value) {
+      case "sent":
+        return "pi pi-send"
+      case "approve":
+        return "pi pi-check"
+      case "decline":
+        return "pi pi-times"
+      case "convert":
+        return "pi pi-briefcase"
+      case "delete":
+        return "pi pi-trash"
+      default:
+        return "pi pi-check"
+    }
+  })
+
+  const actionConfirmClass = computed(() => {
+    switch (selectedAction.value) {
+      case "sent":
+        return "quotes-list-page__dialog-sent-btn"
+      case "approve":
+        return "quotes-list-page__dialog-approve-btn"
+      case "decline":
+        return "quotes-list-page__dialog-decline-btn"
+      case "convert":
+        return "quotes-list-page__dialog-convert-btn"
+      case "delete":
+        return "quotes-list-page__dialog-delete-btn"
+      default:
+        return ""
+    }
   })
 
   function prettify(value: unknown): string {
@@ -168,25 +261,124 @@ export function useQuoteListPage() {
       "status-draft": status === "draft",
       "status-sent": status === "sent",
       "status-approved": status === "approved",
-      "status-rejected": status === "rejected",
+      "status-declined": status === "declined",
     }
   }
 
   function onNewQuotation() {
-    router.push("/quotes/new")
+    router.push({ name: "tms.quotes.create" })
+  }
+
+  function onView(id: number) {
+    router.push({
+      name: "tms.quotes.show",
+      params: { id },
+    })
   }
 
   function onEdit(id: number) {
-    router.push(`/quotes/${id}`)
+    router.push({
+      name: "tms.quotes.edit",
+      params: { id },
+    })
   }
 
-  function onDelete(id: number) {
-    items.value = items.value.filter(item => item.id !== id)
+  function openSentModal(quote: QuoteItem) {
+    openActionDialog(quote, "sent")
+  }
 
-    const maxPage = Math.max(1, Math.ceil(filteredItems.value.length / rows.value))
-    if (page.value > maxPage) {
-      page.value = maxPage
+  function openApprovalModal(quote: QuoteItem) {
+    openActionDialog(quote, "approve")
+  }
+
+  function openDeclineModal(quote: QuoteItem) {
+    openActionDialog(quote, "decline")
+  }
+
+  function openConvertModal(quote: QuoteItem) {
+    openActionDialog(quote, "convert")
+  }
+
+  function openDeleteModal(quote: QuoteItem) {
+    openActionDialog(quote, "delete")
+  }
+
+  function openActionDialog(quote: QuoteItem, action: QuoteAction) {
+    selectedQuote.value = quote
+    selectedAction.value = action
+    actionNotes.value = quote.action_notes ?? ""
+    actionDialogVisible.value = true
+  }
+
+  function closeActionDialog() {
+    actionDialogVisible.value = false
+    selectedQuote.value = null
+    selectedAction.value = null
+    actionNotes.value = ""
+  }
+
+  function confirmQuoteAction() {
+    if (!selectedQuote.value || !selectedAction.value) return
+
+    const quoteId = selectedQuote.value.id
+    const quoteNumber = selectedQuote.value.quote_number
+
+    if (selectedAction.value === "delete") {
+      items.value = items.value.filter(item => item.id !== quoteId)
+
+      toast.add({
+        severity: "error",
+        summary: "Quotation Deleted",
+        detail: `${quoteNumber} has been deleted.`,
+        life: 3000,
+      })
+
+      closeActionDialog()
+      return
     }
+
+    if (selectedAction.value === "convert") {
+      toast.add({
+        severity: "success",
+        summary: "Job Created",
+        detail: `${quoteNumber} has been converted to a job.`,
+        life: 3000,
+      })
+
+      closeActionDialog()
+      return
+    }
+
+    const nextStatus =
+      selectedAction.value === "sent"
+        ? "sent"
+        : selectedAction.value === "approve"
+          ? "approved"
+          : "declined"
+
+    items.value = items.value.map(item => {
+      if (item.id !== quoteId) return item
+
+      return {
+        ...item,
+        status: nextStatus,
+        action_notes: actionNotes.value.trim(),
+      }
+    })
+
+    toast.add({
+      severity: nextStatus === "approved" ? "success" : nextStatus === "declined" ? "warn" : "info",
+      summary:
+        nextStatus === "approved"
+          ? "Quotation Approved"
+          : nextStatus === "declined"
+            ? "Quotation Declined"
+            : "Quotation Sent",
+      detail: `${quoteNumber} has been ${nextStatus}.`,
+      life: 3000,
+    })
+
+    closeActionDialog()
   }
 
   function onPage(event: { first?: number; rows?: number }) {
@@ -214,10 +406,26 @@ export function useQuoteListPage() {
     paginatedItems,
     rows,
     firstRow,
+    actionDialogVisible,
+    selectedQuote,
+    selectedAction,
+    actionNotes,
+    actionDialogTitle,
+    actionDialogMessage,
+    actionConfirmLabel,
+    actionConfirmIcon,
+    actionConfirmClass,
     onPage,
     onNewQuotation,
+    onView,
     onEdit,
-    onDelete,
+    openSentModal,
+    openApprovalModal,
+    openDeclineModal,
+    openConvertModal,
+    openDeleteModal,
+    closeActionDialog,
+    confirmQuoteAction,
     prettify,
     formatAmount,
     statusClass,

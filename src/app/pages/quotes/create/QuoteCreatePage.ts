@@ -1,15 +1,13 @@
-import { computed, ref, watch } from "vue"
-import { useRouter } from "vue-router"
+import { computed, onMounted, reactive, ref, watch } from "vue"
+import { useRoute, useRouter } from "vue-router"
 
-type SelectorItem = {
-  key: string
-  title: string
-  subtitle: string
-}
+type QuoteType = "import" | "export" | "domestic" | "cross_trade" | "multi_modal"
+type TransportMode = "air" | "road" | "rail" | "sea"
 
-type Option<T = string> = {
+type SelectOption<T = string> = {
   label: string
   value: T
+  icon?: string
 }
 
 type CustomerContact = {
@@ -20,7 +18,7 @@ type CustomerContact = {
 
 type CustomerOption = {
   id: number
-  company_name: string
+  name: string
   account_number: string
   contacts: CustomerContact[]
 }
@@ -44,181 +42,242 @@ type ChargeLine = {
   markup_percent: number
 }
 
-type QuoteForm = {
-  quote_ref: string
-  quote_date: Date | null
-  follow_up_date: Date | null
-  valid_until: Date | null
+const CUSTOMERS: CustomerOption[] = [
+  {
+    id: 1,
+    name: "Acme Logistics Ltd",
+    account_number: "CUS-0001",
+    contacts: [
+      {
+        name: "James Thornton",
+        email: "j.thornton@acme.com",
+        phone: "+44 20 7123 4500",
+      },
+      {
+        name: "Sarah Mitchell",
+        email: "s.mitchell@acme.com",
+        phone: "+44 20 7123 4501",
+      },
+    ],
+  },
+  {
+    id: 2,
+    name: "Blueline Shipping Co.",
+    account_number: "CUS-0002",
+    contacts: [
+      {
+        name: "David Okafor",
+        email: "d.okafor@blueline.co.uk",
+        phone: "+44 161 234 5678",
+      },
+      {
+        name: "Priya Sharma",
+        email: "p.sharma@blueline.co.uk",
+        phone: "+44 161 234 5679",
+      },
+    ],
+  },
+  {
+    id: 3,
+    name: "Globex International",
+    account_number: "CUS-0003",
+    contacts: [
+      {
+        name: "Michael Chen",
+        email: "m.chen@globex.com",
+        phone: "+1 212 555 0100",
+      },
+    ],
+  },
+]
 
-  customer_id: number | null
-  customer_ref: string
-  contact_person: string
-  contact_email: string
-  contact_phone: string
-
-  quote_type: string
-  mode_of_transport: string
-  currency: string
-  incoterm: string
-
-  origin: string
-  destination: string
-  etd: Date | null
-  eta: Date | null
-
-  commodity: string
-  vehicle_type: string
-  cargo_class: string
-  container_type: string
-  load_type: string
-
-  goods_description: string
-  is_hazardous: boolean
-  hazardous_class: string
-  un_number: string
-  packing_group: string
-
-  conditions_preset: string
-  terms_conditions: string
-  validity_period: string
-  note: string
-
-  discount: number
-  tax_rate: number
-}
-
-const CONDITIONS_PRESETS: Record<string, string> = {
-  std: `1. All rates quoted are subject to space and equipment availability.
-2. Rates are valid for the period stated and subject to change without notice thereafter.
-3. All charges are exclusive of applicable taxes unless otherwise stated.
-4. Claims for loss or damage must be submitted within 14 days of delivery.
-5. These services are subject to our Standard Trading Conditions available on request.`,
-  air: `1. Air freight rates are based on Chargeable Weight.
-2. Rates do not include customs duties, taxes or government levies.
-3. Transit times are estimated and not guaranteed.
-4. All goods subject to IATA Dangerous Goods Regulations where applicable.
-5. Fuel and security surcharges subject to change.`,
-  sea: `1. Ocean freight rates subject to space and equipment availability.
-2. Port congestion surcharges may apply and will be charged at cost.
-3. Transit times are approximate and not guaranteed.
-4. Demurrage and detention charges will be applied as per carrier tariff.
-5. All LCL rates are per Revenue Tonne.`,
-  haz: `1. All hazardous goods must be declared at time of booking with full MSDS documentation.
-2. DG surcharges apply and are in addition to standard freight rates.
-3. Proper shipping name, UN Number and Packing Group must be provided.
-4. Goods must be packed and labelled in accordance with regulations.
-5. Additional compliance surcharges may apply.`,
+const CONDITIONS: Record<string, string> = {
+  standard:
+    "1. All rates quoted are subject to space and equipment availability.\n2. Rates are valid for the period stated and subject to change without notice thereafter.\n3. All charges are exclusive of applicable taxes unless otherwise stated.\n4. Claims for loss or damage must be submitted within 14 days of delivery.",
+  air: "1. Air freight rates are based on chargeable weight.\n2. Rates do not include customs duties, taxes or government levies.\n3. Transit times are estimated and not guaranteed.\n4. Fuel and security surcharges are subject to change.",
+  sea: "1. Ocean freight rates are subject to space and equipment availability.\n2. Port congestion surcharges may apply and will be charged at cost.\n3. Transit times are approximate and not guaranteed.\n4. Demurrage and detention charges will be charged as per carrier tariff.",
+  hazardous:
+    "1. All hazardous goods must be declared at time of booking with full MSDS documentation.\n2. DG surcharges apply and are in addition to standard freight rates.\n3. Proper shipping name, UN Number and Packing Group must be provided.",
 }
 
 export function useQuoteCreatePage() {
+  const route = useRoute()
   const router = useRouter()
 
-  const QUOTE_TYPES: SelectorItem[] = [
-    { key: "import", title: "Import", subtitle: "Create an Import quote" },
-    { key: "export", title: "Export", subtitle: "Create an Export quote" },
-    { key: "domestic", title: "Domestic", subtitle: "Create a Domestic quote" },
-    { key: "cross_trade", title: "Cross-Trade", subtitle: "Create a Cross-Trade quote" },
-    { key: "multi_modal", title: "Multi Modal", subtitle: "Create a Multi Modal quote" },
+  const quoteId = computed(() => {
+    const id = route.params.id
+
+    if (!id) return null
+
+    return Number(id)
+  })
+
+  const isEditMode = computed(() => Boolean(quoteId.value))
+
+  const pageTitle = computed(() => {
+    return isEditMode.value ? "Edit Freight Quotation" : "New Freight Quotation"
+  })
+
+  const pageStatusLabel = computed(() => {
+    return "Draft"
+  })
+
+  const saveButtonLabel = computed(() => {
+    return isEditMode.value ? "Update Quote" : "Submit Quote"
+  })
+
+  const QUOTE_TYPES = [
+    {
+      key: "import",
+      title: "Import",
+      subtitle: "Inbound shipment",
+      icon: "pi pi-download",
+    },
+    {
+      key: "export",
+      title: "Export",
+      subtitle: "Outbound shipment",
+      icon: "pi pi-upload",
+    },
+    {
+      key: "domestic",
+      title: "Domestic",
+      subtitle: "Local movement",
+      icon: "pi pi-home",
+    },
+    {
+      key: "cross_trade",
+      title: "Cross Trade",
+      subtitle: "Third-country shipment",
+      icon: "pi pi-sync",
+    },
+    {
+      key: "multi_modal",
+      title: "Multi Modal",
+      subtitle: "Multiple transport modes",
+      icon: "pi pi-share-alt",
+    },
   ]
 
-  const BASE_MODE_ITEMS: SelectorItem[] = [
-    { key: "air", title: "Air Freight", subtitle: "Choose Air Freight" },
-    { key: "road", title: "Road Freight", subtitle: "Choose Road Freight" },
-    { key: "rail", title: "Rail Freight", subtitle: "Choose Rail Freight" },
-    { key: "sea", title: "Sea Freight", subtitle: "Choose Sea Freight" },
+  const MODE_OPTIONS = [
+    {
+      key: "air",
+      title: "Air Freight",
+      subtitle: "Fast international movement",
+      icon: "pi pi-send",
+    },
+    {
+      key: "road",
+      title: "Road Freight",
+      subtitle: "Domestic or cross-border trucking",
+      icon: "pi pi-truck",
+    },
+    {
+      key: "rail",
+      title: "Rail Freight",
+      subtitle: "Rail-based cargo movement",
+      icon: "pi pi-minus",
+    },
+    {
+      key: "sea",
+      title: "Sea Freight",
+      subtitle: "Ocean freight movement",
+      icon: "pi pi-globe",
+    },
   ]
 
-  const quoteType = ref<string | null>(null)
-  const mode = ref<string | null>(null)
+  const quoteType = ref<QuoteType | null>(null)
+  const mode = ref<TransportMode | null>(null)
 
   const selectedCustomer = ref<CustomerOption | null>(null)
-  const selectedContactIndex = ref<number | null>(null)
   const customerSuggestions = ref<CustomerOption[]>([])
+  const selectedContactIndex = ref<number | null>(null)
 
-  const customerOptions = ref<CustomerOption[]>([
-    {
-      id: 1,
-      company_name: "Acme Logistics Ltd",
-      account_number: "ACC-0001",
-      contacts: [
-        { name: "James Thornton", email: "j.thornton@acme.com", phone: "+44 20 7123 4500" },
-        { name: "Sarah Mitchell", email: "s.mitchell@acme.com", phone: "+44 20 7123 4501" },
-      ],
-    },
-    {
-      id: 2,
-      company_name: "Blueline Shipping Co.",
-      account_number: "ACC-0002",
-      contacts: [
-        { name: "David Okafor", email: "d.okafor@blueline.co.uk", phone: "+44 161 234 5678" },
-        { name: "Priya Sharma", email: "p.sharma@blueline.co.uk", phone: "+44 161 234 5679" },
-      ],
-    },
-    {
-      id: 3,
-      company_name: "Globex International",
-      account_number: "ACC-0003",
-      contacts: [{ name: "Michael Chen", email: "m.chen@globex.com", phone: "+1 212 555 0100" }],
-    },
-  ])
-
-  const form = ref<QuoteForm>({
-    quote_ref: buildQuoteRef(),
-    quote_date: new Date(),
-    follow_up_date: null,
-    valid_until: null,
-
-    customer_id: null,
+  const form = reactive({
+    quote_ref: generateQuoteRef(),
+    customer_id: null as number | null,
     customer_ref: "",
-    contact_person: "",
+    contact_name: "",
     contact_email: "",
     contact_phone: "",
-
-    quote_type: "",
-    mode_of_transport: "",
+    quote_date: new Date() as Date | null,
+    follow_up_date: null as Date | null,
+    valid_until: null as Date | null,
     currency: "GBP",
-    incoterm: "EXW",
-
+    incoterm: "DAP",
     origin: "",
     destination: "",
-    etd: null,
-    eta: null,
-
-    commodity: "General",
-    vehicle_type: "FTL",
+    etd: null as Date | null,
+    eta: null as Date | null,
+    commodity: "",
+    vehicle_type: "",
     cargo_class: "",
     container_type: "",
-    load_type: "FCL",
-
+    load_type: "",
     goods_description: "",
     is_hazardous: false,
     hazardous_class: "",
     un_number: "",
     packing_group: "",
-
     conditions_preset: "",
     terms_conditions: "",
     validity_period: "30",
     note: "",
-
     discount: 0,
     tax_rate: 20,
   })
 
-  const dimensionRows = ref<DimensionRow[]>([createDimensionRow()])
-  const chargeLines = ref<ChargeLine[]>([createChargeLine("Freight Charge")])
+  const dimensionRows = ref<DimensionRow[]>([])
+  const chargeLines = ref<ChargeLine[]>([])
 
-  const currencyOptions: Option[] = [
+  const availableModes = computed(() => MODE_OPTIONS)
+
+  const showModeSelector = computed(() => {
+    return Boolean(quoteType.value)
+  })
+
+  const canShowForm = computed(() => {
+    return Boolean(quoteType.value && mode.value)
+  })
+
+  const quoteTypeLabel = computed(() => {
+    return QUOTE_TYPES.find(item => item.key === quoteType.value)?.title ?? ""
+  })
+
+  const modeLabel = computed(() => {
+    return MODE_OPTIONS.find(item => item.key === mode.value)?.title ?? ""
+  })
+
+  const formTitle = computed(() => {
+    const prefix = isEditMode.value ? "Edit" : "New"
+    const type = quoteTypeLabel.value || "Freight"
+
+    return `${prefix} ${type} Quote`
+  })
+
+  const accountNumberPreview = computed(() => {
+    return selectedCustomer.value?.account_number ?? ""
+  })
+
+  const contactOptions = computed<SelectOption<number>[]>(() => {
+    if (!selectedCustomer.value) return []
+
+    return selectedCustomer.value.contacts.map((contact, index) => ({
+      label: contact.name,
+      value: index,
+    }))
+  })
+
+  const currencyOptions: SelectOption[] = [
     { label: "GBP – British Pound", value: "GBP" },
     { label: "USD – US Dollar", value: "USD" },
     { label: "EUR – Euro", value: "EUR" },
     { label: "AED – UAE Dirham", value: "AED" },
     { label: "AUD – Australian Dollar", value: "AUD" },
     { label: "SGD – Singapore Dollar", value: "SGD" },
-    { label: "CHF – Swiss Franc", value: "CHF" },
   ]
 
-  const incotermOptions: Option[] = [
+  const incotermOptions: SelectOption[] = [
     "EXW",
     "FCA",
     "FAS",
@@ -230,144 +289,102 @@ export function useQuoteCreatePage() {
     "DAP",
     "DPU",
     "DDP",
-  ].map(value => ({ label: value, value }))
+  ].map(item => ({ label: item, value: item }))
 
-  const containerOptions: Option[] = [
-    "20' GP",
-    "40' GP",
-    "40' HC",
-    "20' RF",
-    "40' RF",
-    "20' OT",
-  ].map(value => ({ label: value, value }))
+  const containerOptions: SelectOption[] = [
+    { label: "20' GP", value: "20GP" },
+    { label: "40' GP", value: "40GP" },
+    { label: "40' HC", value: "40HC" },
+    { label: "20' RF", value: "20RF" },
+    { label: "40' RF", value: "40RF" },
+  ]
 
-  const uomOptions: Option[] = [
-    "Per Shipment",
-    "Per KG",
-    "Per CBM",
-    "Per Unit",
-    "Per Day",
-    "Per Container",
-    "Flat Rate",
-    "Per AWB",
-    "Per BL",
-    "Percent",
-  ].map(value => ({ label: value, value }))
+  const uomOptions: SelectOption[] = [
+    { label: "Per Shipment", value: "Per Shipment" },
+    { label: "Per KG", value: "Per KG" },
+    { label: "Per CBM", value: "Per CBM" },
+    { label: "Per Unit", value: "Per Unit" },
+    { label: "Per Day", value: "Per Day" },
+    { label: "Per Container", value: "Per Container" },
+    { label: "Flat Rate", value: "Flat Rate" },
+  ]
 
-  const chargeDescriptionOptions: Option[] = [
+  const chargeDescriptionOptions: SelectOption[] = [
     "Origin Handling Charge",
     "Freight Charge",
     "Destination Handling Charge",
-    "Fuel Surcharge (FSC)",
-    "Security Surcharge (SSC)",
-    "Customs Clearance – Origin",
-    "Customs Clearance – Destination",
-    "Port Handling Fee",
-    "Delivery / Cartage",
+    "Fuel Surcharge",
+    "Security Surcharge",
+    "Customs Clearance",
     "Documentation Fee",
-    "Inspection Fee",
-    "Storage / Demurrage",
-    "Dangerous Goods Surcharge",
-    "Oversize Cargo Surcharge",
+    "Delivery / Cartage",
     "Insurance Premium",
-    "Terminal Handling Charge (THC)",
-    "Bill of Lading Fee",
-  ].map(value => ({ label: value, value }))
+  ].map(item => ({ label: item, value: item }))
 
-  const hazardousClassOptions: Option[] = [
+  const hazardousClassOptions: SelectOption[] = [
     "Class 1 – Explosives",
-    "Class 2.1 – Flammable Gas",
-    "Class 2.2 – Non-Flammable Gas",
-    "Class 2.3 – Toxic Gas",
+    "Class 2 – Gases",
     "Class 3 – Flammable Liquids",
-    "Class 4.1 – Flammable Solids",
-    "Class 4.2 – Spontaneous Combustibles",
-    "Class 4.3 – Dangerous When Wet",
-    "Class 5.1 – Oxidising Substances",
-    "Class 5.2 – Organic Peroxides",
-    "Class 6.1 – Toxic Substances",
-    "Class 6.2 – Infectious Substances",
+    "Class 4 – Flammable Solids",
+    "Class 5 – Oxidising Substances",
+    "Class 6 – Toxic Substances",
     "Class 7 – Radioactive Material",
     "Class 8 – Corrosives",
-    "Class 9 – Misc. Dangerous Goods",
-  ].map(value => ({ label: value, value }))
+    "Class 9 – Miscellaneous Dangerous Goods",
+  ].map(item => ({ label: item, value: item }))
 
-  const packingGroupOptions: Option[] = ["PG I", "PG II", "PG III"].map(value => ({
-    label: value,
-    value,
-  }))
-
-  const conditionsOptions: Option[] = [
-    { label: "Standard Freight Terms", value: "std" },
-    { label: "Air Freight Conditions", value: "air" },
-    { label: "Sea Freight Conditions", value: "sea" },
-    { label: "Hazardous Goods Terms", value: "haz" },
+  const packingGroupOptions: SelectOption[] = [
+    { label: "PG I", value: "PG I" },
+    { label: "PG II", value: "PG II" },
+    { label: "PG III", value: "PG III" },
   ]
 
-  const validityOptions: Option[] = [
+  const conditionsOptions: SelectOption[] = [
+    { label: "Standard Freight Terms", value: "standard" },
+    { label: "Air Freight Conditions", value: "air" },
+    { label: "Sea Freight Conditions", value: "sea" },
+    { label: "Hazardous Goods Terms", value: "hazardous" },
+  ]
+
+  const validityOptions: SelectOption[] = [
     { label: "Valid for 7 days", value: "7" },
     { label: "Valid for 14 days", value: "14" },
     { label: "Valid for 30 days", value: "30" },
     { label: "Valid for 60 days", value: "60" },
-    { label: "Custom", value: "custom" },
   ]
 
-  const taxRateOptions: Option<number>[] = [
+  const taxRateOptions: SelectOption<number>[] = [
     { label: "0% – Zero Rate", value: 0 },
-    { label: "5% – Reduced Rate", value: 5 },
-    { label: "12.5% – Reduced Rate", value: 12.5 },
-    { label: "20% – Standard Rate", value: 20 },
-    { label: "23% – IE Standard", value: 23 },
-    { label: "25% – DK / SE Standard", value: 25 },
-    { label: "27% – HU Standard", value: 27 },
+    { label: "5% – Reduced", value: 5 },
+    { label: "20% – Standard", value: 20 },
   ]
-
-  const availableModes = computed(() => BASE_MODE_ITEMS)
-
-  const showModeSelector = computed(() => !!quoteType.value)
-
-  const canShowForm = computed(() => !!quoteType.value && !!mode.value)
-
-  const quoteTypeLabel = computed(() => {
-    return QUOTE_TYPES.find(item => item.key === quoteType.value)?.title ?? ""
-  })
-
-  const modeLabel = computed(() => {
-    return BASE_MODE_ITEMS.find(item => item.key === mode.value)?.title ?? ""
-  })
-
-  const accountNumberPreview = computed(() => selectedCustomer.value?.account_number ?? "")
-
-  const contactOptions = computed<Option<number>[]>(() => {
-    return (
-      selectedCustomer.value?.contacts.map((contact, index) => ({
-        label: contact.name,
-        value: index,
-      })) ?? []
-    )
-  })
 
   const totalPieces = computed(() => {
-    return dimensionRows.value.reduce((sum, row) => sum + Number(row.pieces || 0), 0)
+    return dimensionRows.value.reduce((total, row) => total + Number(row.pieces || 0), 0)
   })
 
   const totalActualWeight = computed(() => {
-    return dimensionRows.value.reduce((sum, row) => sum + Number(row.weight || 0), 0)
+    return dimensionRows.value.reduce((total, row) => total + Number(row.weight || 0), 0)
   })
 
-  const totalCbm = computed(() => {
-    return dimensionRows.value.reduce((sum, row) => sum + getRowCbm(row), 0)
+  const totalVolumetricWeight = computed(() => {
+    return dimensionRows.value.reduce((total, row) => total + getRowVolumetricWeight(row), 0)
   })
-
-  const totalVolumetricWeight = computed(() => totalCbm.value * 167)
 
   const chargeableWeight = computed(() => {
-    if (mode.value === "air") return Math.max(totalActualWeight.value, totalVolumetricWeight.value)
+    if (mode.value === "air") {
+      return Math.max(totalActualWeight.value, totalVolumetricWeight.value)
+    }
+
     return totalActualWeight.value
   })
 
+  const totalCbm = computed(() => {
+    return dimensionRows.value.reduce((total, row) => total + getRowCbm(row), 0)
+  })
+
   const totalLdm = computed(() => {
-    return dimensionRows.value.reduce((sum, row) => sum + getRowLdm(row), 0)
+    return dimensionRows.value.reduce((total, row) => total + getRowLdm(row), 0)
   })
 
   const revenueTonne = computed(() => {
@@ -375,22 +392,22 @@ export function useQuoteCreatePage() {
   })
 
   const subtotalSell = computed(() => {
-    return chargeLines.value.reduce((sum, line) => sum + getChargeSellTotal(line), 0)
+    return chargeLines.value.reduce((total, line) => total + getChargeSellTotal(line), 0)
   })
 
   const subtotalCost = computed(() => {
     return chargeLines.value.reduce(
-      (sum, line) => sum + Number(line.qty || 0) * Number(line.cost || 0),
+      (total, line) => total + Number(line.qty || 0) * Number(line.cost || 0),
       0,
     )
   })
 
   const totalExclTax = computed(() => {
-    return Math.max(subtotalSell.value - Number(form.value.discount || 0), 0)
+    return Math.max(subtotalSell.value - Number(form.discount || 0), 0)
   })
 
   const taxAmount = computed(() => {
-    return totalExclTax.value * (Number(form.value.tax_rate || 0) / 100)
+    return totalExclTax.value * (Number(form.tax_rate || 0) / 100)
   })
 
   const totalInclTax = computed(() => {
@@ -403,90 +420,111 @@ export function useQuoteCreatePage() {
 
   const profitPercent = computed(() => {
     if (totalExclTax.value <= 0) return 0
+
     return (profitTotal.value / totalExclTax.value) * 100
   })
 
-  const subtotalSellDisplay = computed(() => formatMoney(subtotalSell.value, form.value.currency))
-  const subtotalCostDisplay = computed(() => formatMoney(subtotalCost.value, form.value.currency))
-  const totalExclTaxDisplay = computed(() => formatMoney(totalExclTax.value, form.value.currency))
-  const taxAmountDisplay = computed(() => formatMoney(taxAmount.value, form.value.currency))
-  const totalInclTaxDisplay = computed(() => formatMoney(totalInclTax.value, form.value.currency))
-  const profitTotalDisplay = computed(() => formatMoney(profitTotal.value, form.value.currency))
+  const subtotalSellDisplay = computed(() => money(subtotalSell.value))
+  const subtotalCostDisplay = computed(() => money(subtotalCost.value))
+  const totalExclTaxDisplay = computed(() => money(totalExclTax.value))
+  const taxAmountDisplay = computed(() => money(taxAmount.value))
+  const totalInclTaxDisplay = computed(() => money(totalInclTax.value))
+  const profitTotalDisplay = computed(() => money(profitTotal.value))
   const profitPercentDisplay = computed(() => `${profitPercent.value.toFixed(2)}%`)
 
   function selectQuoteType(value: string) {
+    if (!isQuoteType(value)) return
+
     quoteType.value = value
-    mode.value = null
-    form.value.quote_type = value
-    form.value.mode_of_transport = ""
+
+    if (value === "multi_modal") {
+      mode.value = "road"
+    }
   }
 
   function selectMode(value: string) {
+    if (!isTransportMode(value)) return
+
     mode.value = value
-    form.value.mode_of_transport = value
-    dimensionRows.value = [createDimensionRow()]
-    chargeLines.value = [createChargeLine("Freight Charge")]
+
+    if (!dimensionRows.value.length) {
+      addDimensionRow()
+    }
+
+    if (!chargeLines.value.length) {
+      addChargeLine("Freight Charge")
+    }
   }
 
-  function customerOptionLabel(option: CustomerOption) {
-    return option?.company_name ?? ""
+  function isQuoteType(value: string): value is QuoteType {
+    return ["import", "export", "domestic", "cross_trade", "multi_modal"].includes(value)
+  }
+
+  function isTransportMode(value: string): value is TransportMode {
+    return ["air", "road", "rail", "sea"].includes(value)
+  }
+
+  function customerOptionLabel(customer: CustomerOption) {
+    return customer.name
   }
 
   function onCustomerComplete(event: { query: string }) {
-    const query = String(event.query ?? "")
-      .trim()
-      .toLowerCase()
+    const query = event.query.trim().toLowerCase()
 
-    customerSuggestions.value = !query
-      ? [...customerOptions.value]
-      : customerOptions.value.filter(item => {
-          return (
-            item.company_name.toLowerCase().includes(query) ||
-            item.account_number.toLowerCase().includes(query)
-          )
-        })
+    if (!query) {
+      customerSuggestions.value = [...CUSTOMERS]
+      return
+    }
+
+    customerSuggestions.value = CUSTOMERS.filter(customer =>
+      customer.name.toLowerCase().includes(query),
+    )
   }
 
-  function onCustomerSelect() {
-    form.value.customer_id = selectedCustomer.value?.id ?? null
+  function onCustomerSelect(event: { value: CustomerOption }) {
+    selectedCustomer.value = event.value
+    form.customer_id = event.value.id
     selectedContactIndex.value = null
-    clearContact()
+    form.contact_name = ""
+    form.contact_email = ""
+    form.contact_phone = ""
   }
 
   function onCustomerClear() {
     selectedCustomer.value = null
     selectedContactIndex.value = null
-    form.value.customer_id = null
-    clearContact()
+    form.customer_id = null
+    form.contact_name = ""
+    form.contact_email = ""
+    form.contact_phone = ""
   }
 
-  function onContactChange() {
-    const contact =
-      selectedContactIndex.value !== null
-        ? selectedCustomer.value?.contacts[selectedContactIndex.value]
-        : null
+  watch(selectedContactIndex, index => {
+    if (index === null || !selectedCustomer.value) return
 
-    form.value.contact_person = contact?.name ?? ""
-    form.value.contact_email = contact?.email ?? ""
-    form.value.contact_phone = contact?.phone ?? ""
-  }
+    const contact = selectedCustomer.value.contacts[index]
+
+    if (!contact) return
+
+    form.contact_name = contact.name
+    form.contact_email = contact.email
+    form.contact_phone = contact.phone
+  })
 
   function addDimensionRow() {
-    dimensionRows.value.push(createDimensionRow())
+    dimensionRows.value.push({
+      id: Date.now() + Math.random(),
+      pieces: 1,
+      length: 0,
+      width: 0,
+      height: 0,
+      weight: 0,
+      container_type: "",
+    })
   }
 
   function removeDimensionRow(id: number) {
-    if (dimensionRows.value.length === 1) return
     dimensionRows.value = dimensionRows.value.filter(row => row.id !== id)
-  }
-
-  function addChargeLine(description = "Freight Charge") {
-    chargeLines.value.push(createChargeLine(description))
-  }
-
-  function removeChargeLine(id: number) {
-    if (chargeLines.value.length === 1) return
-    chargeLines.value = chargeLines.value.filter(line => line.id !== id)
   }
 
   function getRowCbm(row: DimensionRow) {
@@ -495,7 +533,7 @@ export function useQuoteCreatePage() {
         Number(row.width || 0) *
         Number(row.height || 0) *
         Number(row.pieces || 0)) /
-      1_000_000
+      1000000
     )
   }
 
@@ -505,69 +543,180 @@ export function useQuoteCreatePage() {
 
   function getRowLdm(row: DimensionRow) {
     return (
-      (Number(row.length || 0) * Number(row.width || 0) * Number(row.pieces || 0)) / 10_000 / 0.24
+      (Number(row.length || 0) * Number(row.width || 0) * Number(row.pieces || 0)) / 10000 / 0.24
     )
   }
 
+  function addChargeLine(description = "Freight Charge") {
+    chargeLines.value.push({
+      id: Date.now() + Math.random(),
+      description,
+      qty: 1,
+      uom: "Per Shipment",
+      cost: 0,
+      markup_percent: 25,
+    })
+  }
+
+  function removeChargeLine(id: number) {
+    chargeLines.value = chargeLines.value.filter(line => line.id !== id)
+  }
+
   function getChargeSellTotal(line: ChargeLine) {
-    const qty = Number(line.qty || 0)
-    const cost = Number(line.cost || 0)
-    const markup = Number(line.markup_percent || 0)
-    return qty * cost * (1 + markup / 100)
+    return (
+      Number(line.qty || 0) * Number(line.cost || 0) * (1 + Number(line.markup_percent || 0) / 100)
+    )
   }
 
   function onConditionsPresetChange() {
-    const preset = form.value.conditions_preset
-    if (preset && CONDITIONS_PRESETS[preset]) {
-      form.value.terms_conditions = CONDITIONS_PRESETS[preset]
-    }
+    form.terms_conditions = CONDITIONS[form.conditions_preset] ?? ""
   }
 
   function onBrowseQuotes() {
-    router.push("/quotes")
+    router.push({ name: "tms.quotes.index" })
   }
 
   function onFindQuote() {
-    router.push("/quotes")
+    router.push({ name: "tms.quotes.index" })
   }
 
   function onSave() {
-    const payload = {
-      ...form.value,
-      customer_id: selectedCustomer.value?.id ?? null,
+    if (isEditMode.value) {
+      console.log("Update quote", quoteId.value, buildPayload())
+    } else {
+      console.log("Create quote", buildPayload())
+    }
+
+    router.push({ name: "tms.quotes.index" })
+  }
+
+  function onCancel() {
+    if (isEditMode.value && quoteId.value) {
+      router.push({
+        name: "tms.quotes.show",
+        params: { id: quoteId.value },
+      })
+
+      return
+    }
+
+    router.push({ name: "tms.quotes.index" })
+  }
+
+  function buildPayload() {
+    return {
       quote_type: quoteType.value,
       mode_of_transport: mode.value,
+      ...form,
       dimensions: dimensionRows.value,
       charges: chargeLines.value,
       totals: {
         subtotal_sell: subtotalSell.value,
         subtotal_cost: subtotalCost.value,
-        discount: form.value.discount,
-        tax_rate: form.value.tax_rate,
-        tax_amount: taxAmount.value,
         total_excl_tax: totalExclTax.value,
+        tax_amount: taxAmount.value,
         total_incl_tax: totalInclTax.value,
         profit_total: profitTotal.value,
         profit_percent: profitPercent.value,
       },
     }
-
-    console.log("Create quote payload:", payload)
   }
 
-  function onCancel() {
-    router.push("/quotes")
+  function loadQuoteForEdit(id: number) {
+    const quote = {
+      id,
+      quote_ref: `QUO-2026-${String(id).padStart(4, "0")}`,
+      quote_type: "export" as QuoteType,
+      mode_of_transport: "air" as TransportMode,
+      customer_id: 1,
+      customer_ref: "PO-2026-001",
+      contact_index: 0,
+      currency: "GBP",
+      incoterm: "DAP",
+      origin: "London Heathrow",
+      destination: "Dubai DXB",
+      commodity: "Electronics",
+      goods_description: "General Cargo - Electronic Components",
+      terms_conditions: CONDITIONS.air,
+      charges: [
+        {
+          id: 1,
+          description: "Freight Charge",
+          qty: 1,
+          uom: "Per Shipment",
+          cost: 850,
+          markup_percent: 25,
+        },
+      ],
+      dimensions: [
+        {
+          id: 1,
+          pieces: 10,
+          length: 60,
+          width: 40,
+          height: 30,
+          weight: 120,
+          container_type: "",
+        },
+      ],
+    }
+
+    quoteType.value = quote.quote_type
+    mode.value = quote.mode_of_transport
+
+    const customer = CUSTOMERS.find(item => item.id === quote.customer_id) ?? null
+    selectedCustomer.value = customer
+    form.customer_id = quote.customer_id
+
+    if (customer) {
+      selectedContactIndex.value = quote.contact_index
+      const contact = customer.contacts[quote.contact_index]
+
+      form.contact_name = contact?.name ?? ""
+      form.contact_email = contact?.email ?? ""
+      form.contact_phone = contact?.phone ?? ""
+    }
+
+    form.quote_ref = quote.quote_ref
+    form.customer_ref = quote.customer_ref
+    form.currency = quote.currency
+    form.incoterm = quote.incoterm
+    form.origin = quote.origin
+    form.destination = quote.destination
+    form.commodity = quote.commodity
+    form.goods_description = quote.goods_description
+    form.terms_conditions = quote.terms_conditions ?? ""
+
+    dimensionRows.value = quote.dimensions
+    chargeLines.value = quote.charges
   }
 
-  function clearContact() {
-    form.value.contact_person = ""
-    form.value.contact_email = ""
-    form.value.contact_phone = ""
+  function money(value: number) {
+    return `${form.currency} ${new Intl.NumberFormat("en-GB", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(value || 0)}`
   }
 
-  watch(selectedContactIndex, onContactChange)
+  function generateQuoteRef() {
+    return `QUO-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 9000) + 1000)}`
+  }
+
+  onMounted(() => {
+    customerSuggestions.value = [...CUSTOMERS]
+
+    if (isEditMode.value && quoteId.value) {
+      loadQuoteForEdit(quoteId.value)
+    }
+  })
 
   return {
+    pageTitle,
+    pageStatusLabel,
+    formTitle,
+    saveButtonLabel,
+    isEditMode,
+
     QUOTE_TYPES,
     availableModes,
     quoteType,
@@ -634,54 +783,4 @@ export function useQuoteCreatePage() {
     onSave,
     onCancel,
   }
-}
-
-let dimensionId = 0
-let chargeId = 0
-
-function createDimensionRow(): DimensionRow {
-  dimensionId += 1
-
-  return {
-    id: dimensionId,
-    pieces: 1,
-    length: 0,
-    width: 0,
-    height: 0,
-    weight: 0,
-    container_type: "20' GP",
-  }
-}
-
-function createChargeLine(description = "Freight Charge"): ChargeLine {
-  chargeId += 1
-
-  return {
-    id: chargeId,
-    description,
-    qty: 1,
-    uom: "Per Shipment",
-    cost: 0,
-    markup_percent: 25,
-  }
-}
-
-function buildQuoteRef(): string {
-  const year = new Date().getFullYear()
-  const random = Math.floor(1000 + Math.random() * 9000)
-  return `QTE-${year}-${random}`
-}
-
-function formatMoney(value: number, currency: string): string {
-  const symbols: Record<string, string> = {
-    GBP: "£",
-    USD: "$",
-    EUR: "€",
-    AED: "AED ",
-    AUD: "A$",
-    SGD: "S$",
-    CHF: "CHF ",
-  }
-
-  return `${symbols[currency] ?? `${currency} `}${Number(value || 0).toFixed(2)}`
 }

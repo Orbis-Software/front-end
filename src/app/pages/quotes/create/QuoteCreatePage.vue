@@ -3,13 +3,13 @@
     <div class="quote-top">
       <div class="quote-title">
         <i class="pi pi-file-edit" />
-        <span>New Freight Quotation</span>
+        <span>{{ pageTitle }}</span>
       </div>
 
       <div class="quote-actions">
         <span class="status-tag">
           <span class="status-dot" />
-          Draft
+          {{ pageStatusLabel }}
         </span>
 
         <Button class="btn orbis-primary" outlined type="button" @click="onBrowseQuotes">
@@ -44,7 +44,7 @@
 
     <section v-if="canShowForm" class="card section">
       <div class="meta-title">
-        New {{ quoteTypeLabel }} Quote<span v-if="modeLabel"> — {{ modeLabel }}</span>
+        {{ formTitle }}<span v-if="modeLabel"> — {{ modeLabel }}</span>
       </div>
 
       <QuoteStepHeader
@@ -621,9 +621,10 @@
 
           <div class="final-actions">
             <Button class="btn" outlined type="button" @click="onCancel">Cancel</Button>
+
             <Button class="btn orbis-primary" type="button" @click="onSave">
               <i class="pi pi-check" style="margin-right: 8px" />
-              Submit Quote
+              {{ saveButtonLabel }}
             </Button>
           </div>
         </div>
@@ -650,6 +651,11 @@ import QuoteTypeSelector from "./QuoteTypeSelector.vue"
 import { useQuoteCreatePage } from "./QuoteCreatePage"
 
 const {
+  pageTitle,
+  pageStatusLabel,
+  formTitle,
+  saveButtonLabel,
+
   QUOTE_TYPES,
   availableModes,
   quoteType,
