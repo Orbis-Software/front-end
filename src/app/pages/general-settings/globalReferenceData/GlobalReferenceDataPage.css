@@ -1,8 +1,13 @@
 .global-reference-page {
+  --font-body: "Inter";
+  --font-accent: "IBM Plex Sans";
+
   width: 100%;
   background: var(--bg-card);
-  border-radius: 16px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
   overflow: hidden;
+  font-family: var(--font-body);
 }
 
 /* ========================================
@@ -84,9 +89,9 @@
 ======================================== */
 
 .global-reference-page__controls {
-  padding: 16px 18px;
+  padding: 18px 22px;
   background: #fff;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid #e5eaf1;
   display: grid;
   grid-template-columns:
     minmax(260px, 1fr)
@@ -103,29 +108,36 @@
   min-width: 0;
 }
 
-.global-reference-page__search span {
+.global-reference-page__search-icon {
   position: absolute;
-  left: 11px;
+  left: 14px;
   top: 50%;
   transform: translateY(-50%);
-  color: var(--text-muted);
-  font-size: 13px;
+  font-size: 15px;
+  color: #6b7280;
+  pointer-events: none;
+  z-index: 2;
 }
 
 .global-reference-page__search input,
 .global-reference-page__controls select {
   width: 100%;
-  height: 38px;
-  border: 1px solid var(--border);
+  height: 44px;
+  border: 1px solid #d9dee7;
   border-radius: 10px;
   background: #fff;
   color: var(--text);
-  font-size: 13px;
+  font-size: 14px;
   outline: none;
+  box-shadow: none;
 }
 
 .global-reference-page__search input {
-  padding: 0 12px 0 34px;
+  padding: 0 14px 0 40px;
+}
+
+.global-reference-page__search input::placeholder {
+  color: #64748b;
 }
 
 .global-reference-page__controls select {
@@ -134,18 +146,19 @@
 
 .global-reference-page__search input:focus,
 .global-reference-page__controls select:focus {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(236, 105, 26, 0.1);
+  border-color: rgba(236, 105, 26, 0.55);
+  box-shadow: 0 0 0 3px rgba(236, 105, 26, 0.12);
+  outline: none;
 }
 
 .global-reference-page__btn {
-  height: 38px;
-  padding: 0 14px;
-  border: 1px solid var(--border);
+  height: 44px;
+  padding: 0 16px;
+  border: 1px solid #d9dee7;
   background: #fff;
   color: var(--text);
   border-radius: 10px;
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 700;
   cursor: pointer;
   white-space: nowrap;
@@ -160,6 +173,7 @@
   background: var(--primary);
   border-color: var(--primary);
   color: #fff;
+  font-weight: 800;
 }
 
 .global-reference-page__btn--primary:hover {
@@ -168,7 +182,7 @@
 }
 
 .global-reference-page__count {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-muted);
   white-space: nowrap;
 }
@@ -183,7 +197,7 @@
 ======================================== */
 
 .global-reference-page__table-wrap {
-  padding: 16px 18px 20px;
+  padding: 20px 22px 24px;
   background: #fff;
   overflow-x: auto;
 }
@@ -202,54 +216,52 @@
   border-collapse: separate;
   border-spacing: 0;
   background: #fff;
-  font-size: 12px;
-  border: 1px solid var(--border);
-  border-radius: 14px;
+  font-size: 14px;
+  border: 1px solid #dfe5ec;
+  border-radius: 18px;
   overflow: hidden;
-  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.05);
 }
 
 .global-reference-page__table thead tr {
-  background: #1a1a18;
-  color: #fff;
+  background: #f8fafc;
+  color: #22324a;
 }
 
 .global-reference-page__table th {
-  padding: 11px 12px;
+  padding: 18px;
   text-align: left;
-  font-size: 10.5px;
-  text-transform: uppercase;
-  letter-spacing: 0.45px;
+  font-size: 14px;
+  font-weight: 800;
+  text-transform: none;
+  letter-spacing: 0;
   cursor: pointer;
   white-space: nowrap;
+  border-bottom: 1px solid #e5eaf1;
   transition: background 0.15s ease;
 }
 
 .global-reference-page__table th:first-child {
-  border-top-left-radius: 14px;
+  border-top-left-radius: 18px;
 }
 
 .global-reference-page__table th:last-child {
-  border-top-right-radius: 14px;
+  border-top-right-radius: 18px;
 }
 
 .global-reference-page__table th:hover {
-  background: var(--primary);
+  color: var(--primary);
+  background: #fff7ed;
 }
 
 .global-reference-page__table td {
-  padding: 10px 12px;
-  border-bottom: 1px solid #eeeeee;
-  color: var(--text);
+  padding: 14px 18px;
+  border-bottom: 1px solid #e9edf3;
+  color: #22324a;
   vertical-align: middle;
 }
 
 .global-reference-page__table tbody tr:last-child td {
   border-bottom: none;
-}
-
-.global-reference-page__table tbody tr:nth-child(even) {
-  background: #fafafa;
 }
 
 .global-reference-page__table tbody tr:hover {
@@ -279,10 +291,11 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 3px 8px;
+  min-height: 28px;
+  padding: 5px 12px;
   border-radius: 999px;
-  font-size: 10.5px;
-  font-weight: 800;
+  font-size: 12px;
+  font-weight: 700;
   white-space: nowrap;
 }
 
@@ -334,7 +347,7 @@
 
 .global-reference-page__coords {
   font-family: "Courier New", monospace;
-  font-size: 10.5px;
+  font-size: 12px;
   color: var(--text-muted);
 }
 
