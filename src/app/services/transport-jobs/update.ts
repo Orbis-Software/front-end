@@ -4,7 +4,7 @@ import type { TransportJob, TransportJobUpdatePayload } from "@/app/types/transp
 
 type FormValue = string | number | boolean | null | undefined
 
-function appendValue(fd: FormData, key: string, value: FormValue): void {
+function appendValue(fd: FormData, key: string, value: FormValue | Record<string, any>): void {
   if (value === undefined) return
 
   if (value === null) {
@@ -14,6 +14,13 @@ function appendValue(fd: FormData, key: string, value: FormValue): void {
 
   if (typeof value === "boolean") {
     fd.append(key, value ? "1" : "0")
+    return
+  }
+
+  if (typeof value === "object") {
+    Object.entries(value).forEach(([childKey, childValue]) => {
+      appendValue(fd, `${key}[${childKey}]`, childValue)
+    })
     return
   }
 
@@ -79,6 +86,18 @@ function toFormData(payload: TransportJobUpdatePayload): FormData {
   appendValue(fd, "consignee_contact", payload.consignee_contact)
   appendValue(fd, "consignee_phone", payload.consignee_phone)
   appendValue(fd, "consignee_email", payload.consignee_email)
+  appendValue(
+    fd,
+    "origin_contact_collection_address_id",
+    payload.origin_contact_collection_address_id,
+  )
+  appendValue(
+    fd,
+    "destination_contact_collection_address_id",
+    payload.destination_contact_collection_address_id,
+  )
+  appendValue(fd, "collection_date", payload.collection_date)
+  appendValue(fd, "collection_time", payload.collection_time)
 
   appendValue(fd, "note", payload.note)
 

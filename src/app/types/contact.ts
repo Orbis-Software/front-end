@@ -137,6 +137,7 @@ export interface ContactCollectionAddress {
   county_state: string | null
   postal_code: string | null
   country_id: number | null
+  country_name?: string | null
 
   // ✅ NEW: generated fields
   sequence_no?: number | null

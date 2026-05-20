@@ -1,17 +1,25 @@
 import { computed, onMounted, provide, reactive, ref, watch } from "vue"
 import { useRoute } from "vue-router"
+import { useToast } from "primevue/usetoast"
 
 import { useTransportJobStore } from "@/app/stores/transport-job"
 import { useContactStore } from "@/app/stores/contact"
 import { useReferenceDataStore } from "@/app/stores/reference-data"
+import type { Contact, ContactCollectionAddress } from "@/app/types/contact"
 
 import {
   TRANSPORT_MODES,
+  type JobAirDetail,
+  type JobCourierDetail,
+  type JobRailDetail,
+  type JobRoadDetail,
+  type JobSeaDetail,
   type JobType,
   type TransportJob,
   type TransportJobUpdatePayload,
   type TransportMode,
 } from "@/app/types/transport-job"
+import type { JobTransportAddressPayload } from "@/app/components/jobs/details/JobTransportTab/JobTransportAddressModal.vue"
 
 export type JobDetailsTab = {
   label: string
@@ -23,6 +31,14 @@ export type JobDetailsTab = {
 export type SelectOption = {
   label: string
   value: string
+}
+
+export type AddressTarget = "origin" | "destination"
+
+export type AddressSelectOption = {
+  label: string
+  value: number
+  address: ContactCollectionAddress
 }
 
 export type JobDetailsForm = {
@@ -54,11 +70,22 @@ export type JobDetailsForm = {
   consignee_phone: string
   consignee_email: string
 
+  origin_contact_collection_address_id: number | null
+  destination_contact_collection_address_id: number | null
+  collection_date: Date | null
+  collection_time: string
+
   packages: any[]
   charges: any[]
   buy_costs: any[]
   sell_costs: any[]
   files: any[]
+
+  road_detail: JobRoadDetail
+  sea_detail: JobSeaDetail
+  air_detail: JobAirDetail
+  rail_detail: JobRailDetail
+  courier_detail: JobCourierDetail
 
   transport_legs: any[]
   multi_modal_legs: any[]
@@ -66,6 +93,10 @@ export type JobDetailsForm = {
 
 const jobRef = ref<TransportJob | null>(null)
 const savingRef = ref(false)
+const selectedCustomerRef = ref<Contact | null>(null)
+const addressModalVisibleRef = ref(false)
+const addressModalTargetRef = ref<AddressTarget>("origin")
+const addressModalSavingRef = ref(false)
 
 export type JobDetailsContext = {
   job: typeof jobRef
@@ -74,6 +105,15 @@ export type JobDetailsContext = {
   saving: typeof savingRef
   save: () => Promise<void>
   load: () => Promise<void>
+  originAddressOptions: any
+  destinationAddressOptions: any
+  addressModalVisible: any
+  addressModalTarget: any
+  addressModalSaving: any
+  selectedOriginAddress: any
+  selectedDestinationAddress: any
+  openAddressModal: (target: AddressTarget) => void
+  createAndSelectAddress: (payload: JobTransportAddressPayload) => Promise<void>
   referenceOptions: {
     serviceTypeOptions: any
     incotermOptions: any
@@ -108,6 +148,41 @@ function displayContactName(contact: any): string {
     [contact?.first_name, contact?.last_name].filter(Boolean).join(" ") ??
     ""
   )
+}
+
+function extractErrorMessage(error: any): string {
+  const errors = error?.response?.data?.errors
+
+  if (errors && typeof errors === "object") {
+    const first = Object.values(errors)[0]
+    if (Array.isArray(first) && first.length) return String(first[0])
+  }
+
+  return error?.response?.data?.message ?? "Something went wrong while saving the job."
+}
+
+function addressSummary(address: ContactCollectionAddress): string {
+  return [
+    address.address_line_1,
+    address.address_line_2,
+    address.address_line_3,
+    address.city,
+    address.county_state,
+    address.postal_code,
+  ]
+    .filter(Boolean)
+    .join(", ")
+}
+
+function addressOption(address: ContactCollectionAddress): AddressSelectOption {
+  const reference = address.reference_code ? `${address.reference_code} - ` : ""
+  const label = address.label || address.city || addressSummary(address) || "Unnamed Address"
+
+  return {
+    label: `${reference}${label}`,
+    value: Number(address.id),
+    address,
+  }
 }
 
 function cleanReferenceName(value: string): string {
@@ -167,8 +242,147 @@ function serializePackageRow(row: any) {
   }
 }
 
+function serializeTransportLegs(legs: any[], existingIds: Set<number>) {
+  return legs.map((leg, index) => {
+    const id = Number(leg.id)
+
+    return {
+      ...(Number.isFinite(id) && existingIds.has(id) ? { id } : {}),
+      sequence: Number(leg.sequence ?? index + 1),
+      mode: leg.mode,
+      carrier: leg.carrier || null,
+      reference: leg.reference || null,
+      origin: leg.origin || null,
+      destination: leg.destination || null,
+      etd: leg.etd || null,
+      eta: leg.eta || null,
+      notes: leg.notes || null,
+      extra_data: leg.extra_data && typeof leg.extra_data === "object" ? leg.extra_data : {},
+    }
+  })
+}
+
+function emptyRoadDetail(): JobRoadDetail {
+  return {
+    service_type: null,
+    vehicle_type: null,
+    origin_city: null,
+    destination_city: null,
+    estimated_transit_days: null,
+    estimated_distance_km: null,
+    carrier: null,
+    trailer_number: null,
+    driver_name: null,
+    driver_mobile: null,
+    pallet_spaces: null,
+    pallet_type: null,
+    cmr_number: null,
+    pod_method: null,
+    notes: null,
+  }
+}
+
+function emptySeaDetail(): JobSeaDetail {
+  return {
+    shipping_line: null,
+    vessel_name: null,
+    voyage_number: null,
+    shipment_type: null,
+    container_number: null,
+    container_size: null,
+    seal_number: null,
+    container_tare_kg: null,
+    master_bl_number: null,
+    house_bl_number: null,
+    bl_type: null,
+    freight_terms: null,
+    port_of_loading: null,
+    port_of_discharge: null,
+    transhipment_port: null,
+    final_destination: null,
+    etd: null,
+    eta: null,
+    cut_off_date: null,
+    cut_off_time: null,
+    free_days_demurrage: null,
+    free_days_detention: null,
+    return_depot: null,
+    return_date: null,
+    notes: null,
+  }
+}
+
+function emptyAirDetail(): JobAirDetail {
+  return {
+    airline: null,
+    flight_number: null,
+    mawb_number: null,
+    hawb_number: null,
+    airport_of_departure: null,
+    airport_of_arrival: null,
+    via_transhipment: null,
+    shipment_type: null,
+    etd: null,
+    eta: null,
+    cut_off_date: null,
+    cut_off_time: null,
+    uld_type: null,
+    uld_number: null,
+    chargeable_weight: null,
+    rate_per_kg: null,
+    notes: null,
+  }
+}
+
+function emptyRailDetail(): JobRailDetail {
+  return {
+    rail_operator: null,
+    train_number: null,
+    wagon_number: null,
+    container_number: null,
+    container_type: null,
+    loading_terminal: null,
+    discharge_terminal: null,
+    estimated_transit_days: null,
+    departure_date: null,
+    departure_time: null,
+    arrival_date: null,
+    arrival_time: null,
+    notes: null,
+  }
+}
+
+function emptyCourierDetail(): JobCourierDetail {
+  return {
+    courier_service: null,
+    carrier: null,
+    tracking_number: null,
+    vehicle_type: null,
+    driver_name: null,
+    driver_mobile: null,
+    estimated_distance_miles: null,
+    rate_per_mile: null,
+    signature_required: null,
+    pod_method: null,
+    exact_delivery_time: null,
+    parking_access_code: null,
+    notes: null,
+  }
+}
+
+function detailPayloadForMode(form: JobDetailsForm): Partial<TransportJobUpdatePayload> {
+  if (form.mode_of_transport === "road") return { road_detail: form.road_detail }
+  if (form.mode_of_transport === "sea") return { sea_detail: form.sea_detail }
+  if (form.mode_of_transport === "air") return { air_detail: form.air_detail }
+  if (form.mode_of_transport === "rail") return { rail_detail: form.rail_detail }
+  if (form.mode_of_transport === "courier") return { courier_detail: form.courier_detail }
+
+  return {}
+}
+
 export function useJobDetailsPage() {
   const route = useRoute()
+  const toast = useToast()
   const transportJobStore = useTransportJobStore()
   const contactStore = useContactStore()
   const referenceDataStore = useReferenceDataStore()
@@ -212,12 +426,22 @@ export function useJobDetailsPage() {
     consignee_contact: "",
     consignee_phone: "",
     consignee_email: "",
+    origin_contact_collection_address_id: null,
+    destination_contact_collection_address_id: null,
+    collection_date: null,
+    collection_time: "",
 
     packages: [],
     charges: [],
     buy_costs: [],
     sell_costs: [],
     files: [],
+
+    road_detail: emptyRoadDetail(),
+    sea_detail: emptySeaDetail(),
+    air_detail: emptyAirDetail(),
+    rail_detail: emptyRailDetail(),
+    courier_detail: emptyCourierDetail(),
 
     transport_legs: [],
     multi_modal_legs: [],
@@ -260,6 +484,51 @@ export function useJobDetailsPage() {
       value: Number(contact.id),
       account_number: contact.account_number ?? "",
     }))
+  })
+
+  const selectedCustomer = computed<Contact | null>(() => {
+    if (!form.customer_id) return null
+
+    if (selectedCustomerRef.value?.id === Number(form.customer_id)) {
+      return selectedCustomerRef.value
+    }
+
+    const jobCustomer = (job.value as any)?.customer_contact ?? null
+    if (jobCustomer?.id === Number(form.customer_id)) return jobCustomer as Contact
+
+    return (
+      (((contactStore as any).items ?? []) as Contact[]).find(contact => {
+        return Number(contact.id) === Number(form.customer_id)
+      }) ?? null
+    )
+  })
+
+  const originAddressOptions = computed<AddressSelectOption[]>(() => {
+    return (selectedCustomer.value?.collection_addresses ?? [])
+      .filter(address => Boolean(address.is_collection))
+      .map(addressOption)
+  })
+
+  const destinationAddressOptions = computed<AddressSelectOption[]>(() => {
+    return (selectedCustomer.value?.collection_addresses ?? [])
+      .filter(address => Boolean(address.is_delivery))
+      .map(addressOption)
+  })
+
+  const selectedOriginAddress = computed<ContactCollectionAddress | null>(() => {
+    return (
+      originAddressOptions.value.find(option => {
+        return option.value === Number(form.origin_contact_collection_address_id)
+      })?.address ?? null
+    )
+  })
+
+  const selectedDestinationAddress = computed<ContactCollectionAddress | null>(() => {
+    return (
+      destinationAddressOptions.value.find(option => {
+        return option.value === Number(form.destination_contact_collection_address_id)
+      })?.address ?? null
+    )
   })
 
   const referenceOptions = {
@@ -377,6 +646,24 @@ export function useJobDetailsPage() {
     form.consignee_contact = extra.consignee_contact ?? ""
     form.consignee_phone = extra.consignee_phone ?? ""
     form.consignee_email = extra.consignee_email ?? ""
+    form.origin_contact_collection_address_id =
+      extra.origin_contact_collection_address_id === null ||
+      extra.origin_contact_collection_address_id === undefined ||
+      extra.origin_contact_collection_address_id === ""
+        ? null
+        : Number(extra.origin_contact_collection_address_id)
+    form.destination_contact_collection_address_id =
+      extra.destination_contact_collection_address_id === null ||
+      extra.destination_contact_collection_address_id === undefined ||
+      extra.destination_contact_collection_address_id === ""
+        ? null
+        : Number(extra.destination_contact_collection_address_id)
+    form.collection_date = parseDate(extra.collection_date)
+    form.collection_time = extra.collection_time ?? ""
+
+    if (extra.customer_contact?.id === data.customer_id) {
+      selectedCustomerRef.value = extra.customer_contact
+    }
 
     form.files = data.files ?? []
 
@@ -385,6 +672,12 @@ export function useJobDetailsPage() {
     form.charges = Array.isArray(extra.charges) ? extra.charges : []
     form.buy_costs = form.charges.filter((charge: any) => charge.type === "buy")
     form.sell_costs = form.charges.filter((charge: any) => charge.type === "sell")
+
+    Object.assign(form.road_detail, emptyRoadDetail(), extra.road_detail ?? {})
+    Object.assign(form.sea_detail, emptySeaDetail(), extra.sea_detail ?? {})
+    Object.assign(form.air_detail, emptyAirDetail(), extra.air_detail ?? {})
+    Object.assign(form.rail_detail, emptyRailDetail(), extra.rail_detail ?? {})
+    Object.assign(form.courier_detail, emptyCourierDetail(), extra.courier_detail ?? {})
 
     form.transport_legs = Array.isArray(extra.transport_legs) ? extra.transport_legs : []
     form.multi_modal_legs = form.transport_legs
@@ -420,6 +713,12 @@ export function useJobDetailsPage() {
     saving.value = true
 
     try {
+      const existingTransportLegIds = new Set<number>(
+        ((job.value as any)?.transport_legs ?? [])
+          .map((leg: any) => Number(leg.id))
+          .filter((id: number) => Number.isFinite(id) && id > 0),
+      )
+
       const payload: TransportJobUpdatePayload = {
         customer_id: form.customer_id,
         account_number: form.account_number || null,
@@ -447,31 +746,103 @@ export function useJobDetailsPage() {
         consignee_contact: form.consignee_contact || null,
         consignee_phone: form.consignee_phone || null,
         consignee_email: form.consignee_email || null,
+        origin_contact_collection_address_id: form.origin_contact_collection_address_id,
+        destination_contact_collection_address_id: form.destination_contact_collection_address_id,
+        collection_date: formatDate(form.collection_date),
+        collection_time: form.collection_time || null,
 
         note: form.note || null,
 
+        ...detailPayloadForMode(form),
+
         packages: form.packages.map(serializePackageRow),
         charges: [...form.buy_costs, ...form.sell_costs],
-        transport_legs: form.multi_modal_legs,
+        transport_legs: serializeTransportLegs(form.multi_modal_legs, existingTransportLegIds),
       }
 
       const updated = await transportJobStore.update(jobId.value, payload)
 
       hydrateForm(updated)
+      toast.add({
+        severity: "success",
+        summary: "Updated",
+        detail: "Job updated successfully.",
+        life: 2200,
+      })
+    } catch (error: any) {
+      toast.add({
+        severity: "error",
+        summary: "Update failed",
+        detail: extractErrorMessage(error),
+        life: 5500,
+      })
+      throw error
     } finally {
       saving.value = false
     }
   }
 
+  async function loadSelectedCustomer(customerId: number | null) {
+    if (!customerId) {
+      selectedCustomerRef.value = null
+      return null
+    }
+
+    const loaded = await (contactStore as any).find(customerId)
+    selectedCustomerRef.value = loaded
+
+    return loaded
+  }
+
+  function openAddressModal(target: AddressTarget) {
+    addressModalTargetRef.value = target
+    addressModalVisibleRef.value = true
+  }
+
+  async function createAndSelectAddress(payload: JobTransportAddressPayload) {
+    if (!form.customer_id) return
+
+    addressModalSavingRef.value = true
+
+    try {
+      const updatedContact = await (contactStore as any).createCollectionAddress(
+        Number(form.customer_id),
+        payload,
+      )
+      selectedCustomerRef.value = updatedContact
+
+      const addresses = updatedContact.collection_addresses ?? []
+      const created = addresses[addresses.length - 1]
+
+      if (created?.id) {
+        if (addressModalTargetRef.value === "origin") {
+          form.origin_contact_collection_address_id = Number(created.id)
+        } else {
+          form.destination_contact_collection_address_id = Number(created.id)
+        }
+      }
+
+      addressModalVisibleRef.value = false
+    } finally {
+      addressModalSavingRef.value = false
+    }
+  }
+
   watch(
     () => form.customer_id,
-    id => {
+    async id => {
       const customer = customerOptions.value.find((item: CustomerOption) => {
         return item.value === Number(id)
       })
 
       form.account_number = customer?.account_number ?? ""
+
+      form.origin_contact_collection_address_id = null
+      form.destination_contact_collection_address_id = null
+
+      await loadSelectedCustomer(id ? Number(id) : null)
     },
+    { flush: "sync" },
   )
 
   const context: JobDetailsContext = {
@@ -481,6 +852,15 @@ export function useJobDetailsPage() {
     saving,
     save,
     load,
+    originAddressOptions,
+    destinationAddressOptions,
+    addressModalVisible: addressModalVisibleRef,
+    addressModalTarget: addressModalTargetRef,
+    addressModalSaving: addressModalSavingRef,
+    selectedOriginAddress,
+    selectedDestinationAddress,
+    openAddressModal,
+    createAndSelectAddress,
     referenceOptions,
   }
 
@@ -502,13 +882,22 @@ export function useJobDetailsPage() {
     job,
     form,
     customerOptions,
+    originAddressOptions,
+    destinationAddressOptions,
     modeOptions,
     statusOptions,
     referenceOptions,
     loading,
     saving,
+    addressModalVisible: addressModalVisibleRef,
+    addressModalTarget: addressModalTargetRef,
+    addressModalSaving: addressModalSavingRef,
+    selectedOriginAddress,
+    selectedDestinationAddress,
 
     save,
     load,
+    openAddressModal,
+    createAndSelectAddress,
   }
 }

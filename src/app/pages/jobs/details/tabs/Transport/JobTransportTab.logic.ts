@@ -1,4 +1,7 @@
-import { computed, inject } from "vue"
+import { computed, inject, onMounted } from "vue"
+import { storeToRefs } from "pinia"
+import { useGlobalReferenceDataStore } from "@/app/stores/global-reference-data"
+import type { GlobalReferenceDataRow } from "@/app/types/globalReferenceData"
 import type { useJobDetailsPage } from "../../JobDetailsPage.logic"
 
 export type TransportMode = "" | "road" | "rail" | "sea" | "air" | "courier" | "multi_modal"
@@ -39,13 +42,20 @@ export type MultiModalLeg = {
   // Courier
   tracking: string
   service: string
+  extra_data: Record<string, any>
 }
 
 let legId = 1
 
+type ReferenceOption = {
+  label: string
+  value: string
+  subLabel?: string
+}
+
 function createLeg(): MultiModalLeg {
   return {
-    id: legId++,
+    id: -legId++,
     mode: "road",
 
     carrier: "",
@@ -73,17 +83,91 @@ function createLeg(): MultiModalLeg {
 
     tracking: "",
     service: "",
+    extra_data: {},
   }
 }
 
 export function useJobTransportTab() {
   const jobDetails = inject<ReturnType<typeof useJobDetailsPage>>("jobDetails")
+  const globalReferenceDataStore = useGlobalReferenceDataStore()
+  const { data: globalReferenceData } = storeToRefs(globalReferenceDataStore)
 
   if (!jobDetails) {
     throw new Error("Job details context is missing")
   }
 
   const { form } = jobDetails
+
+  const airportOptions = computed(() => {
+    return terminalOptions(row => row.type === "Airport")
+  })
+
+  const seaportOptions = computed(() => {
+    return terminalOptions(row => row.type === "Seaport")
+  })
+
+  const railTerminalOptions = computed(() => {
+    return terminalOptions(row => row.type === "Rail Freight")
+  })
+
+  const roadTerminalOptions = computed(() => {
+    return terminalOptions(row => row.type === "Road Freight")
+  })
+
+  const cityOptions = computed(() => {
+    return globalReferenceData.value.cities
+      .map(row => {
+        const value = row.fullName || row.city || row.location || row.code || ""
+        const subLabel = [row.country, row.code].filter(Boolean).join(" | ")
+
+        return {
+          label: value,
+          value,
+          subLabel,
+        }
+      })
+      .filter(option => option.value)
+  })
+
+  function terminalOptions(filter: (row: GlobalReferenceDataRow) => boolean): ReferenceOption[] {
+    return globalReferenceData.value.terminals
+      .filter(filter)
+      .map(row => {
+        const value = row.terminalName || row.name || row.location || row.code || ""
+        const subLabel = [row.location, row.country, row.code].filter(Boolean).join(" | ")
+
+        return {
+          label: value,
+          value,
+          subLabel,
+        }
+      })
+      .filter(option => option.value)
+  }
+
+  function getLocationOptions(locationMode: MultiModalLegMode): ReferenceOption[] {
+    if (locationMode === "air") return airportOptions.value
+    if (locationMode === "sea") return seaportOptions.value
+    if (locationMode === "rail") return railTerminalOptions.value
+
+    return roadTerminalOptions.value
+  }
+
+  function getOriginLabel(locationMode: MultiModalLegMode): string {
+    if (locationMode === "air") return "Airport of Departure"
+    if (locationMode === "sea") return "Port of Loading"
+    if (locationMode === "rail") return "Loading Terminal"
+
+    return "Origin Road Terminal"
+  }
+
+  function getDestinationLabel(locationMode: MultiModalLegMode): string {
+    if (locationMode === "air") return "Airport of Arrival"
+    if (locationMode === "sea") return "Port of Discharge"
+    if (locationMode === "rail") return "Discharge Terminal"
+
+    return "Destination Road Terminal"
+  }
 
   const mode = computed<TransportMode>(() => {
     const value = form.mode_of_transport
@@ -129,6 +213,12 @@ export function useJobTransportTab() {
         extra.multi_modal_legs = []
       }
 
+      extra.multi_modal_legs.forEach((leg: Partial<MultiModalLeg>) => {
+        if (!leg.extra_data || typeof leg.extra_data !== "object") {
+          leg.extra_data = {}
+        }
+      })
+
       return extra.multi_modal_legs
     },
     set(value) {
@@ -144,11 +234,30 @@ export function useJobTransportTab() {
     multiModalLegs.value = multiModalLegs.value.filter(leg => leg.id !== id)
   }
 
+  onMounted(async () => {
+    const hasReferenceData =
+      globalReferenceData.value.terminals.length ||
+      globalReferenceData.value.airlines.length ||
+      globalReferenceData.value.cities.length
+
+    if (!hasReferenceData) {
+      await globalReferenceDataStore.fetchAll()
+    }
+  })
+
   return {
     form,
     mode,
     modeLabel,
     multiModalLegs,
+    airportOptions,
+    seaportOptions,
+    railTerminalOptions,
+    roadTerminalOptions,
+    cityOptions,
+    getLocationOptions,
+    getOriginLabel,
+    getDestinationLabel,
     addLeg,
     removeLeg,
   }

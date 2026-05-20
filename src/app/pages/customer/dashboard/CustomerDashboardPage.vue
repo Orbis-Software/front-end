@@ -172,9 +172,7 @@ function openShipment(id: number) {
     <section class="welcome-banner">
       <div>
         <div class="welcome-eyebrow">CUSTOMER PORTAL</div>
-        <h1 class="welcome-title" :title="customerName">
-          Welcome back, {{ displayCustomerName }}
-        </h1>
+        <h1 class="welcome-title" :title="customerName">Welcome back, {{ displayCustomerName }}</h1>
         <p class="welcome-subtitle">Here's your logistics overview.</p>
       </div>
 
