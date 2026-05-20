@@ -83,7 +83,7 @@ export function useJobCreatePage() {
 
   const canCreate = computed(() => {
     const hasMode = isNoModeJobType.value ? true : !!mode.value
-    return !!jobType.value && hasMode && !!form.job_number && !creating.value
+    return !!jobType.value && hasMode && !creating.value
   })
 
   const selectedCustomer = ref<Contact | null>(null)
@@ -257,7 +257,7 @@ export function useJobCreatePage() {
     const base = {
       customer_id: form.customer_id,
       quote_ref: form.customer_quote_ref,
-      job_number: form.job_number,
+      job_number: null,
       job_date: form.job_date ? formatDateYYYYMMDD(form.job_date) : null,
       note: form.note,
     }

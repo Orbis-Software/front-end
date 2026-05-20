@@ -134,7 +134,7 @@
                     {{ data.creator?.name ?? "—" }}
                   </div>
                   <div class="jobs-list-page__cell-subtext">
-                    {{ data.customer_contact?.email ?? "" }}
+                    {{ data.creator?.email ?? "" }}
                   </div>
                 </div>
               </template>
