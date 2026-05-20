@@ -243,7 +243,7 @@ export interface TransportJob {
 export interface BaseTransportJobCreatePayload {
   customer_id?: number | null
   quote_ref?: string | null
-  job_number: string
+  job_number?: string | null
   job_date?: string | null
   note?: string | null
 

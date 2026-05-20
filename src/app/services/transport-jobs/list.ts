@@ -12,6 +12,7 @@ export interface ListTransportJobsParams {
   job_type?: JobType
   status?: string
   q?: string
+  created_by?: number
 }
 
 export default async function listTransportJobs(

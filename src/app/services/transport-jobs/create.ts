@@ -10,7 +10,7 @@ function toFormData(payload: TransportJobCreatePayload): FormData {
   }
 
   if (payload.quote_ref !== undefined) fd.append("quote_ref", payload.quote_ref ?? "")
-  fd.append("job_number", payload.job_number)
+  if (payload.job_number) fd.append("job_number", payload.job_number)
 
   if (payload.job_date !== undefined) fd.append("job_date", payload.job_date ?? "")
 
