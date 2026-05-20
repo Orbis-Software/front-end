@@ -114,12 +114,17 @@ export const useAuthStore = defineStore("auth", {
         return
       }
 
-      if (this.authType === "customer") {
-        this.ready = true
-        return
-      }
-
       try {
+        if (this.authType === "customer") {
+          const customer = await AuthService.customerMe()
+
+          this.setCustomer(customer)
+          this.setUser(null)
+          this.authType = "customer"
+
+          return
+        }
+
         const user = await AuthService.me()
 
         this.setUser(user)

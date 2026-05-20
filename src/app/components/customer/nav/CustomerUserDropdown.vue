@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from "vue"
 import { useRouter } from "vue-router"
 import { useAuthStore } from "@/app/stores/auth"
 
@@ -8,6 +9,22 @@ const emit = defineEmits<{
 
 const router = useRouter()
 const auth = useAuthStore()
+
+const customer = computed(() => auth.customer)
+
+const userName = computed(() => {
+  return customer.value?.name ?? "Customer User"
+})
+
+const userEmail = computed(() => {
+  return customer.value?.email ?? customer.value?.contact?.email ?? ""
+})
+
+const companyName = computed(() => {
+  return (
+    customer.value?.contact?.company_name ?? customer.value?.contact?.company?.name ?? "Customer"
+  )
+})
 
 function go(path: string) {
   emit("close")
@@ -19,12 +36,20 @@ async function logout() {
 
   emit("close")
 
-  router.push("/login")
+  router.push("/customer/login")
 }
 </script>
 
 <template>
   <div class="customer-user-dropdown" @click.stop>
+    <div class="dropdown-user">
+      <div class="dropdown-user-name">{{ userName }}</div>
+      <div class="dropdown-user-email">{{ userEmail }}</div>
+      <div class="dropdown-user-company">{{ companyName }}</div>
+    </div>
+
+    <div class="dropdown-divider" />
+
     <button type="button" class="dropdown-link" @click="go('/customer/settings/profile')">
       <i class="pi pi-user" />
 
@@ -76,6 +101,28 @@ async function logout() {
   box-shadow: 0 20px 45px rgba(0, 0, 0, 0.12);
 
   z-index: 200;
+}
+
+.dropdown-user {
+  padding: 8px 16px 12px;
+}
+
+.dropdown-user-name {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #262626;
+}
+
+.dropdown-user-email,
+.dropdown-user-company {
+  margin-top: 4px;
+  font-size: 0.78rem;
+  color: #737373;
+  overflow-wrap: anywhere;
+}
+
+.dropdown-user-company {
+  font-weight: 700;
 }
 
 .dropdown-link {
