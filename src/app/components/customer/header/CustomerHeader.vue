@@ -55,8 +55,32 @@ const companyName = computed(() => {
   return auth.customer?.contact?.company_name ?? auth.customer?.contact?.company?.name ?? "Customer"
 })
 
+function shortenCompanyName(name: string): string {
+  const clean = name.trim().replace(/\s+/g, " ")
+  if (clean.length <= 22) return clean
+
+  const suffixMatch = clean.match(/\b(Ltd|Limited|Inc|Incorporated|Corp|Corporation|LLC|PLC)\.?$/i)
+  const suffix = suffixMatch?.[0]?.replace(/\.$/, ".") ?? ""
+  const nameWithoutSuffix = suffix ? clean.slice(0, suffixMatch!.index).trim() : clean
+  const words = nameWithoutSuffix.split(" ").filter(Boolean)
+  const initials = words
+    .filter(word => !["and", "&", "the", "of", "for"].includes(word.toLowerCase()))
+    .map(word => word[0])
+    .join("")
+    .slice(0, 4)
+    .toUpperCase()
+
+  if (initials.length >= 2) {
+    return suffix ? `${initials} ${suffix}` : initials
+  }
+
+  return `${clean.slice(0, 19).trim()}...`
+}
+
+const shortCompanyName = computed(() => shortenCompanyName(companyName.value))
+
 const portalName = computed(() => {
-  return `${companyName.value} Portal`
+  return `${shortCompanyName.value} Portal`
 })
 
 const userName = computed(() => {
@@ -112,7 +136,7 @@ onBeforeUnmount(() => {
             <i class="pi pi-box" />
           </div>
 
-          <div class="brand-text">{{ portalName }}</div>
+          <div class="brand-text" :title="`${companyName} Portal`">{{ portalName }}</div>
         </RouterLink>
 
         <!-- Nav -->
@@ -155,11 +179,11 @@ onBeforeUnmount(() => {
             </div>
 
             <div class="customer-user-meta">
-              <div class="customer-company">
-                {{ companyName }}
+              <div class="customer-company" :title="companyName">
+                {{ shortCompanyName }}
               </div>
 
-              <div class="customer-user-name">
+              <div class="customer-user-name" :title="userName">
                 {{ userName }}
               </div>
             </div>
@@ -201,7 +225,7 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 20px;
+  gap: 16px;
 
   box-sizing: border-box;
 }
@@ -209,7 +233,7 @@ onBeforeUnmount(() => {
 .customer-left {
   display: flex;
   align-items: center;
-  gap: 28px;
+  gap: 22px;
   flex: 1;
   min-width: 0;
 }
@@ -220,7 +244,8 @@ onBeforeUnmount(() => {
   gap: 10px;
 
   text-decoration: none;
-  flex-shrink: 0;
+  flex: 0 0 auto;
+  min-width: 0;
 }
 
 .brand-mark {
@@ -236,9 +261,15 @@ onBeforeUnmount(() => {
   justify-content: center;
 
   font-size: 15px;
+  flex-shrink: 0;
 }
 
 .brand-text {
+  min-width: 0;
+  max-width: clamp(150px, 18vw, 280px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: 1rem;
   font-weight: 700;
   color: #262626;
@@ -259,6 +290,12 @@ onBeforeUnmount(() => {
   padding: 0;
 
   overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.customer-nav-list::-webkit-scrollbar {
+  display: none;
 }
 
 .customer-nav-item {
@@ -270,7 +307,7 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: center;
 
-  padding: 10px 14px;
+  padding: 10px 12px;
 
   border-radius: 10px;
   border: 1px solid transparent;
@@ -301,7 +338,7 @@ onBeforeUnmount(() => {
 .customer-right {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   flex-shrink: 0;
 }
 
@@ -311,7 +348,7 @@ onBeforeUnmount(() => {
   cursor: pointer;
 
   height: 40px;
-  padding: 0 16px;
+  padding: 0 14px;
   border-radius: 10px;
 
   background: #ec691a;
@@ -368,12 +405,14 @@ onBeforeUnmount(() => {
 
 .customer-user {
   position: relative;
+  min-width: 0;
 }
 
 .customer-user-btn {
   display: flex;
   align-items: center;
   gap: 10px;
+  max-width: clamp(180px, 20vw, 300px);
 
   padding: 6px 10px 6px 6px;
 
@@ -400,6 +439,7 @@ onBeforeUnmount(() => {
 
   font-size: 0.85rem;
   font-weight: 800;
+  flex-shrink: 0;
 }
 
 .customer-user-meta {
@@ -407,17 +447,30 @@ onBeforeUnmount(() => {
   flex-direction: column;
   align-items: flex-start;
   line-height: 1.1;
+  min-width: 0;
 }
 
 .customer-company {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: 0.8rem;
   font-weight: 700;
   color: #262626;
 }
 
 .customer-user-name {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: 0.72rem;
   color: #737373;
+}
+
+.customer-user-btn > .pi {
+  flex-shrink: 0;
 }
 
 .mobile-toggle {
@@ -432,6 +485,16 @@ onBeforeUnmount(() => {
   background: #fff;
 
   cursor: pointer;
+}
+
+@media (max-width: 1320px) {
+  .customer-user-meta {
+    display: none;
+  }
+
+  .customer-user-btn {
+    padding-right: 8px;
+  }
 }
 
 @media (max-width: 1200px) {

@@ -19,6 +19,30 @@ const customerName = computed(() => {
   return auth.customer?.contact?.company_name ?? auth.customer?.name ?? "Customer"
 })
 
+function shortenCustomerName(name: string): string {
+  const clean = name.trim().replace(/\s+/g, " ")
+  if (clean.length <= 34) return clean
+
+  const suffixMatch = clean.match(/\b(Ltd|Limited|Inc|Incorporated|Corp|Corporation|LLC|PLC)\.?$/i)
+  const suffix = suffixMatch?.[0]?.replace(/\.$/, ".") ?? ""
+  const nameWithoutSuffix = suffix ? clean.slice(0, suffixMatch!.index).trim() : clean
+  const words = nameWithoutSuffix.split(" ").filter(Boolean)
+  const initials = words
+    .filter(word => !["and", "&", "the", "of", "for"].includes(word.toLowerCase()))
+    .map(word => word[0])
+    .join("")
+    .slice(0, 4)
+    .toUpperCase()
+
+  if (initials.length >= 2) {
+    return suffix ? `${initials} ${suffix}` : initials
+  }
+
+  return `${clean.slice(0, 31).trim()}...`
+}
+
+const displayCustomerName = computed(() => shortenCustomerName(customerName.value))
+
 const jobs = computed(() => auth.customer?.transport_jobs ?? [])
 
 const activeJobs = computed(() => {
@@ -148,7 +172,9 @@ function openShipment(id: number) {
     <section class="welcome-banner">
       <div>
         <div class="welcome-eyebrow">CUSTOMER PORTAL</div>
-        <h1 class="welcome-title">Welcome back, {{ customerName }}</h1>
+        <h1 class="welcome-title" :title="customerName">
+          Welcome back, {{ displayCustomerName }}
+        </h1>
         <p class="welcome-subtitle">Here's your logistics overview.</p>
       </div>
 

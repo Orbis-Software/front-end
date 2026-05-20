@@ -26,6 +26,10 @@
   gap: 20px;
 }
 
+.welcome-banner > div {
+  min-width: 0;
+}
+
 .welcome-eyebrow {
   font-size: 11px;
   letter-spacing: 0.14em;
@@ -36,6 +40,10 @@
 
 .welcome-title {
   margin: 0;
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   font-size: 28px;
   line-height: 1.15;
   font-weight: 800;
