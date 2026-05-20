@@ -1,35 +1,72 @@
 import type { CustomerAccount, CustomerContact } from "@/app/types/customer"
+import transportJobTransformer from "@/app/transformers/transport-job"
+
+function nullableNumber(value: any): number | null {
+  if (value === null || value === undefined || value === "") return null
+  const numberValue = Number(value)
+  return Number.isNaN(numberValue) ? null : numberValue
+}
+
+function nullableString(value: any): string | null {
+  if (value === null || value === undefined) return null
+  return String(value)
+}
 
 function fetchContact(data: any): CustomerContact | null {
   if (!data) return null
 
   return {
-    id: data.id,
-    company_name: data.company_name,
+    id: Number(data.id),
+    company_id: nullableNumber(data.company_id),
+    company_name: data.company_name ?? "",
     account_number: data.account_number ?? null,
-    email: data.email ?? null,
-    phone: data.phone ?? null,
-    status: data.status ?? null,
+    registration_number: data.registration_number ?? null,
+    vat_number: data.vat_number ?? null,
+    eori: data.eori ?? null,
+    address_line_1: data.address_line_1 ?? null,
+    address_line_2: data.address_line_2 ?? null,
+    address_line_3: data.address_line_3 ?? null,
+    address_line_4: data.address_line_4 ?? null,
+    city: data.city ?? null,
+    county_state: data.county_state ?? null,
+    postal_code: data.postal_code ?? null,
+    country_id: nullableNumber(data.country_id),
+    email: nullableString(data.email),
+    phone: nullableString(data.phone),
+    mobile: nullableString(data.mobile),
+    website: nullableString(data.website),
+    credit_limit: nullableString(data.credit_limit),
+    currency_preference: nullableString(data.currency_preference),
+    status: nullableString(data.status),
+    company: data.company
+      ? {
+          id: Number(data.company.id),
+          name: nullableString(data.company.name),
+        }
+      : null,
   }
 }
 
 export default {
   fetch(data: any): CustomerAccount {
+    const raw = data?.data ?? data
+
     return {
-      id: data.id,
-      contact_id: data.contact_id,
+      id: raw.id,
+      contact_id: raw.contact_id,
 
-      name: data.name,
-      email: data.email,
-      role: data.role,
+      name: raw.name,
+      email: raw.email,
+      role: raw.role,
 
-      is_primary: !!data.is_primary,
-      is_active: !!data.is_active,
+      is_primary: !!raw.is_primary,
+      is_active: !!raw.is_active,
 
-      contact: fetchContact(data.contact),
+      contact: fetchContact(raw.contact),
+      transport_jobs: transportJobTransformer.fetchCollection(raw.transport_jobs),
 
-      created_at: data.created_at,
-      updated_at: data.updated_at,
+      created_at: raw.created_at,
+      updated_at: raw.updated_at,
     }
   },
 }

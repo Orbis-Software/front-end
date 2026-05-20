@@ -29,8 +29,12 @@ http.interceptors.response.use(
     const status = error?.response?.status
 
     if (status === 401) {
+      const authType = localStorage.getItem("auth_type")
+
       localStorage.removeItem("auth_token")
-      window.location.href = "/login"
+      localStorage.removeItem("auth_type")
+
+      window.location.href = authType === "customer" ? "/customer/login" : "/login"
     }
 
     return Promise.reject(error)

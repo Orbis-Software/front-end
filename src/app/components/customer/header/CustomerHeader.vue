@@ -52,11 +52,15 @@ const navItems = [
 ]
 
 const companyName = computed(() => {
-  return auth.user?.company?.legal_name ?? "Customer"
+  return auth.customer?.contact?.company_name ?? auth.customer?.contact?.company?.name ?? "Customer"
+})
+
+const portalName = computed(() => {
+  return `${companyName.value} Portal`
 })
 
 const userName = computed(() => {
-  return auth.user?.name ?? "Customer User"
+  return auth.customer?.name ?? "Customer User"
 })
 
 const initials = computed(() => {
@@ -108,7 +112,7 @@ onBeforeUnmount(() => {
             <i class="pi pi-box" />
           </div>
 
-          <div class="brand-text">Orbis Portal</div>
+          <div class="brand-text">{{ portalName }}</div>
         </RouterLink>
 
         <!-- Nav -->
