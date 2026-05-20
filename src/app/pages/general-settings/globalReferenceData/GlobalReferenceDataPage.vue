@@ -46,7 +46,7 @@ const {
 
     <div class="global-reference-page__controls">
       <div class="global-reference-page__search">
-        <span>🔍</span>
+        <i class="pi pi-search global-reference-page__search-icon" />
         <input v-model="search" type="text" placeholder="Search reference data..." />
       </div>
 
