@@ -1,8 +1,24 @@
 <script setup lang="ts">
 import "./JobTransportTab.css"
+import Dropdown from "primevue/dropdown"
 import { useJobTransportTab } from "./JobTransportTab.logic"
 
-const { mode, modeLabel, multiModalLegs, addLeg, removeLeg } = useJobTransportTab()
+const {
+  form,
+  mode,
+  modeLabel,
+  multiModalLegs,
+  airportOptions,
+  seaportOptions,
+  railTerminalOptions,
+  roadTerminalOptions,
+  cityOptions,
+  getLocationOptions,
+  getOriginLabel,
+  getDestinationLabel,
+  addLeg,
+  removeLeg,
+} = useJobTransportTab()
 </script>
 
 <template>
@@ -58,18 +74,48 @@ const { mode, modeLabel, multiModalLegs, addLeg, removeLeg } = useJobTransportTa
             </label>
 
             <label class="job-transport-tab__field">
-              <span>Carrier</span>
+              <span>{{ leg.mode === "road" ? "Haulier / Carrier" : "Carrier" }}</span>
               <input v-model="leg.carrier" placeholder="Carrier" />
             </label>
 
             <label class="job-transport-tab__field">
-              <span>Origin</span>
-              <input v-model="leg.origin" placeholder="Origin" />
+              <span>{{ getOriginLabel(leg.mode) }}</span>
+              <Dropdown
+                v-model="leg.origin"
+                :options="getLocationOptions(leg.mode)"
+                option-label="label"
+                option-value="value"
+                placeholder="Select origin"
+                filter
+                class="job-transport-tab__prime-select"
+              >
+                <template #option="{ option }">
+                  <div class="job-transport-tab__reference-option">
+                    <strong>{{ option.label }}</strong>
+                    <small v-if="option.subLabel">{{ option.subLabel }}</small>
+                  </div>
+                </template>
+              </Dropdown>
             </label>
 
             <label class="job-transport-tab__field">
-              <span>Destination</span>
-              <input v-model="leg.destination" placeholder="Destination" />
+              <span>{{ getDestinationLabel(leg.mode) }}</span>
+              <Dropdown
+                v-model="leg.destination"
+                :options="getLocationOptions(leg.mode)"
+                option-label="label"
+                option-value="value"
+                placeholder="Select destination"
+                filter
+                class="job-transport-tab__prime-select"
+              >
+                <template #option="{ option }">
+                  <div class="job-transport-tab__reference-option">
+                    <strong>{{ option.label }}</strong>
+                    <small v-if="option.subLabel">{{ option.subLabel }}</small>
+                  </div>
+                </template>
+              </Dropdown>
             </label>
 
             <label class="job-transport-tab__field">
@@ -90,40 +136,273 @@ const { mode, modeLabel, multiModalLegs, addLeg, removeLeg } = useJobTransportTa
           <!-- ROAD -->
           <div v-if="leg.mode === 'road'" class="job-transport-tab__grid">
             <label class="job-transport-tab__field">
-              <span>Vehicle Type</span>
-              <select v-model="leg.vehicle_type">
-                <option>Trailer</option>
-                <option>Van</option>
-                <option>Rigid</option>
+              <span>Service Type</span>
+              <select v-model="leg.extra_data.service_type">
+                <option value="">Select service</option>
+                <option>FTL - Full Truck Load</option>
+                <option>LTL - Part Load</option>
+                <option>Groupage / Consolidation</option>
+                <option>Dedicated Transport</option>
+                <option>Temperature Controlled</option>
+                <option>Hazardous Goods (ADR)</option>
               </select>
             </label>
 
             <label class="job-transport-tab__field">
-              <span>Driver</span>
-              <input v-model="leg.driver_name" />
+              <span>Vehicle Type</span>
+              <select v-model="leg.extra_data.vehicle_type">
+                <option value="">Select vehicle</option>
+                <option>Standard Trailer (13.6m)</option>
+                <option>Curtainsider</option>
+                <option>Flatbed Trailer</option>
+                <option>Refrigerated Trailer</option>
+                <option>Mega Trailer</option>
+                <option>Low Loader</option>
+                <option>Rigid Vehicle</option>
+                <option>Sprinter Van</option>
+                <option>Luton Box Van</option>
+              </select>
+            </label>
+
+            <label class="job-transport-tab__field">
+              <span>Trailer Number</span>
+              <input v-model="leg.extra_data.trailer_number" placeholder="AB12 CDE" />
+            </label>
+
+            <label class="job-transport-tab__field">
+              <span>Driver Name</span>
+              <input v-model="leg.extra_data.driver_name" placeholder="Driver" />
             </label>
 
             <label class="job-transport-tab__field">
               <span>Driver Mobile</span>
-              <input v-model="leg.driver_mobile" />
+              <input v-model="leg.extra_data.driver_mobile" placeholder="+44 ..." />
+            </label>
+
+            <label class="job-transport-tab__field">
+              <span>Est. Distance (km)</span>
+              <input v-model="leg.extra_data.estimated_distance_km" type="number" placeholder="0" />
+            </label>
+
+            <label class="job-transport-tab__field">
+              <span>Est. Transit Days</span>
+              <input
+                v-model="leg.extra_data.estimated_transit_days"
+                type="number"
+                placeholder="0"
+              />
+            </label>
+
+            <label class="job-transport-tab__field">
+              <span>Pallet Spaces</span>
+              <input v-model="leg.extra_data.pallet_spaces" type="number" placeholder="0" />
+            </label>
+
+            <label class="job-transport-tab__field">
+              <span>Pallet Type</span>
+              <select v-model="leg.extra_data.pallet_type">
+                <option value="">Select pallet type</option>
+                <option>Euro Pallet (120x80)</option>
+                <option>UK Pallet (120x100)</option>
+                <option>Half Pallet</option>
+                <option>Mixed</option>
+              </select>
+            </label>
+
+            <label class="job-transport-tab__field">
+              <span>CMR Number</span>
+              <input v-model="leg.extra_data.cmr_number" placeholder="CMR ref" />
+            </label>
+
+            <label class="job-transport-tab__field">
+              <span>POD Method</span>
+              <select v-model="leg.extra_data.pod_method">
+                <option value="">Select POD method</option>
+                <option>Paper POD</option>
+                <option>ePOD (App)</option>
+                <option>Photo Confirmation</option>
+                <option>Email Confirmation</option>
+              </select>
+            </label>
+
+            <label class="job-transport-tab__field job-transport-tab__field--span-4">
+              <span>Road Transport Notes</span>
+              <textarea
+                v-model="leg.extra_data.notes"
+                placeholder="Loading instructions, access codes, special requirements..."
+              />
             </label>
           </div>
 
           <!-- SEA -->
           <div v-if="leg.mode === 'sea'" class="job-transport-tab__grid">
             <label class="job-transport-tab__field">
-              <span>Vessel</span>
-              <input v-model="leg.vessel" />
+              <span>Shipping Line</span>
+              <input
+                v-model="leg.extra_data.shipping_line"
+                placeholder="Maersk / MSC / CMA CGM..."
+              />
             </label>
 
             <label class="job-transport-tab__field">
-              <span>Voyage</span>
-              <input v-model="leg.voyage" />
+              <span>Vessel Name</span>
+              <input v-model="leg.extra_data.vessel_name" placeholder="MV Vessel Name" />
             </label>
 
             <label class="job-transport-tab__field">
-              <span>Container</span>
-              <input v-model="leg.container" />
+              <span>Voyage Number</span>
+              <input v-model="leg.extra_data.voyage_number" placeholder="VOY-123" />
+            </label>
+
+            <label class="job-transport-tab__field">
+              <span>Shipment Type</span>
+              <select v-model="leg.extra_data.shipment_type">
+                <option value="">Select shipment</option>
+                <option>FCL - Full Container</option>
+                <option>LCL - Less Than Container</option>
+                <option>Breakbulk</option>
+                <option>RoRo</option>
+                <option>Project Cargo</option>
+              </select>
+            </label>
+
+            <label class="job-transport-tab__field">
+              <span>Container Number</span>
+              <input v-model="leg.extra_data.container_number" />
+            </label>
+
+            <label class="job-transport-tab__field">
+              <span>Container Size</span>
+              <select v-model="leg.extra_data.container_size">
+                <option value="">Select size</option>
+                <option>20' Standard</option>
+                <option>40' Standard</option>
+                <option>40' High Cube</option>
+                <option>45' High Cube</option>
+                <option>Reefer 20'</option>
+                <option>Reefer 40'</option>
+                <option>Open Top</option>
+                <option>Flat Rack</option>
+              </select>
+            </label>
+
+            <label class="job-transport-tab__field">
+              <span>Seal Number</span>
+              <input v-model="leg.extra_data.seal_number" placeholder="Seal #" />
+            </label>
+
+            <label class="job-transport-tab__field">
+              <span>Container Tare (kg)</span>
+              <input v-model="leg.extra_data.container_tare_kg" type="number" placeholder="0" />
+            </label>
+
+            <label class="job-transport-tab__field">
+              <span>Master BL Number</span>
+              <input v-model="leg.extra_data.master_bl_number" placeholder="MBL ref" />
+            </label>
+
+            <label class="job-transport-tab__field">
+              <span>House BL Number</span>
+              <input v-model="leg.extra_data.house_bl_number" placeholder="HBL ref" />
+            </label>
+
+            <label class="job-transport-tab__field">
+              <span>BL Type</span>
+              <select v-model="leg.extra_data.bl_type">
+                <option value="">Select BL type</option>
+                <option>Original BL</option>
+                <option>Telex Release</option>
+                <option>Sea Waybill</option>
+                <option>Express BL</option>
+              </select>
+            </label>
+
+            <label class="job-transport-tab__field">
+              <span>Freight Terms</span>
+              <select v-model="leg.extra_data.freight_terms">
+                <option value="">Select freight terms</option>
+                <option>Prepaid</option>
+                <option>Collect</option>
+                <option>Third Party</option>
+              </select>
+            </label>
+
+            <label class="job-transport-tab__field">
+              <span>Transhipment Port</span>
+              <Dropdown
+                v-model="leg.extra_data.transhipment_port"
+                :options="seaportOptions"
+                option-label="label"
+                option-value="value"
+                placeholder="Select transhipment port"
+                filter
+                class="job-transport-tab__prime-select"
+              >
+                <template #option="{ option }">
+                  <div class="job-transport-tab__reference-option">
+                    <strong>{{ option.label }}</strong>
+                    <small v-if="option.subLabel">{{ option.subLabel }}</small>
+                  </div>
+                </template>
+              </Dropdown>
+            </label>
+
+            <label class="job-transport-tab__field">
+              <span>Final Destination</span>
+              <Dropdown
+                v-model="leg.extra_data.final_destination"
+                :options="cityOptions"
+                option-label="label"
+                option-value="value"
+                placeholder="Select final destination"
+                filter
+                class="job-transport-tab__prime-select"
+              >
+                <template #option="{ option }">
+                  <div class="job-transport-tab__reference-option">
+                    <strong>{{ option.label }}</strong>
+                    <small v-if="option.subLabel">{{ option.subLabel }}</small>
+                  </div>
+                </template>
+              </Dropdown>
+            </label>
+
+            <label class="job-transport-tab__field">
+              <span>Cut-Off Date</span>
+              <input v-model="leg.extra_data.cut_off_date" type="date" />
+            </label>
+
+            <label class="job-transport-tab__field">
+              <span>Cut-Off Time</span>
+              <input v-model="leg.extra_data.cut_off_time" type="time" />
+            </label>
+
+            <label class="job-transport-tab__field">
+              <span>Free Days Demurrage</span>
+              <input v-model="leg.extra_data.free_days_demurrage" type="number" placeholder="0" />
+            </label>
+
+            <label class="job-transport-tab__field">
+              <span>Free Days Detention</span>
+              <input v-model="leg.extra_data.free_days_detention" type="number" placeholder="0" />
+            </label>
+
+            <label class="job-transport-tab__field">
+              <span>Return Depot</span>
+              <input v-model="leg.extra_data.return_depot" placeholder="Depot name" />
+            </label>
+
+            <label class="job-transport-tab__field">
+              <span>Return Date</span>
+              <input v-model="leg.extra_data.return_date" type="date" />
+            </label>
+
+            <label class="job-transport-tab__field job-transport-tab__field--span-4">
+              <span>Sea Freight Notes</span>
+              <textarea
+                v-model="leg.extra_data.notes"
+                placeholder="VGM details, fumigation requirements, special stowage instructions..."
+              />
             </label>
           </div>
 
@@ -131,17 +410,99 @@ const { mode, modeLabel, multiModalLegs, addLeg, removeLeg } = useJobTransportTa
           <div v-if="leg.mode === 'air'" class="job-transport-tab__grid">
             <label class="job-transport-tab__field">
               <span>Airline</span>
-              <input v-model="leg.airline" />
+              <input v-model="leg.extra_data.airline" />
             </label>
 
             <label class="job-transport-tab__field">
-              <span>Flight</span>
-              <input v-model="leg.flight" />
+              <span>Flight Number</span>
+              <input v-model="leg.extra_data.flight_number" />
             </label>
 
             <label class="job-transport-tab__field">
-              <span>AWB</span>
-              <input v-model="leg.awb" />
+              <span>MAWB Number</span>
+              <input v-model="leg.extra_data.mawb_number" placeholder="123-12345678" />
+            </label>
+
+            <label class="job-transport-tab__field">
+              <span>HAWB Number</span>
+              <input v-model="leg.extra_data.hawb_number" placeholder="HAWB ref" />
+            </label>
+
+            <label class="job-transport-tab__field">
+              <span>Shipment Type</span>
+              <select v-model="leg.extra_data.shipment_type">
+                <option value="">Select cargo</option>
+                <option>General Cargo</option>
+                <option>Perishable</option>
+                <option>Dangerous Goods (DGD)</option>
+                <option>Valuable Cargo (VAL)</option>
+                <option>Live Animals (AVI)</option>
+                <option>Oversized</option>
+                <option>Pharma / GDP</option>
+              </select>
+            </label>
+
+            <label class="job-transport-tab__field">
+              <span>Via / Transhipment</span>
+              <Dropdown
+                v-model="leg.extra_data.via_transhipment"
+                :options="airportOptions"
+                option-label="label"
+                option-value="value"
+                placeholder="Select transit airport"
+                filter
+                class="job-transport-tab__prime-select"
+              >
+                <template #option="{ option }">
+                  <div class="job-transport-tab__reference-option">
+                    <strong>{{ option.label }}</strong>
+                    <small v-if="option.subLabel">{{ option.subLabel }}</small>
+                  </div>
+                </template>
+              </Dropdown>
+            </label>
+
+            <label class="job-transport-tab__field">
+              <span>Cut-Off Date</span>
+              <input v-model="leg.extra_data.cut_off_date" type="date" />
+            </label>
+
+            <label class="job-transport-tab__field">
+              <span>Cut-Off Time</span>
+              <input v-model="leg.extra_data.cut_off_time" type="time" />
+            </label>
+
+            <label class="job-transport-tab__field">
+              <span>ULD Type</span>
+              <select v-model="leg.extra_data.uld_type">
+                <option value="">N/A - Loose</option>
+                <option>PMC - Pallet</option>
+                <option>AKE - LD3 Container</option>
+                <option>AMJ - LD7</option>
+              </select>
+            </label>
+
+            <label class="job-transport-tab__field">
+              <span>ULD Number</span>
+              <input v-model="leg.extra_data.uld_number" placeholder="ULD ref" />
+            </label>
+
+            <label class="job-transport-tab__field">
+              <span>Chargeable Weight</span>
+              <input v-model="leg.extra_data.chargeable_weight" type="number" placeholder="0.00" />
+            </label>
+
+            <label class="job-transport-tab__field">
+              <span>Rate per kg</span>
+              <input v-model="leg.extra_data.rate_per_kg" type="number" placeholder="0.00" />
+            </label>
+
+            <label class="job-transport-tab__field job-transport-tab__field--span-4">
+              <span>Air Freight Notes</span>
+              <textarea
+                v-model="leg.extra_data.notes"
+                placeholder="Screening requirements, lithium battery declaration..."
+              />
             </label>
           </div>
 
@@ -149,28 +510,120 @@ const { mode, modeLabel, multiModalLegs, addLeg, removeLeg } = useJobTransportTa
           <div v-if="leg.mode === 'rail'" class="job-transport-tab__grid">
             <label class="job-transport-tab__field">
               <span>Train No</span>
-              <input v-model="leg.train" />
+              <input v-model="leg.extra_data.train_number" />
             </label>
 
             <label class="job-transport-tab__field">
-              <span>Wagon</span>
-              <input v-model="leg.wagon" />
+              <span>Wagon Number</span>
+              <input v-model="leg.extra_data.wagon_number" />
+            </label>
+
+            <label class="job-transport-tab__field">
+              <span>Container Number</span>
+              <input v-model="leg.extra_data.container_number" />
+            </label>
+
+            <label class="job-transport-tab__field">
+              <span>Container Type</span>
+              <select v-model="leg.extra_data.container_type">
+                <option value="">Select type</option>
+                <option>20' Standard</option>
+                <option>40' Standard</option>
+                <option>40' High Cube</option>
+                <option>45' High Cube</option>
+                <option>Reefer 40'</option>
+                <option>Swap Body</option>
+              </select>
+            </label>
+
+            <label class="job-transport-tab__field">
+              <span>Rail Operator</span>
+              <input v-model="leg.extra_data.rail_operator" placeholder="DB Cargo / Freightliner" />
+            </label>
+
+            <label class="job-transport-tab__field">
+              <span>Est. Transit Days</span>
+              <input
+                v-model="leg.extra_data.estimated_transit_days"
+                type="number"
+                placeholder="0"
+              />
+            </label>
+
+            <label class="job-transport-tab__field">
+              <span>Departure Date</span>
+              <input v-model="leg.extra_data.departure_date" type="date" />
+            </label>
+
+            <label class="job-transport-tab__field">
+              <span>Departure Time</span>
+              <input v-model="leg.extra_data.departure_time" type="time" />
+            </label>
+
+            <label class="job-transport-tab__field">
+              <span>Arrival Date</span>
+              <input v-model="leg.extra_data.arrival_date" type="date" />
+            </label>
+
+            <label class="job-transport-tab__field">
+              <span>Arrival Time</span>
+              <input v-model="leg.extra_data.arrival_time" type="time" />
+            </label>
+
+            <label class="job-transport-tab__field job-transport-tab__field--span-4">
+              <span>Rail Transport Notes</span>
+              <textarea
+                v-model="leg.extra_data.notes"
+                placeholder="Terminal requirements, gauge restrictions, intermodal connections..."
+              />
             </label>
           </div>
 
           <!-- COURIER -->
           <div v-if="leg.mode === 'courier'" class="job-transport-tab__grid">
             <label class="job-transport-tab__field">
-              <span>Tracking No</span>
-              <input v-model="leg.tracking" />
+              <span>Courier Service</span>
+              <select v-model="leg.extra_data.courier_service">
+                <option value="">Select service</option>
+                <option>Same-Day</option>
+                <option>Next-Day AM</option>
+                <option>Next-Day PM</option>
+                <option>48-Hour Economy</option>
+                <option>Express International</option>
+              </select>
             </label>
 
             <label class="job-transport-tab__field">
-              <span>Service</span>
-              <select v-model="leg.service">
-                <option>Next Day</option>
-                <option>Same Day</option>
+              <span>Tracking Number</span>
+              <input v-model="leg.extra_data.tracking_number" />
+            </label>
+
+            <label class="job-transport-tab__field">
+              <span>Vehicle Type</span>
+              <select v-model="leg.extra_data.vehicle_type">
+                <option value="">Select vehicle</option>
+                <option>Motorbike Courier</option>
+                <option>Car / Estate</option>
+                <option>Small Van</option>
+                <option>Transit Van</option>
+                <option>Luton Box Van</option>
+                <option>7.5t Rigid</option>
               </select>
+            </label>
+
+            <label class="job-transport-tab__field">
+              <span>Driver Name</span>
+              <input v-model="leg.extra_data.driver_name" />
+            </label>
+
+            <label class="job-transport-tab__field">
+              <span>Driver Mobile</span>
+              <input v-model="leg.extra_data.driver_mobile" />
+            </label>
+
+            <label class="job-transport-tab__field">
+              <span>Exact Delivery Time</span>
+              <input v-model="leg.extra_data.exact_delivery_time" type="time" />
             </label>
           </div>
         </div>
@@ -214,6 +667,46 @@ const { mode, modeLabel, multiModalLegs, addLeg, removeLeg } = useJobTransportTa
             <option>Sprinter Van</option>
             <option>Luton Box Van</option>
           </select>
+        </label>
+
+        <label class="job-transport-tab__field">
+          <span>Origin Road Terminal</span>
+          <Dropdown
+            v-model="form.road_detail.origin_city"
+            :options="roadTerminalOptions"
+            option-label="label"
+            option-value="value"
+            placeholder="Select origin road terminal"
+            filter
+            class="job-transport-tab__prime-select"
+          >
+            <template #option="{ option }">
+              <div class="job-transport-tab__reference-option">
+                <strong>{{ option.label }}</strong>
+                <small v-if="option.subLabel">{{ option.subLabel }}</small>
+              </div>
+            </template>
+          </Dropdown>
+        </label>
+
+        <label class="job-transport-tab__field">
+          <span>Destination Road Terminal</span>
+          <Dropdown
+            v-model="form.road_detail.destination_city"
+            :options="roadTerminalOptions"
+            option-label="label"
+            option-value="value"
+            placeholder="Select destination road terminal"
+            filter
+            class="job-transport-tab__prime-select"
+          >
+            <template #option="{ option }">
+              <div class="job-transport-tab__reference-option">
+                <strong>{{ option.label }}</strong>
+                <small v-if="option.subLabel">{{ option.subLabel }}</small>
+              </div>
+            </template>
+          </Dropdown>
         </label>
 
         <label class="job-transport-tab__field">
@@ -324,12 +817,42 @@ const { mode, modeLabel, multiModalLegs, addLeg, removeLeg } = useJobTransportTa
 
         <label class="job-transport-tab__field">
           <span>Loading Terminal</span>
-          <input type="text" placeholder="Origin terminal" />
+          <Dropdown
+            v-model="form.rail_detail.loading_terminal"
+            :options="railTerminalOptions"
+            option-label="label"
+            option-value="value"
+            placeholder="Select loading terminal"
+            filter
+            class="job-transport-tab__prime-select"
+          >
+            <template #option="{ option }">
+              <div class="job-transport-tab__reference-option">
+                <strong>{{ option.label }}</strong>
+                <small v-if="option.subLabel">{{ option.subLabel }}</small>
+              </div>
+            </template>
+          </Dropdown>
         </label>
 
         <label class="job-transport-tab__field">
           <span>Discharge Terminal</span>
-          <input type="text" placeholder="Destination terminal" />
+          <Dropdown
+            v-model="form.rail_detail.discharge_terminal"
+            :options="railTerminalOptions"
+            option-label="label"
+            option-value="value"
+            placeholder="Select discharge terminal"
+            filter
+            class="job-transport-tab__prime-select"
+          >
+            <template #option="{ option }">
+              <div class="job-transport-tab__reference-option">
+                <strong>{{ option.label }}</strong>
+                <small v-if="option.subLabel">{{ option.subLabel }}</small>
+              </div>
+            </template>
+          </Dropdown>
         </label>
 
         <label class="job-transport-tab__field">
@@ -459,22 +982,82 @@ const { mode, modeLabel, multiModalLegs, addLeg, removeLeg } = useJobTransportTa
 
         <label class="job-transport-tab__field">
           <span>Port of Loading</span>
-          <input type="text" placeholder="e.g. Felixstowe" />
+          <Dropdown
+            v-model="form.sea_detail.port_of_loading"
+            :options="seaportOptions"
+            option-label="label"
+            option-value="value"
+            placeholder="Select port of loading"
+            filter
+            class="job-transport-tab__prime-select"
+          >
+            <template #option="{ option }">
+              <div class="job-transport-tab__reference-option">
+                <strong>{{ option.label }}</strong>
+                <small v-if="option.subLabel">{{ option.subLabel }}</small>
+              </div>
+            </template>
+          </Dropdown>
         </label>
 
         <label class="job-transport-tab__field">
           <span>Port of Discharge</span>
-          <input type="text" placeholder="e.g. Rotterdam" />
+          <Dropdown
+            v-model="form.sea_detail.port_of_discharge"
+            :options="seaportOptions"
+            option-label="label"
+            option-value="value"
+            placeholder="Select port of discharge"
+            filter
+            class="job-transport-tab__prime-select"
+          >
+            <template #option="{ option }">
+              <div class="job-transport-tab__reference-option">
+                <strong>{{ option.label }}</strong>
+                <small v-if="option.subLabel">{{ option.subLabel }}</small>
+              </div>
+            </template>
+          </Dropdown>
         </label>
 
         <label class="job-transport-tab__field">
           <span>Transhipment Port</span>
-          <input type="text" placeholder="Via if any" />
+          <Dropdown
+            v-model="form.sea_detail.transhipment_port"
+            :options="seaportOptions"
+            option-label="label"
+            option-value="value"
+            placeholder="Select transhipment port"
+            filter
+            class="job-transport-tab__prime-select"
+          >
+            <template #option="{ option }">
+              <div class="job-transport-tab__reference-option">
+                <strong>{{ option.label }}</strong>
+                <small v-if="option.subLabel">{{ option.subLabel }}</small>
+              </div>
+            </template>
+          </Dropdown>
         </label>
 
         <label class="job-transport-tab__field">
           <span>Final Destination</span>
-          <input type="text" placeholder="Inland delivery point" />
+          <Dropdown
+            v-model="form.sea_detail.final_destination"
+            :options="cityOptions"
+            option-label="label"
+            option-value="value"
+            placeholder="Select final destination"
+            filter
+            class="job-transport-tab__prime-select"
+          >
+            <template #option="{ option }">
+              <div class="job-transport-tab__reference-option">
+                <strong>{{ option.label }}</strong>
+                <small v-if="option.subLabel">{{ option.subLabel }}</small>
+              </div>
+            </template>
+          </Dropdown>
         </label>
 
         <label class="job-transport-tab__field">
@@ -555,17 +1138,62 @@ const { mode, modeLabel, multiModalLegs, addLeg, removeLeg } = useJobTransportTa
 
         <label class="job-transport-tab__field">
           <span>Airport of Departure</span>
-          <input type="text" placeholder="e.g. LHR – Heathrow" />
+          <Dropdown
+            v-model="form.air_detail.airport_of_departure"
+            :options="airportOptions"
+            option-label="label"
+            option-value="value"
+            placeholder="Select departure airport"
+            filter
+            class="job-transport-tab__prime-select"
+          >
+            <template #option="{ option }">
+              <div class="job-transport-tab__reference-option">
+                <strong>{{ option.label }}</strong>
+                <small v-if="option.subLabel">{{ option.subLabel }}</small>
+              </div>
+            </template>
+          </Dropdown>
         </label>
 
         <label class="job-transport-tab__field">
           <span>Airport of Arrival</span>
-          <input type="text" placeholder="e.g. JFK – New York" />
+          <Dropdown
+            v-model="form.air_detail.airport_of_arrival"
+            :options="airportOptions"
+            option-label="label"
+            option-value="value"
+            placeholder="Select arrival airport"
+            filter
+            class="job-transport-tab__prime-select"
+          >
+            <template #option="{ option }">
+              <div class="job-transport-tab__reference-option">
+                <strong>{{ option.label }}</strong>
+                <small v-if="option.subLabel">{{ option.subLabel }}</small>
+              </div>
+            </template>
+          </Dropdown>
         </label>
 
         <label class="job-transport-tab__field">
           <span>Via / Transhipment</span>
-          <input type="text" placeholder="Transit airport" />
+          <Dropdown
+            v-model="form.air_detail.via_transhipment"
+            :options="airportOptions"
+            option-label="label"
+            option-value="value"
+            placeholder="Select transit airport"
+            filter
+            class="job-transport-tab__prime-select"
+          >
+            <template #option="{ option }">
+              <div class="job-transport-tab__reference-option">
+                <strong>{{ option.label }}</strong>
+                <small v-if="option.subLabel">{{ option.subLabel }}</small>
+              </div>
+            </template>
+          </Dropdown>
         </label>
 
         <label class="job-transport-tab__field">

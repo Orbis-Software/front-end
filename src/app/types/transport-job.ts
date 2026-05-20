@@ -1,4 +1,4 @@
-import type { Contact } from "@/app/types/contact"
+import type { Contact, ContactCollectionAddress } from "@/app/types/contact"
 import type { JobFile } from "@/app/types/job-file"
 
 export type JobType =
@@ -40,6 +40,8 @@ export interface JobRoadDetail {
   job_id?: number
   service_type?: string | null
   vehicle_type?: string | null
+  origin_city?: string | null
+  destination_city?: string | null
   estimated_transit_days?: number | null
   estimated_distance_km?: number | null
   carrier?: string | null
@@ -153,6 +155,7 @@ export interface JobTransportLeg {
   etd?: string | null
   eta?: string | null
   notes?: string | null
+  extra_data?: Record<string, any> | null
 }
 
 export interface JobPackage {
@@ -222,6 +225,12 @@ export interface TransportJob {
   note?: string | null
 
   customer_contact?: Contact | null
+  origin_contact_collection_address_id?: number | null
+  destination_contact_collection_address_id?: number | null
+  origin_address?: ContactCollectionAddress | null
+  destination_address?: ContactCollectionAddress | null
+  collection_date?: string | null
+  collection_time?: string | null
 
   road_detail?: JobRoadDetail | null
   sea_detail?: JobSeaDetail | null
@@ -288,6 +297,11 @@ export interface TransportJobUpdatePayload extends Partial<BaseTransportJobCreat
   consignee_contact?: string | null
   consignee_phone?: string | null
   consignee_email?: string | null
+
+  origin_contact_collection_address_id?: number | null
+  destination_contact_collection_address_id?: number | null
+  collection_date?: string | null
+  collection_time?: string | null
 
   road_detail?: JobRoadDetail | null
   sea_detail?: JobSeaDetail | null

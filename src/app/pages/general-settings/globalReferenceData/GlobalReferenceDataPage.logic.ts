@@ -1,10 +1,15 @@
 import { computed, onMounted, ref, watch } from "vue"
 import type { PageState } from "primevue/paginator"
-import http from "@/api/http"
+import { storeToRefs } from "pinia"
+import { useGlobalReferenceDataStore } from "@/app/stores/global-reference-data"
+import type {
+  GlobalReferenceDataRow,
+  GlobalReferenceDataTabValue,
+} from "@/app/types/globalReferenceData"
 
-type TabValue = "terminals" | "airlines" | "cities"
+type TabValue = GlobalReferenceDataTabValue
 
-type ReferenceRow = Record<string, string>
+type ReferenceRow = GlobalReferenceDataRow
 
 type Column = {
   label: string
@@ -17,8 +22,6 @@ type ReferenceTab = {
   icon: string
   count: number
 }
-
-type ReferenceDataset = Record<TabValue, ReferenceRow[]>
 
 const terminalColumns: Column[] = [
   { label: "Type", key: "type" },
@@ -58,6 +61,9 @@ const cityColumns: Column[] = [
 ]
 
 export function useGlobalReferenceDataPage() {
+  const store = useGlobalReferenceDataStore()
+  const { data, loading, error } = storeToRefs(store)
+
   const activeTab = ref<TabValue>("terminals")
   const search = ref("")
   const selectedType = ref("")
@@ -66,17 +72,9 @@ export function useGlobalReferenceDataPage() {
   const selectedCountry = ref("")
   const sortKey = ref("")
   const sortDirection = ref<1 | -1>(1)
-  const loading = ref(false)
-  const error = ref("")
 
   const first = ref(0)
   const perPage = ref(25)
-
-  const data = ref<ReferenceDataset>({
-    terminals: [],
-    airlines: [],
-    cities: [],
-  })
 
   const tabs = computed<ReferenceTab[]>(() => [
     {
@@ -179,23 +177,10 @@ export function useGlobalReferenceDataPage() {
   })
 
   async function fetchRows() {
-    loading.value = true
-    error.value = ""
-
     try {
-      const response = await http.get("/global-reference-data")
-      const payload = response.data?.data ?? {}
-
-      data.value = {
-        terminals: normalizeRows(payload.terminals),
-        airlines: normalizeRows(payload.airlines),
-        cities: normalizeRows(payload.cities),
-      }
+      await store.fetchAll()
     } catch (err) {
       console.error("Unable to load global reference data", err)
-      error.value = "Unable to load reference data."
-    } finally {
-      loading.value = false
     }
   }
 
@@ -234,7 +219,9 @@ export function useGlobalReferenceDataPage() {
 
   function exportCsv() {
     const headerRow = columns.value.map(column => column.label)
-    const dataRows = filteredRows.value.map(row => columns.value.map(column => row[column.key] ?? ""))
+    const dataRows = filteredRows.value.map(row =>
+      columns.value.map(column => row[column.key] ?? ""),
+    )
 
     const csv = [headerRow, ...dataRows]
       .map(row => row.map(value => `"${escapeCsvValue(value)}"`).join(","))
@@ -269,12 +256,9 @@ export function useGlobalReferenceDataPage() {
     return "global-reference-page__status--planned"
   }
 
-  watch(
-    [search, selectedType, selectedRegion, selectedStatus, selectedCountry],
-    () => {
-      first.value = 0
-    },
-  )
+  watch([search, selectedType, selectedRegion, selectedStatus, selectedCountry], () => {
+    first.value = 0
+  })
 
   watch(totalRecords, total => {
     if (first.value >= total) {
@@ -313,21 +297,6 @@ export function useGlobalReferenceDataPage() {
     getTypeClass,
     getStatusClass,
   }
-}
-
-function normalizeRows(rows: unknown): ReferenceRow[] {
-  if (!Array.isArray(rows)) return []
-
-  return rows.map(row => {
-    return Object.entries(row as Record<string, unknown>).reduce<ReferenceRow>(
-      (result, [key, value]) => {
-        result[key] = value === null || value === undefined ? "" : String(value)
-
-        return result
-      },
-      {},
-    )
-  })
 }
 
 function unique(values: string[]) {

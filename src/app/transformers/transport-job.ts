@@ -30,6 +30,8 @@ function fetchRoadDetail(raw: any): JobRoadDetail | null {
     job_id: nullableNumber(raw.job_id) ?? undefined,
     service_type: nullableString(raw.service_type),
     vehicle_type: nullableString(raw.vehicle_type),
+    origin_city: nullableString(raw.origin_city),
+    destination_city: nullableString(raw.destination_city),
     estimated_transit_days: nullableNumber(raw.estimated_transit_days),
     estimated_distance_km: nullableNumber(raw.estimated_distance_km),
     carrier: nullableString(raw.carrier),
@@ -161,6 +163,7 @@ function fetchTransportLeg(raw: any): JobTransportLeg {
     etd: nullableString(raw.etd),
     eta: nullableString(raw.eta),
     notes: nullableString(raw.notes),
+    extra_data: raw.extra_data ?? raw.extraData ?? {},
   }
 }
 
@@ -244,6 +247,16 @@ const transportJobTransformer = {
       note: raw.note ?? null,
 
       customer_contact: customerRaw ? (customerRaw as any) : null,
+      origin_contact_collection_address_id: nullableNumber(
+        raw.origin_contact_collection_address_id,
+      ),
+      destination_contact_collection_address_id: nullableNumber(
+        raw.destination_contact_collection_address_id,
+      ),
+      origin_address: raw.origin_address ?? raw.originAddress ?? null,
+      destination_address: raw.destination_address ?? raw.destinationAddress ?? null,
+      collection_date: raw.collection_date ?? null,
+      collection_time: raw.collection_time ?? null,
 
       creator: creatorRaw
         ? {

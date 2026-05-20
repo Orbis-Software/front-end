@@ -54,6 +54,7 @@ function normalizeCollectionAddress(raw: any): ContactCollectionAddress {
     county_state: raw.county_state ?? null,
     postal_code: raw.postal_code ?? null,
     country_id: toNumberOrNull(raw.country_id),
+    country_name: raw.country_name ?? raw.country?.name ?? null,
 
     // ✅ NEW generated fields
     sequence_no:
