@@ -1,4 +1,6 @@
-import { computed, ref } from "vue"
+import { computed, onMounted, ref, watch } from "vue"
+import type { PageState } from "primevue/paginator"
+import http from "@/api/http"
 
 type TabValue = "terminals" | "airlines" | "cities"
 
@@ -15,6 +17,8 @@ type ReferenceTab = {
   icon: string
   count: number
 }
+
+type ReferenceDataset = Record<TabValue, ReferenceRow[]>
 
 const terminalColumns: Column[] = [
   { label: "Type", key: "type" },
@@ -53,194 +57,6 @@ const cityColumns: Column[] = [
   { label: "Coordinates", key: "coordinates" },
 ]
 
-const terminals: ReferenceRow[] = [
-  {
-    type: "Airport",
-    country: "USA",
-    location: "Memphis, TN",
-    terminalName: "Memphis International Airport",
-    region: "North America",
-    status: "Active",
-    function: "Cargo Hub",
-    year: "1929",
-    code: "MEM",
-    coordinates: "35.0424°N, 89.9767°W",
-  },
-  {
-    type: "Airport",
-    country: "UK",
-    location: "London",
-    terminalName: "London Heathrow Airport",
-    region: "Europe",
-    status: "Active",
-    function: "Cargo + Passenger",
-    year: "1946",
-    code: "LHR",
-    coordinates: "51.4700°N, 0.4543°W",
-  },
-  {
-    type: "Seaport",
-    country: "China",
-    location: "Shanghai",
-    terminalName: "Port of Shanghai",
-    region: "Asia Pacific",
-    status: "Active",
-    function: "Container / Multi-Purpose",
-    year: "1684",
-    code: "CNSHA",
-    coordinates: "31.2304°N, 121.4737°E",
-  },
-  {
-    type: "Rail Freight",
-    country: "UK",
-    location: "Daventry",
-    terminalName: "DIRFT – Daventry International Rail Freight Terminal",
-    region: "Europe",
-    status: "Active",
-    function: "Intermodal Container Depot",
-    year: "1997",
-    code: "GBDAV",
-    coordinates: "52.2610°N, 1.1559°W",
-  },
-  {
-    type: "Road Freight",
-    country: "Netherlands",
-    location: "Tilburg",
-    terminalName: "Tilburg Distribution Hub",
-    region: "Europe",
-    status: "Active",
-    function: "Road Distribution Hub",
-    year: "1985",
-    code: "NLTLB",
-    coordinates: "51.5600°N, 5.0913°E",
-  },
-]
-
-const airlines: ReferenceRow[] = [
-  {
-    name: "American Airlines Cargo",
-    iata: "AA",
-    icao: "AAL",
-    awb: "001",
-    country: "USA",
-    region: "North America",
-    fleet: "B777, B787, A321 belly",
-    status: "Active",
-  },
-  {
-    name: "FedEx Express",
-    iata: "FX",
-    icao: "FDX",
-    awb: "023",
-    country: "USA",
-    region: "North America",
-    fleet: "B777F, B767F, ATR72F, B757F",
-    status: "Active",
-  },
-  {
-    name: "Lufthansa Cargo",
-    iata: "LH",
-    icao: "DLH",
-    awb: "020",
-    country: "Germany",
-    region: "Europe",
-    fleet: "B777F, MD-11F",
-    status: "Active",
-  },
-  {
-    name: "Emirates SkyCargo",
-    iata: "EK",
-    icao: "UAE",
-    awb: "176",
-    country: "UAE",
-    region: "Middle East",
-    fleet: "B777F, B747-400ERF",
-    status: "Active",
-  },
-  {
-    name: "TNT Airways",
-    iata: "3V",
-    icao: "TAY",
-    awb: "—",
-    country: "Belgium",
-    region: "Europe",
-    fleet: "B777F, B747-400F",
-    status: "Inactive",
-  },
-]
-
-const cities: ReferenceRow[] = [
-  {
-    type: "Major City",
-    country: "United Kingdom",
-    city: "London",
-    fullName: "Greater London",
-    region: "Europe",
-    status: "Active",
-    function: "Metro Delivery Hub",
-    state: "Greater London",
-    code: "GB-LND",
-    coordinates: "51.5074°N, 0.1278°W",
-  },
-  {
-    type: "Major City",
-    country: "Germany",
-    city: "Berlin",
-    fullName: "Berlin",
-    region: "Europe",
-    status: "Active",
-    function: "Capital Hub",
-    state: "Berlin",
-    code: "DE-BER",
-    coordinates: "52.5200°N, 13.4050°E",
-  },
-  {
-    type: "Major City",
-    country: "United States",
-    city: "New York",
-    fullName: "New York City",
-    region: "North America",
-    status: "Active",
-    function: "Metro Delivery Hub",
-    state: "New York",
-    code: "US-NYC",
-    coordinates: "40.7128°N, 74.0060°W",
-  },
-  {
-    type: "Major City",
-    country: "Philippines",
-    city: "Manila",
-    fullName: "Manila",
-    region: "Asia Pacific",
-    status: "Active",
-    function: "Port City",
-    state: "Metro Manila",
-    code: "PH-MNL",
-    coordinates: "14.5995°N, 120.9842°E",
-  },
-]
-
-const tabs: ReferenceTab[] = [
-  {
-    label: "Transport Terminals",
-    value: "terminals",
-    icon: "🏭",
-    count: terminals.length,
-  },
-  {
-    label: "Air Cargo Airlines",
-    value: "airlines",
-    icon: "✈️",
-    count: airlines.length,
-  },
-  {
-    label: "Road Delivery Cities",
-    value: "cities",
-    icon: "🚛",
-    count: cities.length,
-  },
-]
-
 export function useGlobalReferenceDataPage() {
   const activeTab = ref<TabValue>("terminals")
   const search = ref("")
@@ -250,12 +66,44 @@ export function useGlobalReferenceDataPage() {
   const selectedCountry = ref("")
   const sortKey = ref("")
   const sortDirection = ref<1 | -1>(1)
+  const loading = ref(false)
+  const error = ref("")
+
+  const first = ref(0)
+  const perPage = ref(25)
+
+  const data = ref<ReferenceDataset>({
+    terminals: [],
+    airlines: [],
+    cities: [],
+  })
+
+  const tabs = computed<ReferenceTab[]>(() => [
+    {
+      label: "Transport Terminals",
+      value: "terminals",
+      icon: "🏭",
+      count: data.value.terminals.length,
+    },
+    {
+      label: "Air Cargo Airlines",
+      value: "airlines",
+      icon: "✈️",
+      count: data.value.airlines.length,
+    },
+    {
+      label: "Road Delivery Cities",
+      value: "cities",
+      icon: "🚚",
+      count: data.value.cities.length,
+    },
+  ])
 
   const sourceRows = computed<ReferenceRow[]>(() => {
-    if (activeTab.value === "airlines") return airlines
-    if (activeTab.value === "cities") return cities
+    if (activeTab.value === "airlines") return data.value.airlines
+    if (activeTab.value === "cities") return data.value.cities
 
-    return terminals
+    return data.value.terminals
   })
 
   const columns = computed<Column[]>(() => {
@@ -265,7 +113,7 @@ export function useGlobalReferenceDataPage() {
     return terminalColumns
   })
 
-  const rows = computed<ReferenceRow[]>(() => {
+  const filteredRows = computed<ReferenceRow[]>(() => {
     const query = search.value.trim().toLowerCase()
 
     const filtered = sourceRows.value.filter(row => {
@@ -298,8 +146,24 @@ export function useGlobalReferenceDataPage() {
     })
   })
 
+  const totalRecords = computed(() => filteredRows.value.length)
+
+  const rows = computed<ReferenceRow[]>(() => {
+    return filteredRows.value.slice(first.value, first.value + perPage.value)
+  })
+
+  const paginationStart = computed(() => {
+    if (!totalRecords.value) return 0
+
+    return first.value + 1
+  })
+
+  const paginationEnd = computed(() => {
+    return Math.min(first.value + perPage.value, totalRecords.value)
+  })
+
   const typeOptions = computed(() => {
-    return unique(terminals.map(item => item.type ?? ""))
+    return unique(data.value.terminals.map(item => item.type ?? ""))
   })
 
   const regionOptions = computed(() => {
@@ -311,8 +175,29 @@ export function useGlobalReferenceDataPage() {
   })
 
   const countryOptions = computed(() => {
-    return unique(cities.map(item => item.country ?? ""))
+    return unique(data.value.cities.map(item => item.country ?? ""))
   })
+
+  async function fetchRows() {
+    loading.value = true
+    error.value = ""
+
+    try {
+      const response = await http.get("/global-reference-data")
+      const payload = response.data?.data ?? {}
+
+      data.value = {
+        terminals: normalizeRows(payload.terminals),
+        airlines: normalizeRows(payload.airlines),
+        cities: normalizeRows(payload.cities),
+      }
+    } catch (err) {
+      console.error("Unable to load global reference data", err)
+      error.value = "Unable to load reference data."
+    } finally {
+      loading.value = false
+    }
+  }
 
   function setTab(tab: TabValue) {
     activeTab.value = tab
@@ -327,21 +212,29 @@ export function useGlobalReferenceDataPage() {
     selectedCountry.value = ""
     sortKey.value = ""
     sortDirection.value = 1
+    first.value = 0
   }
 
   function sortBy(key: string) {
     if (sortKey.value === key) {
       sortDirection.value = sortDirection.value === 1 ? -1 : 1
+      first.value = 0
       return
     }
 
     sortKey.value = key
     sortDirection.value = 1
+    first.value = 0
+  }
+
+  function onPageChange(event: PageState) {
+    first.value = event.first
+    perPage.value = event.rows
   }
 
   function exportCsv() {
     const headerRow = columns.value.map(column => column.label)
-    const dataRows = rows.value.map(row => columns.value.map(column => row[column.key] ?? ""))
+    const dataRows = filteredRows.value.map(row => columns.value.map(column => row[column.key] ?? ""))
 
     const csv = [headerRow, ...dataRows]
       .map(row => row.map(value => `"${escapeCsvValue(value)}"`).join(","))
@@ -376,6 +269,21 @@ export function useGlobalReferenceDataPage() {
     return "global-reference-page__status--planned"
   }
 
+  watch(
+    [search, selectedType, selectedRegion, selectedStatus, selectedCountry],
+    () => {
+      first.value = 0
+    },
+  )
+
+  watch(totalRecords, total => {
+    if (first.value >= total) {
+      first.value = 0
+    }
+  })
+
+  onMounted(fetchRows)
+
   return {
     tabs,
     activeTab,
@@ -388,15 +296,38 @@ export function useGlobalReferenceDataPage() {
     regionOptions,
     statusOptions,
     countryOptions,
+    loading,
+    error,
     rows,
     columns,
+    first,
+    perPage,
+    totalRecords,
+    paginationStart,
+    paginationEnd,
     setTab,
     clearFilters,
     exportCsv,
     sortBy,
+    onPageChange,
     getTypeClass,
     getStatusClass,
   }
+}
+
+function normalizeRows(rows: unknown): ReferenceRow[] {
+  if (!Array.isArray(rows)) return []
+
+  return rows.map(row => {
+    return Object.entries(row as Record<string, unknown>).reduce<ReferenceRow>(
+      (result, [key, value]) => {
+        result[key] = value === null || value === undefined ? "" : String(value)
+
+        return result
+      },
+      {},
+    )
+  })
 }
 
 function unique(values: string[]) {

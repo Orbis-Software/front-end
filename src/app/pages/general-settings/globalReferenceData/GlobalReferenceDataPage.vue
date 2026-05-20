@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import "./GlobalReferenceDataPage.css"
+import Paginator from "primevue/paginator"
 import { useGlobalReferenceDataPage } from "./GlobalReferenceDataPage.logic"
 
 const {
@@ -14,12 +15,20 @@ const {
   regionOptions,
   statusOptions,
   countryOptions,
+  loading,
+  error,
   rows,
   columns,
+  first,
+  perPage,
+  totalRecords,
+  paginationStart,
+  paginationEnd,
   setTab,
   clearFilters,
   exportCsv,
   sortBy,
+  onPageChange,
   getTypeClass,
   getStatusClass,
 } = useGlobalReferenceDataPage()
@@ -91,12 +100,27 @@ const {
       </button>
 
       <div class="global-reference-page__count">
-        Showing <strong>{{ rows.length }}</strong> records
+        Showing
+        <strong>{{ paginationStart }}-{{ paginationEnd }}</strong>
+        of
+        <strong>{{ totalRecords }}</strong>
+        records
       </div>
     </div>
 
     <div class="global-reference-page__table-wrap">
-      <table v-if="rows.length" class="global-reference-page__table">
+      <div v-if="loading" class="global-reference-page__empty">
+        <div>...</div>
+        <h3>Loading reference data</h3>
+      </div>
+
+      <div v-else-if="error" class="global-reference-page__empty">
+        <div>!</div>
+        <h3>{{ error }}</h3>
+        <p>Please refresh the page or try again later.</p>
+      </div>
+
+      <table v-else-if="rows.length" class="global-reference-page__table">
         <thead>
           <tr>
             <th v-for="column in columns" :key="column.key" @click="sortBy(column.key)">
@@ -106,7 +130,7 @@ const {
         </thead>
 
         <tbody>
-          <tr v-for="(row, index) in rows" :key="index">
+          <tr v-for="(row, index) in rows" :key="`${first}-${index}`">
             <td v-for="column in columns" :key="column.key">
               <span
                 v-if="column.key === 'type'"
@@ -152,6 +176,17 @@ const {
         <h3>No records match your filters</h3>
         <p>Try adjusting your search or filter criteria.</p>
       </div>
+    </div>
+
+    <div v-if="!loading && !error && totalRecords > 0" class="global-reference-page__pagination">
+      <Paginator
+        v-model:first="first"
+        :rows="perPage"
+        :total-records="totalRecords"
+        :rows-per-page-options="[10, 25, 50, 100]"
+        template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown"
+        @page="onPageChange"
+      />
     </div>
   </section>
 </template>

@@ -43,9 +43,9 @@ async function logout() {
 <template>
   <div class="customer-user-dropdown" @click.stop>
     <div class="dropdown-user">
-      <div class="dropdown-user-name">{{ userName }}</div>
-      <div class="dropdown-user-email">{{ userEmail }}</div>
-      <div class="dropdown-user-company">{{ companyName }}</div>
+      <div class="dropdown-user-name" :title="userName">{{ userName }}</div>
+      <div class="dropdown-user-email" :title="userEmail">{{ userEmail }}</div>
+      <div class="dropdown-user-company" :title="companyName">{{ companyName }}</div>
     </div>
 
     <div class="dropdown-divider" />
@@ -90,7 +90,7 @@ async function logout() {
   top: calc(100% + 12px);
   right: 0;
 
-  width: 260px;
+  width: min(320px, calc(100vw - 32px));
 
   background: #fff;
   border: 1px solid #d9d9d9;
@@ -108,6 +108,10 @@ async function logout() {
 }
 
 .dropdown-user-name {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   font-size: 0.95rem;
   font-weight: 800;
   color: #262626;
@@ -116,9 +120,11 @@ async function logout() {
 .dropdown-user-email,
 .dropdown-user-company {
   margin-top: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: 0.78rem;
   color: #737373;
-  overflow-wrap: anywhere;
 }
 
 .dropdown-user-company {
