@@ -1,5 +1,9 @@
 import { computed, onMounted, reactive, ref, watch } from "vue"
 import { useRoute, useRouter } from "vue-router"
+import http from "@/api/http"
+import { useTransportQuoteStore } from "@/app/stores/transportQuote"
+import type { TransportQuote, TransportQuotePayload } from "@/app/types/transportQuote"
+import { useToast } from "primevue/usetoast"
 
 type QuoteType = "import" | "export" | "domestic" | "cross_trade" | "multi_modal"
 type TransportMode = "air" | "road" | "rail" | "sea"
@@ -42,55 +46,6 @@ type ChargeLine = {
   markup_percent: number
 }
 
-const CUSTOMERS: CustomerOption[] = [
-  {
-    id: 1,
-    name: "Acme Logistics Ltd",
-    account_number: "CUS-0001",
-    contacts: [
-      {
-        name: "James Thornton",
-        email: "j.thornton@acme.com",
-        phone: "+44 20 7123 4500",
-      },
-      {
-        name: "Sarah Mitchell",
-        email: "s.mitchell@acme.com",
-        phone: "+44 20 7123 4501",
-      },
-    ],
-  },
-  {
-    id: 2,
-    name: "Blueline Shipping Co.",
-    account_number: "CUS-0002",
-    contacts: [
-      {
-        name: "David Okafor",
-        email: "d.okafor@blueline.co.uk",
-        phone: "+44 161 234 5678",
-      },
-      {
-        name: "Priya Sharma",
-        email: "p.sharma@blueline.co.uk",
-        phone: "+44 161 234 5679",
-      },
-    ],
-  },
-  {
-    id: 3,
-    name: "Globex International",
-    account_number: "CUS-0003",
-    contacts: [
-      {
-        name: "Michael Chen",
-        email: "m.chen@globex.com",
-        phone: "+1 212 555 0100",
-      },
-    ],
-  },
-]
-
 const CONDITIONS: Record<string, string> = {
   standard:
     "1. All rates quoted are subject to space and equipment availability.\n2. Rates are valid for the period stated and subject to change without notice thereafter.\n3. All charges are exclusive of applicable taxes unless otherwise stated.\n4. Claims for loss or damage must be submitted within 14 days of delivery.",
@@ -103,48 +58,37 @@ const CONDITIONS: Record<string, string> = {
 export function useQuoteCreatePage() {
   const route = useRoute()
   const router = useRouter()
+  const quoteStore = useTransportQuoteStore()
+  const toast = useToast()
+
+  const loadingCustomers = ref(false)
+  const customerSuggestions = ref<CustomerOption[]>([])
+  const selectedCustomer = ref<CustomerOption | null>(null)
+  const selectedContactIndex = ref<number | null>(null)
+  const localError = ref<string | null>(null)
 
   const quoteId = computed(() => {
     const id = route.params.id
-
     if (!id) return null
 
-    return Number(id)
+    const parsed = Number(id)
+    return Number.isFinite(parsed) ? parsed : null
   })
 
   const isEditMode = computed(() => Boolean(quoteId.value))
+  const saving = computed(() => quoteStore.saving || quoteStore.loading)
+  const error = computed(() => localError.value || quoteStore.error)
 
-  const pageTitle = computed(() => {
-    return isEditMode.value ? "Edit Freight Quotation" : "New Freight Quotation"
-  })
-
-  const pageStatusLabel = computed(() => {
-    return "Draft"
-  })
-
-  const saveButtonLabel = computed(() => {
-    return isEditMode.value ? "Update Quote" : "Submit Quote"
-  })
+  const pageTitle = computed(() =>
+    isEditMode.value ? "Edit Freight Quotation" : "New Freight Quotation",
+  )
+  const pageStatusLabel = computed(() => quoteStore.selectedQuote?.status ?? "Draft")
+  const saveButtonLabel = computed(() => (isEditMode.value ? "Update Quote" : "Submit Quote"))
 
   const QUOTE_TYPES = [
-    {
-      key: "import",
-      title: "Import",
-      subtitle: "Inbound shipment",
-      icon: "pi pi-download",
-    },
-    {
-      key: "export",
-      title: "Export",
-      subtitle: "Outbound shipment",
-      icon: "pi pi-upload",
-    },
-    {
-      key: "domestic",
-      title: "Domestic",
-      subtitle: "Local movement",
-      icon: "pi pi-home",
-    },
+    { key: "import", title: "Import", subtitle: "Inbound shipment", icon: "pi pi-download" },
+    { key: "export", title: "Export", subtitle: "Outbound shipment", icon: "pi pi-upload" },
+    { key: "domestic", title: "Domestic", subtitle: "Local movement", icon: "pi pi-home" },
     {
       key: "cross_trade",
       title: "Cross Trade",
@@ -178,20 +122,11 @@ export function useQuoteCreatePage() {
       subtitle: "Rail-based cargo movement",
       icon: "pi pi-minus",
     },
-    {
-      key: "sea",
-      title: "Sea Freight",
-      subtitle: "Ocean freight movement",
-      icon: "pi pi-globe",
-    },
+    { key: "sea", title: "Sea Freight", subtitle: "Ocean freight movement", icon: "pi pi-globe" },
   ]
 
   const quoteType = ref<QuoteType | null>(null)
   const mode = ref<TransportMode | null>(null)
-
-  const selectedCustomer = ref<CustomerOption | null>(null)
-  const customerSuggestions = ref<CustomerOption[]>([])
-  const selectedContactIndex = ref<number | null>(null)
 
   const form = reactive({
     quote_ref: generateQuoteRef(),
@@ -231,22 +166,13 @@ export function useQuoteCreatePage() {
   const chargeLines = ref<ChargeLine[]>([])
 
   const availableModes = computed(() => MODE_OPTIONS)
+  const showModeSelector = computed(() => Boolean(quoteType.value))
+  const canShowForm = computed(() => Boolean(quoteType.value && mode.value))
 
-  const showModeSelector = computed(() => {
-    return Boolean(quoteType.value)
-  })
-
-  const canShowForm = computed(() => {
-    return Boolean(quoteType.value && mode.value)
-  })
-
-  const quoteTypeLabel = computed(() => {
-    return QUOTE_TYPES.find(item => item.key === quoteType.value)?.title ?? ""
-  })
-
-  const modeLabel = computed(() => {
-    return MODE_OPTIONS.find(item => item.key === mode.value)?.title ?? ""
-  })
+  const quoteTypeLabel = computed(
+    () => QUOTE_TYPES.find(item => item.key === quoteType.value)?.title ?? "",
+  )
+  const modeLabel = computed(() => MODE_OPTIONS.find(item => item.key === mode.value)?.title ?? "")
 
   const formTitle = computed(() => {
     const prefix = isEditMode.value ? "Edit" : "New"
@@ -255,15 +181,13 @@ export function useQuoteCreatePage() {
     return `${prefix} ${type} Quote`
   })
 
-  const accountNumberPreview = computed(() => {
-    return selectedCustomer.value?.account_number ?? ""
-  })
+  const accountNumberPreview = computed(() => selectedCustomer.value?.account_number ?? "")
 
   const contactOptions = computed<SelectOption<number>[]>(() => {
     if (!selectedCustomer.value) return []
 
     return selectedCustomer.value.contacts.map((contact, index) => ({
-      label: contact.name,
+      label: contact.name || selectedCustomer.value?.name || `Contact ${index + 1}`,
       value: index,
     }))
   })
@@ -289,7 +213,10 @@ export function useQuoteCreatePage() {
     "DAP",
     "DPU",
     "DDP",
-  ].map(item => ({ label: item, value: item }))
+  ].map(item => ({
+    label: item,
+    value: item,
+  }))
 
   const containerOptions: SelectOption[] = [
     { label: "20' GP", value: "20GP" },
@@ -359,70 +286,44 @@ export function useQuoteCreatePage() {
     { label: "20% – Standard", value: 20 },
   ]
 
-  const totalPieces = computed(() => {
-    return dimensionRows.value.reduce((total, row) => total + Number(row.pieces || 0), 0)
-  })
+  const totalPieces = computed(() =>
+    dimensionRows.value.reduce((total, row) => total + Number(row.pieces || 0), 0),
+  )
+  const totalActualWeight = computed(() =>
+    dimensionRows.value.reduce((total, row) => total + Number(row.weight || 0), 0),
+  )
+  const totalVolumetricWeight = computed(() =>
+    dimensionRows.value.reduce((total, row) => total + getRowVolumetricWeight(row), 0),
+  )
+  const chargeableWeight = computed(() =>
+    mode.value === "air"
+      ? Math.max(totalActualWeight.value, totalVolumetricWeight.value)
+      : totalActualWeight.value,
+  )
+  const totalCbm = computed(() =>
+    dimensionRows.value.reduce((total, row) => total + getRowCbm(row), 0),
+  )
+  const totalLdm = computed(() =>
+    dimensionRows.value.reduce((total, row) => total + getRowLdm(row), 0),
+  )
+  const revenueTonne = computed(() => Math.max(totalActualWeight.value / 1000, totalCbm.value))
 
-  const totalActualWeight = computed(() => {
-    return dimensionRows.value.reduce((total, row) => total + Number(row.weight || 0), 0)
-  })
-
-  const totalVolumetricWeight = computed(() => {
-    return dimensionRows.value.reduce((total, row) => total + getRowVolumetricWeight(row), 0)
-  })
-
-  const chargeableWeight = computed(() => {
-    if (mode.value === "air") {
-      return Math.max(totalActualWeight.value, totalVolumetricWeight.value)
-    }
-
-    return totalActualWeight.value
-  })
-
-  const totalCbm = computed(() => {
-    return dimensionRows.value.reduce((total, row) => total + getRowCbm(row), 0)
-  })
-
-  const totalLdm = computed(() => {
-    return dimensionRows.value.reduce((total, row) => total + getRowLdm(row), 0)
-  })
-
-  const revenueTonne = computed(() => {
-    return Math.max(totalActualWeight.value / 1000, totalCbm.value)
-  })
-
-  const subtotalSell = computed(() => {
-    return chargeLines.value.reduce((total, line) => total + getChargeSellTotal(line), 0)
-  })
-
-  const subtotalCost = computed(() => {
-    return chargeLines.value.reduce(
+  const subtotalSell = computed(() =>
+    chargeLines.value.reduce((total, line) => total + getChargeSellTotal(line), 0),
+  )
+  const subtotalCost = computed(() =>
+    chargeLines.value.reduce(
       (total, line) => total + Number(line.qty || 0) * Number(line.cost || 0),
       0,
-    )
-  })
-
-  const totalExclTax = computed(() => {
-    return Math.max(subtotalSell.value - Number(form.discount || 0), 0)
-  })
-
-  const taxAmount = computed(() => {
-    return totalExclTax.value * (Number(form.tax_rate || 0) / 100)
-  })
-
-  const totalInclTax = computed(() => {
-    return totalExclTax.value + taxAmount.value
-  })
-
-  const profitTotal = computed(() => {
-    return totalExclTax.value - subtotalCost.value
-  })
-
-  const profitPercent = computed(() => {
-    if (totalExclTax.value <= 0) return 0
-
-    return (profitTotal.value / totalExclTax.value) * 100
-  })
+    ),
+  )
+  const totalExclTax = computed(() => Math.max(subtotalSell.value - Number(form.discount || 0), 0))
+  const taxAmount = computed(() => totalExclTax.value * (Number(form.tax_rate || 0) / 100))
+  const totalInclTax = computed(() => totalExclTax.value + taxAmount.value)
+  const profitTotal = computed(() => totalExclTax.value - subtotalCost.value)
+  const profitPercent = computed(() =>
+    totalExclTax.value <= 0 ? 0 : (profitTotal.value / totalExclTax.value) * 100,
+  )
 
   const subtotalSellDisplay = computed(() => money(subtotalSell.value))
   const subtotalCostDisplay = computed(() => money(subtotalCost.value))
@@ -437,7 +338,7 @@ export function useQuoteCreatePage() {
 
     quoteType.value = value
 
-    if (value === "multi_modal") {
+    if (value === "multi_modal" && !mode.value) {
       mode.value = "road"
     }
   }
@@ -447,13 +348,8 @@ export function useQuoteCreatePage() {
 
     mode.value = value
 
-    if (!dimensionRows.value.length) {
-      addDimensionRow()
-    }
-
-    if (!chargeLines.value.length) {
-      addChargeLine("Freight Charge")
-    }
+    if (!dimensionRows.value.length) addDimensionRow()
+    if (!chargeLines.value.length) addChargeLine("Freight Charge")
   }
 
   function isQuoteType(value: string): value is QuoteType {
@@ -465,29 +361,17 @@ export function useQuoteCreatePage() {
   }
 
   function customerOptionLabel(customer: CustomerOption) {
-    return customer.name
+    return customer?.name ?? ""
   }
 
-  function onCustomerComplete(event: { query: string }) {
-    const query = event.query.trim().toLowerCase()
-
-    if (!query) {
-      customerSuggestions.value = [...CUSTOMERS]
-      return
-    }
-
-    customerSuggestions.value = CUSTOMERS.filter(customer =>
-      customer.name.toLowerCase().includes(query),
-    )
+  async function onCustomerComplete(event: { query: string }) {
+    await fetchCustomers(event.query)
   }
 
   function onCustomerSelect(event: { value: CustomerOption }) {
     selectedCustomer.value = event.value
     form.customer_id = event.value.id
-    selectedContactIndex.value = null
-    form.contact_name = ""
-    form.contact_email = ""
-    form.contact_phone = ""
+    selectedContactIndex.value = event.value.contacts.length ? 0 : null
   }
 
   function onCustomerClear() {
@@ -503,7 +387,6 @@ export function useQuoteCreatePage() {
     if (index === null || !selectedCustomer.value) return
 
     const contact = selectedCustomer.value.contacts[index]
-
     if (!contact) return
 
     form.contact_name = contact.name
@@ -580,14 +463,68 @@ export function useQuoteCreatePage() {
     router.push({ name: "tms.quotes.index" })
   }
 
-  function onSave() {
-    if (isEditMode.value) {
-      console.log("Update quote", quoteId.value, buildPayload())
-    } else {
-      console.log("Create quote", buildPayload())
+  async function onSave() {
+    localError.value = null
+
+    if (!quoteType.value) {
+      localError.value = "Please select a quote type."
+
+      toast.add({
+        severity: "warn",
+        summary: "Quote Type Required",
+        detail: "Please select a quote type.",
+        life: 3000,
+      })
+
+      return
     }
 
-    router.push({ name: "tms.quotes.index" })
+    if (!mode.value) {
+      localError.value = "Please select a mode of transport."
+
+      toast.add({
+        severity: "warn",
+        summary: "Mode Required",
+        detail: "Please select a mode of transport.",
+        life: 3000,
+      })
+
+      return
+    }
+
+    try {
+      const payload = buildPayload()
+
+      const quote =
+        isEditMode.value && quoteId.value
+          ? await quoteStore.updateQuote(quoteId.value, payload as TransportQuotePayload)
+          : await quoteStore.createQuote(payload as TransportQuotePayload)
+
+      toast.add({
+        severity: "success",
+        summary: isEditMode.value ? "Quotation Updated" : "Quotation Created",
+        detail: `${quote.quote_ref || `QUOTE-${quote.id}`} saved successfully.`,
+        life: 3000,
+      })
+
+      setTimeout(() => {
+        router.push({
+          name: "tms.quotes.show",
+          params: { id: quote.id },
+        })
+      }, 700)
+    } catch (error: any) {
+      const message = error?.response?.data?.message ?? "Unable to save quotation."
+
+      localError.value = message
+
+      toast.add({
+        severity: "error",
+        summary: "Save Failed",
+        detail: message,
+        life: 4000,
+      })
+    }
   }
 
   function onCancel() {
@@ -596,7 +533,6 @@ export function useQuoteCreatePage() {
         name: "tms.quotes.show",
         params: { id: quoteId.value },
       })
-
       return
     }
 
@@ -605,11 +541,49 @@ export function useQuoteCreatePage() {
 
   function buildPayload() {
     return {
+      customer_id: form.customer_id,
+      quote_ref: form.quote_ref || null,
       quote_type: quoteType.value,
       mode_of_transport: mode.value,
-      ...form,
-      dimensions: dimensionRows.value,
-      charges: chargeLines.value,
+      status: "draft",
+
+      account_number: accountNumberPreview.value || null,
+      customer_ref: form.customer_ref || null,
+      contact_name: form.contact_name || null,
+      contact_email: form.contact_email || null,
+      contact_phone: form.contact_phone || null,
+
+      quote_date: toApiDate(form.quote_date),
+      follow_up_date: toApiDate(form.follow_up_date),
+      valid_until: toApiDate(form.valid_until),
+      currency: form.currency || null,
+      incoterm: form.incoterm || null,
+
+      origin: form.origin || null,
+      destination: form.destination || null,
+      etd: toApiDate(form.etd),
+      eta: toApiDate(form.eta),
+
+      commodity: form.commodity || null,
+      vehicle_type: form.vehicle_type || null,
+      cargo_class: form.cargo_class || null,
+      container_type: form.container_type || null,
+      load_type: form.load_type || null,
+      goods_description: form.goods_description || null,
+
+      is_hazardous: Boolean(form.is_hazardous),
+      hazardous_class: form.is_hazardous ? form.hazardous_class || null : null,
+      un_number: form.is_hazardous ? form.un_number || null : null,
+      packing_group: form.is_hazardous ? form.packing_group || null : null,
+
+      conditions_preset: form.conditions_preset || null,
+      terms_conditions: form.terms_conditions || null,
+      validity_period: form.validity_period ? Number(form.validity_period) : null,
+      note: form.note || null,
+
+      discount: Number(form.discount || 0),
+      tax_rate: Number(form.tax_rate || 0),
+
       totals: {
         subtotal_sell: subtotalSell.value,
         subtotal_cost: subtotalCost.value,
@@ -619,76 +593,154 @@ export function useQuoteCreatePage() {
         profit_total: profitTotal.value,
         profit_percent: profitPercent.value,
       },
+
+      dimensions: dimensionRows.value.map(row => ({
+        pieces: Number(row.pieces || 0) || null,
+        length: Number(row.length || 0),
+        width: Number(row.width || 0),
+        height: Number(row.height || 0),
+        weight: Number(row.weight || 0),
+        container_type: row.container_type || null,
+      })),
+
+      charges: chargeLines.value.map(line => ({
+        description: line.description || null,
+        qty: Number(line.qty || 0),
+        uom: line.uom || null,
+        cost: Number(line.cost || 0),
+        markup_percent: Number(line.markup_percent || 0),
+      })),
+    } as any
+  }
+
+  async function fetchCustomers(query = "") {
+    loadingCustomers.value = true
+
+    try {
+      const response = await http.get("/contacts", {
+        params: {
+          q: query || undefined,
+          per_page: 20,
+        },
+      })
+
+      const rows = response.data?.data ?? response.data ?? []
+      customerSuggestions.value = Array.isArray(rows) ? rows.map(mapContactToCustomerOption) : []
+    } catch {
+      customerSuggestions.value = []
+    } finally {
+      loadingCustomers.value = false
     }
   }
 
-  function loadQuoteForEdit(id: number) {
-    const quote = {
-      id,
-      quote_ref: `QUO-2026-${String(id).padStart(4, "0")}`,
-      quote_type: "export" as QuoteType,
-      mode_of_transport: "air" as TransportMode,
-      customer_id: 1,
-      customer_ref: "PO-2026-001",
-      contact_index: 0,
-      currency: "GBP",
-      incoterm: "DAP",
-      origin: "London Heathrow",
-      destination: "Dubai DXB",
-      commodity: "Electronics",
-      goods_description: "General Cargo - Electronic Components",
-      terms_conditions: CONDITIONS.air,
-      charges: [
+  function mapContactToCustomerOption(item: any): CustomerOption {
+    const companyName = item.company_name ?? item.name ?? item.full_name ?? "Unnamed Customer"
+    const contactName = item.contact_name ?? item.name ?? companyName
+
+    return {
+      id: Number(item.id),
+      name: companyName,
+      account_number: item.account_number ?? "",
+      contacts: [
         {
-          id: 1,
-          description: "Freight Charge",
-          qty: 1,
-          uom: "Per Shipment",
-          cost: 850,
-          markup_percent: 25,
-        },
-      ],
-      dimensions: [
-        {
-          id: 1,
-          pieces: 10,
-          length: 60,
-          width: 40,
-          height: 30,
-          weight: 120,
-          container_type: "",
+          name: contactName,
+          email: item.email ?? "",
+          phone: item.phone ?? item.mobile ?? "",
         },
       ],
     }
+  }
 
-    quoteType.value = quote.quote_type
-    mode.value = quote.mode_of_transport
+  async function loadQuoteForEdit(id: number) {
+    const quote = await quoteStore.fetchQuote(id)
 
-    const customer = CUSTOMERS.find(item => item.id === quote.customer_id) ?? null
-    selectedCustomer.value = customer
+    fillFormFromQuote(quote)
+  }
+
+  function fillFormFromQuote(quote: TransportQuote) {
+    quoteType.value = isQuoteType(String(quote.quote_type)) ? (quote.quote_type as QuoteType) : null
+    mode.value = isTransportMode(String(quote.mode_of_transport))
+      ? (quote.mode_of_transport as TransportMode)
+      : null
+
+    form.quote_ref = quote.quote_ref ?? generateQuoteRef()
     form.customer_id = quote.customer_id
+    form.customer_ref = quote.customer_ref ?? ""
+    form.contact_name = quote.contact_name ?? ""
+    form.contact_email = quote.contact_email ?? ""
+    form.contact_phone = quote.contact_phone ?? ""
+    form.quote_date = fromApiDate(quote.quote_date)
+    form.follow_up_date = fromApiDate(quote.follow_up_date)
+    form.valid_until = fromApiDate(quote.valid_until)
+    form.currency = quote.currency ?? "GBP"
+    form.incoterm = quote.incoterm ?? "DAP"
+    form.origin = quote.origin ?? ""
+    form.destination = quote.destination ?? ""
+    form.etd = fromApiDate(quote.etd)
+    form.eta = fromApiDate(quote.eta)
+    form.commodity = quote.commodity ?? ""
+    form.vehicle_type = quote.vehicle_type ?? ""
+    form.cargo_class = quote.cargo_class ?? ""
+    form.container_type = quote.container_type ?? ""
+    form.load_type = quote.load_type ?? ""
+    form.goods_description = quote.goods_description ?? ""
+    form.is_hazardous = Boolean(quote.is_hazardous)
+    form.hazardous_class = quote.hazardous_class ?? ""
+    form.un_number = quote.un_number ?? ""
+    form.packing_group = quote.packing_group ?? ""
+    form.conditions_preset = quote.conditions_preset ?? ""
+    form.terms_conditions = quote.terms_conditions ?? ""
+    form.validity_period = String(quote.validity_period ?? "30")
+    form.note = quote.note ?? ""
+    form.discount = Number(quote.discount || 0)
+    form.tax_rate = Number(quote.tax_rate || 0)
 
-    if (customer) {
-      selectedContactIndex.value = quote.contact_index
-      const contact = customer.contacts[quote.contact_index]
+    if (quote.customer_contact) {
+      selectedCustomer.value = {
+        id: quote.customer_contact.id,
+        name: quote.customer_contact.company_name ?? "",
+        account_number: quote.customer_contact.account_number ?? "",
+        contacts: [
+          {
+            name: quote.contact_name ?? quote.customer_contact.company_name ?? "",
+            email: quote.contact_email ?? quote.customer_contact.email ?? "",
+            phone:
+              quote.contact_phone ??
+              quote.customer_contact.phone ??
+              quote.customer_contact.mobile ??
+              "",
+          },
+        ],
+      }
 
-      form.contact_name = contact?.name ?? ""
-      form.contact_email = contact?.email ?? ""
-      form.contact_phone = contact?.phone ?? ""
+      selectedContactIndex.value = 0
     }
 
-    form.quote_ref = quote.quote_ref
-    form.customer_ref = quote.customer_ref
-    form.currency = quote.currency
-    form.incoterm = quote.incoterm
-    form.origin = quote.origin
-    form.destination = quote.destination
-    form.commodity = quote.commodity
-    form.goods_description = quote.goods_description
-    form.terms_conditions = quote.terms_conditions ?? ""
+    dimensionRows.value = quote.dimensions.length
+      ? quote.dimensions.map(row => ({
+          id: row.id ?? Date.now() + Math.random(),
+          pieces: Number(row.pieces || 1),
+          length: Number(row.length || 0),
+          width: Number(row.width || 0),
+          height: Number(row.height || 0),
+          weight: Number(row.weight || 0),
+          container_type: row.container_type ?? "",
+        }))
+      : []
 
-    dimensionRows.value = quote.dimensions
-    chargeLines.value = quote.charges
+    chargeLines.value = Array.isArray(quote.charges)
+      ? quote.charges.map((line: any) => ({
+          id: line.id ?? Date.now() + Math.random(),
+          description: line.description ?? "Freight Charge",
+          qty: Number(line.qty || 1),
+          uom: line.uom ?? "Per Shipment",
+          cost: Number(line.cost || 0),
+          markup_percent: Number(line.markup_percent || 0),
+        }))
+      : []
+
+    if (!dimensionRows.value.length) addDimensionRow()
+    if (!chargeLines.value.length) addChargeLine()
   }
 
   function money(value: number) {
@@ -702,11 +754,32 @@ export function useQuoteCreatePage() {
     return `QUO-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 9000) + 1000)}`
   }
 
-  onMounted(() => {
-    customerSuggestions.value = [...CUSTOMERS]
+  function toApiDate(value: Date | string | null) {
+    if (!value) return null
+    if (typeof value === "string") return value
+
+    const year = value.getFullYear()
+    const month = String(value.getMonth() + 1).padStart(2, "0")
+    const day = String(value.getDate()).padStart(2, "0")
+
+    return `${year}-${month}-${day}`
+  }
+
+  function fromApiDate(value: string | null) {
+    if (!value) return null
+
+    const date = new Date(`${value}T00:00:00`)
+    return Number.isNaN(date.getTime()) ? null : date
+  }
+
+  onMounted(async () => {
+    await fetchCustomers()
 
     if (isEditMode.value && quoteId.value) {
-      loadQuoteForEdit(quoteId.value)
+      await loadQuoteForEdit(quoteId.value)
+    } else {
+      addDimensionRow()
+      addChargeLine("Freight Charge")
     }
   })
 
@@ -715,7 +788,8 @@ export function useQuoteCreatePage() {
     pageStatusLabel,
     formTitle,
     saveButtonLabel,
-    isEditMode,
+    saving,
+    error,
 
     QUOTE_TYPES,
     availableModes,

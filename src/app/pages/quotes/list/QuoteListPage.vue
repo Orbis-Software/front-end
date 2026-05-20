@@ -65,6 +65,7 @@
             responsiveLayout="scroll"
             class="quotes-table"
             paginator
+            :loading="loading"
             :rows="rows"
             :totalRecords="filteredItems.length"
             :first="firstRow"
@@ -130,7 +131,9 @@
 
             <Column header="Valid Until" style="width: 160px">
               <template #body="{ data }">
-                <span class="quotes-list-page__plain-value">{{ data.valid_until }}</span>
+                <span class="quotes-list-page__plain-value">
+                  {{ data.valid_until || "—" }}
+                </span>
               </template>
             </Column>
 
@@ -142,7 +145,7 @@
               </template>
             </Column>
 
-            <Column header="Actions" style="width: 260px">
+            <Column header="Actions" style="width: 280px">
               <template #body="{ data }">
                 <div class="quotes-list-page__row-actions">
                   <template v-if="data.status === 'draft'">
@@ -168,7 +171,7 @@
                       text
                       class="quotes-list-page__approve-btn"
                       icon="pi pi-check"
-                      label="Approve"
+                      label="Accept"
                       @click="openApprovalModal(data)"
                     />
 
@@ -176,12 +179,12 @@
                       text
                       class="quotes-list-page__decline-btn"
                       icon="pi pi-times"
-                      label="Decline"
+                      label="Reject"
                       @click="openDeclineModal(data)"
                     />
                   </template>
 
-                  <template v-else-if="data.status === 'approved'">
+                  <template v-else-if="data.status === 'accepted'">
                     <Button
                       text
                       class="quotes-list-page__convert-btn"
@@ -191,7 +194,7 @@
                     />
                   </template>
 
-                  <template v-else-if="data.status === 'declined'">
+                  <template v-else-if="data.status === 'rejected'">
                     <Button
                       text
                       class="quotes-list-page__delete-btn"
@@ -199,6 +202,10 @@
                       label="Delete"
                       @click="openDeleteModal(data)"
                     />
+                  </template>
+
+                  <template v-else>
+                    <Button text icon="pi pi-eye" label="View" @click="onView(data.id)" />
                   </template>
                 </div>
               </template>
@@ -247,12 +254,20 @@
       </div>
 
       <template #footer>
-        <Button label="Cancel" severity="secondary" outlined @click="closeActionDialog" />
+        <Button
+          label="Cancel"
+          severity="secondary"
+          outlined
+          :disabled="actionProcessing"
+          @click="closeActionDialog"
+        />
 
         <Button
           :label="actionConfirmLabel"
           :icon="actionConfirmIcon"
           :class="actionConfirmClass"
+          :loading="actionProcessing"
+          :disabled="actionProcessing"
           @click="confirmQuoteAction"
         />
       </template>
@@ -284,6 +299,8 @@ const {
   paginatedItems,
   rows,
   firstRow,
+  loading,
+  actionProcessing,
   actionDialogVisible,
   selectedQuote,
   selectedAction,
