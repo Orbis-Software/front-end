@@ -2,7 +2,15 @@
   <section class="quote-details-page">
     <Toast />
 
-    <div class="quote-details-page__envelope">
+    <div v-if="loading" class="quote-details-page__envelope">
+      <section class="quote-details-page__card">Loading quotation...</section>
+    </div>
+
+    <div v-else-if="!quote" class="quote-details-page__envelope">
+      <section class="quote-details-page__card">Quotation not found.</section>
+    </div>
+
+    <div v-else class="quote-details-page__envelope">
       <header class="quote-details-page__header">
         <div>
           <Button
@@ -16,9 +24,9 @@
 
           <h1 class="quote-details-page__title">
             {{ quote.quote_number }}
-            <small
-              >{{ quote.customer_name }} · {{ prettify(quote.mode_of_transport) }} Freight</small
-            >
+            <small>
+              {{ quote.customer_name }} · {{ prettify(quote.mode_of_transport) }} Freight
+            </small>
           </h1>
         </div>
 
@@ -37,20 +45,28 @@
           />
 
           <Button
-            v-if="canTakeAction"
-            label="Approve"
+            v-if="quote.status === 'sent'"
+            label="Accept"
             icon="pi pi-check"
             class="quote-details-page__approve-btn"
             @click="openActionModal('approve')"
           />
 
           <Button
-            v-if="canTakeAction"
-            label="Decline"
+            v-if="quote.status === 'sent'"
+            label="Reject"
             icon="pi pi-times"
             severity="danger"
             outlined
             @click="openActionModal('decline')"
+          />
+
+          <Button
+            v-if="quote.status === 'accepted'"
+            label="Convert to Job"
+            icon="pi pi-briefcase"
+            class="quote-details-page__approve-btn"
+            @click="openActionModal('convert')"
           />
         </div>
       </header>
@@ -62,27 +78,27 @@
           <div class="quote-details-page__meta-grid">
             <div>
               <span>Contact</span>
-              <strong>{{ quote.contact_name }}</strong>
+              <strong>{{ quote.contact_name || "—" }}</strong>
             </div>
 
             <div>
               <span>Email</span>
-              <strong>{{ quote.contact_email }}</strong>
+              <strong>{{ quote.contact_email || "—" }}</strong>
             </div>
 
             <div>
               <span>Phone</span>
-              <strong>{{ quote.contact_phone }}</strong>
+              <strong>{{ quote.contact_phone || "—" }}</strong>
             </div>
 
             <div>
               <span>Quote Date</span>
-              <strong>{{ quote.quote_date }}</strong>
+              <strong>{{ quote.quote_date || "—" }}</strong>
             </div>
 
             <div>
               <span>Follow Up</span>
-              <strong>{{ quote.follow_up_date }}</strong>
+              <strong>{{ quote.follow_up_date || "—" }}</strong>
             </div>
 
             <div>
@@ -92,12 +108,12 @@
 
             <div>
               <span>Incoterms</span>
-              <strong>{{ quote.incoterms }}</strong>
+              <strong>{{ quote.incoterms || "—" }}</strong>
             </div>
 
             <div>
               <span>Validity</span>
-              <strong>{{ quote.validity }}</strong>
+              <strong>{{ quote.validity || "—" }}</strong>
             </div>
           </div>
         </div>
@@ -117,22 +133,22 @@
           <div class="quote-details-page__info-grid">
             <div>
               <span>Origin</span>
-              <strong>{{ quote.origin }}</strong>
+              <strong>{{ quote.origin || "—" }}</strong>
             </div>
 
             <div>
               <span>Destination</span>
-              <strong>{{ quote.destination }}</strong>
+              <strong>{{ quote.destination || "—" }}</strong>
             </div>
 
             <div>
               <span>Est. Departure</span>
-              <strong>{{ quote.etd }}</strong>
+              <strong>{{ quote.etd || "—" }}</strong>
             </div>
 
             <div>
               <span>Est. Arrival</span>
-              <strong>{{ quote.eta }}</strong>
+              <strong>{{ quote.eta || "—" }}</strong>
             </div>
 
             <div>
@@ -148,7 +164,7 @@
 
           <div class="quote-details-page__goods">
             <span>Goods Description</span>
-            <strong>{{ quote.goods_description }}</strong>
+            <strong>{{ quote.goods_description || "—" }}</strong>
           </div>
 
           <div v-if="quote.is_hazardous" class="quote-details-page__hazard">
@@ -243,7 +259,7 @@
           <h2>Terms & Conditions</h2>
         </div>
 
-        <pre class="quote-details-page__terms">{{ quote.terms_conditions }}</pre>
+        <pre class="quote-details-page__terms">{{ quote.terms_conditions || "—" }}</pre>
       </section>
 
       <section v-if="quote.internal_notes" class="quote-details-page__card">
@@ -281,7 +297,7 @@
             </div>
           </div>
 
-          <div class="quote-details-page__dialog-field">
+          <div v-if="selectedAction !== 'convert'" class="quote-details-page__dialog-field">
             <label>Notes</label>
             <Textarea
               v-model="actionNotes"
@@ -293,12 +309,20 @@
         </div>
 
         <template #footer>
-          <Button label="Cancel" severity="secondary" outlined @click="closeActionModal" />
+          <Button
+            label="Cancel"
+            severity="secondary"
+            outlined
+            :disabled="actionProcessing"
+            @click="closeActionModal"
+          />
 
           <Button
             :label="actionConfirmLabel"
             :icon="actionConfirmIcon"
             :class="actionConfirmClass"
+            :loading="actionProcessing"
+            :disabled="actionProcessing"
             @click="confirmAction"
           />
         </template>
@@ -321,14 +345,16 @@ import { useQuoteDetailsPage } from "./QuoteDetailsPage"
 
 const {
   quote,
+  loading,
+  actionProcessing,
   actionDialogVisible,
+  selectedAction,
   actionNotes,
   actionDialogTitle,
   actionDialogMessage,
   actionConfirmLabel,
   actionConfirmIcon,
   actionConfirmClass,
-  canTakeAction,
   onBack,
   onEdit,
   openActionModal,

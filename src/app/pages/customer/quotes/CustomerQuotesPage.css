@@ -1,68 +1,362 @@
-@import "../shipments/CustomerShipmentsPage.css";
-
-.quote-alert {
-  background: #fff3e0;
-  border: 1px solid #fde68a;
-  border-radius: 14px;
-  padding: 16px 18px;
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.quote-alert p {
-  margin: 4px 0 0;
-  color: #b45309;
-}
-
-.primary-btn.small {
-  padding: 8px 14px;
-}
-
-.quote-list {
+.customer-quotes-page {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 1rem;
+  padding: 1.25rem;
+  min-height: 100%;
+  background: var(--bg-page);
 }
 
-.quote-card {
-  background: #fff;
-  border: 1px solid #c7c7c7;
-  border-radius: 14px;
-  padding: 20px;
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 20px;
-}
-
-.quote-ref {
+.customer-quotes-page__header {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 1rem;
-  font-weight: 800;
+  justify-content: space-between;
+  gap: 1rem;
 }
 
-.quote-card p {
-  margin: 6px 0 0;
-  color: #737373;
-}
-
-.quote-meta {
+.customer-quotes-page__title-wrap {
   display: flex;
-  flex-wrap: wrap;
-  gap: 14px;
-  margin-top: 12px;
-  color: #737373;
-  font-size: 0.85rem;
+  flex-direction: column;
+  gap: 0.25rem;
 }
 
-.quote-right {
-  text-align: right;
+.customer-quotes-page__title {
+  margin: 0;
+  font-family: var(--font-accent);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text);
 }
 
-.quote-amount {
-  font-size: 1.3rem;
+.customer-quotes-page__card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+.customer-quotes-page__tabs {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  padding: 0 14px;
+  background: #efefef;
+  border-top: 1px solid #ededed;
+  border-bottom: 1px solid #d9d9d9;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+}
+
+.customer-quotes-page__tab {
+  appearance: none;
+  -webkit-appearance: none;
+  border: 1px solid transparent;
+  border-bottom: none;
+  outline: none;
+  box-shadow: none;
+  cursor: pointer;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  height: 44px;
+  padding: 0 16px;
+  margin-top: 8px;
+
+  border-radius: 10px 10px 0 0;
+  background: transparent;
+  color: #5c5c5c;
+  text-decoration: none;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 700;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.customer-quotes-page__tab:hover {
+  color: #222;
+  background: rgba(255, 255, 255, 0.45);
+}
+
+.customer-quotes-page__tab--active {
+  background: #fff;
+  color: #141414;
+  border-color: #d9d9d9;
+  position: relative;
+  top: 1px;
+}
+
+.customer-quotes-page__tab-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: #d9d9d9;
+  color: #333;
+  font-size: 12px;
   font-weight: 800;
-  margin-bottom: 10px;
+}
+
+.customer-quotes-page__tab--active .customer-quotes-page__tab-count {
+  background: #141414;
+  color: #fff;
+}
+
+.customer-quotes-page__content {
+  padding: 1rem;
+}
+
+.customer-quotes-page__primary-btn {
+  appearance: none;
+  border: 1px solid #141414;
+  border-radius: 10px;
+  min-height: 38px;
+  padding: 0 14px;
+  background: #141414;
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 800;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.customer-quotes-page__primary-btn:hover {
+  background: #2a2a2a;
+  border-color: #2a2a2a;
+}
+
+.customer-quotes-page__table-card {
+  background: #fff;
+  border: 1px solid #d9d9d9;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.customer-quotes-page__table-head,
+.customer-quotes-page__table-row {
+  display: grid;
+  grid-template-columns: 1.1fr 1.4fr 0.8fr 1.1fr 0.8fr 0.8fr 1.3fr;
+  gap: 14px;
+  align-items: center;
+}
+
+.customer-quotes-page__table-head {
+  padding: 14px 18px;
+  background: #f6f6f6;
+  border-bottom: 1px solid #d9d9d9;
+  color: #666;
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.customer-quotes-page__table-row {
+  padding: 18px;
+  border-bottom: 1px solid #ececec;
+}
+
+.customer-quotes-page__table-row:last-child {
+  border-bottom: none;
+}
+
+.customer-quotes-page__quote-cell,
+.customer-quotes-page__table-row > div {
+  min-width: 0;
+}
+
+.customer-quotes-page__quote-link {
+  appearance: none;
+  border: none;
+  background: transparent;
+  padding: 0;
+  color: #141414;
+  font-size: 14px;
+  font-weight: 900;
+  cursor: pointer;
+  text-align: left;
+}
+
+.customer-quotes-page__quote-link:hover {
+  text-decoration: underline;
+}
+
+.customer-quotes-page__cell-subtext {
+  display: block;
+  margin-top: 4px;
+  color: #737373;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.customer-quotes-page__info-chip,
+.customer-quotes-page__status-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.customer-quotes-page__info-chip {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.customer-quotes-page__status-chip--amber {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.customer-quotes-page__status-chip--green {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.customer-quotes-page__status-chip--blue {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.customer-quotes-page__status-chip--red {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.customer-quotes-page__status-chip--gray {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.customer-quotes-page__amount {
+  font-weight: 900;
+  color: #141414;
+}
+
+.customer-quotes-page__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.customer-quotes-page__action-btn {
+  appearance: none;
+  min-height: 32px;
+  padding: 0 11px;
+  border-radius: 9px;
+  border: 1px solid transparent;
+  background: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.customer-quotes-page__action-btn--approve {
+  background: #16a34a;
+  border-color: #16a34a;
+  color: #fff;
+}
+
+.customer-quotes-page__action-btn--approve:hover {
+  background: #15803d;
+  border-color: #15803d;
+}
+
+.customer-quotes-page__action-btn--decline {
+  border-color: #dc2626;
+  color: #dc2626;
+}
+
+.customer-quotes-page__action-btn--decline:hover {
+  background: #fef2f2;
+}
+
+.customer-quotes-page__action-btn--download {
+  border-color: #c7c7c7;
+  color: #333;
+}
+
+.customer-quotes-page__action-btn--download:hover:not(:disabled) {
+  background: #f7f7f7;
+  border-color: #999;
+}
+
+.customer-quotes-page__action-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.customer-quotes-page__empty {
+  padding: 24px;
+  text-align: center;
+  color: #737373;
+  font-weight: 700;
+}
+
+@media (max-width: 1200px) {
+  .customer-quotes-page__table-head {
+    display: none;
+  }
+
+  .customer-quotes-page__table-row {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .customer-quotes-page__actions {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 768px) {
+  .customer-quotes-page {
+    padding: 1rem;
+  }
+
+  .customer-quotes-page__header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .customer-quotes-page__tabs {
+    padding: 0 10px;
+  }
+
+  .customer-quotes-page__content {
+    padding: 0.75rem;
+  }
+
+  .customer-quotes-page__tab {
+    min-height: 40px;
+    height: 40px;
+    padding: 0 14px;
+    margin-top: 6px;
+    font-size: 12px;
+  }
 }

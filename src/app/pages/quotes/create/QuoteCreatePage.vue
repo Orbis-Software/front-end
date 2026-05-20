@@ -1,5 +1,7 @@
 <template>
   <div class="quote-page">
+    <Toast />
+
     <div class="quote-top">
       <div class="quote-title">
         <i class="pi pi-file-edit" />
@@ -22,6 +24,10 @@
           Find Quote
         </Button>
       </div>
+    </div>
+
+    <div v-if="error" class="card section" style="border-color: #fecaca; color: #991b1b">
+      {{ error }}
     </div>
 
     <section class="card section">
@@ -561,13 +567,10 @@
 
           <div class="totals-box">
             <div class="totals-row">
-              <span>Subtotal (Sell)</span>
-              <strong>{{ subtotalSellDisplay }}</strong>
+              <span>Subtotal (Sell)</span><strong>{{ subtotalSellDisplay }}</strong>
             </div>
-
             <div class="totals-row">
-              <span>Subtotal (Cost)</span>
-              <strong>{{ subtotalCostDisplay }}</strong>
+              <span>Subtotal (Cost)</span><strong>{{ subtotalCostDisplay }}</strong>
             </div>
 
             <div class="totals-row">
@@ -594,36 +597,35 @@
             </div>
 
             <div class="totals-row">
-              <span>Tax on Sell</span>
-              <strong>{{ taxAmountDisplay }}</strong>
+              <span>Tax on Sell</span><strong>{{ taxAmountDisplay }}</strong>
             </div>
-
             <div class="totals-row">
-              <span>Total excl. Tax</span>
-              <strong>{{ totalExclTaxDisplay }}</strong>
+              <span>Total excl. Tax</span><strong>{{ totalExclTaxDisplay }}</strong>
             </div>
-
             <div class="totals-row grand">
-              <span>Total incl. Tax</span>
-              <strong>{{ totalInclTaxDisplay }}</strong>
+              <span>Total incl. Tax</span><strong>{{ totalInclTaxDisplay }}</strong>
             </div>
-
             <div class="totals-row profit">
-              <span>Profit Total</span>
-              <strong>{{ profitTotalDisplay }}</strong>
+              <span>Profit Total</span><strong>{{ profitTotalDisplay }}</strong>
             </div>
-
             <div class="totals-row profit">
-              <span>Profit %</span>
-              <strong>{{ profitPercentDisplay }}</strong>
+              <span>Profit %</span><strong>{{ profitPercentDisplay }}</strong>
             </div>
           </div>
 
           <div class="final-actions">
-            <Button class="btn" outlined type="button" @click="onCancel">Cancel</Button>
+            <Button class="btn" outlined type="button" :disabled="saving" @click="onCancel"
+              >Cancel</Button
+            >
 
-            <Button class="btn orbis-primary" type="button" @click="onSave">
-              <i class="pi pi-check" style="margin-right: 8px" />
+            <Button
+              class="btn orbis-primary"
+              type="button"
+              :loading="saving"
+              :disabled="saving"
+              @click="onSave"
+            >
+              <i v-if="!saving" class="pi pi-check" style="margin-right: 8px" />
               {{ saveButtonLabel }}
             </Button>
           </div>
@@ -655,6 +657,8 @@ const {
   pageStatusLabel,
   formTitle,
   saveButtonLabel,
+  saving,
+  error,
 
   QUOTE_TYPES,
   availableModes,
