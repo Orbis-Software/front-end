@@ -44,6 +44,7 @@ const ContactsImportPage = () => import("@/app/pages/contacts/import/ContactsImp
 
 const ConsolidationPage = () => import("@/app/pages/consolidations/ConsolidationPage.vue")
 const SettingsPage = () => import("@/app/pages/general-settings/GeneralSettingsPage.vue")
+const TmsListPage = () => import("@/app/pages/tms/shared/TmsListPage.vue")
 
 const MeasurementsUnitsTab = () =>
   import("@/app/pages/general-settings/tabs/MeasurementsUnitsTab.vue")
@@ -324,13 +325,15 @@ export const routes: RouteRecordRaw[] = [
       {
         path: "invoices",
         name: "acc.invoices",
-        component: PlaceholderPage,
+        component: TmsListPage,
+        props: { tableKey: "invoices" },
         meta: { title: "Invoices" },
       },
       {
         path: "reports",
         name: "mgmt.reports",
-        component: PlaceholderPage,
+        component: TmsListPage,
+        props: { tableKey: "reports" },
         meta: { title: "Reports" },
       },
 

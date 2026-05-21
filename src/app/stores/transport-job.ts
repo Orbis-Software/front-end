@@ -3,6 +3,7 @@ import { ref } from "vue"
 
 import transportJobs from "@/app/services/transport-jobs"
 import type { CollectionNotePreviewPayload } from "@/app/services/transport-jobs/collection-note-preview"
+import jobPdfService from "@/app/services/transport-jobs/job-pdf"
 import type {
   TransportJob,
   PaginatedResponse,
@@ -152,6 +153,16 @@ export const useTransportJobStore = defineStore("transportJob", () => {
     }
   }
 
+  async function jobPdf(id: number) {
+    loading.value = true
+
+    try {
+      return await jobPdfService(id)
+    } finally {
+      loading.value = false
+    }
+  }
+
   function setCreatedBy(value: number | null) {
     createdBy.value = value
   }
@@ -188,6 +199,7 @@ export const useTransportJobStore = defineStore("transportJob", () => {
     update,
     remove,
     collectionNotePreview,
+    jobPdf,
 
     setCreatedBy,
     resetFilters,

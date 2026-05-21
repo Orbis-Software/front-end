@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import "./JobDetailsPage.css"
-import { computed } from "vue"
+import { computed, ref } from "vue"
 import { RouterLink, RouterView } from "vue-router"
+import { useToast } from "primevue/usetoast"
 
 import Button from "primevue/button"
 import Dropdown from "primevue/dropdown"
@@ -9,6 +10,7 @@ import InputText from "primevue/inputtext"
 import Calendar from "primevue/calendar"
 
 import JobProgressStepper from "@/app/components/jobs/details/JobProgressStepper.vue"
+import { useTransportJobStore } from "@/app/stores/transport-job"
 import { useJobDetailsPage } from "./JobDetailsPage.logic"
 
 const {
@@ -17,14 +19,20 @@ const {
   getTabCount,
   title,
   subtitle,
+  job,
   form,
   customerOptions,
   modeOptions,
   statusOptions,
   loading,
+  initialLoading,
   saving,
   save,
 } = useJobDetailsPage()
+
+const toast = useToast()
+const transportJobStore = useTransportJobStore()
+const pdfLoading = ref(false)
 
 const progressSteps = computed(() => [
   {
@@ -85,12 +93,80 @@ const progressSteps = computed(() => [
   },
 ])
 
+function pdfFileName() {
+  const number = form.job_number || job.value?.job_number || `job-${job.value?.id ?? "details"}`
+  return `${number}`.replace(/[^A-Za-z0-9_-]+/g, "-") + ".pdf"
+}
+
+function openBlob(blob: Blob, download = false) {
+  const url = URL.createObjectURL(blob)
+
+  if (download) {
+    const link = document.createElement("a")
+    link.href = url
+    link.download = pdfFileName()
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000)
+    return
+  }
+
+  window.open(url, "_blank", "noopener,noreferrer")
+  window.setTimeout(() => URL.revokeObjectURL(url), 60000)
+}
+
+async function extractPdfError(error: any) {
+  const data = error?.response?.data
+
+  if (data instanceof Blob) {
+    const text = await data.text()
+
+    try {
+      const parsed = JSON.parse(text)
+      return parsed?.message ?? text
+    } catch {
+      return text || "Unable to generate the job PDF."
+    }
+  }
+
+  return error?.response?.data?.message ?? error?.message ?? "Unable to generate the job PDF."
+}
+
+async function loadPdf(download = false) {
+  const id = Number(job.value?.id)
+
+  if (!Number.isFinite(id) || id <= 0) return
+
+  pdfLoading.value = true
+
+  try {
+    const blob = await transportJobStore.jobPdf(id)
+
+    if (!(blob instanceof Blob) || blob.type !== "application/pdf") {
+      const text = blob instanceof Blob ? await blob.text() : ""
+      throw new Error(text || "The server did not return a PDF.")
+    }
+
+    openBlob(blob, download)
+  } catch (error: any) {
+    toast.add({
+      severity: "error",
+      summary: "PDF failed",
+      detail: await extractPdfError(error),
+      life: 4500,
+    })
+  } finally {
+    pdfLoading.value = false
+  }
+}
+
 function onPrint() {
-  window.print()
+  loadPdf(false)
 }
 
 function onExportPdf() {
-  window.print()
+  loadPdf(true)
 }
 
 function onBookJob() {
@@ -117,8 +193,9 @@ function onBookJob() {
           <Button
             class="job-action-btn"
             icon="pi pi-print"
-            label="Print"
-            :disabled="loading"
+            :label="pdfLoading ? 'Opening...' : 'Print'"
+            :loading="pdfLoading"
+            :disabled="loading || pdfLoading"
             @click="onPrint"
           />
 
@@ -126,7 +203,7 @@ function onBookJob() {
             class="job-action-btn"
             icon="pi pi-download"
             label="Export"
-            :disabled="loading"
+            :disabled="loading || pdfLoading"
             @click="onExportPdf"
           />
 
@@ -260,9 +337,13 @@ function onBookJob() {
     </div>
 
     <div class="job-content-shell">
-      <div v-if="loading" class="job-details-page__loading">Loading job details...</div>
+      <div v-if="initialLoading" class="job-details-page__loading">Loading job details...</div>
 
-      <RouterView v-else />
+      <RouterView v-else v-slot="{ Component }">
+        <KeepAlive>
+          <component :is="Component" />
+        </KeepAlive>
+      </RouterView>
     </div>
   </section>
 </template>

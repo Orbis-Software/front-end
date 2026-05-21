@@ -97,6 +97,7 @@ const selectedCustomerRef = ref<Contact | null>(null)
 const addressModalVisibleRef = ref(false)
 const addressModalTargetRef = ref<AddressTarget>("origin")
 const addressModalSavingRef = ref(false)
+const initialLoadingRef = ref(false)
 
 export type JobDetailsContext = {
   job: typeof jobRef
@@ -395,7 +396,7 @@ export function useJobDetailsPage() {
   })
 
   const job = jobRef
-  const loading = computed(() => transportJobStore.loading || referenceDataStore.loading)
+  const loading = computed(() => initialLoadingRef.value)
   const saving = savingRef
 
   const form = reactive<JobDetailsForm>({
@@ -867,8 +868,14 @@ export function useJobDetailsPage() {
   provide("jobDetails", context)
 
   onMounted(async () => {
-    await Promise.all([loadCustomers(), loadReferenceData()])
-    await load()
+    initialLoadingRef.value = true
+
+    try {
+      await Promise.all([loadCustomers(), loadReferenceData()])
+      await load()
+    } finally {
+      initialLoadingRef.value = false
+    }
   })
 
   return {
@@ -888,6 +895,7 @@ export function useJobDetailsPage() {
     statusOptions,
     referenceOptions,
     loading,
+    initialLoading: initialLoadingRef,
     saving,
     addressModalVisible: addressModalVisibleRef,
     addressModalTarget: addressModalTargetRef,

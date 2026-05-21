@@ -1,0 +1,244 @@
+.tms-list-page {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+  min-height: 100%;
+  background: var(--bg-page);
+}
+
+.tms-list-page__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.tms-list-page__title {
+  margin: 0;
+  font-family: var(--font-accent);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.tms-list-page__header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.tms-list-page__search-wrap {
+  position: relative;
+  flex: 0 0 420px;
+  width: 420px;
+  max-width: 100%;
+}
+
+.tms-list-page__search-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  z-index: 2;
+  color: #6b7280;
+  font-size: 15px;
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
+.tms-list-page__search-input {
+  width: 100%;
+  height: 44px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #fff;
+  padding: 0 14px 0 40px;
+  font-size: 14px;
+  outline: none;
+}
+
+.tms-list-page__search-input:focus {
+  border-color: rgba(236, 105, 26, 0.55);
+  box-shadow: 0 0 0 3px rgba(236, 105, 26, 0.12);
+}
+
+.tms-list-page__card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+.tms-list-page__tabs {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  padding: 0 14px;
+  background: #efefef;
+  border-top: 1px solid #ededed;
+  border-bottom: 1px solid #d9d9d9;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.tms-list-page__tab {
+  appearance: none;
+  border: 1px solid transparent;
+  border-bottom: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  height: 44px;
+  padding: 0 16px;
+  margin-top: 8px;
+  border-radius: 10px 10px 0 0;
+  background: transparent;
+  color: #5c5c5c;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.tms-list-page__tab:hover {
+  color: #222;
+  background: rgba(255, 255, 255, 0.45);
+}
+
+.tms-list-page__tab--active {
+  position: relative;
+  top: 1px;
+  background: #fff;
+  border-color: #d9d9d9;
+  color: #141414;
+}
+
+.tms-list-page__content {
+  padding: 1rem;
+}
+
+.tms-list-page__table-wrap {
+  background: #fff;
+  border: 1px solid #dfe5ec;
+  border-radius: 18px;
+  overflow-x: auto;
+}
+
+.tms-list-page__table {
+  width: 100%;
+  min-width: 940px;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.tms-list-page__table th {
+  padding: 16px;
+  background: #f8fafc;
+  border-bottom: 1px solid #e5eaf1;
+  color: #22324a;
+  font-size: 14px;
+  font-weight: 800;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.tms-list-page__table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #e9edf3;
+  color: #22324a;
+  font-size: 14px;
+  vertical-align: middle;
+}
+
+.tms-list-page__table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.tms-list-page__primary {
+  font-weight: 800;
+}
+
+.tms-list-page__chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid #d9dee7;
+  background: #f8fafc;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.tms-list-page__chip--paid,
+.tms-list-page__chip--operational,
+.tms-list-page__chip--customer {
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+  color: #047857;
+}
+
+.tms-list-page__chip--sent,
+.tms-list-page__chip--scheduled {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1d4ed8;
+}
+
+.tms-list-page__chip--draft,
+.tms-list-page__chip--finance {
+  background: #fff7ed;
+  border-color: #fed7aa;
+  color: #c2410c;
+}
+
+.tms-list-page__chip--overdue {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #dc2626;
+}
+
+.tms-list-page__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tms-list-page__empty {
+  padding: 36px 16px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+@media (max-width: 1100px) {
+  .tms-list-page__header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .tms-list-page__header-actions,
+  .tms-list-page__search-wrap {
+    width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .tms-list-page__content {
+    padding: 0.75rem;
+  }
+
+  .tms-list-page__tab {
+    min-height: 40px;
+    height: 40px;
+    padding: 0 14px;
+    margin-top: 6px;
+    font-size: 12px;
+  }
+}

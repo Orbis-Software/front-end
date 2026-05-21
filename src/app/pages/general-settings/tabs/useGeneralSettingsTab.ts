@@ -1,6 +1,11 @@
 import { computed, onMounted, reactive } from "vue"
 import { useReferenceDataStore } from "@/app/stores/reference-data"
 
+type CreateOptionPayload = {
+  name?: string
+  is_default?: boolean
+}
+
 export function useGeneralSettingsTab(group: string) {
   const referenceDataStore = useReferenceDataStore()
   const newItemValues = reactive<Record<number, string>>({})
@@ -13,13 +18,14 @@ export function useGeneralSettingsTab(group: string) {
     }, 0)
   })
 
-  async function addItem(categoryKey: string, categoryId: number) {
-    const name = newItemValues[categoryId]?.trim()
+  async function addItem(categoryKey: string, categoryId: number, payload?: CreateOptionPayload) {
+    const name = (payload?.name ?? newItemValues[categoryId])?.trim()
 
     if (!name) return
 
     await referenceDataStore.createOption(categoryKey, {
       name,
+      is_default: payload?.is_default,
     })
 
     newItemValues[categoryId] = ""
