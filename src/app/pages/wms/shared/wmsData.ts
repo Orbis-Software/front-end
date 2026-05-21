@@ -1,0 +1,644 @@
+import { reactive } from "vue"
+
+export type WmsColumn = {
+  key: string
+  label: string
+}
+
+export type WmsRow = Record<string, string | number>
+
+export type WmsTableConfig = {
+  title: string
+  searchPlaceholder: string
+  columns: WmsColumn[]
+  rows: WmsRow[]
+  statusKey?: string
+}
+
+export type WmsAdminConfig = {
+  title: string
+  singular: string
+  columns: WmsColumn[]
+  rows: WmsRow[]
+  primaryKey: string
+}
+
+export const wmsTables = reactive<Record<string, WmsTableConfig>>({
+  storageAll: {
+    title: "All Consignments",
+    searchPlaceholder: "Search consignment, customer, supplier...",
+    statusKey: "status",
+    columns: [
+      { key: "id", label: "ID" },
+      { key: "customer", label: "Customer" },
+      { key: "supplier", label: "Supplier" },
+      { key: "description", label: "Description" },
+      { key: "qty", label: "Qty" },
+      { key: "weight", label: "Weight" },
+      { key: "location", label: "Location" },
+      { key: "status", label: "Status" },
+      { key: "date", label: "Date" },
+    ],
+    rows: [
+      {
+        id: "CON-A1B2C3",
+        customer: "Greenfield Imports",
+        supplier: "TechSource Ltd",
+        description: "Consumer electronics",
+        qty: 42,
+        weight: "320 kg",
+        location: "A01-L2",
+        status: "In Storage",
+        date: "21 May 2026",
+      },
+      {
+        id: "CON-D4E5F6",
+        customer: "Greenfield Imports",
+        supplier: "Global Imports Co",
+        description: "Retail cartons",
+        qty: 30,
+        weight: "180 kg",
+        location: "A02-L1",
+        status: "Allocated",
+        date: "20 May 2026",
+      },
+      {
+        id: "CON-G7H8I9",
+        customer: "NovaTech Solutions",
+        supplier: "TechSource Ltd",
+        description: "Spare parts",
+        qty: 18,
+        weight: "540 kg",
+        location: "B01-L3",
+        status: "In Storage",
+        date: "18 May 2026",
+      },
+    ],
+  },
+  storageByCustomer: {
+    title: "By Customer",
+    searchPlaceholder: "Search customer...",
+    columns: [
+      { key: "customer", label: "Customer" },
+      { key: "consignments", label: "Consignments" },
+      { key: "qty", label: "Total Qty" },
+      { key: "weight", label: "Total Weight" },
+      { key: "locations", label: "Locations" },
+    ],
+    rows: [
+      {
+        customer: "Greenfield Imports",
+        consignments: 2,
+        qty: 72,
+        weight: "500 kg",
+        locations: "A01-L2, A02-L1",
+      },
+      {
+        customer: "NovaTech Solutions",
+        consignments: 1,
+        qty: 18,
+        weight: "540 kg",
+        locations: "B01-L3",
+      },
+    ],
+  },
+  storageByLocation: {
+    title: "By Location",
+    searchPlaceholder: "Search location...",
+    statusKey: "status",
+    columns: [
+      { key: "location", label: "Location" },
+      { key: "zone", label: "Zone" },
+      { key: "customer", label: "Customer" },
+      { key: "consignment", label: "Consignment" },
+      { key: "weight", label: "Weight" },
+      { key: "status", label: "Status" },
+    ],
+    rows: [
+      {
+        location: "A01-L2",
+        zone: "Ambient",
+        customer: "Greenfield Imports",
+        consignment: "CON-A1B2C3",
+        weight: "320 kg",
+        status: "Occupied",
+      },
+      {
+        location: "A03-L1",
+        zone: "Ambient",
+        customer: "-",
+        consignment: "-",
+        weight: "0 kg",
+        status: "Available",
+      },
+    ],
+  },
+  stockOnHand: {
+    title: "Stock on Hand",
+    searchPlaceholder: "Search SKU, product, barcode...",
+    statusKey: "status",
+    columns: [
+      { key: "sku", label: "SKU" },
+      { key: "product", label: "Product" },
+      { key: "category", label: "Category" },
+      { key: "barcode", label: "Barcode" },
+      { key: "qty", label: "Qty" },
+      { key: "location", label: "Location" },
+      { key: "cost", label: "Cost" },
+      { key: "status", label: "Status" },
+    ],
+    rows: [
+      {
+        sku: "SKU-001",
+        product: "Widget Type A",
+        category: "Electronics",
+        barcode: "5050001001",
+        qty: 250,
+        location: "A01-L2",
+        cost: "£4.25",
+        status: "Active",
+      },
+      {
+        sku: "SKU-002",
+        product: "Component Pack B",
+        category: "Parts",
+        barcode: "5050001002",
+        qty: 8,
+        location: "B01-L3",
+        cost: "£12.90",
+        status: "Low Stock",
+      },
+      {
+        sku: "SKU-003",
+        product: "Assembly Kit C",
+        category: "Kits",
+        barcode: "5050001003",
+        qty: 500,
+        location: "A02-L1",
+        cost: "£8.40",
+        status: "Active",
+      },
+    ],
+  },
+  stockCategory: {
+    title: "By Category",
+    searchPlaceholder: "Search category...",
+    columns: [
+      { key: "category", label: "Category" },
+      { key: "skus", label: "SKUs" },
+      { key: "qty", label: "Total Qty" },
+      { key: "value", label: "Stock Value" },
+    ],
+    rows: [
+      { category: "Electronics", skus: 1, qty: 250, value: "£1,062.50" },
+      { category: "Parts", skus: 1, qty: 8, value: "£103.20" },
+      { category: "Kits", skus: 1, qty: 500, value: "£4,200.00" },
+    ],
+  },
+  stockLow: {
+    title: "Low Stock",
+    searchPlaceholder: "Search low stock...",
+    statusKey: "status",
+    columns: [
+      { key: "sku", label: "SKU" },
+      { key: "product", label: "Product" },
+      { key: "qty", label: "Qty" },
+      { key: "minQty", label: "Min Qty" },
+      { key: "location", label: "Location" },
+      { key: "status", label: "Status" },
+    ],
+    rows: [
+      {
+        sku: "SKU-002",
+        product: "Component Pack B",
+        qty: 8,
+        minQty: 30,
+        location: "B01-L3",
+        status: "Low Stock",
+      },
+    ],
+  },
+  stockValuation: {
+    title: "Valuation",
+    searchPlaceholder: "Search valuation...",
+    columns: [
+      { key: "sku", label: "SKU" },
+      { key: "product", label: "Product" },
+      { key: "qty", label: "Qty" },
+      { key: "unitCost", label: "Unit Cost" },
+      { key: "value", label: "Value" },
+    ],
+    rows: [
+      { sku: "SKU-001", product: "Widget Type A", qty: 250, unitCost: "£4.25", value: "£1,062.50" },
+      { sku: "SKU-002", product: "Component Pack B", qty: 8, unitCost: "£12.90", value: "£103.20" },
+      {
+        sku: "SKU-003",
+        product: "Assembly Kit C",
+        qty: 500,
+        unitCost: "£8.40",
+        value: "£4,200.00",
+      },
+    ],
+  },
+  barcodeLabels: {
+    title: "Barcode Labels",
+    searchPlaceholder: "Search barcode labels...",
+    columns: [
+      { key: "sku", label: "SKU" },
+      { key: "product", label: "Product" },
+      { key: "barcode", label: "Barcode" },
+      { key: "labelSize", label: "Label Size" },
+      { key: "copies", label: "Copies" },
+    ],
+    rows: [
+      {
+        sku: "SKU-001",
+        product: "Widget Type A",
+        barcode: "5050001001",
+        labelSize: "70x35mm",
+        copies: 24,
+      },
+      {
+        sku: "SKU-002",
+        product: "Component Pack B",
+        barcode: "5050001002",
+        labelSize: "70x35mm",
+        copies: 12,
+      },
+    ],
+  },
+  stockAdjustments: {
+    title: "Adjustments",
+    searchPlaceholder: "Search adjustments...",
+    statusKey: "status",
+    columns: [
+      { key: "date", label: "Date" },
+      { key: "sku", label: "SKU" },
+      { key: "product", label: "Product" },
+      { key: "change", label: "Change" },
+      { key: "reason", label: "Reason" },
+      { key: "status", label: "Status" },
+    ],
+    rows: [
+      {
+        date: "21 May 2026",
+        sku: "SKU-002",
+        product: "Component Pack B",
+        change: "-2",
+        reason: "Stock count",
+        status: "Posted",
+      },
+      {
+        date: "20 May 2026",
+        sku: "SKU-001",
+        product: "Widget Type A",
+        change: "+10",
+        reason: "Receipt correction",
+        status: "Posted",
+      },
+    ],
+  },
+  goodsOutReady: {
+    title: "Ready to Pick",
+    searchPlaceholder: "Search ready shipments...",
+    statusKey: "status",
+    columns: [
+      { key: "shipment", label: "Shipment" },
+      { key: "customer", label: "Customer" },
+      { key: "orders", label: "Orders" },
+      { key: "pieces", label: "Pieces" },
+      { key: "carrier", label: "Carrier" },
+      { key: "status", label: "Status" },
+    ],
+    rows: [
+      {
+        shipment: "SHP-2041",
+        customer: "Greenfield Imports",
+        orders: 2,
+        pieces: 42,
+        carrier: "DHL",
+        status: "Ready",
+      },
+      {
+        shipment: "SHP-2042",
+        customer: "NovaTech Solutions",
+        orders: 1,
+        pieces: 18,
+        carrier: "FedEx",
+        status: "Ready",
+      },
+    ],
+  },
+  goodsOutPickLists: {
+    title: "Pick Lists",
+    searchPlaceholder: "Search pick lists...",
+    statusKey: "status",
+    columns: [
+      { key: "pickList", label: "Pick List" },
+      { key: "shipment", label: "Shipment" },
+      { key: "items", label: "Items" },
+      { key: "assignedTo", label: "Assigned To" },
+      { key: "status", label: "Status" },
+    ],
+    rows: [
+      {
+        pickList: "PICK-1001",
+        shipment: "SHP-2041",
+        items: 4,
+        assignedTo: "Ian H",
+        status: "Open",
+      },
+      {
+        pickList: "PICK-1002",
+        shipment: "SHP-2042",
+        items: 2,
+        assignedTo: "Warehouse Team",
+        status: "Open",
+      },
+    ],
+  },
+  goodsOutPackingLists: {
+    title: "Packing Lists",
+    searchPlaceholder: "Search packing lists...",
+    statusKey: "status",
+    columns: [
+      { key: "packingList", label: "Packing List" },
+      { key: "shipment", label: "Shipment" },
+      { key: "cartons", label: "Cartons" },
+      { key: "grossWeight", label: "Gross Weight" },
+      { key: "status", label: "Status" },
+    ],
+    rows: [
+      {
+        packingList: "PACK-9001",
+        shipment: "SHP-2041",
+        cartons: 12,
+        grossWeight: "320 kg",
+        status: "Draft",
+      },
+      {
+        packingList: "PACK-9002",
+        shipment: "SHP-2042",
+        cartons: 8,
+        grossWeight: "540 kg",
+        status: "Draft",
+      },
+    ],
+  },
+  consolidationActive: {
+    title: "Active Shipments",
+    searchPlaceholder: "Search shipment, customer, carrier...",
+    statusKey: "status",
+    columns: [
+      { key: "shipment", label: "Shipment" },
+      { key: "customer", label: "Customer" },
+      { key: "mode", label: "Mode" },
+      { key: "carrier", label: "Carrier" },
+      { key: "pieces", label: "Pieces" },
+      { key: "status", label: "Status" },
+    ],
+    rows: [
+      {
+        shipment: "SHP-2041",
+        customer: "Greenfield Imports",
+        mode: "Road",
+        carrier: "DHL",
+        pieces: 42,
+        status: "Building",
+      },
+      {
+        shipment: "SHP-2042",
+        customer: "NovaTech Solutions",
+        mode: "Air",
+        carrier: "FedEx",
+        pieces: 18,
+        status: "Ready",
+      },
+    ],
+  },
+  consolidationDispatched: {
+    title: "Dispatched",
+    searchPlaceholder: "Search dispatched shipments...",
+    statusKey: "status",
+    columns: [
+      { key: "shipment", label: "Shipment" },
+      { key: "customer", label: "Customer" },
+      { key: "carrier", label: "Carrier" },
+      { key: "dispatchedAt", label: "Dispatched" },
+      { key: "status", label: "Status" },
+    ],
+    rows: [
+      {
+        shipment: "SHP-2039",
+        customer: "Greenfield Imports",
+        carrier: "DPD",
+        dispatchedAt: "18 May 2026",
+        status: "Dispatched",
+      },
+    ],
+  },
+  reportsInbound: {
+    title: "Inbound",
+    searchPlaceholder: "Search inbound report...",
+    columns: [
+      { key: "metric", label: "Metric" },
+      { key: "value", label: "Value" },
+      { key: "period", label: "Period" },
+    ],
+    rows: [
+      { metric: "Received Consignments", value: 18, period: "May 2026" },
+      { metric: "Expected Arrivals", value: 6, period: "Next 7 days" },
+    ],
+  },
+  reportsOutbound: {
+    title: "Outbound",
+    searchPlaceholder: "Search outbound report...",
+    columns: [
+      { key: "metric", label: "Metric" },
+      { key: "value", label: "Value" },
+      { key: "period", label: "Period" },
+    ],
+    rows: [
+      { metric: "Ready to Dispatch", value: 2, period: "Today" },
+      { metric: "Dispatched Shipments", value: 11, period: "May 2026" },
+    ],
+  },
+  reportsStorage: {
+    title: "Storage & Dwell",
+    searchPlaceholder: "Search storage report...",
+    columns: [
+      { key: "customer", label: "Customer" },
+      { key: "consignments", label: "Consignments" },
+      { key: "avgDwell", label: "Avg Dwell" },
+      { key: "weight", label: "Weight" },
+    ],
+    rows: [
+      { customer: "Greenfield Imports", consignments: 2, avgDwell: "4 days", weight: "500 kg" },
+      { customer: "NovaTech Solutions", consignments: 1, avgDwell: "2 days", weight: "540 kg" },
+    ],
+  },
+  reportsCustomer: {
+    title: "Customer Summary",
+    searchPlaceholder: "Search customer summary...",
+    columns: [
+      { key: "customer", label: "Customer" },
+      { key: "inbound", label: "Inbound" },
+      { key: "stored", label: "Stored" },
+      { key: "outbound", label: "Outbound" },
+    ],
+    rows: [
+      { customer: "Greenfield Imports", inbound: 12, stored: 2, outbound: 8 },
+      { customer: "NovaTech Solutions", inbound: 6, stored: 1, outbound: 3 },
+    ],
+  },
+  reportsValuation: {
+    title: "Stock Valuation",
+    searchPlaceholder: "Search stock valuation...",
+    columns: [
+      { key: "category", label: "Category" },
+      { key: "qty", label: "Qty" },
+      { key: "value", label: "Value" },
+    ],
+    rows: [
+      { category: "Electronics", qty: 250, value: "£1,062.50" },
+      { category: "Parts", qty: 8, value: "£103.20" },
+      { category: "Kits", qty: 500, value: "£4,200.00" },
+    ],
+  },
+})
+
+export const wmsAdminLists = reactive<Record<string, WmsAdminConfig>>({
+  customers: {
+    title: "Customers",
+    singular: "Customer",
+    primaryKey: "name",
+    columns: [
+      { key: "name", label: "Name" },
+      { key: "contact", label: "Contact" },
+      { key: "email", label: "Email" },
+      { key: "phone", label: "Phone" },
+    ],
+    rows: [
+      {
+        id: "c1",
+        name: "Greenfield Imports",
+        contact: "Sarah Miles",
+        email: "ops@greenfield.example",
+        phone: "0161 555 0188",
+      },
+      {
+        id: "c2",
+        name: "NovaTech Solutions",
+        contact: "Alex Chen",
+        email: "warehouse@novatech.example",
+        phone: "0113 555 0191",
+      },
+    ],
+  },
+  suppliers: {
+    title: "Suppliers",
+    singular: "Supplier",
+    primaryKey: "name",
+    columns: [
+      { key: "name", label: "Name" },
+      { key: "country", label: "Country" },
+      { key: "contact", label: "Contact" },
+      { key: "email", label: "Email" },
+    ],
+    rows: [
+      {
+        id: "s1",
+        name: "TechSource Ltd",
+        country: "China",
+        contact: "Wei Tan",
+        email: "sales@techsource.example",
+      },
+      {
+        id: "s2",
+        name: "Global Imports Co",
+        country: "Hong Kong",
+        contact: "Maya Wong",
+        email: "ops@globalimports.example",
+      },
+    ],
+  },
+  carriers: {
+    title: "Carriers",
+    singular: "Carrier",
+    primaryKey: "name",
+    columns: [
+      { key: "name", label: "Name" },
+      { key: "service", label: "Service" },
+      { key: "account", label: "Account No." },
+    ],
+    rows: [
+      { id: "ca1", name: "DHL", service: "Road", account: "DHL-7782" },
+      { id: "ca2", name: "FedEx", service: "Air", account: "FDX-4431" },
+    ],
+  },
+  units: {
+    title: "Units",
+    singular: "Unit",
+    primaryKey: "label",
+    columns: [{ key: "label", label: "Label" }],
+    rows: [
+      { id: "u1", label: "Carton" },
+      { id: "u2", label: "Pallet" },
+      { id: "u3", label: "Piece" },
+    ],
+  },
+  categories: {
+    title: "Categories",
+    singular: "Category",
+    primaryKey: "label",
+    columns: [{ key: "label", label: "Label" }],
+    rows: [
+      { id: "cat1", label: "Electronics" },
+      { id: "cat2", label: "Parts" },
+      { id: "cat3", label: "Kits" },
+    ],
+  },
+  goodsTypes: {
+    title: "Goods Types",
+    singular: "Goods Type",
+    primaryKey: "label",
+    columns: [{ key: "label", label: "Label" }],
+    rows: [
+      { id: "gt1", label: "General Cargo" },
+      { id: "gt2", label: "Fragile" },
+      { id: "gt3", label: "Hazardous" },
+    ],
+  },
+  locations: {
+    title: "Locations",
+    singular: "Location",
+    primaryKey: "label",
+    columns: [
+      { key: "label", label: "Slot Label" },
+      { key: "zone", label: "Zone" },
+      { key: "weightCapacity", label: "Weight Capacity" },
+      { key: "status", label: "Status" },
+    ],
+    rows: [
+      { id: "l1", label: "A01-L2", zone: "Ambient", weightCapacity: "500 kg", status: "Active" },
+      { id: "l2", label: "A02-L1", zone: "Ambient", weightCapacity: "500 kg", status: "Active" },
+      { id: "l3", label: "B01-L3", zone: "Secure", weightCapacity: "750 kg", status: "Active" },
+    ],
+  },
+  racks: {
+    title: "Racks",
+    singular: "Rack",
+    primaryKey: "name",
+    columns: [
+      { key: "name", label: "Rack" },
+      { key: "aisle", label: "Aisle" },
+      { key: "bays", label: "Bays" },
+      { key: "levels", label: "Levels" },
+      { key: "capacity", label: "Capacity" },
+    ],
+    rows: [
+      { id: "r1", name: "Rack A", aisle: "A", bays: 6, levels: 3, capacity: "500 kg/slot" },
+      { id: "r2", name: "Rack B", aisle: "B", bays: 4, levels: 4, capacity: "750 kg/slot" },
+    ],
+  },
+})

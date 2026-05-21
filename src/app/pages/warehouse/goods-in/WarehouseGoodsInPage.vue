@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import "./WarehouseGoodsInPage.css"
 import { RouterLink, RouterView } from "vue-router"
+import Button from "primevue/button"
 import { useWarehouseGoodsInPage } from "./WarehouseGoodsInPage"
 import ReceiveConsignmentModal from "@/app/components/warehouse/goods-in/ReceiveConsignmentModal.vue"
 
@@ -25,13 +26,12 @@ const {
       </div>
 
       <div class="warehouse-goods-in-page__actions">
-        <button
-          class="warehouse-goods-in-page__primary-btn"
-          type="button"
+        <Button
+          class="btn btn--primary warehouse-goods-in-page__action-btn"
+          icon="pi pi-plus"
+          label="Receive Consignment"
           @click="onOpenReceiveConsignment"
-        >
-          + Receive Consignment
-        </button>
+        />
       </div>
     </header>
 
