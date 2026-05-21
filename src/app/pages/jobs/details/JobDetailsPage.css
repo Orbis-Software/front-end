@@ -1,10 +1,17 @@
 .job-details-page {
+  --job-field-height: 38px;
+  --job-field-radius: 8px;
+  --job-field-font-size: 12px;
+  --job-field-text: #1a1a18;
+  --job-field-muted: #737373;
+
   display: flex;
   flex-direction: column;
   gap: 0;
-  padding: 1.25rem;
+  padding: 1rem;
   min-height: 100%;
   background: var(--bg-page);
+  font-family: var(--font-body);
 }
 
 /* =========================================
@@ -57,7 +64,8 @@
 
 .job-action-btn {
   height: 38px;
-  font-size: 12px;
+  font-family: var(--font-body) !important;
+  font-size: 12px !important;
   font-weight: 700;
 }
 
@@ -109,7 +117,7 @@
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: #737373;
+  color: var(--job-field-muted);
 }
 
 .job-header-form__field strong {
@@ -121,55 +129,59 @@
 ========================================= */
 .job-header-form__prime {
   width: 100%;
-  height: 38px;
+  height: var(--job-field-height);
 }
 
 .job-header-form__field :deep(.p-dropdown),
 .job-header-form__field :deep(.p-calendar),
 .job-header-form__field :deep(.p-inputtext) {
   width: 100%;
-  height: 38px !important;
-  min-height: 38px !important;
+  height: var(--job-field-height) !important;
+  min-height: var(--job-field-height) !important;
   box-sizing: border-box;
+  font-family: var(--font-body) !important;
+  font-size: var(--job-field-font-size) !important;
+  color: var(--job-field-text);
 }
 
 /* InputText */
 .job-header-form__field :deep(.p-inputtext) {
   width: 100%;
-  height: 38px !important;
-  min-height: 38px !important;
+  height: var(--job-field-height) !important;
+  min-height: var(--job-field-height) !important;
   padding: 0 10px;
-  border-radius: 8px;
-  font-size: 12px;
-  line-height: 38px;
+  border-radius: var(--job-field-radius);
+  font-size: var(--job-field-font-size);
+  line-height: var(--job-field-height);
 }
 
 /* Dropdown */
 .job-header-form__field :deep(.p-dropdown) {
   display: flex;
   align-items: center;
-  border-radius: 8px;
+  border-radius: var(--job-field-radius);
   overflow: hidden;
 }
 
 .job-header-form__field :deep(.p-dropdown-label) {
   display: flex;
   align-items: center;
-  height: 38px !important;
-  min-height: 38px !important;
+  height: var(--job-field-height) !important;
+  min-height: var(--job-field-height) !important;
   padding: 0 10px;
-  font-size: 12px;
-  line-height: 38px;
+  font-family: var(--font-body) !important;
+  font-size: var(--job-field-font-size) !important;
+  line-height: var(--job-field-height);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .job-header-form__field :deep(.p-dropdown-trigger) {
-  width: 38px;
-  min-width: 38px;
-  height: 38px !important;
-  min-height: 38px !important;
+  width: var(--job-field-height);
+  min-width: var(--job-field-height);
+  height: var(--job-field-height) !important;
+  min-height: var(--job-field-height) !important;
   flex-shrink: 0;
 }
 
@@ -181,19 +193,49 @@
 
 .job-header-form__field :deep(.p-calendar .p-inputtext) {
   width: 100%;
-  height: 38px !important;
-  min-height: 38px !important;
+  height: var(--job-field-height) !important;
+  min-height: var(--job-field-height) !important;
   padding-right: 36px;
-  border-radius: 8px;
-  line-height: 38px;
+  border-radius: var(--job-field-radius);
+  line-height: var(--job-field-height);
 }
 
 .job-header-form__field :deep(.p-datepicker-trigger) {
   width: 36px;
   min-width: 36px;
-  height: 38px !important;
-  min-height: 38px !important;
+  height: var(--job-field-height) !important;
+  min-height: var(--job-field-height) !important;
   border-radius: 0 8px 8px 0;
+}
+
+.job-details-page :deep(.p-dropdown),
+.job-details-page :deep(.p-dropdown-label),
+.job-details-page :deep(.p-dropdown-item),
+.job-details-page :deep(.p-inputtext),
+.job-details-page :deep(.p-calendar),
+.job-details-page :deep(.p-button),
+.job-details-page :deep(textarea),
+.job-details-page :deep(select),
+.job-details-page :deep(input) {
+  font-family: var(--font-body) !important;
+}
+
+.job-details-page :deep(.p-dropdown-label),
+.job-details-page :deep(.p-inputtext),
+.job-details-page :deep(textarea),
+.job-details-page :deep(select),
+.job-details-page :deep(input) {
+  font-size: var(--job-field-font-size) !important;
+}
+
+.p-dropdown-panel,
+.p-datepicker,
+.p-datepicker table,
+.p-datepicker .p-datepicker-header,
+.p-dropdown-panel .p-dropdown-items .p-dropdown-item,
+.p-dropdown-panel .p-dropdown-header .p-inputtext {
+  font-family: var(--font-body) !important;
+  font-size: 12px !important;
 }
 
 /* Focus */

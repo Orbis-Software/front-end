@@ -1,0 +1,134 @@
+export type TmsColumn = {
+  key: string
+  label: string
+}
+
+export type TmsRow = Record<string, string | number>
+
+export type TmsTableConfig = {
+  title: string
+  searchPlaceholder: string
+  actionLabel: string
+  tabs: Array<{ label: string; value: string }>
+  columns: TmsColumn[]
+  rows: TmsRow[]
+  statusKey?: string
+}
+
+export const tmsTables: Record<string, TmsTableConfig> = {
+  invoices: {
+    title: "Invoices",
+    searchPlaceholder: "Search invoice, customer, job...",
+    actionLabel: "New Invoice",
+    statusKey: "status",
+    tabs: [
+      { label: "All", value: "all" },
+      { label: "Draft", value: "draft" },
+      { label: "Sent", value: "sent" },
+      { label: "Paid", value: "paid" },
+      { label: "Overdue", value: "overdue" },
+    ],
+    columns: [
+      { key: "invoice", label: "Invoice" },
+      { key: "customer", label: "Customer" },
+      { key: "job", label: "Job" },
+      { key: "issued", label: "Issued" },
+      { key: "due", label: "Due" },
+      { key: "amount", label: "Amount" },
+      { key: "status", label: "Status" },
+    ],
+    rows: [
+      {
+        invoice: "INV-2026-0042",
+        customer: "Far East Trading (HK)",
+        job: "JOB-AIR-1092",
+        issued: "2026-05-15",
+        due: "2026-06-14",
+        amount: "£3,476.92",
+        status: "sent",
+      },
+      {
+        invoice: "INV-2026-0041",
+        customer: "Northline Retail Ltd",
+        job: "JOB-SEA-1088",
+        issued: "2026-05-12",
+        due: "2026-06-11",
+        amount: "£1,840.00",
+        status: "draft",
+      },
+      {
+        invoice: "INV-2026-0039",
+        customer: "Blue Ridge Supplies",
+        job: "JOB-RD-1074",
+        issued: "2026-04-28",
+        due: "2026-05-28",
+        amount: "£620.50",
+        status: "paid",
+      },
+      {
+        invoice: "INV-2026-0036",
+        customer: "Atlas Components",
+        job: "JOB-AIR-1069",
+        issued: "2026-04-18",
+        due: "2026-05-18",
+        amount: "£2,105.75",
+        status: "overdue",
+      },
+    ],
+  },
+  reports: {
+    title: "Reports",
+    searchPlaceholder: "Search report, owner, frequency...",
+    actionLabel: "New Report",
+    statusKey: "status",
+    tabs: [
+      { label: "All", value: "all" },
+      { label: "Operational", value: "operational" },
+      { label: "Finance", value: "finance" },
+      { label: "Customer", value: "customer" },
+      { label: "Scheduled", value: "scheduled" },
+    ],
+    columns: [
+      { key: "report", label: "Report" },
+      { key: "category", label: "Category" },
+      { key: "owner", label: "Owner" },
+      { key: "frequency", label: "Frequency" },
+      { key: "lastRun", label: "Last Run" },
+      { key: "status", label: "Status" },
+    ],
+    rows: [
+      {
+        report: "Job Profitability",
+        category: "finance",
+        owner: "Accounts",
+        frequency: "Weekly",
+        lastRun: "2026-05-18",
+        status: "scheduled",
+      },
+      {
+        report: "Open Jobs by Mode",
+        category: "operational",
+        owner: "Operations",
+        frequency: "Daily",
+        lastRun: "2026-05-21",
+        status: "operational",
+      },
+      {
+        report: "Customer Activity",
+        category: "customer",
+        owner: "Customer Service",
+        frequency: "Monthly",
+        lastRun: "2026-05-01",
+        status: "customer",
+      },
+      {
+        report: "Invoice Aging",
+        category: "finance",
+        owner: "Accounts",
+        frequency: "Daily",
+        lastRun: "2026-05-21",
+        status: "finance",
+      },
+    ],
+  },
+}

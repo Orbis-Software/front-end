@@ -33,10 +33,10 @@
         <Button
           label="Add Supplier Order"
           icon="pi pi-plus"
-          class="p-button-outlined orbis-primary"
+          class="btn btn--ghost"
         />
-        <Button label="Lock" icon="pi pi-lock" class="p-button-outlined orbis-primary" />
-        <Button label="Post Invoices" icon="pi pi-file" class="orbis-primary" />
+        <Button label="Lock" icon="pi pi-lock" class="btn btn--ghost" />
+        <Button label="Post Invoices" icon="pi pi-file" class="btn btn--primary" />
       </div>
     </div>
 
@@ -45,11 +45,11 @@
       <template #content>
         <SectionHead title="Consolidation" subtitle="Control panel for this consolidation.">
           <template #actions>
-            <Button label="New CO" icon="pi pi-copy" class="p-button-outlined orbis-primary" />
+            <Button label="New CO" icon="pi pi-copy" class="btn btn--ghost" />
             <Button
               label="Link Orders"
               icon="pi pi-search"
-              class="p-button-outlined orbis-primary"
+              class="btn btn--ghost"
             />
           </template>
         </SectionHead>
@@ -223,12 +223,12 @@
                 <Button
                   label="Generate from GRNs"
                   icon="pi pi-bolt"
-                  class="p-button-outlined orbis-primary"
+                  class="btn btn--ghost"
                 />
                 <Button
                   label="Import"
                   icon="pi pi-upload"
-                  class="p-button-outlined orbis-primary"
+                  class="btn btn--ghost"
                 />
               </template>
             </SectionHead>
@@ -333,7 +333,7 @@
               subtitle="Invoices or documents that have been issued and sent to the customer."
             >
               <template #actions>
-                <Button label="Resend" icon="pi pi-send" class="p-button-outlined orbis-primary" />
+                <Button label="Resend" icon="pi pi-send" class="btn btn--ghost" />
               </template>
             </SectionHead>
 
@@ -368,7 +368,7 @@
                 <Button
                   label="Post Invoices"
                   icon="pi pi-check"
-                  class="p-button-outlined orbis-primary"
+                  class="btn btn--ghost"
                 />
               </template>
             </SectionHead>
@@ -399,7 +399,7 @@
                 <Button
                   label="Return to Draft"
                   icon="pi pi-undo"
-                  class="p-button-outlined orbis-primary"
+                  class="btn btn--ghost"
                 />
               </template>
             </SectionHead>

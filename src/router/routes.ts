@@ -44,6 +44,7 @@ const ContactsImportPage = () => import("@/app/pages/contacts/import/ContactsImp
 
 const ConsolidationPage = () => import("@/app/pages/consolidations/ConsolidationPage.vue")
 const SettingsPage = () => import("@/app/pages/general-settings/GeneralSettingsPage.vue")
+const TmsListPage = () => import("@/app/pages/tms/shared/TmsListPage.vue")
 
 const MeasurementsUnitsTab = () =>
   import("@/app/pages/general-settings/tabs/MeasurementsUnitsTab.vue")
@@ -82,6 +83,7 @@ const SystemSettingsAwbManagerPage = () =>
    WMS Pages
 ========================= */
 const WmsDashboardPage = () => import("@/app/pages/wms/dashboard/WmsDashboardPage.vue")
+const WmsTableTab = () => import("@/app/pages/wms/shared/WmsTableTab.vue")
 
 const WarehouseGoodsInPage = () => import("@/app/pages/warehouse/goods-in/WarehouseGoodsInPage.vue")
 const ArrivalLogTab = () =>
@@ -101,6 +103,7 @@ const InventoryStockPage = () => import("@/app/pages/inventory/stock/InventorySt
 const InventoryReportsPage = () => import("@/app/pages/inventory/reports/InventoryReportsPage.vue")
 
 const WmsAdminPage = () => import("@/app/pages/wms-admin/WmsAdminPage.vue")
+const WmsAdminListTab = () => import("@/app/pages/wms-admin/WmsAdminListTab.vue")
 
 export const routes: RouteRecordRaw[] = [
   {
@@ -322,13 +325,15 @@ export const routes: RouteRecordRaw[] = [
       {
         path: "invoices",
         name: "acc.invoices",
-        component: PlaceholderPage,
+        component: TmsListPage,
+        props: { tableKey: "invoices" },
         meta: { title: "Invoices" },
       },
       {
         path: "reports",
         name: "mgmt.reports",
-        component: PlaceholderPage,
+        component: TmsListPage,
+        props: { tableKey: "reports" },
         meta: { title: "Reports" },
       },
 
@@ -381,19 +386,22 @@ export const routes: RouteRecordRaw[] = [
           {
             path: "all-consignments",
             name: "warehouse-storage-all",
-            component: PlaceholderPage,
+            component: WmsTableTab,
+            props: { tableKey: "storageAll" },
             meta: { title: "Storage • All Consignments" },
           },
           {
             path: "by-customer",
             name: "warehouse-storage-by-customer",
-            component: PlaceholderPage,
+            component: WmsTableTab,
+            props: { tableKey: "storageByCustomer" },
             meta: { title: "Storage • By Customer" },
           },
           {
             path: "by-location",
             name: "warehouse-storage-by-location",
-            component: PlaceholderPage,
+            component: WmsTableTab,
+            props: { tableKey: "storageByLocation" },
             meta: { title: "Storage • By Location" },
           },
         ],
@@ -411,19 +419,22 @@ export const routes: RouteRecordRaw[] = [
           {
             path: "ready-to-pick",
             name: "warehouse-goods-out-ready",
-            component: PlaceholderPage,
+            component: WmsTableTab,
+            props: { tableKey: "goodsOutReady" },
             meta: { title: "Goods Out • Ready to Pick" },
           },
           {
             path: "pick-lists",
             name: "warehouse-goods-out-pick-lists",
-            component: PlaceholderPage,
+            component: WmsTableTab,
+            props: { tableKey: "goodsOutPickLists" },
             meta: { title: "Goods Out • Pick Lists" },
           },
           {
             path: "packing-lists",
             name: "warehouse-goods-out-packing-lists",
-            component: PlaceholderPage,
+            component: WmsTableTab,
+            props: { tableKey: "goodsOutPackingLists" },
             meta: { title: "Goods Out • Packing Lists" },
           },
         ],
@@ -441,13 +452,15 @@ export const routes: RouteRecordRaw[] = [
           {
             path: "active-shipments",
             name: "warehouse-consolidation-active",
-            component: PlaceholderPage,
+            component: WmsTableTab,
+            props: { tableKey: "consolidationActive" },
             meta: { title: "Consolidation • Active Shipments" },
           },
           {
             path: "dispatched",
             name: "warehouse-consolidation-dispatched",
-            component: PlaceholderPage,
+            component: WmsTableTab,
+            props: { tableKey: "consolidationDispatched" },
             meta: { title: "Consolidation • Dispatched" },
           },
         ],
@@ -465,37 +478,43 @@ export const routes: RouteRecordRaw[] = [
           {
             path: "stock-on-hand",
             name: "inventory-stock-on-hand",
-            component: PlaceholderPage,
+            component: WmsTableTab,
+            props: { tableKey: "stockOnHand" },
             meta: { title: "Stock • Stock on Hand" },
           },
           {
             path: "by-category",
             name: "inventory-stock-by-category",
-            component: PlaceholderPage,
+            component: WmsTableTab,
+            props: { tableKey: "stockCategory" },
             meta: { title: "Stock • By Category" },
           },
           {
             path: "low-stock",
             name: "inventory-stock-low-stock",
-            component: PlaceholderPage,
+            component: WmsTableTab,
+            props: { tableKey: "stockLow" },
             meta: { title: "Stock • Low Stock" },
           },
           {
             path: "valuation",
             name: "inventory-stock-valuation",
-            component: PlaceholderPage,
+            component: WmsTableTab,
+            props: { tableKey: "stockValuation" },
             meta: { title: "Stock • Valuation" },
           },
           {
             path: "barcode-labels",
             name: "inventory-stock-barcodes",
-            component: PlaceholderPage,
+            component: WmsTableTab,
+            props: { tableKey: "barcodeLabels" },
             meta: { title: "Stock • Barcode Labels" },
           },
           {
             path: "adjustments",
             name: "inventory-stock-adjustments",
-            component: PlaceholderPage,
+            component: WmsTableTab,
+            props: { tableKey: "stockAdjustments" },
             meta: { title: "Stock • Adjustments" },
           },
         ],
@@ -513,31 +532,36 @@ export const routes: RouteRecordRaw[] = [
           {
             path: "inbound",
             name: "inventory-reports-inbound",
-            component: PlaceholderPage,
+            component: WmsTableTab,
+            props: { tableKey: "reportsInbound" },
             meta: { title: "WMS Reports • Inbound" },
           },
           {
             path: "outbound",
             name: "inventory-reports-outbound",
-            component: PlaceholderPage,
+            component: WmsTableTab,
+            props: { tableKey: "reportsOutbound" },
             meta: { title: "WMS Reports • Outbound" },
           },
           {
             path: "storage",
             name: "inventory-reports-storage",
-            component: PlaceholderPage,
+            component: WmsTableTab,
+            props: { tableKey: "reportsStorage" },
             meta: { title: "WMS Reports • Storage & Dwell" },
           },
           {
             path: "customer-summary",
             name: "inventory-reports-customer",
-            component: PlaceholderPage,
+            component: WmsTableTab,
+            props: { tableKey: "reportsCustomer" },
             meta: { title: "WMS Reports • Customer Summary" },
           },
           {
             path: "stock-valuation",
             name: "inventory-reports-stock-valuation",
-            component: PlaceholderPage,
+            component: WmsTableTab,
+            props: { tableKey: "reportsValuation" },
             meta: { title: "WMS Reports • Stock Valuation" },
           },
         ],
@@ -555,49 +579,57 @@ export const routes: RouteRecordRaw[] = [
           {
             path: "customers",
             name: "wms-admin-customers",
-            component: PlaceholderPage,
+            component: WmsAdminListTab,
+            props: { listKey: "customers" },
             meta: { title: "WMS Admin • Customers" },
           },
           {
             path: "suppliers",
             name: "wms-admin-suppliers",
-            component: PlaceholderPage,
+            component: WmsAdminListTab,
+            props: { listKey: "suppliers" },
             meta: { title: "WMS Admin • Suppliers" },
           },
           {
             path: "carriers",
             name: "wms-admin-carriers",
-            component: PlaceholderPage,
+            component: WmsAdminListTab,
+            props: { listKey: "carriers" },
             meta: { title: "WMS Admin • Carriers" },
           },
           {
             path: "units",
             name: "wms-admin-units",
-            component: PlaceholderPage,
+            component: WmsAdminListTab,
+            props: { listKey: "units" },
             meta: { title: "WMS Admin • Units" },
           },
           {
             path: "categories",
             name: "wms-admin-categories",
-            component: PlaceholderPage,
+            component: WmsAdminListTab,
+            props: { listKey: "categories" },
             meta: { title: "WMS Admin • Categories" },
           },
           {
             path: "goods-types",
             name: "wms-admin-goods-types",
-            component: PlaceholderPage,
+            component: WmsAdminListTab,
+            props: { listKey: "goodsTypes" },
             meta: { title: "WMS Admin • Goods Types" },
           },
           {
             path: "locations",
             name: "wms-admin-locations",
-            component: PlaceholderPage,
+            component: WmsAdminListTab,
+            props: { listKey: "locations" },
             meta: { title: "WMS Admin • Locations" },
           },
           {
             path: "racks",
             name: "wms-admin-racks",
-            component: PlaceholderPage,
+            component: WmsAdminListTab,
+            props: { listKey: "racks" },
             meta: { title: "WMS Admin • Racks" },
           },
         ],

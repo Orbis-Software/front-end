@@ -1,11 +1,21 @@
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount } from "vue"
+import { computed, onMounted, onBeforeUnmount } from "vue"
 import { useRoute } from "vue-router"
 import AppHeader from "@/app/components/header/AppHeader.vue"
 import { useUiStore } from "@/app/stores/ui"
 
 const ui = useUiStore()
 const route = useRoute()
+
+const pageKey = computed(() => {
+  const topLevelRecord = route.matched[1]
+  const topLevelPath = topLevelRecord?.path ?? route.path
+  const stableParams = Object.entries(route.params)
+    .map(([key, value]) => `${key}:${Array.isArray(value) ? value.join("|") : value}`)
+    .join(";")
+
+  return `${topLevelPath}:${stableParams}`
+})
 
 function onResize() {
   ui.setDesktop(window.innerWidth >= 1024)
@@ -33,7 +43,7 @@ onBeforeUnmount(() => window.removeEventListener("resize", onResize))
     </div>
 
     <main class="app-content">
-      <router-view :key="route.fullPath" />
+      <router-view :key="pageKey" />
     </main>
   </div>
 </template>

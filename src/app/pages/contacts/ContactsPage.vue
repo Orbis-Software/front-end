@@ -20,7 +20,7 @@
 
         <!-- ✅ NEW: Import Contacts -->
         <Button
-          class="contacts-page__import-btn"
+          class="btn btn--ghost contacts-page__import-btn"
           icon="pi pi-upload"
           label="Import Contacts"
           @click="onImportContacts"
@@ -28,7 +28,7 @@
 
         <!-- Existing -->
         <Button
-          class="contacts-page__new-btn"
+          class="btn btn--primary contacts-page__new-btn"
           icon="pi pi-plus"
           label="New Contact"
           @click="onCreate"

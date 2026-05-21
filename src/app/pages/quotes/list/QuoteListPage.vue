@@ -18,7 +18,7 @@
         </div>
 
         <Button
-          class="quotes-list-page__new-btn"
+          class="btn btn--primary quotes-list-page__new-btn"
           icon="pi pi-plus"
           label="New Quotation"
           @click="onNewQuotation"

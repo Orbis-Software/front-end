@@ -1,69 +1,133 @@
 <script setup lang="ts">
+import "../CustomerPortalListPage.css"
+import { ref } from "vue"
+import Button from "primevue/button"
 import { modeBreakdown, reportStats } from "./CustomerReportsPage"
+
+const activeTab = ref("overview")
+
+const tabs = [
+  { label: "Overview", value: "overview" },
+  { label: "Shipment Modes", value: "modes" },
+  { label: "Freight Costs", value: "costs" },
+]
 </script>
 
 <template>
-  <div class="customer-page">
-    <div class="page-header">
-      <div>
-        <h1>Reports</h1>
-        <p>Shipment, stock and cost analytics</p>
+  <section class="customer-list-page">
+    <header class="customer-list-page__header">
+      <div class="customer-list-page__title-wrap">
+        <h1 class="customer-list-page__title">Reports</h1>
       </div>
 
-      <button class="secondary-btn">Download PDF</button>
-    </div>
+      <Button class="btn btn--ghost customer-list-page__action-btn" label="Download PDF" />
+    </header>
 
-    <section class="stats-grid">
-      <div v-for="stat in reportStats" :key="stat.label" class="stat-card">
-        <div class="stat-label">{{ stat.label }}</div>
-        <div class="stat-value">{{ stat.value }}</div>
-        <div class="stat-note" :class="stat.color">{{ stat.note }}</div>
+    <div class="customer-list-page__card">
+      <div class="customer-list-page__tabs-bar">
+        <nav class="customer-list-page__tabs">
+          <button
+            v-for="tab in tabs"
+            :key="tab.value"
+            class="customer-list-page__tab"
+            :class="{ 'customer-list-page__tab--active': activeTab === tab.value }"
+            type="button"
+            @click="activeTab = tab.value"
+          >
+            {{ tab.label }}
+          </button>
+        </nav>
       </div>
-    </section>
 
-    <section class="report-grid">
-      <div class="report-card">
-        <h2>Shipments by Mode</h2>
+      <div class="customer-list-page__content">
+        <section v-if="activeTab === 'overview'" class="customer-list-page__table-card">
+          <div class="customer-list-page__table-scroll">
+            <table class="customer-list-page__table">
+              <thead>
+                <tr>
+                  <th>Metric</th>
+                  <th>Value</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
 
-        <div class="mode-list">
-          <div v-for="mode in modeBreakdown" :key="mode.label" class="mode-item">
-            <div class="mode-head">
-              <span>{{ mode.label }}</span>
-              <strong>{{ mode.value }}</strong>
-            </div>
-
-            <div class="progress">
-              <div class="progress-fill" :style="{ width: mode.percent }" />
-            </div>
+              <tbody>
+                <tr v-for="stat in reportStats" :key="stat.label">
+                  <td>
+                    <span class="customer-list-page__cell-title">{{ stat.label }}</span>
+                  </td>
+                  <td>{{ stat.value }}</td>
+                  <td>
+                    <span class="customer-list-page__plain-value">{{ stat.note }}</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
-        </div>
+        </section>
+
+        <section v-else-if="activeTab === 'modes'" class="customer-list-page__table-card">
+          <div class="customer-list-page__table-scroll">
+            <table class="customer-list-page__table">
+              <thead>
+                <tr>
+                  <th>Mode</th>
+                  <th>Share</th>
+                  <th>Volume</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                <tr v-for="mode in modeBreakdown" :key="mode.label">
+                  <td>
+                    <span class="customer-list-page__cell-title">{{ mode.label }}</span>
+                  </td>
+                  <td>
+                    <div class="progress">
+                      <div class="progress-fill" :style="{ width: mode.percent }" />
+                    </div>
+                  </td>
+                  <td>{{ mode.value }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section v-else class="customer-list-page__table-card">
+          <div class="customer-list-page__table-scroll">
+            <table class="customer-list-page__table">
+              <thead>
+                <tr>
+                  <th>Cost Category</th>
+                  <th>Amount</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                <tr>
+                  <td>Sea Freight</td>
+                  <td><strong>£14,200</strong></td>
+                </tr>
+                <tr>
+                  <td>Air Freight</td>
+                  <td><strong>£7,840</strong></td>
+                </tr>
+                <tr>
+                  <td>Road / Final Mile</td>
+                  <td><strong>£1,250</strong></td>
+                </tr>
+                <tr>
+                  <td><strong>Total</strong></td>
+                  <td><strong>£24,190</strong></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
       </div>
-
-      <div class="report-card">
-        <h2>Freight Cost Breakdown</h2>
-
-        <div class="cost-row">
-          <span>Sea Freight</span>
-          <strong>£14,200</strong>
-        </div>
-
-        <div class="cost-row">
-          <span>Air Freight</span>
-          <strong>£7,840</strong>
-        </div>
-
-        <div class="cost-row">
-          <span>Road / Final Mile</span>
-          <strong>£1,250</strong>
-        </div>
-
-        <div class="cost-row total">
-          <span>Total</span>
-          <strong>£24,190</strong>
-        </div>
-      </div>
-    </section>
-  </div>
+    </div>
+  </section>
 </template>
 
 <style scoped src="./CustomerReportsPage.css"></style>
