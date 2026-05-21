@@ -177,6 +177,12 @@ export const routes: RouteRecordRaw[] = [
         meta: { title: "Customer Quotes" },
       },
       {
+        path: "quotes/:id",
+        name: "customer.quotes.show",
+        component: () => import("@/app/pages/customer/quotes/CustomerQuoteDetailsPage.vue"),
+        meta: { title: "Customer Quote Details" },
+      },
+      {
         path: "documents",
         name: "customer.documents",
         component: () => import("@/app/pages/customer/documents/CustomerDocumentsPage.vue"),
