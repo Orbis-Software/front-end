@@ -101,11 +101,14 @@ export const useAuthStore = defineStore("auth", {
       this.token = result.token
       this.authType = "customer"
 
-      this.setCustomer(result.customer)
-      this.setUser(null)
-
       localStorage.setItem(TOKEN_KEY, result.token)
       localStorage.setItem(AUTH_TYPE_KEY, "customer")
+
+      const customer = await AuthService.customerMe()
+
+      this.setCustomer(customer)
+      this.setUser(null)
+      this.ready = true
     },
 
     async hydrate() {

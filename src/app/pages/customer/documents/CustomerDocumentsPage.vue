@@ -1,5 +1,7 @@
 <script setup lang="ts">
+import "../CustomerPortalListPage.css"
 import { computed, ref } from "vue"
+import Button from "primevue/button"
 import { documents, documentTabs } from "./CustomerDocumentsPage"
 
 const activeTab = ref("all")
@@ -8,49 +10,86 @@ const filteredDocuments = computed(() => {
   if (activeTab.value === "all") return documents
   return documents.filter(document => document.type === activeTab.value)
 })
+
+function tabCount(value: string) {
+  if (value === "all") return documents.length
+  return documents.filter(document => document.type === value).length
+}
 </script>
 
 <template>
-  <div class="customer-page">
-    <div class="page-header">
-      <div>
-        <h1>Documents</h1>
-        <p>24 files available — quotes, invoices, PODs & reports</p>
+  <section class="customer-list-page">
+    <header class="customer-list-page__header">
+      <div class="customer-list-page__title-wrap">
+        <h1 class="customer-list-page__title">Documents</h1>
       </div>
 
-      <input class="search-input" placeholder="Search documents…" />
-    </div>
+      <input class="customer-list-page__search-input" placeholder="Search documents..." />
+    </header>
 
-    <div class="tabs">
-      <button
-        v-for="tab in documentTabs"
-        :key="tab.value"
-        class="tab-btn"
-        :class="{ active: activeTab === tab.value }"
-        @click="activeTab = tab.value"
-      >
-        {{ tab.label }}
-      </button>
-    </div>
+    <div class="customer-list-page__card">
+      <div class="customer-list-page__tabs-bar">
+        <nav class="customer-list-page__tabs">
+          <button
+            v-for="tab in documentTabs"
+            :key="tab.value"
+            class="customer-list-page__tab"
+            :class="{ 'customer-list-page__tab--active': activeTab === tab.value }"
+            type="button"
+            @click="activeTab = tab.value"
+          >
+            {{ tab.label.replace(/\s*\(.+\)$/, "") }}
+            <span class="customer-list-page__tab-count">{{ tabCount(tab.value) }}</span>
+          </button>
+        </nav>
+      </div>
 
-    <section class="doc-grid">
-      <article v-for="document in filteredDocuments" :key="document.name" class="doc-card">
-        <div class="doc-main">
-          <div class="doc-icon">📄</div>
+      <div class="customer-list-page__content">
+        <div class="customer-list-page__table-card">
+          <div class="customer-list-page__table-scroll">
+            <table class="customer-list-page__table">
+              <thead>
+                <tr>
+                  <th>Document</th>
+                  <th>Reference</th>
+                  <th>Type</th>
+                  <th>Date</th>
+                  <th>Size</th>
+                  <th />
+                </tr>
+              </thead>
 
-          <div>
-            <strong>{{ document.name }}</strong>
-            <p>{{ document.reference }} · {{ document.date }}</p>
+              <tbody>
+                <tr v-for="document in filteredDocuments" :key="document.name">
+                  <td>
+                    <div class="customer-list-page__cell-stack">
+                      <span class="customer-list-page__cell-title">{{ document.name }}</span>
+                      <span class="customer-list-page__cell-subtext">{{ document.fileType }}</span>
+                    </div>
+                  </td>
+                  <td>{{ document.reference }}</td>
+                  <td>
+                    <span class="customer-list-page__chip">{{ document.type }}</span>
+                  </td>
+                  <td>{{ document.date }}</td>
+                  <td>{{ document.size }}</td>
+                  <td>
+                    <div class="customer-list-page__row-actions">
+                      <Button class="btn btn--primary" label="Download" />
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div v-if="!filteredDocuments.length" class="customer-list-page__empty">
+            No documents found.
           </div>
         </div>
-
-        <div class="doc-footer">
-          <span>{{ document.fileType }} · {{ document.size }}</span>
-          <button class="primary-btn small">Download</button>
-        </div>
-      </article>
-    </section>
-  </div>
+      </div>
+    </div>
+  </section>
 </template>
 
 <style scoped src="./CustomerDocumentsPage.css"></style>
