@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import "../CustomerPortalListPage.css"
 import Button from "primevue/button"
+import Toast from "primevue/toast"
 import { useCustomerQuotesPage } from "./CustomerQuotesPage"
 
 const {
   tabs,
   activeTab,
   filteredQuotes,
+  loading,
+  actionProcessingId,
   isActive,
   setActiveTab,
   openQuote,
@@ -18,6 +21,8 @@ const {
 
 <template>
   <section class="customer-list-page">
+    <Toast />
+
     <header class="customer-list-page__header">
       <div class="customer-list-page__title-wrap">
         <h1 class="customer-list-page__title">Quotes</h1>
@@ -117,18 +122,22 @@ const {
                         v-if="quote.canApprove"
                         class="btn btn--primary"
                         label="Approve"
+                        :loading="actionProcessingId === quote.id"
+                        :disabled="!!actionProcessingId"
                         @click="approveQuote(quote.reference)"
                       />
                       <Button
                         v-if="quote.canDecline"
                         class="btn btn--ghost"
                         label="Decline"
+                        :loading="actionProcessingId === quote.id"
+                        :disabled="!!actionProcessingId"
                         @click="declineQuote(quote.reference)"
                       />
                       <Button
                         class="btn btn--ghost"
                         label="Download"
-                        :disabled="!quote.amount"
+                        :disabled="!quote.amount || !!actionProcessingId"
                         @click="downloadQuote(quote.reference)"
                       />
                     </div>
@@ -138,7 +147,9 @@ const {
             </table>
           </div>
 
-          <div v-if="!filteredQuotes.length" class="customer-list-page__empty">
+          <div v-if="loading" class="customer-list-page__empty">Loading quotes...</div>
+
+          <div v-else-if="!filteredQuotes.length" class="customer-list-page__empty">
             No quotes found for {{ activeTab }}.
           </div>
         </div>
