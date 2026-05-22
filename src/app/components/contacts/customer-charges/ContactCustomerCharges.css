@@ -47,6 +47,14 @@
   padding: 14px;
 }
 
+.sheet-panel > .btn {
+  margin-top: 10px;
+}
+
+.sheet-panel > .btn + .btn {
+  margin-left: 8px;
+}
+
 .sheet-panel__top {
   display: flex;
   align-items: center;
@@ -221,23 +229,24 @@
 }
 
 .btn {
-  min-height: 42px;
-  border-radius: 10px;
+  width: auto;
+  flex: 0 0 auto;
+  min-height: 34px;
+  border-radius: 8px;
   border: 1px solid transparent;
-  padding: 0 14px;
-  font-size: 13px;
+  padding: 0 10px;
+  font-size: 12px;
   font-weight: 700;
   cursor: pointer;
+  white-space: nowrap;
   transition: all 0.18s ease;
 }
 
 .btn--primary {
-  width: 100%;
   background: linear-gradient(135deg, #ec691a, #f38b47);
   border-color: #ec691a;
   color: #ffffff;
   box-shadow: 0 8px 18px rgba(236, 105, 26, 0.22);
-  margin-top: 10px;
 }
 
 .btn--primary:hover {
@@ -247,11 +256,9 @@
 
 .btn--danger,
 .p-button.btn--danger {
-  width: 100%;
   background: linear-gradient(135deg, #f04438, #d92d20) !important;
   border: none !important;
   color: white !important;
-  margin-top: 8px;
   box-shadow: 0 8px 18px rgba(217, 45, 32, 0.25);
 }
 
@@ -265,7 +272,7 @@
   background: #ffffff;
   border-color: #d0d5dd;
   color: #344054;
-  min-width: 190px;
+  min-width: 110px;
 }
 
 .btn--ghost:hover {

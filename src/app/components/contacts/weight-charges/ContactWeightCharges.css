@@ -59,6 +59,12 @@
 .wcSplit__col {
   display: grid;
   gap: 10px;
+  align-content: start;
+  justify-items: start;
+}
+
+.wcSplit__col .wcInput {
+  justify-self: stretch;
 }
 
 .wcSplit__head {
@@ -136,11 +142,14 @@
 /* BUTTONS */
 .wcBtn {
   height: 32px;
+  min-width: 0;
+  padding: 0 10px;
   font-size: 12px;
+  white-space: nowrap;
 }
 
 .wcBtn--block {
-  width: 100%;
+  width: auto;
 }
 
 .p-button.wcBtn--danger {
@@ -156,7 +165,7 @@
 }
 
 .wcBtn--footer {
-  min-width: 148px;
+  min-width: 110px;
 }
 
 /* LIST */
@@ -300,7 +309,7 @@
 /* TOOLBAR */
 .wcToolbar {
   display: flex;
-  justify-content: flex-end;
+  justify-content: flex-start;
 }
 
 /* BREAKS */

@@ -30,7 +30,7 @@ function saveBranch(branchId: number, patch: Partial<ContactBranch>) {
       type="button"
       class="btn btn--primary"
       icon="pi pi-plus"
-      label="Add new branch"
+      label="Add branch"
       @click="emit('add')"
     />
   </div>
@@ -46,6 +46,6 @@ function saveBranch(branchId: number, patch: Partial<ContactBranch>) {
   </div>
 
   <div v-if="branches.length === 0" class="loading" style="padding: 14px 0">
-    No branches yet. Click “Add new branch”.
+    No branches yet. Click Add branch.
   </div>
 </template>

@@ -69,7 +69,12 @@ function exportCsv() {
           />
         </div>
 
-        <Button class="btn btn--ghost" icon="pi pi-download" label="Export CSV" @click="exportCsv" />
+        <Button
+          class="btn btn--ghost"
+          icon="pi pi-download"
+          label="Export CSV"
+          @click="exportCsv"
+        />
         <Button class="btn btn--primary" icon="pi pi-plus" :label="table.actionLabel" />
       </div>
     </header>
@@ -103,7 +108,11 @@ function exportCsv() {
             <tbody>
               <tr v-for="(row, index) in rows" :key="index">
                 <td v-for="(column, columnIndex) in table.columns" :key="column.key">
-                  <span v-if="column.key === table.statusKey" class="tms-list-page__chip" :class="`tms-list-page__chip--${row[column.key]}`">
+                  <span
+                    v-if="column.key === table.statusKey"
+                    class="tms-list-page__chip"
+                    :class="`tms-list-page__chip--${row[column.key]}`"
+                  >
                     {{ row[column.key] }}
                   </span>
                   <span v-else :class="{ 'tms-list-page__primary': columnIndex === 0 }">

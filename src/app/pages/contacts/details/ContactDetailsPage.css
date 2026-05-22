@@ -1,135 +1,210 @@
-.page {
-  padding: 20px;
-}
-
-.loading {
-  padding: 24px;
-  color: #6b7280;
-}
-
-.pageHeader {
+.contact-details-page {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 16px;
+  flex-direction: column;
+  padding: 1rem;
+  min-height: 100%;
+  background: var(--bg-page);
+  font-family: var(--font-body);
 }
 
-.pageTitle {
-  font-size: 22px;
-  font-weight: 700;
-  color: #111827;
+.contact-details-page__loading {
+  padding: 2rem;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.875rem;
 }
 
-.pageMeta {
-  margin-top: 8px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: #6b7280;
-  font-size: 13px;
-}
-
-.dot {
-  opacity: 0.7;
-}
-
-.metaItem {
-  white-space: nowrap;
-}
-
-.pill {
-  display: inline-flex;
-  gap: 6px;
-  align-items: center;
-  padding: 6px 10px;
-  border: 1px solid #e5e7eb;
-  border-radius: 999px;
-  background: #fff;
-  color: #111827;
-}
-
-.pill__label {
-  color: #6b7280;
-}
-
-.pill__value {
-  font-weight: 600;
-}
-
-/* keep everything else the same, only update these parts */
-
-.btn {
-  border: 1px solid #e5e7eb;
-  background: #fff;
-  padding: 10px 12px;
-  border-radius: 10px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-/* ✅ use your design token primary */
-.btn--primary {
-  background: var(--primary);
-  color: #fff;
-  border-color: var(--primary);
-}
-
-.btn--primary:hover {
-  background: var(--primary-hover);
-  border-color: var(--primary-hover);
-}
-
-.btn--ghost {
-  background: #fff;
-}
-
-/* ✅ if you use PrimeVue Button, remove its default look but keep your .btn styling */
-:global(.p-button.btn) {
-  padding: 10px 12px;
-  border-radius: 10px;
-  font-weight: 600;
-  box-shadow: none;
-}
-
-:global(.p-button.btn:focus) {
-  box-shadow: none;
-}
-
-.panel {
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 14px;
+.contact-header-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-bottom: none;
+  border-radius: 18px 18px 0 0;
   overflow: hidden;
 }
 
-.panelBody {
-  padding: 16px;
-}
-
-/* Tabs */
-.tabs {
+.contact-header-main {
   display: flex;
-  gap: 8px;
-  padding: 12px;
-  border-bottom: 1px solid #e5e7eb;
-  background: #fafafa;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem;
 }
 
-.tab {
-  padding: 10px 12px;
-  border-radius: 10px;
-  border: 1px solid transparent;
-  background: transparent;
+.contact-header-left {
+  min-width: 0;
+}
+
+.contact-title {
+  margin: 0;
+  font-family: var(--font-accent);
+  font-size: 1.5rem;
   font-weight: 700;
-  color: #6b7280;
+  color: var(--text);
+}
+
+.contact-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+}
+
+.contact-meta__pill,
+.contact-meta__item {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border: 1px solid #e3e3e3;
+  border-radius: 999px;
+  background: #fff;
+  white-space: nowrap;
+}
+
+.contact-meta__pill {
+  gap: 6px;
+  color: #1a1a18;
+}
+
+.contact-meta__label {
+  color: var(--text-muted);
+}
+
+.contact-meta__value {
+  font-weight: 700;
+}
+
+.contact-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.contact-action-btn {
+  height: 38px;
+  font-family: var(--font-body) !important;
+  font-size: 12px !important;
+  font-weight: 700;
+}
+
+.contact-action-btn--primary {
+  background: #ec691a !important;
+  border-color: #ec691a !important;
+}
+
+.contact-details-tabs {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  padding: 0 14px;
+  background: #efefef;
+  border-top: 1px solid #ededed;
+  border-bottom: 1px solid #d9d9d9;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+}
+
+.contact-details-tabs__tab {
+  border: 1px solid transparent;
+  border-bottom: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 44px;
+  height: 44px;
+  padding: 0 16px;
+  margin-top: 8px;
+  border-radius: 10px 10px 0 0;
+  background: transparent;
+  color: #5c5c5c;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.contact-details-tabs__tab:hover {
+  color: #222;
+  background: rgba(255, 255, 255, 0.45);
+}
+
+.contact-details-tabs__tab--active {
+  background: #fff;
+  color: #141414;
+  border-color: #d9d9d9;
+  position: relative;
+  top: 1px;
+  z-index: 2;
+}
+
+.contact-details-tabs__count {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: #e3e3e3;
+  color: #555;
+  font-size: 11px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.contact-content-shell {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-top: none;
+  border-radius: 0 0 18px 18px;
+  padding: 1rem;
+  margin-top: 0;
+}
+
+.contact-details-page :deep(.p-dropdown),
+.contact-details-page :deep(.p-dropdown-label),
+.contact-details-page :deep(.p-dropdown-item),
+.contact-details-page :deep(.p-inputtext),
+.contact-details-page :deep(.p-button),
+.contact-details-page :deep(textarea),
+.contact-details-page :deep(select),
+.contact-details-page :deep(input) {
+  font-family: var(--font-body) !important;
+}
+
+.btn {
+  width: auto !important;
+  flex: 0 0 auto;
+  min-height: 34px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 0 10px;
+  background: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
   cursor: pointer;
 }
 
-.tab--active {
-  background: #fff;
-  border-color: #e5e7eb;
-  color: #111827;
+.btn--primary,
+.p-button.btn--primary {
+  background: #ec691a !important;
+  border-color: #ec691a !important;
+  color: #fff !important;
+}
+
+.btn--ghost,
+.p-button.btn--ghost {
+  background: #fff !important;
+  border-color: #d1d5db !important;
+  color: #374151 !important;
 }
 
 /* Tab header */
@@ -139,6 +214,13 @@
   justify-content: space-between;
   gap: 16px;
   margin-bottom: 12px;
+}
+
+.tabHeader > .p-button,
+.tabHeader > .btn {
+  width: auto !important;
+  min-width: 0;
+  align-self: flex-start;
 }
 
 .tabHeader__title {
@@ -221,12 +303,15 @@
   border: 1px solid #fecaca;
   background: #fff1f2;
   color: #9f1239;
-  padding: 7px 10px;
-  border-radius: 999px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 8px;
   cursor: pointer;
   font-weight: 800;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
 }
 
@@ -319,4 +404,30 @@
 
 .muted {
   opacity: 0.55;
+}
+
+@media (max-width: 768px) {
+  .contact-header-main {
+    flex-direction: column;
+  }
+
+  .contact-actions {
+    justify-content: flex-start;
+  }
+
+  .contact-details-tabs {
+    padding: 0 10px;
+  }
+
+  .contact-details-tabs__tab {
+    min-height: 40px;
+    height: 40px;
+    padding: 0 14px;
+    margin-top: 6px;
+    font-size: 12px;
+  }
+
+  .contact-content-shell {
+    padding: 0.75rem;
+  }
 }

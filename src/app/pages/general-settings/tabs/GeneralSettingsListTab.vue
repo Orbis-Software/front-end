@@ -176,9 +176,7 @@ async function submitAddItem() {
           </tbody>
         </table>
 
-        <div v-else class="general-settings-tab-page__empty">
-          No records match your search.
-        </div>
+        <div v-else class="general-settings-tab-page__empty">No records match your search.</div>
       </div>
     </div>
 

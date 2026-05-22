@@ -602,7 +602,8 @@ onUnmounted(() => {
 
             <Button
               type="button"
-              :label="creating ? 'Creating...' : '+ Create New Sheet'"
+              icon="pi pi-plus"
+              :label="creating ? 'Creating...' : 'Create'"
               class="btn btn--primary"
               :disabled="creating"
               @click="createSheet"
@@ -610,7 +611,8 @@ onUnmounted(() => {
 
             <Button
               type="button"
-              :label="deleting ? 'Deleting...' : 'Delete Current Sheet'"
+              icon="pi pi-trash"
+              :label="deleting ? 'Deleting...' : 'Delete'"
               class="btn btn--danger"
               :disabled="!activeSheet || deleting"
               @click="deleteSheet"
@@ -710,9 +712,7 @@ onUnmounted(() => {
 
                 <tbody>
                   <tr v-if="!activeSheet.lines.length">
-                    <td colspan="6" class="table-empty">
-                      No charge lines yet. Click “Add New Charge Line”.
-                    </td>
+                    <td colspan="6" class="table-empty">No charge lines yet. Click Add line.</td>
                   </tr>
 
                   <tr v-for="(line, index) in activeSheet.lines" :key="line.id">
@@ -763,7 +763,8 @@ onUnmounted(() => {
             <div class="table-actions">
               <Button
                 type="button"
-                label="+ Add New Charge Line"
+                icon="pi pi-plus"
+                label="Add line"
                 class="btn btn--ghost"
                 @click="addLine"
               />

@@ -30,11 +30,7 @@
       </div>
 
       <div class="topbar-right">
-        <Button
-          label="Add Supplier Order"
-          icon="pi pi-plus"
-          class="btn btn--ghost"
-        />
+        <Button label="Add Supplier Order" icon="pi pi-plus" class="btn btn--ghost" />
         <Button label="Lock" icon="pi pi-lock" class="btn btn--ghost" />
         <Button label="Post Invoices" icon="pi pi-file" class="btn btn--primary" />
       </div>
@@ -46,11 +42,7 @@
         <SectionHead title="Consolidation" subtitle="Control panel for this consolidation.">
           <template #actions>
             <Button label="New CO" icon="pi pi-copy" class="btn btn--ghost" />
-            <Button
-              label="Link Orders"
-              icon="pi pi-search"
-              class="btn btn--ghost"
-            />
+            <Button label="Link Orders" icon="pi pi-search" class="btn btn--ghost" />
           </template>
         </SectionHead>
 
@@ -220,16 +212,8 @@
               subtitle="Draft consolidation invoices and working records for review."
             >
               <template #actions>
-                <Button
-                  label="Generate from GRNs"
-                  icon="pi pi-bolt"
-                  class="btn btn--ghost"
-                />
-                <Button
-                  label="Import"
-                  icon="pi pi-upload"
-                  class="btn btn--ghost"
-                />
+                <Button label="Generate from GRNs" icon="pi pi-bolt" class="btn btn--ghost" />
+                <Button label="Import" icon="pi pi-upload" class="btn btn--ghost" />
               </template>
             </SectionHead>
 
@@ -365,11 +349,7 @@
               subtitle="Approved records ready for posting and downstream accounting processes."
             >
               <template #actions>
-                <Button
-                  label="Post Invoices"
-                  icon="pi pi-check"
-                  class="btn btn--ghost"
-                />
+                <Button label="Post Invoices" icon="pi pi-check" class="btn btn--ghost" />
               </template>
             </SectionHead>
 
@@ -396,11 +376,7 @@
               subtitle="Rejected items that need correction before they can proceed."
             >
               <template #actions>
-                <Button
-                  label="Return to Draft"
-                  icon="pi pi-undo"
-                  class="btn btn--ghost"
-                />
+                <Button label="Return to Draft" icon="pi pi-undo" class="btn btn--ghost" />
               </template>
             </SectionHead>
 

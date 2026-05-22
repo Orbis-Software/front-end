@@ -87,6 +87,9 @@
       </template>
     </Card>
 
+    <div v-if="loading" class="dashboard-status">Loading dashboard data...</div>
+    <div v-else-if="error" class="dashboard-status dashboard-status--error">{{ error }}</div>
+
     <!-- KPI GRID -->
     <section class="dash-kpis">
       <Card v-for="card in currentStatCards" :key="card.key" class="dash-card stat-card">
@@ -164,7 +167,7 @@
             <div class="todo-list">
               <div v-for="t in userTodo" :key="t.id" class="todo-card">
                 <div class="todo-card__title">{{ t.title }}</div>
-                <div class="todo-card__meta">{{ t.owner }} · {{ t.when }}</div>
+                <div class="todo-card__meta">{{ t.owner }} &middot; {{ t.when }}</div>
               </div>
             </div>
           </template>
@@ -186,29 +189,20 @@
 
             <div class="chart-card">
               <div class="chart-card__legend chart-card__legend--top">
-                <div class="legend-item">
-                  <span class="legend-dot legend-dot--orange"></span>
-                  <span>Air</span>
-                </div>
-                <div class="legend-item">
-                  <span class="legend-dot legend-dot--gray"></span>
-                  <span>Road</span>
+                <div v-for="item in modeMix" :key="item.mode" class="legend-item">
+                  <span class="legend-dot" :style="{ background: modeColor(item.mode) }"></span>
+                  <span>{{ item.label }}</span>
                 </div>
               </div>
 
-              <div class="donut donut--mode-user">
+              <div class="donut" :style="donutMixStyle">
                 <div class="donut-hole"></div>
               </div>
 
               <div class="metric-row">
-                <div class="metric-pill">
-                  <span>Air</span>
-                  <strong>1</strong>
-                </div>
-
-                <div class="metric-pill">
-                  <span>Road</span>
-                  <strong>2</strong>
+                <div v-for="item in modeMix" :key="item.mode" class="metric-pill">
+                  <span>{{ item.label }}</span>
+                  <strong>{{ item.count ?? 0 }}</strong>
                 </div>
               </div>
             </div>
@@ -229,29 +223,20 @@
 
             <div class="chart-card">
               <div class="chart-card__legend chart-card__legend--top">
-                <div class="legend-item">
-                  <span class="legend-dot legend-dot--orange"></span>
-                  <span>Air</span>
-                </div>
-                <div class="legend-item">
-                  <span class="legend-dot legend-dot--gray"></span>
-                  <span>Road</span>
+                <div v-for="item in revenueByMode" :key="item.mode" class="legend-item">
+                  <span class="legend-dot" :style="{ background: modeColor(item.mode) }"></span>
+                  <span>{{ item.label }}</span>
                 </div>
               </div>
 
-              <div class="donut donut--revenue-user">
+              <div class="donut" :style="donutRevenueStyle">
                 <div class="donut-hole"></div>
               </div>
 
               <div class="metric-row">
-                <div class="metric-pill">
-                  <span>Air</span>
-                  <strong>£2,450</strong>
-                </div>
-
-                <div class="metric-pill">
-                  <span>Road</span>
-                  <strong>£2,490</strong>
+                <div v-for="item in revenueByMode" :key="item.mode" class="metric-pill">
+                  <span>{{ item.label }}</span>
+                  <strong>{{ money(item.amount ?? 0) }}</strong>
                 </div>
               </div>
             </div>
@@ -348,7 +333,7 @@
             <div class="todo-list">
               <div v-for="t in managementExceptions" :key="t.id" class="todo-card">
                 <div class="todo-card__title">{{ t.title }}</div>
-                <div class="todo-card__meta">{{ t.owner }} · {{ t.when }}</div>
+                <div class="todo-card__meta">{{ t.owner }} &middot; {{ t.when }}</div>
               </div>
             </div>
           </template>
@@ -370,25 +355,13 @@
 
             <div class="chart-card">
               <div class="chart-card__legend chart-card__legend--top">
-                <div class="legend-item">
-                  <span class="legend-dot legend-dot--orange"></span>
-                  <span>Air</span>
-                </div>
-                <div class="legend-item">
-                  <span class="legend-dot legend-dot--gray"></span>
-                  <span>Road</span>
-                </div>
-                <div class="legend-item">
-                  <span class="legend-dot legend-dot--gray-dark"></span>
-                  <span>Sea</span>
-                </div>
-                <div class="legend-item">
-                  <span class="legend-dot legend-dot--gray-light"></span>
-                  <span>Rail</span>
+                <div v-for="item in modeMix" :key="item.mode" class="legend-item">
+                  <span class="legend-dot" :style="{ background: modeColor(item.mode) }"></span>
+                  <span>{{ item.label }}</span>
                 </div>
               </div>
 
-              <div class="donut donut--mix-management">
+              <div class="donut" :style="donutMixStyle">
                 <div class="donut-hole"></div>
               </div>
             </div>
@@ -409,25 +382,13 @@
 
             <div class="chart-card">
               <div class="chart-card__legend chart-card__legend--top">
-                <div class="legend-item">
-                  <span class="legend-dot legend-dot--orange"></span>
-                  <span>Air</span>
-                </div>
-                <div class="legend-item">
-                  <span class="legend-dot legend-dot--gray"></span>
-                  <span>Road</span>
-                </div>
-                <div class="legend-item">
-                  <span class="legend-dot legend-dot--gray-dark"></span>
-                  <span>Sea</span>
-                </div>
-                <div class="legend-item">
-                  <span class="legend-dot legend-dot--gray-light"></span>
-                  <span>Rail</span>
+                <div v-for="item in revenueByMode" :key="item.mode" class="legend-item">
+                  <span class="legend-dot" :style="{ background: modeColor(item.mode) }"></span>
+                  <span>{{ item.label }}</span>
                 </div>
               </div>
 
-              <div class="donut donut--revenue-management">
+              <div class="donut" :style="donutRevenueStyle">
                 <div class="donut-hole"></div>
               </div>
             </div>
@@ -439,9 +400,16 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive } from "vue"
+import { computed, onMounted, reactive, ref, watch } from "vue"
 import { useRouter } from "vue-router"
+import dashboardService from "@/app/services/dashboard"
 import { useAuthStore } from "@/app/stores/auth"
+import type {
+  DashboardDateRange,
+  DashboardTransportSummary,
+  DashboardUserFocus,
+} from "@/app/services/dashboard/transport"
+import type { TransportMode } from "@/app/types/transport-job"
 import "./DashboardPage.css"
 
 type StatCard = {
@@ -457,11 +425,15 @@ const router = useRouter()
 const auth = useAuthStore()
 
 const filters = reactive({
-  date: "month",
-  userFocus: "all_users",
-  mode: "all",
+  date: "month" as DashboardDateRange,
+  userFocus: "all_users" as DashboardUserFocus,
+  mode: "all" as TransportMode | "all",
   search: "",
 })
+
+const summary = ref<DashboardTransportSummary | null>(null)
+const loading = ref(false)
+const error = ref<string | null>(null)
 
 const dateOptions = [
   { label: "This Month", value: "month" },
@@ -469,13 +441,14 @@ const dateOptions = [
   { label: "Last Month", value: "last_month" },
 ]
 
-const userFocusOptions = [
+const userFocusOptions = computed(() => [
   { label: "All Users", value: "all_users" },
-  { label: "Maral Y.", value: "maral" },
-  { label: "Ian H.", value: "ian" },
-  { label: "James K.", value: "james" },
-  { label: "Nadia R.", value: "nadia" },
-]
+  { label: "My Jobs", value: "current_user" },
+  ...(summary.value?.users.map(user => ({
+    label: user.name,
+    value: user.id,
+  })) ?? []),
+])
 
 const modeOptions = [
   { label: "All Modes", value: "all" },
@@ -483,6 +456,9 @@ const modeOptions = [
   { label: "Road", value: "road" },
   { label: "Sea", value: "sea" },
   { label: "Rail", value: "rail" },
+  { label: "Courier", value: "courier" },
+  { label: "Multi Modal", value: "multi_modal" },
+  { label: "Consolidation", value: "consolidation" },
 ]
 
 const managementRoles = ["super-admin", "admin", "company-manager"]
@@ -513,6 +489,7 @@ const hasManagementDashboardPermissions = computed(() => {
 const isManagement = computed(() => {
   return auth.isAdmin || hasManagementRole.value || hasManagementDashboardPermissions.value
 })
+
 const canCreateJobs = computed(() => {
   return auth.hasPermission("tms.jobs.create")
 })
@@ -521,139 +498,167 @@ const canViewQuotes = computed(() => {
   return auth.hasPermission("tms.quotes.view") || auth.hasPermission("tms.quotes.create")
 })
 
-const userStatCards: StatCard[] = [
-  { key: "jobs", label: "ALL JOBS", value: 3, sub: "User history" },
-  { key: "quotes", label: "QUOTES", value: 2, sub: "Current quotes" },
-  { key: "open", label: "OPEN JOBS", value: 2, sub: "Planned + in transit" },
-  { key: "delivered", label: "JOBS DELIVERED", value: 1, sub: "Completed jobs" },
-  { key: "exceptions", label: "EXCEPTIONS", value: 2, sub: "Operational issues" },
-  { key: "sales", label: "TOTAL SALES", value: "£4,940", sub: "Visible sales" },
-  { key: "cost", label: "COST", value: "£3,250", sub: "Operational cost" },
-  { key: "profit", label: "PROFIT / LOSS", value: "£1,690", sub: "Sales less cost" },
-  {
-    key: "target_sales",
-    label: "SALES TARGET",
-    value: "£12,000",
-    sub: "£4,940 actual",
-    progress: 41,
-    progressLabel: "Progress",
-  },
-  {
-    key: "target_profit",
-    label: "PROFIT TARGET",
-    value: "£3,800",
-    sub: "£1,690 actual",
-    progress: 44,
-    progressLabel: "Progress",
-  },
-]
-
-const managementStatCards: StatCard[] = [
-  { key: "jobs", label: "ALL JOBS", value: 12, sub: "Entire dataset" },
-  { key: "quotes", label: "QUOTES", value: 8, sub: "All users" },
-  { key: "open", label: "OPEN JOBS", value: 8, sub: "Planned + in transit" },
-  { key: "delivered", label: "JOBS DELIVERED", value: 4, sub: "Completed jobs" },
-  { key: "exceptions", label: "EXCEPTIONS", value: 8, sub: "Business-wide issues" },
-  { key: "sales", label: "TOTAL SALES", value: "£43,790", sub: "Visible sales" },
-  { key: "cost", label: "COST", value: "£30,050", sub: "Operational cost" },
-  { key: "profit", label: "PROFIT / LOSS", value: "£13,740", sub: "Sales less cost" },
-  {
-    key: "target_sales",
-    label: "SALES TARGET",
-    value: "£68,500",
-    sub: "£43,790 actual",
-    progress: 64,
-    progressLabel: "Progress",
-  },
-  {
-    key: "target_profit",
-    label: "PROFIT TARGET",
-    value: "£21,000",
-    sub: "£13,740 actual",
-    progress: 65,
-    progressLabel: "Progress",
-  },
-]
-
 const currentStatCards = computed(() => {
-  return isManagement.value ? managementStatCards : userStatCards
+  const stats = summary.value?.stats
+  const scope = isManagement.value ? "Selected business view" : "Your visible records"
+  const salesTarget = stats?.sales_target ?? 0
+  const profitTarget = stats?.profit_target ?? 0
+
+  return [
+    { key: "jobs", label: "ALL JOBS", value: stats?.jobs ?? 0, sub: scope },
+    { key: "quotes", label: "QUOTES", value: stats?.quotes ?? 0, sub: "Current quotes" },
+    { key: "open", label: "OPEN JOBS", value: stats?.open_jobs ?? 0, sub: "Planned + in transit" },
+    {
+      key: "delivered",
+      label: "JOBS DELIVERED",
+      value: stats?.delivered_jobs ?? 0,
+      sub: "Completed jobs",
+    },
+    { key: "exceptions", label: "EXCEPTIONS", value: stats?.exceptions ?? 0, sub: "Needs review" },
+    { key: "sales", label: "TOTAL SALES", value: money(stats?.sales ?? 0), sub: "Visible sales" },
+    { key: "cost", label: "COST", value: money(stats?.cost ?? 0), sub: "Operational cost" },
+    {
+      key: "profit",
+      label: "PROFIT / LOSS",
+      value: money(stats?.profit ?? 0),
+      sub: "Sales less cost",
+    },
+    {
+      key: "target_sales",
+      label: "SALES TARGET",
+      value: money(salesTarget),
+      sub: `${money(stats?.sales ?? 0)} actual`,
+      progress: percentage(stats?.sales ?? 0, salesTarget),
+      progressLabel: "Progress",
+    },
+    {
+      key: "target_profit",
+      label: "PROFIT TARGET",
+      value: money(profitTarget),
+      sub: `${money(stats?.profit ?? 0)} actual`,
+      progress: percentage(stats?.profit ?? 0, profitTarget),
+      progressLabel: "Progress",
+    },
+  ] satisfies StatCard[]
 })
 
-const kanban = [
-  {
-    key: "planned",
-    title: "Planned",
-    jobs: [
-      { id: 1, ref: "JOB-250301", customer: "Aston Components Ltd" },
-      { id: 2, ref: "JOB-250311", customer: "PC Cargo House Account" },
-    ],
-  },
-  {
-    key: "transit",
-    title: "In Transit",
-    jobs: [],
-  },
-  {
-    key: "delivered",
-    title: "Delivered",
-    jobs: [{ id: 3, ref: "JOB-250306", customer: "Atlas Trade Group" }],
-  },
-]
+const kanban = computed(() => summary.value?.kanban ?? [])
+const userTodo = computed(() => summary.value?.todos ?? [])
+const managementExceptions = computed(() => summary.value?.todos ?? [])
+const modeMix = computed(() => summary.value?.mode_mix ?? [])
+const revenueByMode = computed(() => summary.value?.revenue_by_mode ?? [])
 
-const userTodo = [
-  {
-    id: 1,
-    title: "Upload POD for JOB-250301",
-    owner: "Maral Y.",
-    when: "Due Today",
-  },
-]
+const managementPerformance = computed(() => {
+  const items = summary.value?.performance ?? []
+  const maxMetric = Math.max(1, ...items.flatMap(item => [item.sales, item.profit, item.target]))
 
-const managementExceptions = [
-  {
-    id: 1,
-    title: "JOB-250301 • Aston Components Ltd",
-    owner: "Maral Y.",
-    when: "Missing POD",
-  },
-  {
-    id: 2,
-    title: "JOB-250302 • Silk Route Trading",
-    owner: "Ian H.",
-    when: "Customs inspection",
-  },
-  {
-    id: 3,
-    title: "JOB-250304 • Northfield Medical",
-    owner: "James K.",
-    when: "Awaiting booking confirmation",
-  },
-  {
-    id: 4,
-    title: "JOB-250305 • EuroMach Systems",
-    owner: "Nadia R.",
-    when: "Documentation query",
-  },
-]
+  return items.map(item => ({
+    ...item,
+    salesPct: Math.max(2, Math.round((item.sales / maxMetric) * 100)),
+    profitPct: Math.max(2, Math.round((item.profit / maxMetric) * 100)),
+    targetPct: Math.max(2, Math.round((item.target / maxMetric) * 100)),
+  }))
+})
 
-const rawPerformance = [
-  { name: "Maral", sales: 5000, profit: 1800, target: 12000 },
-  { name: "Ian", sales: 15500, profit: 5000, target: 18000 },
-  { name: "Sarah", sales: 8500, profit: 2400, target: 14000 },
-  { name: "James", sales: 5700, profit: 1900, target: 11000 },
-  { name: "Nadia", sales: 9700, profit: 3200, target: 13500 },
-]
+const donutMixStyle = computed(() => donutStyle(modeMix.value, "count"))
+const donutRevenueStyle = computed(() => donutStyle(revenueByMode.value, "amount"))
 
-const maxMetric = Math.max(
-  ...rawPerformance.flatMap(item => [item.sales, item.profit, item.target]),
+let fetchTimer: ReturnType<typeof setTimeout> | null = null
+let fetchVersion = 0
+
+onMounted(() => {
+  fetchDashboard()
+})
+
+watch(
+  () => [filters.date, filters.userFocus, filters.mode, filters.search, isManagement.value],
+  () => {
+    if (fetchTimer) {
+      clearTimeout(fetchTimer)
+    }
+
+    fetchTimer = setTimeout(fetchDashboard, 250)
+  },
 )
 
-const managementPerformance = rawPerformance.map(item => ({
-  ...item,
-  salesPct: Math.round((item.sales / maxMetric) * 100),
-  profitPct: Math.round((item.profit / maxMetric) * 100),
-  targetPct: Math.round((item.target / maxMetric) * 100),
-}))
+async function fetchDashboard() {
+  const version = ++fetchVersion
+  loading.value = true
+  error.value = null
+
+  try {
+    const data = await dashboardService.transport({
+      date: filters.date,
+      user_focus: isManagement.value ? filters.userFocus : "current_user",
+      mode: filters.mode,
+      q: filters.search || undefined,
+    })
+
+    if (version === fetchVersion) {
+      summary.value = data
+    }
+  } catch (err) {
+    if (version === fetchVersion) {
+      error.value = "Dashboard data could not be loaded."
+      console.error(err)
+    }
+  } finally {
+    if (version === fetchVersion) {
+      loading.value = false
+    }
+  }
+}
+
+function money(value: number) {
+  return new Intl.NumberFormat("en-GB", {
+    style: "currency",
+    currency: "GBP",
+    maximumFractionDigits: 0,
+  }).format(value)
+}
+
+function percentage(actual: number, target: number) {
+  if (!target) return 0
+
+  return Math.min(100, Math.round((actual / target) * 100))
+}
+
+function donutStyle(
+  items: { mode: string; count?: number; amount?: number }[],
+  key: "count" | "amount",
+) {
+  const total = items.reduce((sum, item) => sum + Number(item[key] ?? 0), 0)
+
+  if (!total) {
+    return { background: "#efefef" }
+  }
+
+  let start = 0
+  const segments = items.map((item, index) => {
+    const value = Number(item[key] ?? 0)
+    const end = start + (value / total) * 360
+    const segment = `${modeColor(item.mode, index)} ${start}deg ${end}deg`
+    start = end
+    return segment
+  })
+
+  return { background: `conic-gradient(${segments.join(", ")})` }
+}
+
+function modeColor(mode: string, fallbackIndex = 0) {
+  const colors: Record<string, string> = {
+    air: "var(--primary)",
+    road: "#9c9c9c",
+    sea: "#595959",
+    rail: "#b9b9b9",
+    courier: "#777",
+    multi_modal: "#d0d0d0",
+    consolidation: "#434343",
+  }
+  const fallbackColors = Object.values(colors)
+
+  return colors[mode] ?? fallbackColors[fallbackIndex % fallbackColors.length]
+}
 
 function goJobs() {
   router.push({ name: "tms.jobs.index" })
@@ -675,6 +680,7 @@ function exportView() {
   console.log("export dashboard", {
     view: isManagement.value ? "management" : "user",
     ...filters,
+    stats: summary.value?.stats,
   })
 }
 </script>

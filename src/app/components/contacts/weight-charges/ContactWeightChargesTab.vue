@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import "./ContactWeightCharges.css"
 
-import { computed, nextTick, onMounted, ref, watch } from "vue"
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue"
 import { useRoute } from "vue-router"
 
 import Button from "primevue/button"
@@ -223,6 +223,11 @@ async function ensureAtLeastOneTable() {
 }
 
 async function selectTable(table: ChargeTableListItem) {
+  if (autosaveTimer) {
+    clearTimeout(autosaveTimer)
+    autosaveTimer = null
+  }
+  isHydrating.value = true
   activeTableId.value = table.id
   const loaded = await contactStore.loadChargeTable(contactId.value, table.id)
   await hydrateFromTable(loaded)
@@ -318,13 +323,6 @@ async function saveCurrentTableSilently() {
     await contactStore.fetchChargeTables(contactId.value, {
       charge_type: "weight_break",
     })
-
-    toast.add({
-      severity: "success",
-      summary: "Saved",
-      detail: "Charge table auto-saved",
-      life: 1200,
-    })
   } catch (error: any) {
     console.error("AUTOSAVE FAILED", error)
 
@@ -348,7 +346,7 @@ function queueAutosave() {
 
   autosaveTimer = setTimeout(async () => {
     await saveCurrentTableSilently()
-  }, 700)
+  }, 1200)
 }
 
 function addWeightBreak() {
@@ -432,10 +430,17 @@ onMounted(async () => {
 
   const firstTable = contactStore.chargeTables[0]
   if (firstTable) {
+    isHydrating.value = true
     activeTableId.value = firstTable.id
     const loaded = await contactStore.loadChargeTable(contactId.value, firstTable.id)
     await hydrateFromTable(loaded)
   }
+})
+
+onUnmounted(() => {
+  if (!autosaveTimer) return
+  clearTimeout(autosaveTimer)
+  autosaveTimer = null
 })
 </script>
 
@@ -453,7 +458,7 @@ onMounted(async () => {
     <section class="wcCard">
       <div class="wcSplit">
         <div class="wcSplit__col">
-          <div class="wcSectionTitle">Create New Weight Break Table</div>
+          <div class="wcSectionTitle">Create Weight Table</div>
 
           <input
             v-model="newTableName"
@@ -463,7 +468,7 @@ onMounted(async () => {
           />
 
           <Button
-            label="Create New Table"
+            label="Create"
             icon="pi pi-plus"
             class="btn btn--primary wcBtn wcBtn--block"
             :disabled="!newTableName.trim()"
@@ -471,7 +476,7 @@ onMounted(async () => {
           />
 
           <Button
-            label="Delete Current Table"
+            label="Delete"
             icon="pi pi-trash"
             class="p-button-outlined wcBtn wcBtn--danger wcBtn--block"
             :disabled="!activeTableId || tables.length <= 1"
@@ -536,7 +541,7 @@ onMounted(async () => {
 
     <div class="wcToolbar">
       <Button
-        label="Add Weight Break"
+        label="Add break"
         icon="pi pi-plus"
         class="btn btn--primary wcBtn"
         :disabled="!activeTableId"
@@ -669,7 +674,7 @@ onMounted(async () => {
 
       <div class="wcFooter">
         <Button
-          label="Add New Charge"
+          label="Add charge"
           icon="pi pi-plus-circle"
           class="p-button-outlined wcBtn wcBtn--footer"
           :disabled="!activeTableId"
