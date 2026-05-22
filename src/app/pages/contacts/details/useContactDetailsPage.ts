@@ -12,7 +12,6 @@ export type ContactDetailsTab =
   | "collections"
   | "weight_break"
   | "customer"
-  | "demo"
 
 function blankBranch(): Omit<ContactBranch, "id"> {
   return {
@@ -113,15 +112,6 @@ export function useContactDetailsPage() {
     })
   }
 
-  function onSendInvoice() {
-    toast.add({
-      severity: "info",
-      summary: "Send invoice",
-      detail: `Contact ID: ${contact.value?.id ?? "-"}`,
-      life: 2500,
-    })
-  }
-
   async function saveBranch(branchId: number, patch: Partial<ContactBranch>) {
     if (!contact.value) return
     if (!branchId || branchId <= 0) return
@@ -153,7 +143,6 @@ export function useContactDetailsPage() {
     try {
       await contactStore.createBranch(contact.value.id, {
         ...blankBranch(),
-        name: "Head Office",
         billing_same_as_delivery: true,
       })
 
@@ -224,7 +213,6 @@ export function useContactDetailsPage() {
     try {
       await contactStore.createCollectionAddress(contact.value.id, {
         ...blankCollectionAddress(),
-        label: "New collection point",
       })
 
       toast.add({
@@ -314,7 +302,6 @@ export function useContactDetailsPage() {
     setTab,
 
     onEditContact,
-    onSendInvoice,
 
     addBranch,
     removeBranch,

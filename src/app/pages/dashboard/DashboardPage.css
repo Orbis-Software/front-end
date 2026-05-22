@@ -109,6 +109,23 @@
   width: 100%;
 }
 
+.dashboard-status {
+  margin: 0 0 14px;
+  border: 1px solid #d8d8d8;
+  border-radius: 12px;
+  background: #f8f8f8;
+  color: #555;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.dashboard-status--error {
+  border-color: #e2b6b6;
+  background: #fff6f6;
+  color: #9f2d2d;
+}
+
 /* PrimeVue inputs */
 .dashboard-page .p-inputtext,
 .dashboard-page .p-select,

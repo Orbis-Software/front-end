@@ -129,7 +129,8 @@ const sameAsDelivery = computed({
         type="button"
         class="dangerBtn"
         icon="pi pi-trash"
-        label="Delete"
+        title="Delete branch"
+        aria-label="Delete branch"
         @click="emit('delete')"
       />
     </div>

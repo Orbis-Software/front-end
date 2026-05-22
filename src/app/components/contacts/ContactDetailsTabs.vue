@@ -1,8 +1,9 @@
 <script setup lang="ts">
-export type MainTab = "overview" | "branches" | "collections" | "weight_break" | "customer" | "demo"
+export type MainTab = "overview" | "branches" | "collections" | "weight_break" | "customer"
 
 defineProps<{
   active: MainTab
+  counts?: Partial<Record<MainTab, number>>
 }>()
 
 const emit = defineEmits<{
@@ -11,59 +12,56 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <div class="tabs">
+  <nav class="contact-details-tabs" aria-label="Contact details sections">
     <button
       type="button"
-      class="tab"
-      :class="{ 'tab--active': active === 'overview' }"
+      class="contact-details-tabs__tab"
+      :class="{ 'contact-details-tabs__tab--active': active === 'overview' }"
       @click="emit('change', 'overview')"
     >
-      Overview
+      <span>Overview</span>
     </button>
 
     <button
       type="button"
-      class="tab"
-      :class="{ 'tab--active': active === 'branches' }"
+      class="contact-details-tabs__tab"
+      :class="{ 'contact-details-tabs__tab--active': active === 'branches' }"
       @click="emit('change', 'branches')"
     >
-      Branches & Billing
+      <span>Branches</span>
+      <span v-if="counts?.branches !== undefined" class="contact-details-tabs__count">
+        {{ counts.branches }}
+      </span>
     </button>
 
     <button
       type="button"
-      class="tab"
-      :class="{ 'tab--active': active === 'collections' }"
+      class="contact-details-tabs__tab"
+      :class="{ 'contact-details-tabs__tab--active': active === 'collections' }"
       @click="emit('change', 'collections')"
     >
-      Addresses
+      <span>Addresses</span>
+      <span v-if="counts?.collections !== undefined" class="contact-details-tabs__count">
+        {{ counts.collections }}
+      </span>
     </button>
 
     <button
       type="button"
-      class="tab"
-      :class="{ 'tab--active': active === 'weight_break' }"
+      class="contact-details-tabs__tab"
+      :class="{ 'contact-details-tabs__tab--active': active === 'weight_break' }"
       @click="emit('change', 'weight_break')"
     >
-      Weight Break Charges
+      <span>Weight Charges</span>
     </button>
 
     <button
       type="button"
-      class="tab"
-      :class="{ 'tab--active': active === 'customer' }"
+      class="contact-details-tabs__tab"
+      :class="{ 'contact-details-tabs__tab--active': active === 'customer' }"
       @click="emit('change', 'customer')"
     >
-      Customer Charges
+      <span>Customer Charges</span>
     </button>
-
-    <button
-      type="button"
-      class="tab"
-      :class="{ 'tab--active': active === 'demo' }"
-      @click="emit('change', 'demo')"
-    >
-      Calculation Demo
-    </button>
-  </div>
+  </nav>
 </template>

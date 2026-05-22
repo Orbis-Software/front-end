@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, ref, watch, onMounted } from "vue"
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue"
 import Button from "primevue/button"
 import Calendar from "primevue/calendar"
 import InputSwitch from "primevue/inputswitch"
@@ -51,6 +51,9 @@ watch(
 )
 
 const selected = computed(() => rows.value[selectedIndex.value])
+const lastSavedSnapshot = ref("")
+const autosaveTimer = ref<ReturnType<typeof setTimeout> | null>(null)
+const autosaveState = ref<"idle" | "pending" | "saving" | "saved">("idle")
 
 function select(i: number) {
   selectedIndex.value = i
@@ -67,6 +70,7 @@ function onDeleteSelected() {
 }
 
 function onCancel() {
+  clearAutosaveTimer()
   emit("cancel")
 }
 
@@ -268,7 +272,74 @@ function onSave() {
   }
 
   emit("save", selected.value.id, payload)
+  lastSavedSnapshot.value = JSON.stringify(payload)
+  autosaveState.value = "saved"
 }
+
+function buildSavePayload(row: ContactCollectionAddress): Partial<ContactCollectionAddress> {
+  return {
+    label: row.label ?? null,
+    address_line_1: row.address_line_1 ?? null,
+    address_line_2: row.address_line_2 ?? null,
+    address_line_3: row.address_line_3 ?? null,
+    city: row.city ?? null,
+    county_state: row.county_state ?? null,
+    postal_code: row.postal_code ?? null,
+    country_id: row.country_id ?? null,
+    is_collection: Boolean(row.is_collection),
+    is_delivery: Boolean(row.is_delivery),
+    hours_of_operation: row.hours_of_operation ?? null,
+    contact_person: row.contact_person ?? null,
+    email: row.email ?? null,
+    phone: row.phone ?? null,
+    special_instructions: row.special_instructions ?? null,
+  }
+}
+
+function clearAutosaveTimer() {
+  if (!autosaveTimer.value) return
+  clearTimeout(autosaveTimer.value)
+  autosaveTimer.value = null
+}
+
+function queueAutosave() {
+  if (!selected.value?.id) return
+
+  clearAutosaveTimer()
+  autosaveState.value = "pending"
+
+  autosaveTimer.value = setTimeout(() => {
+    if (!selected.value?.id) return
+
+    autosaveState.value = "saving"
+    onSave()
+  }, 700)
+}
+
+const selectedSaveSnapshot = computed(() => {
+  if (!selected.value?.id) return ""
+  return JSON.stringify(buildSavePayload(selected.value))
+})
+
+watch(
+  () => selected.value?.id,
+  () => {
+    clearAutosaveTimer()
+    lastSavedSnapshot.value = selectedSaveSnapshot.value
+    autosaveState.value = selected.value?.id ? "saved" : "idle"
+  },
+  { immediate: true },
+)
+
+watch(selectedSaveSnapshot, snapshot => {
+  if (!snapshot) return
+  if (snapshot === lastSavedSnapshot.value) return
+  queueAutosave()
+})
+
+onBeforeUnmount(() => {
+  clearAutosaveTimer()
+})
 
 /* =========================
    DISPLAY HELPERS
@@ -308,7 +379,7 @@ function displayType(c: CollectionUI) {
     <div>
       <div class="tabHeader__title">Supplier addresses</div>
       <div class="tabHeader__subtitle">
-        Click any address to edit full details. Add, delete, update instantly.
+        Click any address to edit full details. Changes auto-save after editing.
       </div>
     </div>
 
@@ -316,7 +387,7 @@ function displayType(c: CollectionUI) {
       type="button"
       class="btn btn--primary"
       icon="pi pi-plus"
-      label="New address"
+      label="Add address"
       @click="onAdd"
     />
   </div>
@@ -376,11 +447,15 @@ function displayType(c: CollectionUI) {
             <div class="editorTitle">Edit address</div>
             <div class="editorSub">
               {{
-                selected?.reference_code
-                  ? `Ref: ${selected.reference_code}`
-                  : selected?.id
-                    ? `#${selected.id}`
-                    : "New record (not saved yet)"
+                autosaveState === "pending"
+                  ? "Unsaved changes"
+                  : autosaveState === "saving"
+                    ? "Saving..."
+                    : selected?.reference_code
+                      ? `Ref: ${selected.reference_code}`
+                      : selected?.id
+                        ? `#${selected.id}`
+                        : "New record"
               }}
             </div>
           </div>
@@ -548,7 +623,7 @@ function displayType(c: CollectionUI) {
         </div>
 
         <div class="editorActions">
-          <Button type="button" class="btn btn--ghost" label="Cancel" @click="onCancel" />
+          <Button type="button" class="btn btn--ghost" label="Reset" @click="onCancel" />
 
           <div class="editorActions__right">
             <Button
@@ -564,7 +639,7 @@ function displayType(c: CollectionUI) {
               type="button"
               class="btn btn--primary"
               icon="pi pi-check"
-              label="Save changes"
+              label="Save"
               :disabled="!selected?.id"
               @click="onSave"
             />
@@ -834,13 +909,20 @@ function displayType(c: CollectionUI) {
 .editorActions__right {
   display: flex;
   gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 :global(.p-button.btn) {
-  padding: 10px 12px;
-  border-radius: 10px;
+  width: auto !important;
+  flex: 0 0 auto;
+  min-height: 34px;
+  padding: 0 10px;
+  border-radius: 8px;
+  font-size: 12px;
   font-weight: 800;
   box-shadow: none;
+  white-space: nowrap;
 }
 
 :global(.p-button.btn:focus) {

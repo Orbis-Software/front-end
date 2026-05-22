@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import "./ContactOverviewCard.css"
-import { computed, ref } from "vue"
+import { computed } from "vue"
 
 interface ContactOverview {
   id?: number
@@ -10,6 +10,7 @@ interface ContactOverview {
   phone?: string | null
   website?: string | null
   vat_number?: string | null
+  eori?: string | null
   eori_number?: string | null
 
   payment_terms?: string | null
@@ -31,13 +32,6 @@ const props = defineProps<{
   contact: ContactOverview
 }>()
 
-const testMode = ref(true)
-const testCreditLimit = ref<number>(25000)
-const testTotalSales = ref<number>(23000)
-const testDaysOverdue = ref<number>(0)
-const testOveragePercentage = ref<number>(5)
-const testJobValue = ref<number>(2100)
-
 function toNumber(value: number | string | null | undefined, fallback = 0): number {
   if (value === null || value === undefined || value === "") return fallback
 
@@ -58,15 +52,7 @@ function formatMoney(value: number | string | null | undefined, fallback = "-"):
 }
 
 const activeContact = computed<ContactOverview>(() => {
-  if (!testMode.value) return props.contact
-
-  return {
-    ...props.contact,
-    credit_limit: testCreditLimit.value,
-    total_sales: testTotalSales.value,
-    days_overdue: testDaysOverdue.value,
-    overage_percentage: testOveragePercentage.value,
-  }
+  return props.contact
 })
 
 const creditLimitNumber = computed(() => toNumber(activeContact.value.credit_limit, 0))
@@ -122,10 +108,6 @@ const formattedMaximumBookableAmount = computed(() =>
   formatMoney(maximumBookableAmountNumber.value, "0.00"),
 )
 
-const bookingCheck = computed(() => {
-  return testJobValue.value <= maximumBookableAmountNumber.value
-})
-
 const stats = computed(() => [
   {
     label: "Branches",
@@ -167,7 +149,10 @@ const infoRows = computed(() => [
   { label: "Phone", value: activeContact.value.phone || "-" },
   { label: "Website", value: activeContact.value.website || "-" },
   { label: "VAT Number", value: activeContact.value.vat_number || "-" },
-  { label: "EORI Number", value: activeContact.value.eori_number || "-" },
+  {
+    label: "EORI Number",
+    value: activeContact.value.eori || activeContact.value.eori_number || "-",
+  },
   {
     label: "Account Status",
     value: accountStatusLabel.value,
@@ -203,46 +188,6 @@ defineExpose({
 
 <template>
   <div class="contact-overview">
-    <section v-if="testMode" class="contact-overview__test-panel">
-      <div class="contact-overview__test-header">
-        <strong>Notification Test Panel</strong>
-      </div>
-
-      <div class="contact-overview__test-grid">
-        <label class="contact-overview__test-field">
-          <span>Credit Limit</span>
-          <input v-model.number="testCreditLimit" type="number" />
-        </label>
-
-        <label class="contact-overview__test-field">
-          <span>Total Sales</span>
-          <input v-model.number="testTotalSales" type="number" />
-        </label>
-
-        <label class="contact-overview__test-field">
-          <span>Days Overdue</span>
-          <input v-model.number="testDaysOverdue" type="number" />
-        </label>
-
-        <label class="contact-overview__test-field">
-          <span>Overage %</span>
-          <input v-model.number="testOveragePercentage" type="number" />
-        </label>
-
-        <label class="contact-overview__test-field">
-          <span>Test Job Value</span>
-          <input v-model.number="testJobValue" type="number" />
-        </label>
-      </div>
-
-      <div class="contact-overview__test-results">
-        <div>Available Credit: £{{ formattedAvailableCredit }}</div>
-        <div>ON STOP: {{ isOnStop ? "YES" : "NO" }}</div>
-        <div>Low Credit Warning: {{ isLowAvailableCredit ? "YES" : "NO" }}</div>
-        <div>Booking Allowed: {{ bookingCheck ? "YES" : "NO" }}</div>
-      </div>
-    </section>
-
     <section class="contact-overview__hero">
       <div class="contact-overview__hero-main">
         <div class="contact-overview__eyebrow">Customer Overview</div>
