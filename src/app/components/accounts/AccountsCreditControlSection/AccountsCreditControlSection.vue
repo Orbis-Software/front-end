@@ -1,53 +1,29 @@
 <script setup lang="ts">
 import "./AccountsCreditControlSection.css"
 
-type CreditCustomerRow = {
-  customer: string
-  terms: string
-  creditLimit: string
-  outstanding: string
-  oldestDebt: string
-  status: string
-  statusTone: "warning" | "success"
-  hold: string
-  holdTone: "danger" | "neutral"
-}
+import { computed, ref } from "vue"
+import Button from "primevue/button"
 
-const customerRows: CreditCustomerRow[] = [
-  {
-    customer: "Acme Retail UK",
-    terms: "30 days",
-    creditLimit: "£10,000.00",
-    outstanding: "£7,650.00",
-    oldestDebt: "63 days",
-    status: "Warning",
-    statusTone: "warning",
-    hold: "ON HOLD",
-    holdTone: "danger",
-  },
-  {
-    customer: "Nomad Tech GmbH",
-    terms: "30 days",
-    creditLimit: "£12,000.00",
-    outstanding: "£9,200.00",
-    oldestDebt: "30 days",
-    status: "OK",
-    statusTone: "success",
-    hold: "Active",
-    holdTone: "neutral",
-  },
-  {
-    customer: "Silk Route Logistics",
-    terms: "14 days",
-    creditLimit: "£8,000.00",
-    outstanding: "£0.00",
-    oldestDebt: "0 days",
-    status: "OK",
-    statusTone: "success",
-    hold: "Active",
-    holdTone: "neutral",
-  },
-]
+import { useAccountsDemo } from "@/app/composables/useAccountsDemo"
+
+const { state, creditRows, saveState, money } = useAccountsDemo()
+const selectedCustomerName = ref("Acme Retail UK")
+
+const selectedCustomer = computed(
+  () =>
+    creditRows.value.find(row => row.customer === selectedCustomerName.value) ??
+    creditRows.value[0],
+)
+
+function toggleHold() {
+  if (!selectedCustomer.value) return
+  const customer = state.creditCustomers.find(
+    row => row.customer === selectedCustomer.value?.customer,
+  )
+  if (!customer) return
+  customer.onHold = !customer.onHold
+  saveState()
+}
 </script>
 
 <template>
@@ -79,19 +55,20 @@ const customerRows: CreditCustomerRow[] = [
             </thead>
 
             <tbody>
-              <tr v-for="row in customerRows" :key="row.customer">
+              <tr
+                v-for="row in creditRows"
+                :key="row.customer"
+                @click="selectedCustomerName = row.customer"
+              >
                 <td>{{ row.customer }}</td>
-                <td>{{ row.terms }}</td>
-                <td>{{ row.creditLimit }}</td>
-                <td>{{ row.outstanding }}</td>
-                <td>{{ row.oldestDebt }}</td>
+                <td>{{ row.termsLabel }}</td>
+                <td>{{ row.creditLimitLabel }}</td>
+                <td>{{ row.outstandingLabel }}</td>
+                <td>{{ row.oldestDebtLabel }}</td>
                 <td>
                   <span
                     class="accounts-credit-control__pill"
-                    :class="{
-                      'accounts-credit-control__pill--warning': row.statusTone === 'warning',
-                      'accounts-credit-control__pill--success': row.statusTone === 'success',
-                    }"
+                    :class="`accounts-credit-control__pill--${row.statusTone}`"
                   >
                     {{ row.status }}
                   </span>
@@ -99,10 +76,7 @@ const customerRows: CreditCustomerRow[] = [
                 <td>
                   <span
                     class="accounts-credit-control__pill"
-                    :class="{
-                      'accounts-credit-control__pill--danger': row.holdTone === 'danger',
-                      'accounts-credit-control__pill--neutral': row.holdTone === 'neutral',
-                    }"
+                    :class="`accounts-credit-control__pill--${row.holdTone}`"
                   >
                     {{ row.hold }}
                   </span>
@@ -113,38 +87,55 @@ const customerRows: CreditCustomerRow[] = [
         </div>
       </section>
 
-      <aside class="accounts-credit-control__panel accounts-credit-control__detail">
+      <aside
+        v-if="selectedCustomer"
+        class="accounts-credit-control__panel accounts-credit-control__detail"
+      >
         <div class="accounts-credit-control__detail-head">Selected Customer Status</div>
 
         <div class="accounts-credit-control__detail-stack">
           <div class="accounts-credit-control__detail-card">
-            <div class="accounts-credit-control__detail-title">Acme Retail UK</div>
+            <div class="accounts-credit-control__detail-title">{{ selectedCustomer.customer }}</div>
             <div class="accounts-credit-control__detail-text">
-              Terms 30 days · Credit Limit £10,000.00
+              Terms {{ selectedCustomer.termsLabel }} · Credit Limit
+              {{ selectedCustomer.creditLimitLabel }}
             </div>
           </div>
 
-          <div class="accounts-credit-control__alert">
-            Payment terms exceeded. Oldest outstanding debt is 63 days.
+          <div v-if="selectedCustomer.status === 'Warning'" class="accounts-credit-control__alert">
+            Payment terms or credit limit warning. Oldest outstanding debt is
+            {{ selectedCustomer.oldestDebtLabel }}.
           </div>
 
           <div class="accounts-credit-control__detail-card">
             <div class="accounts-credit-control__detail-title">Credit Position</div>
-            <div class="accounts-credit-control__detail-text">Current exposure £7,650.00</div>
+            <div class="accounts-credit-control__detail-text">
+              Current exposure {{ selectedCustomer.outstandingLabel }}
+            </div>
           </div>
 
           <div class="accounts-credit-control__detail-card">
             <div class="accounts-credit-control__detail-title">System Hold</div>
-            <div class="accounts-credit-control__detail-text">ON HOLD enabled automatically.</div>
+            <div class="accounts-credit-control__detail-text">
+              {{ selectedCustomer.onHold ? "ON HOLD enabled." : "Account active." }}
+            </div>
+            <Button
+              :label="selectedCustomer.onHold ? 'Release Hold' : 'Place On Hold'"
+              class="btn btn--ghost"
+              size="small"
+              @click="toggleHold"
+            />
           </div>
 
           <div class="accounts-credit-control__detail-card">
             <div class="accounts-credit-control__detail-title">Open Invoices</div>
-            <div class="accounts-credit-control__detail-text">
-              INV-1001 · due 2026-04-01 · £4,850.00
-            </div>
-            <div class="accounts-credit-control__detail-text">
-              INV-1004 · due 2026-01-09 · £2,800.00
+            <div
+              v-for="invoice in selectedCustomer.openInvoices"
+              :key="invoice.id"
+              class="accounts-credit-control__detail-text"
+            >
+              {{ invoice.invoice }} · due {{ invoice.dueDate }} ·
+              {{ money(invoice.amount, invoice.currency) }}
             </div>
           </div>
         </div>

@@ -41,11 +41,23 @@
   flex-wrap: wrap;
 }
 
-.accounts-charge-codes__form-grid {
+.accounts-charge-codes__filters {
   display: grid;
-  grid-template-columns: 1.25fr 0.85fr 0.85fr 0.85fr 1.25fr;
+  grid-template-columns: minmax(220px, 1fr) 180px 150px 150px 120px;
   gap: 12px;
   margin-top: 20px;
+  align-items: end;
+}
+
+.accounts-charge-codes__form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  align-items: end;
+}
+
+.accounts-charge-codes__field--wide {
+  grid-column: 1 / -1;
 }
 
 .accounts-charge-codes__field {
@@ -64,8 +76,50 @@
   width: 100%;
 }
 
-.accounts-charge-codes__add-row {
-  margin-top: 18px;
+.accounts-charge-codes__field--customs {
+  min-width: 120px;
+}
+
+.accounts-charge-codes__switch-row {
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.accounts-charge-codes__dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.accounts-charge-codes__list-tools {
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.accounts-charge-codes__counts {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.accounts-charge-codes__error {
+  margin-top: 10px;
+  border: 1px solid #e0aaaa;
+  background: #fff2f2;
+  color: #8c2c2c;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 13px;
 }
 
 .accounts-charge-codes__table-wrap {
@@ -93,6 +147,8 @@
   background: #fafafa;
   color: var(--text-muted);
   font-weight: 700;
+  cursor: pointer;
+  user-select: none;
 }
 
 .accounts-charge-codes__table-actions {
@@ -101,14 +157,71 @@
   flex-wrap: wrap;
 }
 
+.accounts-charge-codes__paginator {
+  border: 0;
+  padding: 12px 16px 0;
+  background: #fff;
+}
+
+.accounts-charge-codes__paginator.p-paginator {
+  justify-content: flex-end;
+  border: 0;
+  background: #fff;
+  padding: 0;
+}
+
+.accounts-charge-codes__code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-weight: 700;
+}
+
+.accounts-charge-codes__badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 4px 8px;
+  background: #eef4fb;
+  color: #0b5cad;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.accounts-charge-codes__badge--empty {
+  background: #f2f4f7;
+  color: var(--text-muted);
+}
+
+.accounts-charge-codes__yes {
+  color: #0b5cad !important;
+  font-weight: 700;
+}
+
+.accounts-charge-codes__no {
+  color: var(--text-muted) !important;
+}
+
 @media (max-width: 1200px) {
-  .accounts-charge-codes__form-grid {
+  .accounts-charge-codes__filters {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 768px) {
+  .accounts-charge-codes__filters {
+    grid-template-columns: 1fr;
+  }
+
   .accounts-charge-codes__form-grid {
     grid-template-columns: 1fr;
+  }
+
+  .accounts-charge-codes__field--wide {
+    grid-column: auto;
+  }
+
+  .accounts-charge-codes__list-tools,
+  .accounts-charge-codes__paginator.p-paginator {
+    justify-content: flex-start;
   }
 }

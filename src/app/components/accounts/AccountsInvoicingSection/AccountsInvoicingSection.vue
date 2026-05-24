@@ -1,178 +1,143 @@
 <script setup lang="ts">
 import "./AccountsInvoicingSection.css"
 
+import { computed, ref } from "vue"
 import Button from "primevue/button"
 import Dropdown from "primevue/dropdown"
 import InputText from "primevue/inputtext"
 
-type InvoiceSummaryCard = {
-  label: string
-  value: string
-}
+import { downloadCsv, parseCsvFile, useAccountsDemo } from "@/app/composables/useAccountsDemo"
 
-type InvoiceRow = {
-  id: number
-  invoice: string
-  job: string
-  customer: string
-  mode: string
-  invoiceDate: string
-  dueDate: string
-  amount: string
-  paid: string
-  paidDate: string
-  status: string
-  statusTone: "warning" | "danger" | "success"
-  finance: string
-  financeTone: "neutral" | "success"
-}
+const {
+  state,
+  selectedInvoice,
+  invoiceSummary,
+  money,
+  statusLabel,
+  statusTone,
+  postInvoices,
+  markInvoicesPaid,
+  saveState,
+} = useAccountsDemo()
 
-type BankFeedRow = {
-  date: string
-  reference: string
-  description: string
-  direction: string
-  currency: string
-  amount: string
-  matchedInvoice: string
-  matched: boolean
-}
-
-const summaryCards: InvoiceSummaryCard[] = [
-  { label: "Total Invoices", value: "4" },
-  { label: "Outstanding", value: "£16,850.00" },
-  { label: "Paid", value: "£6,400.00" },
-  { label: "Posted to Finance", value: "2" },
-  { label: "On Hold Customers", value: "1" },
-]
-
-const invoices: InvoiceRow[] = [
-  {
-    id: 1,
-    invoice: "INV-1001",
-    job: "JOB-24091",
-    customer: "Acme Retail UK",
-    mode: "Sea",
-    invoiceDate: "2026-03-02",
-    dueDate: "2026-04-01",
-    amount: "£4,850.00",
-    paid: "-",
-    paidDate: "-",
-    status: "Sent",
-    statusTone: "warning",
-    finance: "Not Posted",
-    financeTone: "neutral",
-  },
-  {
-    id: 2,
-    invoice: "INV-1002",
-    job: "JOB-24092",
-    customer: "Nomad Tech GmbH",
-    mode: "Air",
-    invoiceDate: "2026-01-12",
-    dueDate: "2026-02-11",
-    amount: "€9,200.00",
-    paid: "-",
-    paidDate: "-",
-    status: "Overdue 30d",
-    statusTone: "danger",
-    finance: "Xero",
-    financeTone: "success",
-  },
-  {
-    id: 3,
-    invoice: "INV-1003",
-    job: "JOB-24093",
-    customer: "Silk Route Logistics",
-    mode: "Road",
-    invoiceDate: "2026-02-18",
-    dueDate: "2026-03-20",
-    amount: "US$6,400.00",
-    paid: "US$6,400.00",
-    paidDate: "2026-02-28",
-    status: "Paid",
-    statusTone: "success",
-    finance: "QuickBooks",
-    financeTone: "success",
-  },
-  {
-    id: 4,
-    invoice: "INV-1004",
-    job: "JOB-24094",
-    customer: "Acme Retail UK",
-    mode: "Warehouse",
-    invoiceDate: "2025-12-10",
-    dueDate: "2026-01-09",
-    amount: "£2,800.00",
-    paid: "-",
-    paidDate: "-",
-    status: "Overdue 63d",
-    statusTone: "danger",
-    finance: "Not Posted",
-    financeTone: "neutral",
-  },
-]
-
-const bankFeedRows: BankFeedRow[] = [
-  {
-    date: "2026-02-28",
-    reference: "PAY-8821",
-    description: "Silk Route remittance",
-    direction: "IN",
-    currency: "USD",
-    amount: "US$6,400.00",
-    matchedInvoice: "INV-1003",
-    matched: true,
-  },
-  {
-    date: "2026-03-05",
-    reference: "BK-5521",
-    description: "Carrier payment",
-    direction: "OUT",
-    currency: "EUR",
-    amount: "€4,300.00",
-    matchedInvoice: "Unmatched",
-    matched: false,
-  },
-  {
-    date: "2026-03-06",
-    reference: "PAY-9182",
-    description: "Partial client receipt",
-    direction: "IN",
-    currency: "GBP",
-    amount: "£2,000.00",
-    matchedInvoice: "INV-1001",
-    matched: true,
-  },
-]
+const selectedStatus = ref("all")
+const selectedAccountingPlatform = ref("Xero")
+const selectedTransferMethod = ref("Sales Invoice Push")
+const searchText = ref("")
+const selectedInvoiceIds = ref<string[]>([])
+const bankImportInput = ref<HTMLInputElement | null>(null)
 
 const statusOptions = [
   { label: "All statuses", value: "all" },
+  { label: "Draft", value: "draft" },
   { label: "Sent", value: "sent" },
   { label: "Paid", value: "paid" },
   { label: "Overdue", value: "overdue" },
+  { label: "Posted to finance", value: "posted" },
 ]
 
-const accountingPlatformOptions = [
-  { label: "Xero", value: "xero" },
-  { label: "QuickBooks", value: "quickbooks" },
-  { label: "Sage", value: "sage" },
-]
+const accountingPlatformOptions = ["Xero", "QuickBooks", "Sage"].map(value => ({
+  label: value,
+  value,
+}))
+const transferMethodOptions = ["Sales Invoice Push", "Purchase Invoice Push", "Draft Sync"].map(
+  value => ({
+    label: value,
+    value,
+  }),
+)
 
-const transferMethodOptions = [
-  { label: "Sales Invoice Push", value: "sales-invoice-push" },
-  { label: "Draft Export", value: "draft-export" },
-  { label: "Summary Export", value: "summary-export" },
-]
+const filteredInvoices = computed(() => {
+  const query = searchText.value.trim().toLowerCase()
+  return state.invoices.filter(invoice => {
+    const statusMatch =
+      selectedStatus.value === "all" ||
+      invoice.status === selectedStatus.value ||
+      (selectedStatus.value === "posted" && Boolean(invoice.postedPlatform))
+    const text = [invoice.invoice, invoice.job, invoice.customer, invoice.mode, invoice.currency]
+      .join(" ")
+      .toLowerCase()
+    return statusMatch && (!query || text.includes(query))
+  })
+})
 
-const selectedStatus = "all"
-const selectedAccountingPlatform = "xero"
-const selectedTransferMethod = "sales-invoice-push"
-const searchText = ""
+const allVisibleSelected = computed(
+  () =>
+    filteredInvoices.value.length > 0 &&
+    filteredInvoices.value.every(invoice => selectedInvoiceIds.value.includes(invoice.id)),
+)
+
+function toggleAllInvoices(event: Event) {
+  const checked = (event.target as HTMLInputElement).checked
+  const visibleIds = filteredInvoices.value.map(invoice => invoice.id)
+  selectedInvoiceIds.value = checked
+    ? Array.from(new Set([...selectedInvoiceIds.value, ...visibleIds]))
+    : selectedInvoiceIds.value.filter(id => !visibleIds.includes(id))
+}
+
+function requireSelection() {
+  if (selectedInvoiceIds.value.length) return selectedInvoiceIds.value
+  return selectedInvoice.value ? [selectedInvoice.value.id] : []
+}
+
+function postSelected() {
+  postInvoices(requireSelection(), selectedAccountingPlatform.value)
+}
+
+function markSelectedPaid() {
+  markInvoicesPaid(requireSelection())
+}
+
+function printInvoice() {
+  window.print()
+}
+
+function exportBankFeed() {
+  downloadCsv("bank_feed_export.csv", [
+    ["Date", "Reference", "Description", "Direction", "Currency", "Amount", "MatchedInvoice"],
+    ...state.bankFeed.map(row => [
+      row.date,
+      row.reference,
+      row.description,
+      row.direction,
+      row.currency,
+      row.amount,
+      row.matchedInvoice,
+    ]),
+  ])
+}
+
+async function importBankCsv(event: Event) {
+  const file = (event.target as HTMLInputElement).files?.[0]
+  if (!file) return
+  const [, ...rows] = await parseCsvFile(file)
+  rows.forEach(row => {
+    state.bankFeed.push({
+      id: `BF-${Date.now()}-${row[1]}`,
+      date: row[0] || "",
+      reference: row[1] || "",
+      description: row[2] || "",
+      direction: row[3] === "OUT" ? "OUT" : "IN",
+      currency: row[4] || "GBP",
+      amount: Number(row[5] || 0),
+      matchedInvoice: row[6] || "",
+    })
+  })
+  ;(event.target as HTMLInputElement).value = ""
+  saveState()
+}
 </script>
 
 <template>
   <div class="accounts-invoicing">
+    <input
+      ref="bankImportInput"
+      type="file"
+      accept=".csv"
+      style="display: none"
+      @change="importBankCsv"
+    />
+
     <section class="accounts-invoicing__hero">
       <div class="accounts-invoicing__hero-head">
         <div>
@@ -183,16 +148,31 @@ const searchText = ""
         </div>
 
         <div class="accounts-invoicing__hero-actions">
-          <Button label="Export Bank Feed CSV" class="btn btn--ghost" size="small" />
-          <Button label="Import Bank CSV" class="btn btn--ghost" size="small" />
-          <Button label="Post Selected" class="btn btn--ghost" size="small" />
-          <Button label="Print Invoice PDF" class="btn btn--primary" size="small" />
+          <Button
+            label="Export Bank Feed CSV"
+            class="btn btn--ghost"
+            size="small"
+            @click="exportBankFeed"
+          />
+          <Button
+            label="Import Bank CSV"
+            class="btn btn--ghost"
+            size="small"
+            @click="bankImportInput?.click()"
+          />
+          <Button label="Post Selected" class="btn btn--ghost" size="small" @click="postSelected" />
+          <Button
+            label="Print Invoice PDF"
+            class="btn btn--primary"
+            size="small"
+            @click="printInvoice"
+          />
         </div>
       </div>
 
       <div class="accounts-invoicing__summary-grid">
         <div
-          v-for="card in summaryCards"
+          v-for="card in invoiceSummary"
           :key="card.label"
           class="accounts-invoicing__summary-card"
         >
@@ -209,12 +189,12 @@ const searchText = ""
 
           <div class="accounts-invoicing__filters">
             <InputText
-              :model-value="searchText"
+              v-model="searchText"
               placeholder="Search invoice, job, customer, mode..."
               class="accounts-invoicing__search"
             />
             <Dropdown
-              :model-value="selectedStatus"
+              v-model="selectedStatus"
               :options="statusOptions"
               option-label="label"
               option-value="value"
@@ -228,7 +208,13 @@ const searchText = ""
           <table class="accounts-invoicing__table">
             <thead>
               <tr>
-                <th class="checkbox-col"></th>
+                <th class="checkbox-col">
+                  <input
+                    type="checkbox"
+                    :checked="allVisibleSelected"
+                    @change="toggleAllInvoices"
+                  />
+                </th>
                 <th>Invoice</th>
                 <th>Job</th>
                 <th>Customer</th>
@@ -244,9 +230,13 @@ const searchText = ""
             </thead>
 
             <tbody>
-              <tr v-for="row in invoices" :key="row.id">
-                <td class="checkbox-col">
-                  <input type="checkbox" />
+              <tr
+                v-for="row in filteredInvoices"
+                :key="row.id"
+                @click="state.selectedInvoiceId = row.id"
+              >
+                <td class="checkbox-col" @click.stop>
+                  <input v-model="selectedInvoiceIds" type="checkbox" :value="row.id" />
                 </td>
                 <td>{{ row.invoice }}</td>
                 <td>{{ row.job }}</td>
@@ -254,30 +244,27 @@ const searchText = ""
                 <td>{{ row.mode }}</td>
                 <td>{{ row.invoiceDate }}</td>
                 <td>{{ row.dueDate }}</td>
-                <td>{{ row.amount }}</td>
-                <td>{{ row.paid }}</td>
-                <td>{{ row.paidDate }}</td>
+                <td>{{ money(row.amount, row.currency) }}</td>
+                <td>{{ row.paid ? money(row.amount, row.currency) : "-" }}</td>
+                <td>{{ row.paidDate || "-" }}</td>
                 <td>
                   <span
                     class="accounts-invoicing__pill"
-                    :class="{
-                      'accounts-invoicing__pill--warning': row.statusTone === 'warning',
-                      'accounts-invoicing__pill--danger': row.statusTone === 'danger',
-                      'accounts-invoicing__pill--success': row.statusTone === 'success',
-                    }"
+                    :class="`accounts-invoicing__pill--${statusTone(row.status)}`"
                   >
-                    {{ row.status }}
+                    {{ statusLabel(row.status, row.dueDate) }}
                   </span>
                 </td>
                 <td>
                   <span
                     class="accounts-invoicing__pill"
-                    :class="{
-                      'accounts-invoicing__pill--neutral': row.financeTone === 'neutral',
-                      'accounts-invoicing__pill--success': row.financeTone === 'success',
-                    }"
+                    :class="
+                      row.postedPlatform
+                        ? 'accounts-invoicing__pill--success'
+                        : 'accounts-invoicing__pill--neutral'
+                    "
                   >
-                    {{ row.finance }}
+                    {{ row.postedPlatform || "Not Posted" }}
                   </span>
                 </td>
               </tr>
@@ -286,7 +273,7 @@ const searchText = ""
         </div>
       </section>
 
-      <aside class="accounts-invoicing__panel accounts-invoicing__detail">
+      <aside v-if="selectedInvoice" class="accounts-invoicing__panel accounts-invoicing__detail">
         <div class="accounts-invoicing__panel-head">
           <h3>Invoice Detail</h3>
           <span class="accounts-invoicing__linked-pill">Job page linked</span>
@@ -294,52 +281,52 @@ const searchText = ""
 
         <div class="accounts-invoicing__detail-stack">
           <div class="accounts-invoicing__detail-card">
-            <div class="accounts-invoicing__detail-title">INV-1001</div>
+            <div class="accounts-invoicing__detail-title">{{ selectedInvoice.invoice }}</div>
             <div class="accounts-invoicing__detail-text">
-              Job JOB-24091 · Acme Retail UK · Maral
+              {{ selectedInvoice.job }} · {{ selectedInvoice.customer }} ·
+              {{ selectedInvoice.user }}
             </div>
           </div>
-
           <div class="accounts-invoicing__detail-card">
             <div class="accounts-invoicing__detail-title">Shipment</div>
-            <div class="accounts-invoicing__detail-text">Valencia, ES → Tbilisi, GE</div>
-            <div class="accounts-invoicing__detail-text">FCL · Sea · DAP</div>
+            <div class="accounts-invoicing__detail-text">{{ selectedInvoice.route }}</div>
+            <div class="accounts-invoicing__detail-text">{{ selectedInvoice.mode }}</div>
           </div>
-
           <div class="accounts-invoicing__detail-card">
             <div class="accounts-invoicing__detail-title">Transport Refs</div>
-            <div class="accounts-invoicing__detail-text">Master: MEDU3482172</div>
-            <div class="accounts-invoicing__detail-text">House/Job Ref: PCCUK24091</div>
+            <div
+              v-for="refText in selectedInvoice.transportRefs"
+              :key="refText"
+              class="accounts-invoicing__detail-text"
+            >
+              {{ refText }}
+            </div>
           </div>
-
           <div class="accounts-invoicing__detail-card">
             <div class="accounts-invoicing__detail-title">Financial</div>
-            <div class="accounts-invoicing__detail-text">Amount: £4,850.00</div>
-            <div class="accounts-invoicing__detail-text">Cost: £3,660.00</div>
-            <div class="accounts-invoicing__detail-text">Profit: £1,190.00</div>
-            <div class="accounts-invoicing__detail-text">Paid: No</div>
-          </div>
-
-          <div class="accounts-invoicing__detail-card">
-            <div class="accounts-invoicing__detail-title">Credit Status</div>
-            <div class="accounts-invoicing__detail-text">Terms: 30 days</div>
             <div class="accounts-invoicing__detail-text">
-              Outstanding Customer Exposure: £7,650.00
+              Amount: {{ money(selectedInvoice.amount, selectedInvoice.currency) }}
             </div>
-
-            <div class="accounts-invoicing__alert">
-              Customer is on hold due to credit limit and/or payment term breach.
+            <div class="accounts-invoicing__detail-text">
+              Cost: {{ money(selectedInvoice.cost, selectedInvoice.currency) }}
+            </div>
+            <div class="accounts-invoicing__detail-text">
+              Profit:
+              {{ money(selectedInvoice.amount - selectedInvoice.cost, selectedInvoice.currency) }}
+            </div>
+            <div class="accounts-invoicing__detail-text">
+              Paid: {{ selectedInvoice.paid ? "Yes" : "No" }}
             </div>
           </div>
-
           <div class="accounts-invoicing__detail-card">
             <div class="accounts-invoicing__detail-title">Invoice Lines</div>
-            <div class="accounts-invoicing__detail-text">Ocean Freight · £3,200.00 · Tax GBZR</div>
-            <div class="accounts-invoicing__detail-text">
-              Destination Handling · £850.00 · Tax GBZR
-            </div>
-            <div class="accounts-invoicing__detail-text">
-              Customs Clearance · £800.00 · Tax UK20
+            <div
+              v-for="line in selectedInvoice.lines"
+              :key="line.description"
+              class="accounts-invoicing__detail-text"
+            >
+              {{ line.description }} · {{ money(line.amount, selectedInvoice.currency) }} · Tax
+              {{ line.taxCode }}
             </div>
           </div>
         </div>
@@ -356,7 +343,7 @@ const searchText = ""
           <div class="accounts-invoicing__field">
             <label>Accounting Platform</label>
             <Dropdown
-              :model-value="selectedAccountingPlatform"
+              v-model="selectedAccountingPlatform"
               :options="accountingPlatformOptions"
               option-label="label"
               option-value="value"
@@ -367,7 +354,7 @@ const searchText = ""
           <div class="accounts-invoicing__field">
             <label>Transfer Method</label>
             <Dropdown
-              :model-value="selectedTransferMethod"
+              v-model="selectedTransferMethod"
               :options="transferMethodOptions"
               option-label="label"
               option-value="value"
@@ -378,25 +365,30 @@ const searchText = ""
 
         <div class="accounts-invoicing__field accounts-invoicing__field--full">
           <label>Compatibility Notes</label>
-          <textarea class="accounts-invoicing__textarea" rows="4">
+          <textarea class="accounts-invoicing__textarea" rows="4" readonly>
 Normalised invoice header, line items, nominal codes, tax codes, currency, exchange rate, customer account, due dates, settlement status and payment references are stored in a platform-ready structure. Banking feed import/export follows CSV transaction mapping suitable for later bank/API connectors.
           </textarea>
         </div>
 
         <div class="accounts-invoicing__panel-actions">
-          <Button label="Post Current Invoice" class="btn btn--primary" size="small" />
-          <Button label="Mark Selected as Paid" class="btn btn--ghost" size="small" />
+          <Button
+            label="Post Current Invoice"
+            class="btn btn--primary"
+            size="small"
+            @click="postInvoices([state.selectedInvoiceId], selectedAccountingPlatform)"
+          />
+          <Button
+            label="Mark Selected as Paid"
+            class="btn btn--ghost"
+            size="small"
+            @click="markSelectedPaid"
+          />
         </div>
 
         <div class="accounts-invoicing__log-stack">
-          <div class="accounts-invoicing__log-card">
-            <div class="accounts-invoicing__log-title">Xero INV-1002</div>
-            <div class="accounts-invoicing__log-text">2026-01-13 09:42 · Posted successfully</div>
-          </div>
-
-          <div class="accounts-invoicing__log-card">
-            <div class="accounts-invoicing__log-title">QuickBooks INV-1003</div>
-            <div class="accounts-invoicing__log-text">2026-02-19 11:25 · Posted successfully</div>
+          <div v-for="log in state.postingLog" :key="log.id" class="accounts-invoicing__log-card">
+            <div class="accounts-invoicing__log-title">{{ log.title }}</div>
+            <div class="accounts-invoicing__log-text">{{ log.ts }} · {{ log.text }}</div>
           </div>
         </div>
       </section>
@@ -421,23 +413,23 @@ Normalised invoice header, line items, nominal codes, tax codes, currency, excha
               </tr>
             </thead>
             <tbody>
-              <tr v-for="row in bankFeedRows" :key="`${row.reference}-${row.date}`">
+              <tr v-for="row in state.bankFeed" :key="row.id">
                 <td>{{ row.date }}</td>
                 <td>{{ row.reference }}</td>
                 <td>{{ row.description }}</td>
                 <td>{{ row.direction }}</td>
                 <td>{{ row.currency }}</td>
-                <td>{{ row.amount }}</td>
+                <td>{{ money(row.amount, row.currency) }}</td>
                 <td>
                   <span
                     class="accounts-invoicing__pill"
                     :class="
-                      row.matched
+                      row.matchedInvoice
                         ? 'accounts-invoicing__pill--success'
                         : 'accounts-invoicing__pill--neutral'
                     "
                   >
-                    {{ row.matchedInvoice }}
+                    {{ row.matchedInvoice || "Unmatched" }}
                   </span>
                 </td>
               </tr>

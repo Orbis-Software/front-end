@@ -35,6 +35,19 @@
   line-height: 1.35;
 }
 
+.accounts-tax-codes__actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.accounts-tax-codes__filters {
+  display: grid;
+  grid-template-columns: minmax(220px, 420px);
+  gap: 12px;
+  margin-top: 20px;
+}
+
 .accounts-tax-codes__form-grid {
   display: grid;
   grid-template-columns: 1.35fr 0.9fr 1.35fr 0.9fr 1.15fr;
@@ -56,6 +69,22 @@
 
 .accounts-tax-codes__add-row {
   margin-top: 18px;
+}
+
+.accounts-tax-codes__counts {
+  margin-top: 14px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.accounts-tax-codes__error {
+  margin-top: 10px;
+  border: 1px solid #e0aaaa;
+  background: #fff2f2;
+  color: #8c2c2c;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 13px;
 }
 
 .accounts-tax-codes__table-wrap {
@@ -83,12 +112,21 @@
   background: #fafafa;
   color: var(--text-muted);
   font-weight: 700;
+  cursor: pointer;
+  user-select: none;
 }
 
 .accounts-tax-codes__table-actions {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
+}
+
+.accounts-tax-codes__paginator.p-paginator {
+  justify-content: flex-end;
+  border: 0;
+  background: #fff;
+  padding: 12px 16px 0;
 }
 
 @media (max-width: 1200px) {
@@ -98,7 +136,12 @@
 }
 
 @media (max-width: 768px) {
+  .accounts-tax-codes__filters,
   .accounts-tax-codes__form-grid {
     grid-template-columns: 1fr;
+  }
+
+  .accounts-tax-codes__paginator.p-paginator {
+    justify-content: flex-start;
   }
 }

@@ -1,121 +1,56 @@
 <script setup lang="ts">
 import "./AccountsOverviewSection.css"
 
-const summaryCards = [
-  { label: "Total Jobs Invoiced", value: "4" },
-  { label: "Outstanding Jobs to Invoice", value: "4" },
-  { label: "Total Invoiced Value", value: "£23,250.00" },
-  { label: "Total To Be Invoiced", value: "£21,800.00" },
-  { label: "Gross Profit", value: "£11,240.00" },
-]
+import { computed } from "vue"
 
-const profitLossRows = [
-  {
-    metric: "Recognised Sales (Invoiced)",
-    value: "£23,250.00",
-    comment: "4 sales invoices raised",
-  },
-  {
-    metric: "Open Sales Pipeline",
-    value: "£21,800.00",
-    comment: "4 jobs still to invoice",
-  },
-  {
-    metric: "Total Sales View",
-    value: "£45,050.00",
-    comment: "Invoiced plus pending operational billing",
-  },
-  {
-    metric: "Invoiced Job Costs",
-    value: "£17,410.00",
-    comment: "Costs carried on customer invoices/jobs",
-  },
-  {
-    metric: "Pending Job Costs",
-    value: "£16,400.00",
-    comment: "Estimated costs on unbilled jobs",
-  },
-  {
-    metric: "Supplier Purchase Ledger",
-    value: "£15,700.00",
-    comment: "4 supplier invoices logged",
-  },
-  {
-    metric: "Gross Profit View",
-    value: "£11,240.00",
-    comment: "Sales less job costs",
-  },
-  {
-    metric: "Net Position vs Supplier Ledger",
-    value: "£29,350.00",
-    comment: "Sales less supplier invoice value",
-  },
-]
+import { useAccountsDemo } from "@/app/composables/useAccountsDemo"
 
-const creditCashSnapshot = [
-  { value: "£16,850.00", label: "Customer debt still outstanding" },
-  { value: "£6,400.00", label: "Customer receipts marked as paid" },
-  { value: "£15,700.00", label: "Supplier invoices still awaiting payment" },
-  { value: "1", label: "Customers currently on hold" },
-]
+const { state, overviewSummary, overviewRows, creditRows, money } = useAccountsDemo()
 
-const jobsAwaitingInvoicing = [
-  {
-    job: "JOB-24095",
-    customer: "Acme Retail UK",
-    user: "Maral",
-    mode: "Road",
-    stage: "Delivered",
-    stageClass: "success",
-    targetInvoiceDate: "2026-03-12",
-    estimatedSell: "£3,250.00",
-    estimatedCost: "£2,480.00",
-    expectedProfit: "£770.00",
-  },
-  {
-    job: "JOB-24096",
-    customer: "Nomad Tech GmbH",
-    user: "Ian",
-    mode: "Air",
-    stage: "Awaiting costs",
-    stageClass: "warning",
-    targetInvoiceDate: "2026-03-15",
-    estimatedSell: "£7,850.00",
-    estimatedCost: "£6,120.00",
-    expectedProfit: "£1,730.00",
-  },
-  {
-    job: "JOB-24097",
-    customer: "Silk Route Logistics",
-    user: "John",
-    mode: "Sea",
-    stage: "Discharged",
-    stageClass: "info",
-    targetInvoiceDate: "2026-03-18",
-    estimatedSell: "US$9,100.00",
-    estimatedCost: "US$6,980.00",
-    expectedProfit: "US$2,120.00",
-  },
-  {
-    job: "JOB-24098",
-    customer: "Baltic Industrial",
-    user: "Maral",
-    mode: "Warehouse",
-    stage: "Ready to bill",
-    stageClass: "success",
-    targetInvoiceDate: "2026-03-11",
-    estimatedSell: "£1,600.00",
-    estimatedCost: "£820.00",
-    expectedProfit: "£780.00",
-  },
-]
+const creditCashSnapshot = computed(() => {
+  const outstanding = state.invoices
+    .filter(invoice => !invoice.paid)
+    .reduce((sum, invoice) => sum + invoice.amount, 0)
+  const paid = state.invoices
+    .filter(invoice => invoice.paid)
+    .reduce((sum, invoice) => sum + invoice.amount, 0)
+  const supplierOutstanding = state.supplierInvoices
+    .filter(invoice => !invoice.paid)
+    .reduce((sum, invoice) => sum + invoice.amount, 0)
 
-const accountStatusSummary = [
-  { value: "2", label: "Sales invoices transferred to finance systems" },
-  { value: "0", label: "Supplier invoices approved/scheduled for payment" },
-  { value: "3", label: "Live working currency rates in the table" },
-  { value: "2", label: "Configured client bank accounts available for documents and payments" },
-]
+  return [
+    { value: money(outstanding), label: "Customer debt still outstanding" },
+    { value: money(paid), label: "Customer receipts marked as paid" },
+    { value: money(supplierOutstanding), label: "Supplier invoices still awaiting payment" },
+    {
+      value: String(state.creditCustomers.filter(customer => customer.onHold).length),
+      label: "Customers currently on hold",
+    },
+  ]
+})
+
+const accountStatusSummary = computed(() => [
+  {
+    value: String(state.invoices.filter(invoice => invoice.postedPlatform).length),
+    label: "Sales invoices transferred to finance systems",
+  },
+  {
+    value: String(state.supplierInvoices.filter(invoice => invoice.status === "scheduled").length),
+    label: "Supplier invoices approved/scheduled for payment",
+  },
+  { value: String(state.exchangeRates.length), label: "Live working currency rates in the table" },
+  {
+    value: String(state.bankAccounts.length),
+    label: "Configured client bank accounts available for documents and payments",
+  },
+])
+
+function stageClass(stage: string) {
+  if (stage.toLowerCase().includes("ready") || stage.toLowerCase().includes("delivered"))
+    return "success"
+  if (stage.toLowerCase().includes("awaiting")) return "warning"
+  return "info"
+}
 </script>
 
 <template>
@@ -133,7 +68,11 @@ const accountStatusSummary = [
       </div>
 
       <div class="accounts-overview__summary-grid">
-        <div v-for="card in summaryCards" :key="card.label" class="accounts-overview__summary-card">
+        <div
+          v-for="card in overviewSummary"
+          :key="card.label"
+          class="accounts-overview__summary-card"
+        >
           <div class="accounts-overview__summary-label">{{ card.label }}</div>
           <div class="accounts-overview__summary-value">{{ card.value }}</div>
         </div>
@@ -157,7 +96,7 @@ const accountStatusSummary = [
               </tr>
             </thead>
             <tbody>
-              <tr v-for="row in profitLossRows" :key="row.metric">
+              <tr v-for="row in overviewRows" :key="row.metric">
                 <td>{{ row.metric }}</td>
                 <td class="strong">{{ row.value }}</td>
                 <td>{{ row.comment }}</td>
@@ -208,7 +147,7 @@ const accountStatusSummary = [
               </tr>
             </thead>
             <tbody>
-              <tr v-for="job in jobsAwaitingInvoicing" :key="job.job">
+              <tr v-for="job in state.pendingJobs" :key="job.job">
                 <td>{{ job.job }}</td>
                 <td>{{ job.customer }}</td>
                 <td>{{ job.user }}</td>
@@ -216,15 +155,17 @@ const accountStatusSummary = [
                 <td>
                   <span
                     class="accounts-overview__status"
-                    :class="`accounts-overview__status--${job.stageClass}`"
+                    :class="`accounts-overview__status--${stageClass(job.stage)}`"
                   >
                     {{ job.stage }}
                   </span>
                 </td>
                 <td>{{ job.targetInvoiceDate }}</td>
-                <td>{{ job.estimatedSell }}</td>
-                <td>{{ job.estimatedCost }}</td>
-                <td class="strong">{{ job.expectedProfit }}</td>
+                <td>{{ money(job.estimatedSell, job.currency) }}</td>
+                <td>{{ money(job.estimatedCost, job.currency) }}</td>
+                <td class="strong">
+                  {{ money(job.estimatedSell - job.estimatedCost, job.currency) }}
+                </td>
               </tr>
             </tbody>
           </table>
