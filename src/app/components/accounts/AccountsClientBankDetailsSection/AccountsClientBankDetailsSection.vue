@@ -1,66 +1,66 @@
 <script setup lang="ts">
 import "./AccountsClientBankDetailsSection.css"
 
+import { reactive, ref } from "vue"
 import Button from "primevue/button"
 import InputText from "primevue/inputtext"
 
-type BankAccountRow = {
-  id: number
-  account: string
-  currency: string
-  branch: string
-  accountNo: string
-  sortCode: string
-  iban: string
-  swift: string
-  bank: string
-  country: string
+import { useAccountsDemo } from "@/app/composables/useAccountsDemo"
+
+const { state, saveState } = useAccountsDemo()
+const editingId = ref("")
+const form = reactive({
+  account: "PC Cargo UK Ltd - GBP",
+  branch: "London City Branch",
+  prefix: "00",
+  currency: "GBP",
+  accountNo: "12345678",
+  sortCode: "12-34-56",
+  bic: "BARCGB22",
+  swift: "BARCGB22",
+  iban: "GB00BARC12345612345678",
+  bank: "Barclays Bank PLC",
+  addressLine1: "1 Bank Street",
+  addressLine2: "Canary Wharf",
+  addressLine3: "Floor / Building",
+  city: "London",
+  countyState: "Greater London",
+  postCodeZip: "E14 5HP",
+  country: "GB",
+})
+
+function resetForm() {
+  editingId.value = ""
+  Object.keys(form).forEach(key => {
+    form[key as keyof typeof form] = ""
+  })
 }
 
-const accountName = "PC Cargo UK Ltd - GBP"
-const branchName = "London City Branch"
-const prefix = "00"
-const currency = "GBP"
-const accountNumber = "12345678"
-const sortCode = "12-34-56"
-const bic = "BARCGB22"
-const swift = "BARCGB22"
-const iban = "GB00BARC12345612345678"
-const bankName = "Barclays Bank PLC"
-const addressLine1 = "1 Bank Street"
-const addressLine2 = "Canary Wharf"
-const addressLine3 = "Floor / Building"
-const city = "London"
-const countyState = "Greater London"
-const postCodeZip = "E14 5HP"
-const countryCode = "GB"
+function saveBankAccount() {
+  const record = {
+    id: editingId.value || `BANK-${Date.now()}`,
+    ...form,
+    currency: form.currency.toUpperCase(),
+    country: form.country.toUpperCase(),
+  }
+  const index = state.bankAccounts.findIndex(row => row.id === editingId.value)
+  if (index >= 0) state.bankAccounts[index] = record
+  else state.bankAccounts.unshift(record)
+  saveState()
+  resetForm()
+}
 
-const bankAccounts: BankAccountRow[] = [
-  {
-    id: 1,
-    account: "PC Cargo UK Ltd - GBP",
-    currency: "GBP",
-    branch: "London City Branch",
-    accountNo: "12345678",
-    sortCode: "12-34-56",
-    iban: "GB12BARC12345612345678",
-    swift: "BARCGB22",
-    bank: "Barclays Bank PLC",
-    country: "GB",
-  },
-  {
-    id: 2,
-    account: "PC Cargo UK Ltd - EUR",
-    currency: "EUR",
-    branch: "International Payments",
-    accountNo: "99887766",
-    sortCode: "",
-    iban: "GB29LOYD30927699887766",
-    swift: "LOYDGB2L",
-    bank: "Lloyds Bank",
-    country: "GB",
-  },
-]
+function editBankAccount(id: string) {
+  const row = state.bankAccounts.find(item => item.id === id)
+  if (!row) return
+  editingId.value = id
+  Object.assign(form, row)
+}
+
+function deleteBankAccount(id: string) {
+  state.bankAccounts = state.bankAccounts.filter(row => row.id !== id)
+  saveState()
+}
 </script>
 
 <template>
@@ -76,92 +76,81 @@ const bankAccounts: BankAccountRow[] = [
       <div class="accounts-client-bank-details__form-grid">
         <div class="accounts-client-bank-details__field">
           <label>Account Name</label>
-          <InputText :model-value="accountName" />
+          <InputText v-model="form.account" />
         </div>
-
         <div class="accounts-client-bank-details__field">
           <label>Branch Name</label>
-          <InputText :model-value="branchName" />
+          <InputText v-model="form.branch" />
         </div>
-
         <div class="accounts-client-bank-details__field">
           <label>Prefix</label>
-          <InputText :model-value="prefix" />
+          <InputText v-model="form.prefix" />
         </div>
-
         <div class="accounts-client-bank-details__field">
           <label>Currency</label>
-          <InputText :model-value="currency" />
+          <InputText v-model="form.currency" />
         </div>
-
         <div class="accounts-client-bank-details__field">
           <label>Account Number</label>
-          <InputText :model-value="accountNumber" />
+          <InputText v-model="form.accountNo" />
         </div>
-
         <div class="accounts-client-bank-details__field">
           <label>Sort Code</label>
-          <InputText :model-value="sortCode" />
+          <InputText v-model="form.sortCode" />
         </div>
-
         <div class="accounts-client-bank-details__field">
           <label>BIC</label>
-          <InputText :model-value="bic" />
+          <InputText v-model="form.bic" />
         </div>
-
         <div class="accounts-client-bank-details__field">
           <label>SWIFT</label>
-          <InputText :model-value="swift" />
+          <InputText v-model="form.swift" />
         </div>
-
         <div class="accounts-client-bank-details__field accounts-client-bank-details__field--wide">
           <label>IBAN</label>
-          <InputText :model-value="iban" />
+          <InputText v-model="form.iban" />
         </div>
-
         <div class="accounts-client-bank-details__field">
           <label>Bank Name</label>
-          <InputText :model-value="bankName" />
+          <InputText v-model="form.bank" />
         </div>
-
         <div class="accounts-client-bank-details__field">
           <label>Address Line 1</label>
-          <InputText :model-value="addressLine1" />
+          <InputText v-model="form.addressLine1" />
         </div>
-
         <div class="accounts-client-bank-details__field">
           <label>Address Line 2</label>
-          <InputText :model-value="addressLine2" />
+          <InputText v-model="form.addressLine2" />
         </div>
-
         <div class="accounts-client-bank-details__field">
           <label>Address Line 3</label>
-          <InputText :model-value="addressLine3" />
+          <InputText v-model="form.addressLine3" />
         </div>
-
         <div class="accounts-client-bank-details__field">
           <label>City</label>
-          <InputText :model-value="city" />
+          <InputText v-model="form.city" />
         </div>
-
         <div class="accounts-client-bank-details__field">
           <label>County / State</label>
-          <InputText :model-value="countyState" />
+          <InputText v-model="form.countyState" />
         </div>
-
         <div class="accounts-client-bank-details__field">
           <label>Post Code / ZIP</label>
-          <InputText :model-value="postCodeZip" />
+          <InputText v-model="form.postCodeZip" />
         </div>
-
         <div class="accounts-client-bank-details__field">
           <label>Country Code</label>
-          <InputText :model-value="countryCode" />
+          <InputText v-model="form.country" />
         </div>
       </div>
 
       <div class="accounts-client-bank-details__add-row">
-        <Button label="Add Bank Account" class="btn btn--primary" />
+        <Button
+          :label="editingId ? 'Save Bank Account' : 'Add Bank Account'"
+          class="btn btn--primary"
+          @click="saveBankAccount"
+        />
+        <Button v-if="editingId" label="Cancel Edit" class="btn btn--ghost" @click="resetForm" />
       </div>
 
       <div class="accounts-client-bank-details__table-wrap">
@@ -180,9 +169,8 @@ const bankAccounts: BankAccountRow[] = [
               <th>Action</th>
             </tr>
           </thead>
-
           <tbody>
-            <tr v-for="row in bankAccounts" :key="row.id">
+            <tr v-for="row in state.bankAccounts" :key="row.id">
               <td>{{ row.account }}</td>
               <td>{{ row.currency }}</td>
               <td>{{ row.branch }}</td>
@@ -194,8 +182,12 @@ const bankAccounts: BankAccountRow[] = [
               <td>{{ row.country }}</td>
               <td>
                 <div class="accounts-client-bank-details__table-actions">
-                  <Button label="Edit" class="btn btn--ghost" />
-                  <Button label="Delete" class="btn btn--ghost" />
+                  <Button label="Edit" class="btn btn--ghost" @click="editBankAccount(row.id)" />
+                  <Button
+                    label="Delete"
+                    class="btn btn--ghost"
+                    @click="deleteBankAccount(row.id)"
+                  />
                 </div>
               </td>
             </tr>
