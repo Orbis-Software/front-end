@@ -15,6 +15,8 @@ type PermRow = {
   key: string
   label: string
   permission: string
+  title: string
+  action: string
 }
 
 type PermGroup = {
@@ -25,6 +27,18 @@ type PermGroup = {
 
 function unique(arr: string[]) {
   return Array.from(new Set(arr.filter(Boolean)))
+}
+
+function titleCase(value: string) {
+  return value
+    .replace(/[._-]+/g, " ")
+    .replace(/\b\w/g, char => char.toUpperCase())
+    .trim()
+}
+
+function actionFromPermission(permission: string) {
+  const last = permission.split(".").filter(Boolean).pop() || permission
+  return titleCase(last)
 }
 
 function collectPermissionsFromItem(item: NavItem): string[] {
@@ -47,6 +61,8 @@ function flattenNavToPermRows(items: NavItem[]): PermRow[] {
         key: `${node.id}:${permission}`,
         label: node.label,
         permission,
+        title: titleCase(permission.replace(/^[^.]+\./, "")),
+        action: actionFromPermission(permission),
       })
     })
   })
@@ -69,6 +85,7 @@ export function useSystemAccessPage() {
 
   const rolesDraft = ref<string[]>([])
   const permsDraft = ref<string[]>([])
+  const permissionQuery = ref("")
 
   const HIDDEN_ROLES = new Set(["dev"])
 
@@ -174,6 +191,45 @@ export function useSystemAccessPage() {
     return (store.permissions ?? []).filter(permission => !allMapped.value.has(permission))
   })
 
+  const filteredPermissionGroups = computed<PermGroup[]>(() => {
+    const query = permissionQuery.value.trim().toLowerCase()
+    if (!query) return permissionGroups.value
+
+    return permissionGroups.value
+      .map(group => ({
+        ...group,
+        items: group.items.filter(item => {
+          return [group.label, item.label, item.title, item.action, item.permission]
+            .join(" ")
+            .toLowerCase()
+            .includes(query)
+        }),
+      }))
+      .filter(group => group.items.length > 0)
+  })
+
+  const filteredUnmappedPermissions = computed(() => {
+    const query = permissionQuery.value.trim().toLowerCase()
+    if (!query) return unmappedPermissions.value
+    return unmappedPermissions.value.filter(permission => permission.toLowerCase().includes(query))
+  })
+
+  const selectedDirectCount = computed(() => unique(permsDraft.value ?? []).length)
+  const selectedRoleCount = computed(() => unique(rolesDraft.value ?? []).length)
+  const effectiveCount = computed(() => unique(store.selected?.effective_permissions ?? []).length)
+
+  function roleLabel(role: string) {
+    return titleCase(role)
+  }
+
+  function permissionLabel(permission: string) {
+    return titleCase(permission)
+  }
+
+  function isPermSelected(permission: string) {
+    return (permsDraft.value ?? []).includes(permission)
+  }
+
   function selectAllGroup(group: PermGroup) {
     const set = new Set(permsDraft.value ?? [])
     group.items.forEach(item => set.add(item.permission))
@@ -196,18 +252,18 @@ export function useSystemAccessPage() {
 
   function selectAllUnmapped() {
     const set = new Set(permsDraft.value ?? [])
-    unmappedPermissions.value.forEach(permission => set.add(permission))
+    filteredUnmappedPermissions.value.forEach(permission => set.add(permission))
     permsDraft.value = Array.from(set)
   }
 
   function clearAllUnmapped() {
-    const remove = new Set(unmappedPermissions.value)
+    const remove = new Set(filteredUnmappedPermissions.value)
     permsDraft.value = (permsDraft.value ?? []).filter(permission => !remove.has(permission))
   }
 
   const countSelectedUnmapped = computed(() => {
     const selected = new Set(permsDraft.value ?? [])
-    return unmappedPermissions.value.reduce(
+    return filteredUnmappedPermissions.value.reduce(
       (count, permission) => count + (selected.has(permission) ? 1 : 0),
       0,
     )
@@ -267,6 +323,11 @@ export function useSystemAccessPage() {
     }
   }
 
+  async function saveAllAccess() {
+    await saveRoles()
+    await savePermissions()
+  }
+
   const effectiveGroups = computed(() => {
     const effective = new Set(store.selected?.effective_permissions ?? [])
     const direct = new Set(store.selected?.direct_permissions ?? [])
@@ -319,11 +380,20 @@ export function useSystemAccessPage() {
 
     rolesDraft,
     rolesOptions,
+    roleLabel,
 
     permsDraft,
+    permissionQuery,
+    selectedDirectCount,
+    selectedRoleCount,
+    effectiveCount,
+    permissionLabel,
+    isPermSelected,
 
     permissionGroups,
+    filteredPermissionGroups,
     unmappedPermissions,
+    filteredUnmappedPermissions,
 
     selectAllGroup,
     clearAllGroup,
@@ -339,6 +409,7 @@ export function useSystemAccessPage() {
 
     saveRoles,
     savePermissions,
+    saveAllAccess,
 
     init,
   }

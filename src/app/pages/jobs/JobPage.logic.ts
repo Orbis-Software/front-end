@@ -121,6 +121,12 @@ export function useJobCreatePage() {
   function selectJobType(next: string) {
     if (!isJobType(next)) return
 
+    if (next === "consolidation") {
+      const route = router.resolve({ name: "tms.consolidations.create" })
+      window.open(route.href, "_blank", "noopener,noreferrer")
+      return
+    }
+
     jobType.value = next
     mode.value = null
     form.job_number = ""

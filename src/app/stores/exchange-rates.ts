@@ -1,6 +1,10 @@
 import { defineStore } from "pinia"
 import exchangeRateService from "@/app/services/exchange-rates"
-import type { ExchangeRate, ExchangeRateFilters, ExchangeRatePayload } from "@/app/types/exchange-rate"
+import type {
+  ExchangeRate,
+  ExchangeRateFilters,
+  ExchangeRatePayload,
+} from "@/app/types/exchange-rate"
 
 type State = {
   exchangeRates: ExchangeRate[]

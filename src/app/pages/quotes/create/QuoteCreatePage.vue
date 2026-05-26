@@ -198,12 +198,48 @@
       <div class="grid-4">
         <div class="field">
           <label class="label">Origin Port / Location</label>
-          <InputText v-model="form.origin" class="control" placeholder="e.g. London Heathrow" />
+          <Select
+            v-model="form.origin"
+            :options="originLocationOptions"
+            optionLabel="label"
+            optionValue="value"
+            filter
+            filterBy="label,subLabel,searchText"
+            editable
+            class="control"
+            placeholder="Select origin"
+            emptyFilterMessage="No matching location"
+          >
+            <template #option="{ option }">
+              <div class="quote-location-option">
+                <strong>{{ option.label }}</strong>
+                <small v-if="option.subLabel">{{ option.subLabel }}</small>
+              </div>
+            </template>
+          </Select>
         </div>
 
         <div class="field">
           <label class="label">Destination Port / Location</label>
-          <InputText v-model="form.destination" class="control" placeholder="e.g. Dubai DXB" />
+          <Select
+            v-model="form.destination"
+            :options="destinationLocationOptions"
+            optionLabel="label"
+            optionValue="value"
+            filter
+            filterBy="label,subLabel,searchText"
+            editable
+            class="control"
+            placeholder="Select destination"
+            emptyFilterMessage="No matching location"
+          >
+            <template #option="{ option }">
+              <div class="quote-location-option">
+                <strong>{{ option.label }}</strong>
+                <small v-if="option.subLabel">{{ option.subLabel }}</small>
+              </div>
+            </template>
+          </Select>
         </div>
 
         <div class="field">
@@ -675,6 +711,8 @@ const {
   customerSuggestions,
   contactOptions,
   accountNumberPreview,
+  originLocationOptions,
+  destinationLocationOptions,
 
   currencyOptions,
   incotermOptions,

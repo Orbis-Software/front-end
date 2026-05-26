@@ -94,7 +94,12 @@ async function deleteRate(row: ExchangeRate) {
 function exportRates() {
   downloadCsv("exchange_rates.csv", [
     ["Base", "Quote", "Rate", "Date"],
-    ...exchangeRateStore.exchangeRates.map(row => [row.base, row.quote, row.rate, row.effectiveDate]),
+    ...exchangeRateStore.exchangeRates.map(row => [
+      row.base,
+      row.quote,
+      row.rate,
+      row.effectiveDate,
+    ]),
   ])
 }
 

@@ -47,8 +47,7 @@ export const useTaxCodeStore = defineStore("tax-codes", {
         this.from = result.meta.from
         this.to = result.meta.to
       } catch (error: any) {
-        this.error =
-          error?.response?.data?.message || error?.message || "Failed to load tax codes."
+        this.error = error?.response?.data?.message || error?.message || "Failed to load tax codes."
         throw error
       } finally {
         this.loading = false

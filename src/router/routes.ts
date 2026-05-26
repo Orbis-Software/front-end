@@ -43,6 +43,7 @@ const ContactDetailsPage = () => import("@/app/pages/contacts/details/ContactDet
 const ContactsImportPage = () => import("@/app/pages/contacts/import/ContactsImportPage.vue")
 
 const ConsolidationPage = () => import("@/app/pages/consolidations/ConsolidationPage.vue")
+const LoginDetailsPage = () => import("@/app/pages/settings/loginDetails/LoginDetailsPage.vue")
 const SettingsPage = () => import("@/app/pages/general-settings/GeneralSettingsPage.vue")
 const TmsListPage = () => import("@/app/pages/tms/shared/TmsListPage.vue")
 
@@ -321,6 +322,12 @@ export const routes: RouteRecordRaw[] = [
         meta: { title: "Contacts • Import" },
       },
 
+      {
+        path: "consolidations/new",
+        name: "tms.consolidations.create",
+        component: ConsolidationPage,
+        meta: { title: "Consolidation • New" },
+      },
       {
         path: "consolidations",
         name: "tms.consolidations.show",
@@ -670,6 +677,13 @@ export const routes: RouteRecordRaw[] = [
             meta: { title: "User Management • System Access" },
           },
         ],
+      },
+
+      {
+        path: "settings/login",
+        name: "settings.login-details",
+        component: LoginDetailsPage,
+        meta: { title: "Login Details" },
       },
 
       {

@@ -51,6 +51,7 @@ type ReferenceOption = {
   label: string
   value: string
   subLabel?: string
+  searchText: string
 }
 
 function createLeg(): MultiModalLeg {
@@ -117,13 +118,18 @@ export function useJobTransportTab() {
   const cityOptions = computed(() => {
     return globalReferenceData.value.cities
       .map(row => {
-        const value = row.fullName || row.city || row.location || row.code || ""
-        const subLabel = [row.country, row.code].filter(Boolean).join(" | ")
+        const city = firstValue(row, ["fullName", "full_name", "city", "location", "name"])
+        const code = firstValue(row, ["code", "iata", "iataCode", "iata_code", "unlocode"])
+        const country = firstValue(row, ["country", "countryName", "country_name"])
+        const value = city || code
+        const label = labelWithCode(city, code)
+        const subLabel = [country, code].filter(Boolean).join(" | ")
 
         return {
-          label: value,
+          label,
           value,
           subLabel,
+          searchText: searchText(row, [label, value, subLabel]),
         }
       })
       .filter(option => option.value)
@@ -133,16 +139,51 @@ export function useJobTransportTab() {
     return globalReferenceData.value.terminals
       .filter(filter)
       .map(row => {
-        const value = row.terminalName || row.name || row.location || row.code || ""
-        const subLabel = [row.location, row.country, row.code].filter(Boolean).join(" | ")
+        const terminalName = firstValue(row, [
+          "terminalName",
+          "terminal_name",
+          "airportName",
+          "airport_name",
+          "portName",
+          "port_name",
+          "name",
+        ])
+        const code = firstValue(row, ["code", "iata", "iataCode", "iata_code", "unlocode"])
+        const city = firstValue(row, ["city", "location", "municipality"])
+        const country = firstValue(row, ["country", "countryName", "country_name"])
+        const value = terminalName || city || code
+        const label = labelWithCode(terminalName || city, code)
+        const subLabel = [city, country, code].filter(Boolean).join(" | ")
 
         return {
-          label: value,
+          label,
           value,
           subLabel,
+          searchText: searchText(row, [label, value, subLabel]),
         }
       })
       .filter(option => option.value)
+  }
+
+  function firstValue(row: GlobalReferenceDataRow, keys: string[]): string {
+    for (const key of keys) {
+      const value = row[key]?.trim()
+
+      if (value) return value
+    }
+
+    return ""
+  }
+
+  function labelWithCode(name: string, code: string): string {
+    if (!name) return code
+    if (!code || name.toLowerCase().includes(code.toLowerCase())) return name
+
+    return `${code} - ${name}`
+  }
+
+  function searchText(row: GlobalReferenceDataRow, values: string[]): string {
+    return [...values, ...Object.values(row)].filter(Boolean).join(" ")
   }
 
   function getLocationOptions(locationMode: MultiModalLegMode): ReferenceOption[] {

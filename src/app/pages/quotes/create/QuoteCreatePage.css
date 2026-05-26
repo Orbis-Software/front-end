@@ -377,6 +377,24 @@
   color: #737373;
 }
 
+.quote-page .quote-location-option {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.quote-page .quote-location-option strong {
+  color: #1f2937;
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.quote-page .quote-location-option small {
+  color: #737373;
+  font-size: 11px;
+}
+
 @media (max-width: 1250px) {
   .quote-page .summary-tiles {
     grid-template-columns: repeat(3, minmax(0, 1fr));
