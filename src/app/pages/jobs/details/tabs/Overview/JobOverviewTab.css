@@ -107,6 +107,11 @@
   color: #fff;
 }
 
+.job-overview-tab__address-select .p-button .p-button-label,
+.job-overview-tab__address-select .p-button .p-button-icon {
+  color: #fff;
+}
+
 .job-overview-tab__route-details {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

@@ -180,9 +180,7 @@ onMounted(fetchTaxCodes)
               <th @click="sortBy('code')">Code {{ sortMarker("code") }}</th>
               <th @click="sortBy('taxCode')">Tax Code {{ sortMarker("taxCode") }}</th>
               <th @click="sortBy('rate')">Rate % {{ sortMarker("rate") }}</th>
-              <th @click="sortBy('description')">
-                Description {{ sortMarker("description") }}
-              </th>
+              <th @click="sortBy('description')">Description {{ sortMarker("description") }}</th>
               <th>Action</th>
             </tr>
           </thead>

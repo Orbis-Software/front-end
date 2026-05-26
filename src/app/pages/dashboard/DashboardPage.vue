@@ -435,6 +435,15 @@ const summary = ref<DashboardTransportSummary | null>(null)
 const loading = ref(false)
 const error = ref<string | null>(null)
 
+type SoftDeleteFields = {
+  deleted_at?: unknown
+  deletedAt?: unknown
+  softdelete?: unknown
+  softDelete?: unknown
+  soft_deleted?: unknown
+  is_deleted?: unknown
+}
+
 const dateOptions = [
   { label: "This Month", value: "month" },
   { label: "This Week", value: "week" },
@@ -595,7 +604,7 @@ async function fetchDashboard() {
     })
 
     if (version === fetchVersion) {
-      summary.value = data
+      summary.value = filterSoftDeletedDashboardData(data)
     }
   } catch (err) {
     if (version === fetchVersion) {
@@ -607,6 +616,51 @@ async function fetchDashboard() {
       loading.value = false
     }
   }
+}
+
+function filterSoftDeletedDashboardData(
+  data: DashboardTransportSummary,
+): DashboardTransportSummary {
+  return {
+    ...data,
+    users: filterActiveRecords(data.users),
+    kanban: filterActiveRecords(data.kanban).map(lane => ({
+      ...lane,
+      jobs: filterActiveRecords(lane.jobs),
+    })),
+    todos: filterActiveRecords(data.todos),
+    mode_mix: filterActiveRecords(data.mode_mix),
+    revenue_by_mode: filterActiveRecords(data.revenue_by_mode),
+    performance: filterActiveRecords(data.performance),
+  }
+}
+
+function filterActiveRecords<T extends object>(items: T[] = []): T[] {
+  return items.filter(item => !isSoftDeleted(item as T & SoftDeleteFields))
+}
+
+function isSoftDeleted(item: SoftDeleteFields) {
+  return [
+    item.deleted_at,
+    item.deletedAt,
+    item.softdelete,
+    item.softDelete,
+    item.soft_deleted,
+    item.is_deleted,
+  ].some(isSoftDeleteValue)
+}
+
+function isSoftDeleteValue(value: unknown) {
+  if (value === null || value === undefined || value === false || value === 0 || value === "") {
+    return false
+  }
+
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase()
+    return normalized !== "" && normalized !== "0" && normalized !== "false"
+  }
+
+  return Boolean(value)
 }
 
 function money(value: number) {

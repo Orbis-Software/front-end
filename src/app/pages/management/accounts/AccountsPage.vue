@@ -63,7 +63,7 @@ function printCurrentView() {
   <section class="accounts-page">
     <header class="accounts-page__header">
       <div class="accounts-page__title-wrap">
-        <h1 class="accounts-page__title">TMS Accounts</h1>
+        <h1 class="accounts-page__title">Accounts</h1>
       </div>
 
       <div class="accounts-page__actions">

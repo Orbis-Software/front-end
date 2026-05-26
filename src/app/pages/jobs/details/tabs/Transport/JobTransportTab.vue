@@ -87,6 +87,7 @@ const {
                 option-value="value"
                 placeholder="Select origin"
                 filter
+                filter-by="label,value,subLabel,searchText"
                 class="job-transport-tab__prime-select"
               >
                 <template #option="{ option }">
@@ -107,6 +108,7 @@ const {
                 option-value="value"
                 placeholder="Select destination"
                 filter
+                filter-by="label,value,subLabel,searchText"
                 class="job-transport-tab__prime-select"
               >
                 <template #option="{ option }">
@@ -336,6 +338,7 @@ const {
                 option-value="value"
                 placeholder="Select transhipment port"
                 filter
+                filter-by="label,value,subLabel,searchText"
                 class="job-transport-tab__prime-select"
               >
                 <template #option="{ option }">
@@ -356,6 +359,7 @@ const {
                 option-value="value"
                 placeholder="Select final destination"
                 filter
+                filter-by="label,value,subLabel,searchText"
                 class="job-transport-tab__prime-select"
               >
                 <template #option="{ option }">
@@ -451,6 +455,7 @@ const {
                 option-value="value"
                 placeholder="Select transit airport"
                 filter
+                filter-by="label,value,subLabel,searchText"
                 class="job-transport-tab__prime-select"
               >
                 <template #option="{ option }">
@@ -678,6 +683,7 @@ const {
             option-value="value"
             placeholder="Select origin road terminal"
             filter
+            filter-by="label,value,subLabel,searchText"
             class="job-transport-tab__prime-select"
           >
             <template #option="{ option }">
@@ -698,6 +704,7 @@ const {
             option-value="value"
             placeholder="Select destination road terminal"
             filter
+            filter-by="label,value,subLabel,searchText"
             class="job-transport-tab__prime-select"
           >
             <template #option="{ option }">
@@ -824,6 +831,7 @@ const {
             option-value="value"
             placeholder="Select loading terminal"
             filter
+            filter-by="label,value,subLabel,searchText"
             class="job-transport-tab__prime-select"
           >
             <template #option="{ option }">
@@ -844,6 +852,7 @@ const {
             option-value="value"
             placeholder="Select discharge terminal"
             filter
+            filter-by="label,value,subLabel,searchText"
             class="job-transport-tab__prime-select"
           >
             <template #option="{ option }">
@@ -989,6 +998,7 @@ const {
             option-value="value"
             placeholder="Select port of loading"
             filter
+            filter-by="label,value,subLabel,searchText"
             class="job-transport-tab__prime-select"
           >
             <template #option="{ option }">
@@ -1009,6 +1019,7 @@ const {
             option-value="value"
             placeholder="Select port of discharge"
             filter
+            filter-by="label,value,subLabel,searchText"
             class="job-transport-tab__prime-select"
           >
             <template #option="{ option }">
@@ -1029,6 +1040,7 @@ const {
             option-value="value"
             placeholder="Select transhipment port"
             filter
+            filter-by="label,value,subLabel,searchText"
             class="job-transport-tab__prime-select"
           >
             <template #option="{ option }">
@@ -1049,6 +1061,7 @@ const {
             option-value="value"
             placeholder="Select final destination"
             filter
+            filter-by="label,value,subLabel,searchText"
             class="job-transport-tab__prime-select"
           >
             <template #option="{ option }">
@@ -1145,6 +1158,7 @@ const {
             option-value="value"
             placeholder="Select departure airport"
             filter
+            filter-by="label,value,subLabel,searchText"
             class="job-transport-tab__prime-select"
           >
             <template #option="{ option }">
@@ -1165,6 +1179,7 @@ const {
             option-value="value"
             placeholder="Select arrival airport"
             filter
+            filter-by="label,value,subLabel,searchText"
             class="job-transport-tab__prime-select"
           >
             <template #option="{ option }">
@@ -1185,6 +1200,7 @@ const {
             option-value="value"
             placeholder="Select transit airport"
             filter
+            filter-by="label,value,subLabel,searchText"
             class="job-transport-tab__prime-select"
           >
             <template #option="{ option }">

@@ -1,6 +1,9 @@
 import { computed, onMounted, reactive, ref, watch } from "vue"
 import { useRoute, useRouter } from "vue-router"
+import { storeToRefs } from "pinia"
 import http from "@/api/http"
+import { useGlobalReferenceDataStore } from "@/app/stores/global-reference-data"
+import type { GlobalReferenceDataRow } from "@/app/types/globalReferenceData"
 import { useTransportQuoteStore } from "@/app/stores/transportQuote"
 import type { TransportQuote, TransportQuotePayload } from "@/app/types/transportQuote"
 import { useToast } from "primevue/usetoast"
@@ -12,6 +15,8 @@ type SelectOption<T = string> = {
   label: string
   value: T
   icon?: string
+  subLabel?: string
+  searchText?: string
 }
 
 type CustomerContact = {
@@ -59,6 +64,8 @@ export function useQuoteCreatePage() {
   const route = useRoute()
   const router = useRouter()
   const quoteStore = useTransportQuoteStore()
+  const globalReferenceDataStore = useGlobalReferenceDataStore()
+  const { data: globalReferenceData } = storeToRefs(globalReferenceDataStore)
   const toast = useToast()
 
   const loadingCustomers = ref(false)
@@ -183,6 +190,9 @@ export function useQuoteCreatePage() {
 
   const accountNumberPreview = computed(() => selectedCustomer.value?.account_number ?? "")
 
+  const originLocationOptions = computed<SelectOption[]>(() => getLocationOptions())
+  const destinationLocationOptions = computed<SelectOption[]>(() => getLocationOptions())
+
   const contactOptions = computed<SelectOption<number>[]>(() => {
     if (!selectedCustomer.value) return []
 
@@ -285,6 +295,88 @@ export function useQuoteCreatePage() {
     { label: "5% – Reduced", value: 5 },
     { label: "20% – Standard", value: 20 },
   ]
+
+  function getLocationOptions(): SelectOption[] {
+    if (mode.value === "air") return terminalOptions(row => row.type === "Airport")
+    if (mode.value === "sea") return terminalOptions(row => row.type === "Seaport")
+    if (mode.value === "rail") return terminalOptions(row => row.type === "Rail Freight")
+    if (mode.value === "road") {
+      return [...terminalOptions(row => row.type === "Road Freight"), ...cityOptions()]
+    }
+
+    return [...terminalOptions(() => true), ...cityOptions()]
+  }
+
+  function terminalOptions(filter: (row: GlobalReferenceDataRow) => boolean): SelectOption[] {
+    return globalReferenceData.value.terminals
+      .filter(filter)
+      .map(row => {
+        const terminalName = firstValue(row, [
+          "terminalName",
+          "terminal_name",
+          "airportName",
+          "airport_name",
+          "portName",
+          "port_name",
+          "name",
+        ])
+        const code = firstValue(row, ["code", "iata", "iataCode", "iata_code", "unlocode"])
+        const city = firstValue(row, ["city", "location", "municipality"])
+        const country = firstValue(row, ["country", "countryName", "country_name"])
+        const value = terminalName || city || code
+        const label = labelWithCode(terminalName || city, code)
+        const subLabel = [city, country, code].filter(Boolean).join(" | ")
+
+        return {
+          label,
+          value,
+          subLabel,
+          searchText: searchText(row, [label, value, subLabel]),
+        }
+      })
+      .filter(option => option.value)
+  }
+
+  function cityOptions(): SelectOption[] {
+    return globalReferenceData.value.cities
+      .map(row => {
+        const city = firstValue(row, ["fullName", "full_name", "city", "location", "name"])
+        const code = firstValue(row, ["code", "iata", "iataCode", "iata_code", "unlocode"])
+        const country = firstValue(row, ["country", "countryName", "country_name"])
+        const value = city || code
+        const label = labelWithCode(city, code)
+        const subLabel = [country, code].filter(Boolean).join(" | ")
+
+        return {
+          label,
+          value,
+          subLabel,
+          searchText: searchText(row, [label, value, subLabel]),
+        }
+      })
+      .filter(option => option.value)
+  }
+
+  function firstValue(row: GlobalReferenceDataRow, keys: string[]): string {
+    for (const key of keys) {
+      const value = row[key]?.trim()
+
+      if (value) return value
+    }
+
+    return ""
+  }
+
+  function labelWithCode(name: string, code: string): string {
+    if (!name) return code
+    if (!code || name.toLowerCase().includes(code.toLowerCase())) return name
+
+    return `${code} - ${name}`
+  }
+
+  function searchText(row: GlobalReferenceDataRow, values: string[]): string {
+    return [...values, ...Object.values(row)].filter(Boolean).join(" ")
+  }
 
   const totalPieces = computed(() =>
     dimensionRows.value.reduce((total, row) => total + Number(row.pieces || 0), 0),
@@ -773,7 +865,7 @@ export function useQuoteCreatePage() {
   }
 
   onMounted(async () => {
-    await fetchCustomers()
+    await Promise.allSettled([fetchCustomers(), globalReferenceDataStore.fetchAll()])
 
     if (isEditMode.value && quoteId.value) {
       await loadQuoteForEdit(quoteId.value)
@@ -806,6 +898,8 @@ export function useQuoteCreatePage() {
     customerSuggestions,
     contactOptions,
     accountNumberPreview,
+    originLocationOptions,
+    destinationLocationOptions,
 
     currencyOptions,
     incotermOptions,
