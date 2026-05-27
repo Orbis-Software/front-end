@@ -163,6 +163,8 @@ export interface JobPackage {
   job_id?: number
 
   package_type?: string | null
+  stackable?: boolean | null
+  at_the_top?: boolean | null
   quantity?: number | null
 
   length_cm?: number | null

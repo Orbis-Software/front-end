@@ -99,7 +99,7 @@ export function useQuoteListPage() {
   const actionDialogTitle = computed(() => {
     switch (selectedAction.value) {
       case "sent":
-        return "Mark Quotation as Sent"
+        return "Send Quotation to User"
       case "approve":
         return "Accept Quotation"
       case "decline":
@@ -116,7 +116,7 @@ export function useQuoteListPage() {
   const actionDialogMessage = computed(() => {
     switch (selectedAction.value) {
       case "sent":
-        return "Are you sure you want to mark this draft quotation as sent?"
+        return "This will send the draft quotation to the customer portal user and notify them by email. Continue?"
       case "approve":
         return "Are you sure you want to accept this quotation?"
       case "decline":
@@ -133,7 +133,7 @@ export function useQuoteListPage() {
   const actionConfirmLabel = computed(() => {
     switch (selectedAction.value) {
       case "sent":
-        return "Mark as Sent"
+        return "Send to User"
       case "approve":
         return "Accept"
       case "decline":
@@ -335,7 +335,10 @@ export function useQuoteListPage() {
             : nextStatus === "rejected"
               ? "Quotation Rejected"
               : "Quotation Sent",
-        detail: `${quoteNumber} has been ${prettify(nextStatus).toLowerCase()}.`,
+        detail:
+          nextStatus === "sent"
+            ? `${quoteNumber} has been sent to the customer user.`
+            : `${quoteNumber} has been ${prettify(nextStatus).toLowerCase()}.`,
         life: 3000,
       })
 

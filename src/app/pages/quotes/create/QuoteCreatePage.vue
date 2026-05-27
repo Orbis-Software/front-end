@@ -365,15 +365,18 @@
           <thead>
             <tr>
               <th>#</th>
-              <th>{{ mode === "road" ? "Pallets" : mode === "rail" ? "Units" : "Pieces" }}</th>
-              <th>L (cm)</th>
-              <th>W (cm)</th>
-              <th>H (cm)</th>
+              <th class="quote-table__compact-heading">
+                {{ mode === "road" ? "Pallets" : mode === "rail" ? "Units" : "Pieces" }}
+              </th>
+              <th class="quote-table__compact-heading">Length</th>
+              <th class="quote-table__compact-heading">Width</th>
+              <th class="quote-table__compact-heading">Height</th>
               <th>Weight (KG)</th>
               <th v-if="mode === 'air'">Vol. Wt (KG)</th>
               <th>CBM</th>
               <th v-if="mode === 'road'">LDM</th>
               <th v-if="mode === 'sea' || mode === 'rail'">Container</th>
+              <th>Stacking</th>
               <th></th>
             </tr>
           </thead>
@@ -381,10 +384,38 @@
           <tbody>
             <tr v-for="(row, index) in dimensionRows" :key="row.id">
               <td>{{ index + 1 }}</td>
-              <td><InputNumber v-model="row.pieces" inputClass="table-input" :min="1" /></td>
-              <td><InputNumber v-model="row.length" inputClass="table-input" :min="0" /></td>
-              <td><InputNumber v-model="row.width" inputClass="table-input" :min="0" /></td>
-              <td><InputNumber v-model="row.height" inputClass="table-input" :min="0" /></td>
+              <td class="quote-table__compact-cell">
+                <InputNumber
+                  v-model="row.pieces"
+                  inputClass="table-input table-input--compact"
+                  :min="1"
+                  :max="9999"
+                />
+              </td>
+              <td class="quote-table__compact-cell">
+                <InputNumber
+                  v-model="row.length"
+                  inputClass="table-input table-input--compact"
+                  :min="0"
+                  :max="9999"
+                />
+              </td>
+              <td class="quote-table__compact-cell">
+                <InputNumber
+                  v-model="row.width"
+                  inputClass="table-input table-input--compact"
+                  :min="0"
+                  :max="9999"
+                />
+              </td>
+              <td class="quote-table__compact-cell">
+                <InputNumber
+                  v-model="row.height"
+                  inputClass="table-input table-input--compact"
+                  :min="0"
+                  :max="9999"
+                />
+              </td>
               <td><InputNumber v-model="row.weight" inputClass="table-input" :min="0" /></td>
               <td v-if="mode === 'air'">{{ getRowVolumetricWeight(row).toFixed(2) }}</td>
               <td>{{ getRowCbm(row).toFixed(3) }}</td>
@@ -397,6 +428,30 @@
                   optionValue="value"
                   class="table-select"
                 />
+              </td>
+              <td>
+                <div class="quote-stack-choice">
+                  <label>
+                    <Checkbox
+                      :model-value="row.stackable"
+                      binary
+                      @update:model-value="setDimensionStackable(row, true)"
+                    />
+                    <span>Stackable</span>
+                  </label>
+                  <label>
+                    <Checkbox
+                      :model-value="!row.stackable"
+                      binary
+                      @update:model-value="setDimensionStackable(row, false)"
+                    />
+                    <span>Non-stack</span>
+                  </label>
+                  <label>
+                    <Checkbox v-model="row.atTheTop" binary />
+                    <span>At the top</span>
+                  </label>
+                </div>
               </td>
               <td>
                 <Button
@@ -682,6 +737,7 @@ import Button from "primevue/button"
 import Select from "primevue/select"
 import InputNumber from "primevue/inputnumber"
 import InputSwitch from "primevue/inputswitch"
+import Checkbox from "primevue/checkbox"
 
 import ModeSelector from "@/app/components/jobs/ModeSelector.vue"
 import QuoteStepHeader from "./QuoteStepHeader.vue"
@@ -752,6 +808,7 @@ const {
   onCustomerClear,
   addDimensionRow,
   removeDimensionRow,
+  setDimensionStackable,
   addChargeLine,
   removeChargeLine,
   getRowCbm,

@@ -4,7 +4,7 @@ import { useToast } from "primevue/usetoast"
 import { useTransportQuoteStore } from "@/app/stores/transportQuote"
 import type { TransportQuote } from "@/app/types/transportQuote"
 
-type QuoteAction = "approve" | "decline" | "convert"
+type QuoteAction = "sent" | "approve" | "decline" | "convert"
 
 type ChargeLine = {
   id: number
@@ -83,6 +83,8 @@ export function useQuoteDetailsPage() {
 
   const actionDialogTitle = computed(() => {
     switch (selectedAction.value) {
+      case "sent":
+        return "Send Quotation to User"
       case "approve":
         return "Accept Quotation"
       case "decline":
@@ -96,6 +98,8 @@ export function useQuoteDetailsPage() {
 
   const actionDialogMessage = computed(() => {
     switch (selectedAction.value) {
+      case "sent":
+        return "This will send the draft quotation to the customer portal user and notify them by email. Continue?"
       case "approve":
         return "Are you sure you want to accept this quotation?"
       case "decline":
@@ -109,6 +113,8 @@ export function useQuoteDetailsPage() {
 
   const actionConfirmLabel = computed(() => {
     switch (selectedAction.value) {
+      case "sent":
+        return "Send to User"
       case "approve":
         return "Accept"
       case "decline":
@@ -122,6 +128,8 @@ export function useQuoteDetailsPage() {
 
   const actionConfirmIcon = computed(() => {
     switch (selectedAction.value) {
+      case "sent":
+        return "pi pi-send"
       case "approve":
         return "pi pi-check"
       case "decline":
@@ -135,6 +143,8 @@ export function useQuoteDetailsPage() {
 
   const actionConfirmClass = computed(() => {
     switch (selectedAction.value) {
+      case "sent":
+        return "quote-details-page__dialog-approve-btn"
       case "approve":
         return "quote-details-page__dialog-approve-btn"
       case "decline":
@@ -221,7 +231,12 @@ export function useQuoteDetailsPage() {
         return
       }
 
-      const nextStatus = selectedAction.value === "approve" ? "accepted" : "rejected"
+      const nextStatus =
+        selectedAction.value === "sent"
+          ? "sent"
+          : selectedAction.value === "approve"
+            ? "accepted"
+            : "rejected"
 
       await quoteStore.updateQuote(quote.value.id, {
         status: nextStatus,
@@ -229,9 +244,18 @@ export function useQuoteDetailsPage() {
       })
 
       toast.add({
-        severity: nextStatus === "accepted" ? "success" : "warn",
-        summary: nextStatus === "accepted" ? "Quotation Accepted" : "Quotation Rejected",
-        detail: `${quote.value.quote_number} has been ${nextStatus}.`,
+        severity:
+          nextStatus === "accepted" ? "success" : nextStatus === "rejected" ? "warn" : "info",
+        summary:
+          nextStatus === "accepted"
+            ? "Quotation Accepted"
+            : nextStatus === "rejected"
+              ? "Quotation Rejected"
+              : "Quotation Sent",
+        detail:
+          nextStatus === "sent"
+            ? `${quote.value.quote_number} has been sent to the customer user.`
+            : `${quote.value.quote_number} has been ${nextStatus}.`,
         life: 3000,
       })
 

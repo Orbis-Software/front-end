@@ -2,7 +2,8 @@
 import "./JobPackagesTab.css"
 import { useJobPackagesTab } from "./JobPackagesTab.logic"
 
-const { rows, totals, addRow, removeRow, calculateRow, packageTypeOptions } = useJobPackagesTab()
+const { rows, totals, addRow, removeRow, calculateRow, setStackable, packageTypeOptions } =
+  useJobPackagesTab()
 </script>
 
 <template>
@@ -24,15 +25,16 @@ const { rows, totals, addRow, removeRow, calculateRow, packageTypeOptions } = us
           <thead>
             <tr>
               <th>#</th>
-              <th>Type</th>
+              <th>Packaging</th>
               <th>Description</th>
-              <th>Qty</th>
-              <th>L (cm)</th>
-              <th>W (cm)</th>
-              <th>H (cm)</th>
+              <th class="job-packages-tab__compact-heading">Qty</th>
+              <th class="job-packages-tab__compact-heading">Length</th>
+              <th class="job-packages-tab__compact-heading">Width</th>
+              <th class="job-packages-tab__compact-heading">Height</th>
               <th>Gross kg</th>
               <th>Vol kg</th>
               <th>CBM</th>
+              <th>Stacking</th>
               <th />
             </tr>
           </thead>
@@ -59,38 +61,46 @@ const { rows, totals, addRow, removeRow, calculateRow, packageTypeOptions } = us
                 <input v-model="row.description" type="text" placeholder="Description" />
               </td>
 
-              <td>
+              <td class="job-packages-tab__compact-cell">
                 <input
                   v-model.number="row.quantity"
+                  class="job-packages-tab__compact-input"
                   type="number"
                   min="1"
+                  max="9999"
                   @input="calculateRow(row)"
                 />
               </td>
 
-              <td>
+              <td class="job-packages-tab__compact-cell">
                 <input
                   v-model.number="row.lengthCm"
+                  class="job-packages-tab__compact-input"
                   type="number"
                   min="0"
+                  max="9999"
                   @input="calculateRow(row)"
                 />
               </td>
 
-              <td>
+              <td class="job-packages-tab__compact-cell">
                 <input
                   v-model.number="row.widthCm"
+                  class="job-packages-tab__compact-input"
                   type="number"
                   min="0"
+                  max="9999"
                   @input="calculateRow(row)"
                 />
               </td>
 
-              <td>
+              <td class="job-packages-tab__compact-cell">
                 <input
                   v-model.number="row.heightCm"
+                  class="job-packages-tab__compact-input"
                   type="number"
                   min="0"
+                  max="9999"
                   @input="calculateRow(row)"
                 />
               </td>
@@ -114,6 +124,31 @@ const { rows, totals, addRow, removeRow, calculateRow, packageTypeOptions } = us
               </td>
 
               <td>
+                <div class="job-packages-tab__stack-choice">
+                  <label>
+                    <input
+                      :checked="row.stackable"
+                      type="checkbox"
+                      @change="setStackable(row, true)"
+                    />
+                    <span>Stackable</span>
+                  </label>
+                  <label>
+                    <input
+                      :checked="!row.stackable"
+                      type="checkbox"
+                      @change="setStackable(row, false)"
+                    />
+                    <span>Non-stack</span>
+                  </label>
+                  <label>
+                    <input v-model="row.atTheTop" type="checkbox" />
+                    <span>At the top</span>
+                  </label>
+                </div>
+              </td>
+
+              <td>
                 <button
                   type="button"
                   class="job-packages-tab__remove-btn"
@@ -125,7 +160,7 @@ const { rows, totals, addRow, removeRow, calculateRow, packageTypeOptions } = us
             </tr>
 
             <tr v-if="!rows.length">
-              <td colspan="11" class="job-packages-tab__empty">
+              <td colspan="12" class="job-packages-tab__empty">
                 No packages yet. Click “Add Package” to create one.
               </td>
             </tr>

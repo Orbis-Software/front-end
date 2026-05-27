@@ -297,26 +297,79 @@
               <thead>
                 <tr>
                   <th>Package</th>
-                  <th>Collie</th>
-                  <th>Length</th>
-                  <th>Width</th>
-                  <th>Height</th>
+                  <th class="consolidation-table__compact-heading">Collie</th>
+                  <th class="consolidation-table__compact-heading">Length</th>
+                  <th class="consolidation-table__compact-heading">Width</th>
+                  <th class="consolidation-table__compact-heading">Height</th>
                   <th>Net kg</th>
                   <th>Gross kg</th>
                   <th>ADR</th>
+                  <th>Stacking</th>
                   <th>Action</th>
                 </tr>
               </thead>
               <tbody>
                 <tr v-for="(item, index) in supplierDraft.items" :key="item.id">
                   <td><Dropdown v-model="item.packageType" :options="packageOptions" /></td>
-                  <td><InputNumber v-model="item.collie" :min="1" /></td>
-                  <td><InputNumber v-model="item.length" :min="0" /></td>
-                  <td><InputNumber v-model="item.width" :min="0" /></td>
-                  <td><InputNumber v-model="item.height" :min="0" /></td>
+                  <td class="consolidation-table__compact-cell">
+                    <InputNumber
+                      v-model="item.collie"
+                      class="consolidation-number--compact"
+                      :min="1"
+                      :max="9999"
+                    />
+                  </td>
+                  <td class="consolidation-table__compact-cell">
+                    <InputNumber
+                      v-model="item.length"
+                      class="consolidation-number--compact"
+                      :min="0"
+                      :max="9999"
+                    />
+                  </td>
+                  <td class="consolidation-table__compact-cell">
+                    <InputNumber
+                      v-model="item.width"
+                      class="consolidation-number--compact"
+                      :min="0"
+                      :max="9999"
+                    />
+                  </td>
+                  <td class="consolidation-table__compact-cell">
+                    <InputNumber
+                      v-model="item.height"
+                      class="consolidation-number--compact"
+                      :min="0"
+                      :max="9999"
+                    />
+                  </td>
                   <td><InputNumber v-model="item.net" :min="0" :min-fraction-digits="1" /></td>
                   <td><InputNumber v-model="item.gross" :min="0" :min-fraction-digits="1" /></td>
                   <td><Dropdown v-model="item.adr" :options="yesNoOptions" /></td>
+                  <td>
+                    <div class="consolidation-stack-choice">
+                      <label>
+                        <Checkbox
+                          :model-value="item.stackable"
+                          binary
+                          @update:model-value="setSupplierStackable(item, true)"
+                        />
+                        <span>Stackable</span>
+                      </label>
+                      <label>
+                        <Checkbox
+                          :model-value="!item.stackable"
+                          binary
+                          @update:model-value="setSupplierStackable(item, false)"
+                        />
+                        <span>Non-stack</span>
+                      </label>
+                      <label>
+                        <Checkbox v-model="item.atTheTop" binary />
+                        <span>At the top</span>
+                      </label>
+                    </div>
+                  </td>
                   <td>
                     <Button
                       label="Delete"
@@ -612,24 +665,53 @@
               <thead>
                 <tr>
                   <th>Packaging</th>
-                  <th>Qty</th>
-                  <th>Length</th>
-                  <th>Width</th>
-                  <th>Height</th>
+                  <th class="consolidation-table__compact-heading">Qty</th>
+                  <th class="consolidation-table__compact-heading">Length</th>
+                  <th class="consolidation-table__compact-heading">Width</th>
+                  <th class="consolidation-table__compact-heading">Height</th>
                   <th>Net kg</th>
                   <th>Gross kg</th>
                   <th>CBM</th>
                   <th>LDM</th>
                   <th>ADR</th>
+                  <th>Stacking</th>
                 </tr>
               </thead>
               <tbody>
                 <tr v-for="line in collectionDraft.lines" :key="line.id">
                   <td><Dropdown v-model="line.packageType" :options="packageOptions" /></td>
-                  <td><InputNumber v-model="line.qty" :min="1" /></td>
-                  <td><InputNumber v-model="line.length" :min="0" /></td>
-                  <td><InputNumber v-model="line.width" :min="0" /></td>
-                  <td><InputNumber v-model="line.height" :min="0" /></td>
+                  <td class="consolidation-table__compact-cell">
+                    <InputNumber
+                      v-model="line.qty"
+                      class="consolidation-number--compact"
+                      :min="1"
+                      :max="9999"
+                    />
+                  </td>
+                  <td class="consolidation-table__compact-cell">
+                    <InputNumber
+                      v-model="line.length"
+                      class="consolidation-number--compact"
+                      :min="0"
+                      :max="9999"
+                    />
+                  </td>
+                  <td class="consolidation-table__compact-cell">
+                    <InputNumber
+                      v-model="line.width"
+                      class="consolidation-number--compact"
+                      :min="0"
+                      :max="9999"
+                    />
+                  </td>
+                  <td class="consolidation-table__compact-cell">
+                    <InputNumber
+                      v-model="line.height"
+                      class="consolidation-number--compact"
+                      :min="0"
+                      :max="9999"
+                    />
+                  </td>
                   <td>
                     <InputNumber v-model="line.netWeight" :min="0" :min-fraction-digits="1" />
                   </td>
@@ -639,6 +721,30 @@
                   <td>{{ cbm(line).toFixed(3) }}</td>
                   <td>{{ ldm(line).toFixed(3) }}</td>
                   <td><Checkbox v-model="line.adr" binary /></td>
+                  <td>
+                    <div class="consolidation-stack-choice">
+                      <label>
+                        <Checkbox
+                          :model-value="line.stackable"
+                          binary
+                          @update:model-value="setCollectionStackable(line, true)"
+                        />
+                        <span>Stackable</span>
+                      </label>
+                      <label>
+                        <Checkbox
+                          :model-value="!line.stackable"
+                          binary
+                          @update:model-value="setCollectionStackable(line, false)"
+                        />
+                        <span>Non-stack</span>
+                      </label>
+                      <label>
+                        <Checkbox v-model="line.atTheTop" binary />
+                        <span>At the top</span>
+                      </label>
+                    </div>
+                  </td>
                 </tr>
               </tbody>
             </table>
@@ -1241,6 +1347,8 @@ type TransportKey = "bookingRef" | "carrier" | "originPort" | "destinationPort" 
 type PackageLine = {
   id: number
   packageType: string
+  stackable: boolean
+  atTheTop: boolean
   qty: number
   length: number
   width: number
@@ -1257,6 +1365,8 @@ type SupplierItem = {
   length: number
   width: number
   height: number
+  stackable: boolean
+  atTheTop: boolean
   net: number
   gross: number
   adr: "Yes" | "No"
@@ -1434,6 +1544,8 @@ const collectionDraft = reactive({
     {
       id: 1,
       packageType: "Pallet",
+      stackable: true,
+      atTheTop: false,
       qty: 1,
       length: 120,
       width: 80,
@@ -1445,6 +1557,8 @@ const collectionDraft = reactive({
     {
       id: 2,
       packageType: "Carton",
+      stackable: true,
+      atTheTop: false,
       qty: 4,
       length: 60,
       width: 40,
@@ -1473,6 +1587,8 @@ const supplierDraft = reactive({
       length: 60,
       width: 40,
       height: 35,
+      stackable: true,
+      atTheTop: false,
       net: 72,
       gross: 78,
       adr: "No",
@@ -1498,6 +1614,8 @@ const supplierInvoices = ref<SupplierInvoice[]>([
         length: 120,
         width: 80,
         height: 100,
+        stackable: true,
+        atTheTop: false,
         net: 95,
         gross: 100,
         adr: "No",
@@ -1521,6 +1639,8 @@ const supplierInvoices = ref<SupplierInvoice[]>([
         length: 60,
         width: 40,
         height: 35,
+        stackable: true,
+        atTheTop: false,
         net: 72,
         gross: 78,
         adr: "No",
@@ -1544,6 +1664,8 @@ const supplierInvoices = ref<SupplierInvoice[]>([
         length: 100,
         width: 80,
         height: 90,
+        stackable: true,
+        atTheTop: false,
         net: 110,
         gross: 118,
         adr: "Yes",
@@ -1948,6 +2070,8 @@ function addCollectionLine() {
   collectionDraft.lines.push({
     id: collectionLineId.value++,
     packageType: "Carton",
+    stackable: true,
+    atTheTop: false,
     qty: 1,
     length: 0,
     width: 0,
@@ -1966,6 +2090,8 @@ function addSupplierItem() {
     length: 0,
     width: 0,
     height: 0,
+    stackable: true,
+    atTheTop: false,
     net: 0,
     gross: 0,
     adr: "No",
@@ -1974,6 +2100,14 @@ function addSupplierItem() {
 
 function removeSupplierItem(index: number) {
   supplierDraft.items.splice(index, 1)
+}
+
+function setCollectionStackable(line: PackageLine, stackable: boolean) {
+  line.stackable = stackable
+}
+
+function setSupplierStackable(item: SupplierItem, stackable: boolean) {
+  item.stackable = stackable
 }
 
 function saveSupplierInvoice() {

@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { computed, onMounted, onBeforeUnmount, ref } from "vue"
+import { computed, onMounted, onBeforeUnmount, ref, watch } from "vue"
 import { RouterLink, useRoute, useRouter } from "vue-router"
 import UserDropdown from "@/app/components/nav/UserDropdown.vue"
 import { useAuthStore } from "@/app/stores/auth"
+import { useNotificationStore } from "@/app/stores/notification"
 import { useUiStore } from "@/app/stores/ui"
 import type { AppArea } from "@/app/stores/ui"
 import { useTopNavItems, type NavItem } from "@/app/components/nav/topNavItems"
+import type { AppNotification } from "@/app/types/app-notification"
 
 type Props = {
   area: AppArea
@@ -25,8 +27,11 @@ const ui = useUiStore()
 const route = useRoute()
 const router = useRouter()
 const items = useTopNavItems()
+const notificationStore = useNotificationStore()
 
 const userDropdownOpen = ref(false)
+const notificationsOpen = ref(false)
+const notificationsEnabled = computed(() => props.area === "tms" || props.area === "wms")
 
 const userName = computed(() => auth.user?.name ?? "User")
 const userRole = computed(() => {
@@ -67,16 +72,59 @@ function switchArea(area: AppArea) {
 
 function toggleUserDropdown() {
   userDropdownOpen.value = !userDropdownOpen.value
+  notificationsOpen.value = false
 }
 
 function closeUserDropdown() {
   userDropdownOpen.value = false
 }
 
+function toggleNotifications() {
+  notificationsOpen.value = !notificationsOpen.value
+  userDropdownOpen.value = false
+}
+
+async function openNotification(notification: AppNotification) {
+  if (!notification.read_at) {
+    await notificationStore.markAsRead(notification.id)
+  }
+
+  notificationsOpen.value = false
+
+  if (notification.url) {
+    router.push(notification.url)
+  }
+}
+
+async function markAllNotificationsRead() {
+  await notificationStore.markAllAsRead()
+}
+
+function formatNotificationDate(value: string | null) {
+  if (!value) return ""
+
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(value))
+}
+
 function handleClickOutside(event: MouseEvent) {
-  const element = document.querySelector(".user-profile-container")
-  if (userDropdownOpen.value && element && !element.contains(event.target as Node)) {
+  const userElement = document.querySelector(".user-profile-container")
+  const notificationElement = document.querySelector(".app-notifications")
+
+  if (userDropdownOpen.value && userElement && !userElement.contains(event.target as Node)) {
     closeUserDropdown()
+  }
+
+  if (
+    notificationsOpen.value &&
+    notificationElement &&
+    !notificationElement.contains(event.target as Node)
+  ) {
+    notificationsOpen.value = false
   }
 }
 
@@ -119,7 +167,24 @@ function matchPath(path?: string) {
   return route.path === path || route.path.startsWith(path + "/")
 }
 
-onMounted(() => document.addEventListener("click", handleClickOutside))
+watch(
+  () => props.area,
+  area => {
+    if (area === "tms" || area === "wms") {
+      notificationStore.fetchNotifications().catch(() => undefined)
+    } else {
+      notificationsOpen.value = false
+    }
+  },
+)
+
+onMounted(() => {
+  document.addEventListener("click", handleClickOutside)
+
+  if (notificationsEnabled.value) {
+    notificationStore.fetchNotifications().catch(() => undefined)
+  }
+})
 onBeforeUnmount(() => document.removeEventListener("click", handleClickOutside))
 </script>
 
@@ -166,6 +231,52 @@ onBeforeUnmount(() => document.removeEventListener("click", handleClickOutside))
           >
             WMS
           </button>
+        </div>
+
+        <div v-if="notificationsEnabled" class="app-notifications">
+          <button class="notification-btn" type="button" @click.stop="toggleNotifications">
+            <i class="pi pi-bell" />
+            <span v-if="notificationStore.unreadCount" class="notification-dot" />
+          </button>
+
+          <div v-if="notificationsOpen" class="notifications-panel" @click.stop>
+            <div class="notifications-panel__header">
+              <strong>Notifications</strong>
+
+              <button
+                type="button"
+                :disabled="!notificationStore.unreadCount"
+                @click="markAllNotificationsRead"
+              >
+                Mark all read
+              </button>
+            </div>
+
+            <div v-if="notificationStore.loading" class="notifications-panel__empty">
+              Loading...
+            </div>
+
+            <div v-else-if="!notificationStore.items.length" class="notifications-panel__empty">
+              No notifications.
+            </div>
+
+            <template v-else>
+              <button
+                v-for="notification in notificationStore.items"
+                :key="notification.id"
+                type="button"
+                class="notification-item"
+                :class="{ 'notification-item--unread': !notification.read_at }"
+                @click="openNotification(notification)"
+              >
+                <span class="notification-item__title">{{ notification.title }}</span>
+                <span class="notification-item__message">{{ notification.message }}</span>
+                <span class="notification-item__date">
+                  {{ formatNotificationDate(notification.created_at) }}
+                </span>
+              </button>
+            </template>
+          </div>
         </div>
 
         <div class="user-profile-container">
@@ -327,6 +438,130 @@ onBeforeUnmount(() => document.removeEventListener("click", handleClickOutside))
   background: #fff;
   border-color: rgba(236, 105, 26, 0.18);
   color: var(--primary);
+}
+
+.app-notifications {
+  position: relative;
+}
+
+.notification-btn {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--text-muted);
+  display: inline-grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.notification-btn:hover {
+  background: #f8f8f8;
+  color: var(--primary);
+}
+
+.notification-dot {
+  position: absolute;
+  top: 8px;
+  right: 9px;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--primary);
+}
+
+.notifications-panel {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: min(360px, calc(100vw - 24px));
+  max-height: 420px;
+  overflow: auto;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.18);
+  z-index: 500;
+}
+
+.notifications-panel__header {
+  position: sticky;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  background: #fff;
+  border-bottom: 1px solid #ededed;
+}
+
+.notifications-panel__header strong {
+  font-size: 0.95rem;
+  color: var(--text);
+}
+
+.notifications-panel__header button {
+  border: 0;
+  background: transparent;
+  color: var(--primary);
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.notifications-panel__header button:disabled {
+  color: #a3a3a3;
+  cursor: not-allowed;
+}
+
+.notifications-panel__empty {
+  padding: 22px 14px;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.notification-item {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  border: 0;
+  border-bottom: 1px solid #ededed;
+  background: #fff;
+  text-align: left;
+  cursor: pointer;
+}
+
+.notification-item:hover {
+  background: #fafafa;
+}
+
+.notification-item--unread {
+  background: #fff7ed;
+}
+
+.notification-item__title {
+  color: var(--text);
+  font-size: 0.88rem;
+  font-weight: 800;
+}
+
+.notification-item__message {
+  color: #525252;
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+.notification-item__date {
+  color: #8a8a8a;
+  font-size: 0.74rem;
+  font-weight: 700;
 }
 
 .user-profile-container {

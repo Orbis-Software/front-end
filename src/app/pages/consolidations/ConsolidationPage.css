@@ -444,6 +444,12 @@
   letter-spacing: 0.06em;
 }
 
+.consolidation-table__compact-heading,
+.consolidation-table__compact-cell {
+  width: 76px;
+  max-width: 76px;
+}
+
 .consolidation-table tr:last-child td {
   border-bottom: 0;
 }
@@ -463,6 +469,35 @@
 .consolidation-table--inputs .p-select {
   height: 36px;
   min-height: 36px;
+}
+
+.consolidation-table--inputs .consolidation-number--compact.p-inputnumber {
+  width: 68px;
+  min-width: 0;
+}
+
+.consolidation-table--inputs .consolidation-number--compact .p-inputnumber-input {
+  width: 68px;
+  min-width: 0;
+  padding-inline: 8px;
+  text-align: right;
+}
+
+.consolidation-stack-choice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 300px;
+}
+
+.consolidation-stack-choice label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #40403d;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
 }
 
 .consolidation-page__summary-row {
