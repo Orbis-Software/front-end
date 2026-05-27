@@ -161,7 +161,7 @@
                       text
                       class="quotes-list-page__sent-btn"
                       icon="pi pi-send"
-                      label="Sent"
+                      label="Send"
                       @click="openSentModal(data)"
                     />
                   </template>

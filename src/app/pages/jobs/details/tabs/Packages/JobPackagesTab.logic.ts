@@ -8,6 +8,8 @@ export type PackageRow = {
   id: number | string
   package_type: string | null
   description: string | null
+  stackable: boolean
+  atTheTop: boolean
   quantity: number
   lengthCm: number
   widthCm: number
@@ -22,6 +24,8 @@ function createRow(defaultPackageType: string | null = "Pallet"): PackageRow {
     id: `new-${Date.now()}-${Math.random()}`,
     package_type: defaultPackageType,
     description: "",
+    stackable: true,
+    atTheTop: false,
     quantity: 1,
     lengthCm: 0,
     widthCm: 0,
@@ -92,6 +96,10 @@ export function useJobPackagesTab() {
     rows.value = rows.value.filter(row => row.id !== id)
   }
 
+  function setStackable(row: PackageRow, stackable: boolean) {
+    row.stackable = stackable
+  }
+
   const totals = computed(() => {
     return rows.value.reduce(
       (total, row) => {
@@ -117,6 +125,7 @@ export function useJobPackagesTab() {
     addRow,
     removeRow,
     calculateRow,
+    setStackable,
     packageTypeOptions,
   }
 }

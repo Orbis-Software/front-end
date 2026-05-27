@@ -38,6 +38,8 @@ type DimensionRow = {
   length: number
   width: number
   height: number
+  stackable: boolean
+  atTheTop: boolean
   weight: number
   container_type: string
 }
@@ -493,6 +495,8 @@ export function useQuoteCreatePage() {
       length: 0,
       width: 0,
       height: 0,
+      stackable: true,
+      atTheTop: false,
       weight: 0,
       container_type: "",
     })
@@ -500,6 +504,10 @@ export function useQuoteCreatePage() {
 
   function removeDimensionRow(id: number) {
     dimensionRows.value = dimensionRows.value.filter(row => row.id !== id)
+  }
+
+  function setDimensionStackable(row: DimensionRow, stackable: boolean) {
+    row.stackable = stackable
   }
 
   function getRowCbm(row: DimensionRow) {
@@ -691,6 +699,8 @@ export function useQuoteCreatePage() {
         length: Number(row.length || 0),
         width: Number(row.width || 0),
         height: Number(row.height || 0),
+        stackable: row.stackable ?? true,
+        at_the_top: row.atTheTop ?? false,
         weight: Number(row.weight || 0),
         container_type: row.container_type || null,
       })),
@@ -815,6 +825,8 @@ export function useQuoteCreatePage() {
           length: Number(row.length || 0),
           width: Number(row.width || 0),
           height: Number(row.height || 0),
+          stackable: row.stackable ?? true,
+          atTheTop: row.at_the_top ?? false,
           weight: Number(row.weight || 0),
           container_type: row.container_type ?? "",
         }))
@@ -939,6 +951,7 @@ export function useQuoteCreatePage() {
     onCustomerClear,
     addDimensionRow,
     removeDimensionRow,
+    setDimensionStackable,
     addChargeLine,
     removeChargeLine,
     getRowCbm,

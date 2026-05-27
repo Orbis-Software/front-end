@@ -213,6 +213,8 @@ function normalizePackageRow(row: any) {
     id: row.id ?? `new-${Date.now()}-${Math.random()}`,
     package_type: row.package_type ?? "Pallet",
     description: row.description ?? "",
+    stackable: row.stackable ?? true,
+    atTheTop: row.atTheTop ?? row.at_the_top ?? false,
     quantity: Number(row.quantity ?? 1),
 
     lengthCm: Number(row.lengthCm ?? row.length_cm ?? 0),
@@ -229,6 +231,8 @@ function serializePackageRow(row: any) {
   return {
     id: typeof row.id === "number" ? row.id : undefined,
     package_type: row.package_type ?? null,
+    stackable: row.stackable ?? true,
+    at_the_top: row.atTheTop ?? row.at_the_top ?? false,
     quantity: row.quantity ?? 1,
 
     length_cm: row.lengthCm ?? 0,

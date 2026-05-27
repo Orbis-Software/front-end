@@ -45,6 +45,14 @@
           />
 
           <Button
+            v-if="quote.status === 'draft'"
+            label="Send to User"
+            icon="pi pi-send"
+            class="quote-details-page__approve-btn"
+            @click="openActionModal('sent')"
+          />
+
+          <Button
             v-if="quote.status === 'sent'"
             label="Accept"
             icon="pi pi-check"
