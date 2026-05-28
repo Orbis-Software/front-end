@@ -1,5 +1,5 @@
 import { computed, reactive, ref, watch } from "vue"
-import { useRouter } from "vue-router"
+import { useRoute, useRouter } from "vue-router"
 import { useToast } from "primevue/usetoast"
 
 import { useContactStore } from "@/app/stores/contact"
@@ -41,6 +41,7 @@ export const MODES: CardItem<TransportMode>[] = [
 ]
 
 export function useJobCreatePage() {
+  const route = useRoute()
   const router = useRouter()
   const toast = useToast()
 
@@ -118,12 +119,20 @@ export function useJobCreatePage() {
     return MODES.some(item => item.key === value)
   }
 
-  function selectJobType(next: string) {
+  function openConsolidationPage() {
+    const routeData = router.resolve({ name: "tms.consolidations.create" })
+    const opened = window.open(routeData.href, "_blank", "noopener,noreferrer")
+
+    if (!opened) {
+      router.push({ name: "tms.consolidations.create" })
+    }
+  }
+
+  function selectJobType(next: string, options: { openConsolidation?: boolean } = {}) {
     if (!isJobType(next)) return
 
-    if (next === "consolidation") {
-      const route = router.resolve({ name: "tms.consolidations.create" })
-      window.open(route.href, "_blank", "noopener,noreferrer")
+    if (next === "consolidation" && options.openConsolidation !== false) {
+      openConsolidationPage()
       return
     }
 
@@ -202,6 +211,13 @@ export function useJobCreatePage() {
     await contactStore.fetchTypes()
     await contactStore.setTypeId(customerTypeId.value ?? null)
     await contactStore.setSearch("")
+
+    const requestedType = route.query.type ?? route.query.job_type
+    const requested = Array.isArray(requestedType) ? requestedType[0] : requestedType
+
+    if (requested && isJobType(String(requested))) {
+      selectJobType(String(requested), { openConsolidation: false })
+    }
 
     refreshJobNumberPreview(true)
   }

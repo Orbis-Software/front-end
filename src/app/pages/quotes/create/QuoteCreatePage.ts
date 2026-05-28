@@ -6,6 +6,7 @@ import { useGlobalReferenceDataStore } from "@/app/stores/global-reference-data"
 import type { GlobalReferenceDataRow } from "@/app/types/globalReferenceData"
 import { useTransportQuoteStore } from "@/app/stores/transportQuote"
 import type { TransportQuote, TransportQuotePayload } from "@/app/types/transportQuote"
+import { getPackageStackOption, setPackageStackOption } from "@/app/utils/packageStacking"
 import { useToast } from "primevue/usetoast"
 
 type QuoteType = "import" | "export" | "domestic" | "cross_trade" | "multi_modal"
@@ -506,10 +507,6 @@ export function useQuoteCreatePage() {
     dimensionRows.value = dimensionRows.value.filter(row => row.id !== id)
   }
 
-  function setDimensionStackable(row: DimensionRow, stackable: boolean) {
-    row.stackable = stackable
-  }
-
   function getRowCbm(row: DimensionRow) {
     return (
       (Number(row.length || 0) *
@@ -951,7 +948,8 @@ export function useQuoteCreatePage() {
     onCustomerClear,
     addDimensionRow,
     removeDimensionRow,
-    setDimensionStackable,
+    getPackageStackOption,
+    setPackageStackOption,
     addChargeLine,
     removeChargeLine,
     getRowCbm,

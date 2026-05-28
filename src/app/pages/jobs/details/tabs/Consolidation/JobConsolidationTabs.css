@@ -1,0 +1,293 @@
+.job-consolidation-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.job-consolidation-tab__section {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+  padding: 14px;
+}
+
+.job-consolidation-tab__subsection {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid #ececec;
+}
+
+.job-consolidation-tab__section-header,
+.job-consolidation-tab__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.job-consolidation-tab__section-header {
+  margin-bottom: 12px;
+}
+
+.job-consolidation-tab__section-header h2,
+.job-consolidation-tab__section-header h3 {
+  margin: 0;
+  color: var(--text);
+  font-family: var(--font-accent);
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.job-consolidation-tab__section-header p,
+.job-consolidation-tab__note {
+  margin: 3px 0 0;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.job-consolidation-tab__grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.job-consolidation-tab__grid--two {
+  grid-template-columns: repeat(2, minmax(180px, 1fr));
+}
+
+.job-consolidation-tab__grid--three {
+  grid-template-columns: repeat(3, minmax(150px, 1fr));
+}
+
+.job-consolidation-tab__field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.job-consolidation-tab__field--span-2 {
+  grid-column: span 2;
+}
+
+.job-consolidation-tab__field--span-4 {
+  grid-column: 1 / -1;
+}
+
+.job-consolidation-tab__field > span,
+.job-consolidation-tab__label {
+  color: #737373;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.job-consolidation-tab__field :deep(.p-inputtext),
+.job-consolidation-tab__field :deep(.p-dropdown),
+.job-consolidation-tab__field :deep(.p-inputnumber),
+.job-consolidation-tab__field :deep(.p-inputnumber-input),
+.job-consolidation-tab__field :deep(textarea),
+.job-consolidation-tab__field input,
+.job-consolidation-tab__field select,
+.job-consolidation-tab__field textarea {
+  width: 100%;
+  min-height: 34px;
+  border-radius: 8px;
+  font-family: var(--font-body) !important;
+  font-size: 12px !important;
+}
+
+.job-consolidation-tab__field textarea {
+  resize: vertical;
+}
+
+.job-consolidation-tab__button {
+  height: 34px;
+  border-radius: 8px !important;
+  font-family: var(--font-body) !important;
+  font-size: 12px !important;
+  font-weight: 800 !important;
+}
+
+.job-consolidation-tab__button--primary {
+  background: #ec691a !important;
+  border-color: #ec691a !important;
+  color: #fff !important;
+}
+
+.job-consolidation-tab__button--ghost {
+  background: #fff !important;
+  border-color: #d9d9d9 !important;
+  color: #2f2f2f !important;
+}
+
+.job-consolidation-tab__summary-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.job-consolidation-tab__summary-row article {
+  border: 1px solid #ececec;
+  border-radius: 8px;
+  background: #fafafa;
+  padding: 9px 10px;
+}
+
+.job-consolidation-tab__summary-row span {
+  display: block;
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.job-consolidation-tab__summary-row strong {
+  display: block;
+  margin-top: 2px;
+  color: var(--text);
+  font-size: 14px;
+}
+
+.job-consolidation-tab__table-wrap {
+  width: 100%;
+  margin-top: 12px;
+  overflow-x: auto;
+}
+
+.job-consolidation-tab__table {
+  width: 100%;
+  min-width: 920px;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.job-consolidation-tab__table th,
+.job-consolidation-tab__table td {
+  border-bottom: 1px solid #e8e8e8;
+  padding: 7px;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.job-consolidation-tab__table th {
+  color: #555;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  background: #f7f7f7;
+}
+
+.job-consolidation-tab__table td :deep(.p-inputtext),
+.job-consolidation-tab__table td :deep(.p-dropdown),
+.job-consolidation-tab__table td :deep(.p-inputnumber),
+.job-consolidation-tab__table td :deep(.p-inputnumber-input) {
+  width: 100%;
+  min-height: 32px;
+  font-size: 12px !important;
+}
+
+.job-consolidation-tab__table--wide {
+  min-width: 1180px;
+}
+
+.job-consolidation-tab__compact {
+  width: 74px;
+}
+
+.job-consolidation-tab__check {
+  width: 78px;
+  text-align: center !important;
+}
+
+.job-consolidation-tab__empty {
+  border: 1px dashed #d7d7d7;
+  border-radius: 8px;
+  padding: 18px;
+  color: var(--text-muted);
+  text-align: center;
+  font-size: 13px;
+}
+
+.job-consolidation-tab__status {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  background: #f1f1f1;
+  color: #555;
+  padding: 3px 9px;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.job-consolidation-tab__status--success {
+  background: rgba(22, 163, 74, 0.12);
+  color: #15803d;
+}
+
+.job-consolidation-tab__currency-switch {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.job-consolidation-tab__two-column {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(250px, 320px);
+  gap: 14px;
+  align-items: start;
+}
+
+.job-consolidation-tab__side-card {
+  border: 1px solid #ececec;
+  border-radius: 8px;
+  background: #fafafa;
+  padding: 12px;
+}
+
+.job-consolidation-tab__side-card > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid #e5e5e5;
+  font-size: 12px;
+}
+
+.job-consolidation-tab__side-card > div:last-child {
+  border-bottom: none;
+}
+
+.job-consolidation-tab__grand-total {
+  color: #ec691a;
+  font-size: 16px;
+  font-weight: 900;
+}
+
+@media (max-width: 1100px) {
+  .job-consolidation-tab__grid,
+  .job-consolidation-tab__grid--three {
+    grid-template-columns: repeat(2, minmax(160px, 1fr));
+  }
+
+  .job-consolidation-tab__two-column {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 700px) {
+  .job-consolidation-tab__grid,
+  .job-consolidation-tab__grid--two,
+  .job-consolidation-tab__grid--three {
+    grid-template-columns: 1fr;
+  }
+
+  .job-consolidation-tab__field--span-2,
+  .job-consolidation-tab__field--span-4 {
+    grid-column: auto;
+  }
+}

@@ -18,8 +18,49 @@ function toFormData(payload: TransportJobCreatePayload): FormData {
     fd.append("mode_of_transport", payload.mode_of_transport)
   }
   fd.append("job_type", payload.job_type)
+  if (payload.status !== undefined) fd.append("status", payload.status ?? "")
+
+  appendFlatValue(fd, "account_number", payload.account_number)
+  appendFlatValue(fd, "service_type", payload.service_type)
+  appendFlatValue(fd, "incoterms", payload.incoterms)
+  appendFlatValue(fd, "currency", payload.currency)
+  appendFlatValue(fd, "declared_value", payload.declared_value)
+  appendFlatValue(fd, "description_of_goods", payload.description_of_goods)
+  appendFlatValue(fd, "commodity_code", payload.commodity_code)
+  appendFlatValue(fd, "insurance_level", payload.insurance_level)
+  appendFlatValue(fd, "customer_po_number", payload.customer_po_number)
+  appendFlatValue(fd, "customer_booking_ref", payload.customer_booking_ref)
+  appendFlatValue(fd, "our_reference", payload.our_reference)
+  appendFlatValue(fd, "supplier_ref", payload.supplier_ref)
+  appendFlatValue(fd, "consignee_name", payload.consignee_name)
+  appendFlatValue(fd, "consignee_contact", payload.consignee_contact)
+  appendFlatValue(fd, "consignee_phone", payload.consignee_phone)
+  appendFlatValue(fd, "consignee_email", payload.consignee_email)
+  appendFlatValue(
+    fd,
+    "origin_contact_collection_address_id",
+    payload.origin_contact_collection_address_id,
+  )
+  appendFlatValue(
+    fd,
+    "destination_contact_collection_address_id",
+    payload.destination_contact_collection_address_id,
+  )
+  appendFlatValue(fd, "collection_date", payload.collection_date)
+  appendFlatValue(fd, "collection_time", payload.collection_time)
 
   if (payload.note !== undefined) fd.append("note", payload.note ?? "")
+
+  appendNestedValue(fd, "transport_legs", payload.transport_legs)
+  appendNestedValue(fd, "packages", payload.packages)
+  appendNestedValue(fd, "charges", payload.charges)
+
+  const consolidationDetails = (payload as any).consolidation_details
+  if (consolidationDetails && typeof consolidationDetails === "object") {
+    Object.entries(consolidationDetails).forEach(([key, value]) => {
+      appendNestedValue(fd, `consolidation_details[${key}]`, value)
+    })
+  }
 
   const files = payload.files ?? []
   const fileTypes = payload.file_types ?? []
@@ -31,6 +72,34 @@ function toFormData(payload: TransportJobCreatePayload): FormData {
   })
 
   return fd
+}
+
+function appendFlatValue(fd: FormData, key: string, value: any): void {
+  if (value === undefined) return
+  fd.append(key, value === null ? "" : String(value))
+}
+
+function appendNestedValue(fd: FormData, key: string, value: any): void {
+  if (value === undefined) return
+
+  if (value === null) {
+    fd.append(key, "")
+    return
+  }
+
+  if (typeof value === "boolean") {
+    fd.append(key, value ? "1" : "0")
+    return
+  }
+
+  if (typeof value === "object") {
+    Object.entries(value).forEach(([childKey, childValue]) => {
+      appendNestedValue(fd, `${key}[${childKey}]`, childValue)
+    })
+    return
+  }
+
+  fd.append(key, String(value))
 }
 
 export default async function createTransportJob(

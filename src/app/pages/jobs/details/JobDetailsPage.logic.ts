@@ -9,6 +9,16 @@ import type { Contact, ContactCollectionAddress } from "@/app/types/contact"
 
 import {
   TRANSPORT_MODES,
+  type JobConsolidationChargeLine,
+  type JobConsolidationCollectionOrder,
+  type JobConsolidationDetails,
+  type JobConsolidationGoodsRow,
+  type JobConsolidationInvoiceLine,
+  type JobConsolidationPackageLine,
+  type JobConsolidationPostedInvoice,
+  type JobConsolidationQuoteDetails,
+  type JobConsolidationSupplierInvoice,
+  type JobConsolidationSupplierItem,
   type JobAirDetail,
   type JobCourierDetail,
   type JobRailDetail,
@@ -89,6 +99,7 @@ export type JobDetailsForm = {
 
   transport_legs: any[]
   multi_modal_legs: any[]
+  consolidation_details: JobConsolidationDetails
 }
 
 const jobRef = ref<TransportJob | null>(null)
@@ -103,6 +114,7 @@ export type JobDetailsContext = {
   job: typeof jobRef
   form: JobDetailsForm
   loading: any
+  isConsolidationJob: any
   saving: typeof savingRef
   save: () => Promise<void>
   load: () => Promise<void>
@@ -375,6 +387,259 @@ function emptyCourierDetail(): JobCourierDetail {
   }
 }
 
+function numberValue(value: unknown, fallback = 0): number {
+  const numeric = Number(value)
+
+  return Number.isFinite(numeric) ? numeric : fallback
+}
+
+function stringValue(value: unknown, fallback = ""): string {
+  if (value === null || value === undefined) return fallback
+
+  return String(value)
+}
+
+function booleanValue(value: unknown, fallback = false): boolean {
+  if (value === null || value === undefined || value === "") return fallback
+  if (typeof value === "boolean") return value
+  if (typeof value === "number") return value === 1
+
+  return ["1", "true", "yes", "on"].includes(String(value).toLowerCase())
+}
+
+function arrayValue<T>(value: unknown, mapper: (item: any) => T): T[] {
+  if (!Array.isArray(value)) return []
+
+  return value.map(item => mapper(item))
+}
+
+function normalizeConsolidationPackageLine(row: any): JobConsolidationPackageLine {
+  return {
+    id: numberValue(row?.id, Date.now() + Math.floor(Math.random() * 10000)),
+    packageType: stringValue(row?.packageType ?? row?.package_type, "Carton"),
+    stackable: booleanValue(row?.stackable, true),
+    atTheTop: booleanValue(row?.atTheTop ?? row?.at_the_top, false),
+    qty: numberValue(row?.qty ?? row?.quantity, 1),
+    length: numberValue(row?.length ?? row?.length_cm),
+    width: numberValue(row?.width ?? row?.width_cm),
+    height: numberValue(row?.height ?? row?.height_cm),
+    netWeight: numberValue(row?.netWeight ?? row?.net_weight),
+    grossWeight: numberValue(row?.grossWeight ?? row?.gross_weight ?? row?.weightKg),
+    adr: booleanValue(row?.adr, false),
+  }
+}
+
+function normalizeConsolidationSupplierItem(row: any): JobConsolidationSupplierItem {
+  return {
+    id: numberValue(row?.id, Date.now() + Math.floor(Math.random() * 10000)),
+    packageType: stringValue(row?.packageType ?? row?.package_type, "Carton"),
+    collie: numberValue(row?.collie ?? row?.qty, 1),
+    length: numberValue(row?.length),
+    width: numberValue(row?.width),
+    height: numberValue(row?.height),
+    stackable: booleanValue(row?.stackable, true),
+    atTheTop: booleanValue(row?.atTheTop ?? row?.at_the_top, false),
+    net: numberValue(row?.net),
+    gross: numberValue(row?.gross),
+    adr: stringValue(row?.adr, "No") === "Yes" ? "Yes" : "No",
+  }
+}
+
+function normalizeConsolidationSupplierInvoice(row: any): JobConsolidationSupplierInvoice {
+  return {
+    id: numberValue(row?.id, Date.now() + Math.floor(Math.random() * 10000)),
+    supplierName: stringValue(row?.supplierName ?? row?.supplier_name),
+    customerPoRef: stringValue(row?.customerPoRef ?? row?.customer_po_ref),
+    supplierInvoiceNumber: stringValue(row?.supplierInvoiceNumber ?? row?.supplier_invoice_number),
+    invoiceDate: stringValue(row?.invoiceDate ?? row?.invoice_date),
+    currency: stringValue(row?.currency, "GBP"),
+    invoiceValue: numberValue(row?.invoiceValue ?? row?.invoice_value),
+    collectionRef: stringValue(row?.collectionRef ?? row?.collection_ref),
+    label: stringValue(row?.label),
+    items: arrayValue(row?.items, normalizeConsolidationSupplierItem),
+  }
+}
+
+function normalizeConsolidationCollectionOrder(row: any): JobConsolidationCollectionOrder {
+  return {
+    id: numberValue(row?.id, Date.now() + Math.floor(Math.random() * 10000)),
+    coRef: stringValue(row?.coRef ?? row?.co_ref),
+    customerRef: stringValue(row?.customerRef ?? row?.customer_ref),
+    collectionRef: stringValue(row?.collectionRef ?? row?.collection_ref),
+    supplier: stringValue(row?.supplier, "DHL"),
+    pickupDate: stringValue(row?.pickupDate ?? row?.pickup_date),
+    pickupTime: stringValue(row?.pickupTime ?? row?.pickup_time),
+    vehicle: stringValue(row?.vehicle, "7.5t"),
+    collectionAddress: stringValue(row?.collectionAddress ?? row?.collection_address),
+    deliveryAddress: stringValue(row?.deliveryAddress ?? row?.delivery_address),
+    deliveryDate: stringValue(row?.deliveryDate ?? row?.delivery_date),
+    deliveryTime: stringValue(row?.deliveryTime ?? row?.delivery_time),
+    goodsDescription: stringValue(row?.goodsDescription ?? row?.goods_description),
+    hazardous: booleanValue(row?.hazardous, false),
+    adrClass: stringValue(row?.adrClass ?? row?.adr_class),
+    freight: numberValue(row?.freight),
+    fscPct: numberValue(row?.fscPct ?? row?.fsc_pct),
+    additional: numberValue(row?.additional),
+    pcs: numberValue(row?.pcs),
+    weightKg: numberValue(row?.weightKg ?? row?.weight_kg),
+    volumeCbm: numberValue(row?.volumeCbm ?? row?.volume_cbm),
+    ldm: numberValue(row?.ldm),
+    status: stringValue(row?.status, "Created"),
+    notes: stringValue(row?.notes),
+    wmsRef: stringValue(row?.wmsRef ?? row?.wms_ref),
+    lines: arrayValue(row?.lines, normalizeConsolidationPackageLine),
+  }
+}
+
+function normalizeConsolidationGoodsRow(row: any): JobConsolidationGoodsRow {
+  return {
+    id: numberValue(row?.id, Date.now() + Math.floor(Math.random() * 10000)),
+    grn: stringValue(row?.grn),
+    supplier: stringValue(row?.supplier),
+    supplierInvoice: stringValue(row?.supplierInvoice ?? row?.supplier_invoice),
+    supplierPO: stringValue(row?.supplierPO ?? row?.supplier_po),
+    partNo: stringValue(row?.partNo ?? row?.part_no, "-"),
+    desc: stringValue(row?.desc),
+    pcs: numberValue(row?.pcs),
+    weightKg: numberValue(row?.weightKg ?? row?.weight_kg),
+    cbm: numberValue(row?.cbm),
+    location: stringValue(row?.location, "STAGING"),
+    status: stringValue(row?.status, "Received"),
+  }
+}
+
+function normalizeConsolidationInvoiceLine(row: any): JobConsolidationInvoiceLine {
+  return {
+    id: numberValue(row?.id, Date.now() + Math.floor(Math.random() * 10000)),
+    invoiceCurrency: stringValue(row?.invoiceCurrency ?? row?.invoice_currency, "GBP"),
+    poRef: stringValue(row?.poRef ?? row?.po_ref),
+    shippingLabelNo: stringValue(row?.shippingLabelNo ?? row?.shipping_label_no),
+    description: stringValue(row?.description),
+    qty: numberValue(row?.qty, 1),
+    uom: stringValue(row?.uom, "Fixed"),
+    countryOfOrigin: stringValue(row?.countryOfOrigin ?? row?.country_of_origin),
+    hsCode: stringValue(row?.hsCode ?? row?.hs_code),
+    unitPrice: numberValue(row?.unitPrice ?? row?.unit_price),
+    supplier: stringValue(row?.supplier),
+    grn: stringValue(row?.grn),
+  }
+}
+
+function normalizeConsolidationChargeLine(row: any): JobConsolidationChargeLine {
+  return {
+    id: numberValue(row?.id, Date.now() + Math.floor(Math.random() * 10000)),
+    description: stringValue(row?.description, "Consolidation handling"),
+    qty: numberValue(row?.qty, 1),
+    unit: stringValue(row?.unit, "Fixed"),
+    rate: numberValue(row?.rate),
+    sourceType: row?.sourceType ?? row?.source_type,
+    sourceId: row?.sourceId ?? row?.source_id,
+  }
+}
+
+function normalizePostedInvoice(row: any): JobConsolidationPostedInvoice {
+  return {
+    posted: booleanValue(row?.posted, false),
+    ref: stringValue(row?.ref),
+    date: stringValue(row?.date),
+  }
+}
+
+function normalizeQuote(row: any): JobConsolidationQuoteDetails {
+  return {
+    reference: stringValue(row?.reference),
+    validUntil: stringValue(row?.validUntil ?? row?.valid_until),
+    status: stringValue(row?.status, "Draft"),
+    notes: stringValue(row?.notes),
+    terms: stringValue(
+      row?.terms,
+      "Rates are subject to carrier availability and standard terms of trading.",
+    ),
+  }
+}
+
+function emptyConsolidationDetails(): JobConsolidationDetails {
+  return {
+    supplierInvoices: [],
+    supplierExaNumbers: {},
+    collectionOrders: [],
+    goodsRows: [],
+    consolidatedLines: [],
+    domesticChargeRows: [],
+    exportChargeRows: [],
+    quoteLines: [],
+    domesticInvoice: { posted: false, ref: "", date: "" },
+    exportInvoice: { posted: false, ref: "", date: "" },
+    finalDelivery: {
+      deliveryRef: "",
+      plannedDate: "",
+      plannedTime: "",
+      carrier: "",
+      address: "",
+      instructions: "",
+    },
+    quote: {
+      reference: "",
+      validUntil: "",
+      status: "Draft",
+      notes: "",
+      terms: "Rates are subject to carrier availability and standard terms of trading.",
+    },
+    selectedInvoiceCurrency: "GBP",
+    consolidatedFreightCharge: 0,
+    taxRate: 20,
+    showQuotePanel: false,
+  }
+}
+
+function normalizeConsolidationDetails(raw: any): JobConsolidationDetails {
+  const base = emptyConsolidationDetails()
+  if (!raw || typeof raw !== "object") return base
+
+  return {
+    ...base,
+    supplierInvoices: arrayValue(
+      raw.supplierInvoices ?? raw.supplier_invoices,
+      normalizeConsolidationSupplierInvoice,
+    ),
+    supplierExaNumbers: { ...(raw.supplierExaNumbers ?? raw.supplier_exa_numbers ?? {}) },
+    collectionOrders: arrayValue(
+      raw.collectionOrders ?? raw.collection_orders,
+      normalizeConsolidationCollectionOrder,
+    ),
+    goodsRows: arrayValue(raw.goodsRows ?? raw.goods_rows, normalizeConsolidationGoodsRow),
+    consolidatedLines: arrayValue(
+      raw.consolidatedLines ?? raw.consolidated_lines,
+      normalizeConsolidationInvoiceLine,
+    ),
+    domesticChargeRows: arrayValue(
+      raw.domesticChargeRows ?? raw.domestic_charge_rows,
+      normalizeConsolidationChargeLine,
+    ),
+    exportChargeRows: arrayValue(
+      raw.exportChargeRows ?? raw.export_charge_rows,
+      normalizeConsolidationChargeLine,
+    ),
+    quoteLines: arrayValue(raw.quoteLines ?? raw.quote_lines, normalizeConsolidationChargeLine),
+    domesticInvoice: normalizePostedInvoice(raw.domesticInvoice ?? raw.domestic_invoice),
+    exportInvoice: normalizePostedInvoice(raw.exportInvoice ?? raw.export_invoice),
+    finalDelivery: {
+      ...base.finalDelivery,
+      ...(raw.finalDelivery ?? raw.final_delivery ?? {}),
+    },
+    quote: normalizeQuote(raw.quote),
+    selectedInvoiceCurrency: stringValue(
+      raw.selectedInvoiceCurrency ?? raw.selected_invoice_currency,
+      "GBP",
+    ),
+    consolidatedFreightCharge: numberValue(
+      raw.consolidatedFreightCharge ?? raw.consolidated_freight_charge,
+    ),
+    taxRate: numberValue(raw.taxRate ?? raw.tax_rate, 20),
+    showQuotePanel: booleanValue(raw.showQuotePanel ?? raw.show_quote_panel, false),
+  }
+}
+
 function detailPayloadForMode(form: JobDetailsForm): Partial<TransportJobUpdatePayload> {
   if (form.mode_of_transport === "road") return { road_detail: form.road_detail }
   if (form.mode_of_transport === "sea") return { sea_detail: form.sea_detail }
@@ -450,9 +715,10 @@ export function useJobDetailsPage() {
 
     transport_legs: [],
     multi_modal_legs: [],
+    consolidation_details: emptyConsolidationDetails(),
   })
 
-  const tabs: JobDetailsTab[] = [
+  const baseTabs: JobDetailsTab[] = [
     {
       label: "Overview",
       name: "tms.jobs.show.overview",
@@ -473,6 +739,39 @@ export function useJobDetailsPage() {
       label: "Costs & Charges",
       name: "tms.jobs.show.costs",
       key: "costs",
+      showCount: true,
+    },
+  ]
+
+  const consolidationTabs: JobDetailsTab[] = [
+    {
+      label: "Supplier Invoices",
+      name: "tms.jobs.show.supplier-invoices",
+      key: "supplier-invoices",
+      showCount: true,
+    },
+    {
+      label: "Collection Orders",
+      name: "tms.jobs.show.collection-orders",
+      key: "collection-orders",
+      showCount: true,
+    },
+    {
+      label: "Consolidated Invoices",
+      name: "tms.jobs.show.consolidated-invoices",
+      key: "consolidated-invoices",
+      showCount: true,
+    },
+    {
+      label: "Customer Invoice",
+      name: "tms.jobs.show.customer-invoice",
+      key: "customer-invoice",
+      showCount: true,
+    },
+    {
+      label: "Goods In/Out (WMS)",
+      name: "tms.jobs.show.wms",
+      key: "wms",
       showCount: true,
     },
   ]
@@ -588,6 +887,13 @@ export function useJobDetailsPage() {
   })
 
   const currentRouteName = computed(() => String(route.name ?? ""))
+  const isConsolidationJob = computed(() => {
+    return form.job_type === "consolidation" || form.mode_of_transport === "consolidation"
+  })
+
+  const tabs = computed<JobDetailsTab[]>(() => {
+    return isConsolidationJob.value ? [...baseTabs, ...consolidationTabs] : baseTabs
+  })
 
   const title = computed(() => {
     return form.job_number || "Job Details"
@@ -609,6 +915,16 @@ export function useJobDetailsPage() {
   function getTabCount(key: string) {
     if (key === "packages") return form.packages.length
     if (key === "costs") return form.buy_costs.length + form.sell_costs.length
+    if (key === "supplier-invoices") return form.consolidation_details.supplierInvoices.length
+    if (key === "collection-orders") return form.consolidation_details.collectionOrders.length
+    if (key === "consolidated-invoices") return form.consolidation_details.consolidatedLines.length
+    if (key === "customer-invoice") {
+      return (
+        form.consolidation_details.domesticChargeRows.length +
+        form.consolidation_details.exportChargeRows.length
+      )
+    }
+    if (key === "wms") return form.consolidation_details.goodsRows.length
 
     return 0
   }
@@ -686,6 +1002,10 @@ export function useJobDetailsPage() {
 
     form.transport_legs = Array.isArray(extra.transport_legs) ? extra.transport_legs : []
     form.multi_modal_legs = form.transport_legs
+    Object.assign(
+      form.consolidation_details,
+      normalizeConsolidationDetails(extra.consolidation_details),
+    )
   }
 
   async function loadCustomers() {
@@ -763,6 +1083,7 @@ export function useJobDetailsPage() {
         packages: form.packages.map(serializePackageRow),
         charges: [...form.buy_costs, ...form.sell_costs],
         transport_legs: serializeTransportLegs(form.multi_modal_legs, existingTransportLegIds),
+        consolidation_details: isConsolidationJob.value ? form.consolidation_details : undefined,
       }
 
       const updated = await transportJobStore.update(jobId.value, payload)
@@ -854,6 +1175,7 @@ export function useJobDetailsPage() {
     job,
     form,
     loading,
+    isConsolidationJob,
     saving,
     save,
     load,
@@ -899,6 +1221,7 @@ export function useJobDetailsPage() {
     statusOptions,
     referenceOptions,
     loading,
+    isConsolidationJob,
     initialLoading: initialLoadingRef,
     saving,
     addressModalVisible: addressModalVisibleRef,

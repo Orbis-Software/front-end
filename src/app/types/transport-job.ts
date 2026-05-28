@@ -187,6 +187,160 @@ export interface JobCharge {
   amount?: number | null
 }
 
+export type JobConsolidationCurrency = "GBP" | "USD" | "EUR" | string
+
+export interface JobConsolidationPackageLine {
+  id: number
+  packageType: string
+  stackable: boolean
+  atTheTop: boolean
+  qty: number
+  length: number
+  width: number
+  height: number
+  netWeight: number
+  grossWeight: number
+  adr: boolean
+}
+
+export interface JobConsolidationSupplierItem {
+  id: number
+  packageType: string
+  collie: number
+  length: number
+  width: number
+  height: number
+  stackable: boolean
+  atTheTop: boolean
+  net: number
+  gross: number
+  adr: "Yes" | "No"
+}
+
+export interface JobConsolidationSupplierInvoice {
+  id: number
+  supplierName: string
+  customerPoRef: string
+  supplierInvoiceNumber: string
+  invoiceDate: string
+  currency: JobConsolidationCurrency
+  invoiceValue: number
+  collectionRef: string
+  label: string
+  items: JobConsolidationSupplierItem[]
+}
+
+export interface JobConsolidationCollectionOrder {
+  id: number
+  coRef: string
+  customerRef: string
+  collectionRef: string
+  supplier: string
+  pickupDate: string
+  pickupTime: string
+  vehicle: string
+  collectionAddress: string
+  deliveryAddress: string
+  deliveryDate: string
+  deliveryTime: string
+  goodsDescription: string
+  hazardous: boolean
+  adrClass: string
+  freight: number
+  fscPct: number
+  additional: number
+  pcs: number
+  weightKg: number
+  volumeCbm: number
+  ldm: number
+  status: string
+  notes: string
+  wmsRef: string
+  lines: JobConsolidationPackageLine[]
+}
+
+export interface JobConsolidationGoodsRow {
+  id: number
+  grn: string
+  supplier: string
+  supplierInvoice: string
+  supplierPO: string
+  partNo: string
+  desc: string
+  pcs: number
+  weightKg: number
+  cbm: number
+  location: string
+  status: string
+}
+
+export interface JobConsolidationInvoiceLine {
+  id: number
+  invoiceCurrency: JobConsolidationCurrency
+  poRef: string
+  shippingLabelNo: string
+  description: string
+  qty: number
+  uom: string
+  countryOfOrigin: string
+  hsCode: string
+  unitPrice: number
+  supplier: string
+  grn: string
+}
+
+export interface JobConsolidationChargeLine {
+  id: number
+  description: string
+  qty: number
+  unit: string
+  rate: number
+  sourceType?: "domestic" | "export" | "manual"
+  sourceId?: number | string
+}
+
+export interface JobConsolidationPostedInvoice {
+  posted: boolean
+  ref: string
+  date: string
+}
+
+export interface JobConsolidationFinalDelivery {
+  deliveryRef: string
+  plannedDate: string
+  plannedTime: string
+  carrier: string
+  address: string
+  instructions: string
+}
+
+export interface JobConsolidationQuoteDetails {
+  reference: string
+  validUntil: string
+  status: string
+  notes: string
+  terms: string
+}
+
+export interface JobConsolidationDetails {
+  supplierInvoices: JobConsolidationSupplierInvoice[]
+  supplierExaNumbers: Record<string, string>
+  collectionOrders: JobConsolidationCollectionOrder[]
+  goodsRows: JobConsolidationGoodsRow[]
+  consolidatedLines: JobConsolidationInvoiceLine[]
+  domesticChargeRows: JobConsolidationChargeLine[]
+  exportChargeRows: JobConsolidationChargeLine[]
+  quoteLines: JobConsolidationChargeLine[]
+  domesticInvoice: JobConsolidationPostedInvoice
+  exportInvoice: JobConsolidationPostedInvoice
+  finalDelivery: JobConsolidationFinalDelivery
+  quote: JobConsolidationQuoteDetails
+  selectedInvoiceCurrency: JobConsolidationCurrency
+  consolidatedFreightCharge: number
+  taxRate: number
+  showQuotePanel: boolean
+}
+
 export interface TransportJob {
   id: number
   company_id: number
@@ -243,6 +397,7 @@ export interface TransportJob {
   transport_legs?: JobTransportLeg[]
   packages?: JobPackage[]
   charges?: JobCharge[]
+  consolidation_details?: JobConsolidationDetails | null
 
   files: JobFile[]
 
@@ -253,10 +408,39 @@ export interface TransportJob {
 
 export interface BaseTransportJobCreatePayload {
   customer_id?: number | null
+  account_number?: string | null
   quote_ref?: string | null
   job_number?: string | null
   job_date?: string | null
+  status?: string | null
+
+  service_type?: string | null
+  incoterms?: string | null
+  currency?: string | null
+  declared_value?: number | null
+  description_of_goods?: string | null
+  commodity_code?: string | null
+  insurance_level?: string | null
+
+  customer_po_number?: string | null
+  customer_booking_ref?: string | null
+  our_reference?: string | null
+  supplier_ref?: string | null
+
+  consignee_name?: string | null
+  consignee_contact?: string | null
+  consignee_phone?: string | null
+  consignee_email?: string | null
+
   note?: string | null
+  origin_contact_collection_address_id?: number | null
+  destination_contact_collection_address_id?: number | null
+  collection_date?: string | null
+  collection_time?: string | null
+  transport_legs?: JobTransportLeg[] | null
+  packages?: JobPackage[] | null
+  charges?: JobCharge[] | null
+  consolidation_details?: JobConsolidationDetails | null
 
   files?: File[]
   file_types?: (string | null)[]
@@ -314,6 +498,7 @@ export interface TransportJobUpdatePayload extends Partial<BaseTransportJobCreat
   transport_legs?: JobTransportLeg[] | null
   packages?: JobPackage[] | null
   charges?: JobCharge[] | null
+  consolidation_details?: JobConsolidationDetails | null
 }
 
 export interface PaginationMeta {

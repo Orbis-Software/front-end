@@ -6,6 +6,8 @@ import { useRoute, useRouter } from "vue-router"
 import Button from "primevue/button"
 import Column from "primevue/column"
 import DataTable from "primevue/datatable"
+import Dialog from "primevue/dialog"
+import InputText from "primevue/inputtext"
 import Toast from "primevue/toast"
 import { useToast } from "primevue/usetoast"
 import { useTransportQuoteStore } from "@/app/stores/transportQuote"
@@ -17,6 +19,8 @@ const toast = useToast()
 const quoteStore = useTransportQuoteStore()
 
 const actionProcessing = ref(false)
+const showCustomerReferenceModal = ref(false)
+const customerReferenceInput = ref("")
 
 const quoteId = computed(() => Number(route.params.id))
 const quote = computed<TransportQuote | null>(() => quoteStore.selectedQuote)
@@ -46,13 +50,37 @@ function onBack() {
   router.push({ name: "customer.quotes" })
 }
 
-async function respond(status: "accepted" | "rejected") {
+function requestAcceptQuote() {
+  if (!quote.value || actionProcessing.value) return
+
+  const customerReference = String(quote.value.customer_ref ?? "").trim()
+
+  if (customerReference) {
+    respond("accepted", customerReference)
+    return
+  }
+
+  customerReferenceInput.value = ""
+  showCustomerReferenceModal.value = true
+}
+
+async function acceptQuote(customerReference: string | null = null) {
+  showCustomerReferenceModal.value = false
+  await respond("accepted", customerReference)
+}
+
+async function respond(status: "accepted" | "rejected", customerReference?: string | null) {
   if (!quote.value || actionProcessing.value) return
 
   actionProcessing.value = true
 
   try {
-    await quoteStore.updateQuote(quote.value.id, { status })
+    const payload =
+      status === "accepted"
+        ? { status, customer_ref: customerReference?.trim() || null }
+        : { status }
+
+    await quoteStore.updateQuote(quote.value.id, payload)
     await quoteStore.fetchQuote(quote.value.id)
 
     toast.add({
@@ -172,7 +200,7 @@ onMounted(() => {
             class="btn btn--primary"
             :loading="actionProcessing"
             :disabled="actionProcessing"
-            @click="respond('accepted')"
+            @click="requestAcceptQuote"
           />
 
           <Button
@@ -307,5 +335,43 @@ onMounted(() => {
         <pre>{{ quote.terms_conditions || "-" }}</pre>
       </section>
     </template>
+
+    <Dialog
+      v-model:visible="showCustomerReferenceModal"
+      header="Customer Reference"
+      modal
+      :style="{ width: '420px' }"
+    >
+      <div class="customer-quote-details__reference-modal">
+        <p>
+          This quote does not have a customer reference yet. Add one now or continue without it.
+        </p>
+
+        <label for="customer-reference">Customer Reference</label>
+        <InputText
+          id="customer-reference"
+          v-model="customerReferenceInput"
+          class="customer-quote-details__reference-input"
+          placeholder="Enter customer reference"
+          autofocus
+        />
+      </div>
+
+      <template #footer>
+        <Button
+          label="Proceed Without Reference"
+          class="btn btn--ghost"
+          :disabled="actionProcessing"
+          @click="acceptQuote(null)"
+        />
+        <Button
+          label="Accept Quote"
+          icon="pi pi-check"
+          class="btn btn--primary"
+          :loading="actionProcessing"
+          @click="acceptQuote(customerReferenceInput)"
+        />
+      </template>
+    </Dialog>
   </section>
 </template>

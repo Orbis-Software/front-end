@@ -1,6 +1,7 @@
 import { computed, inject } from "vue"
 
 import { useReferenceDataStore } from "@/app/stores/reference-data"
+import { getPackageStackOption, setPackageStackOption } from "@/app/utils/packageStacking"
 
 import type { JobDetailsContext } from "../../JobDetailsPage.logic"
 
@@ -96,10 +97,6 @@ export function useJobPackagesTab() {
     rows.value = rows.value.filter(row => row.id !== id)
   }
 
-  function setStackable(row: PackageRow, stackable: boolean) {
-    row.stackable = stackable
-  }
-
   const totals = computed(() => {
     return rows.value.reduce(
       (total, row) => {
@@ -125,7 +122,8 @@ export function useJobPackagesTab() {
     addRow,
     removeRow,
     calculateRow,
-    setStackable,
+    getPackageStackOption,
+    setPackageStackOption,
     packageTypeOptions,
   }
 }

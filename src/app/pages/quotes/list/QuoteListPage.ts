@@ -298,7 +298,7 @@ export function useQuoteListPage() {
       }
 
       if (selectedAction.value === "convert") {
-        await quoteStore.convertQuoteToJob(quoteId, {
+        const job = await quoteStore.convertQuoteToJob(quoteId, {
           status: "draft",
         })
 
@@ -311,6 +311,14 @@ export function useQuoteListPage() {
 
         await quoteStore.fetchQuotes()
         closeActionDialog()
+
+        if (job?.id) {
+          router.push({
+            name: "tms.jobs.show",
+            params: { id: job.id },
+          })
+        }
+
         return
       }
 
