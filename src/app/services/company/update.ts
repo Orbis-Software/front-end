@@ -12,6 +12,14 @@ function hasLogoFile(payload: CompanyUpdatePayload): boolean {
   return !!payload && payload.logo instanceof File
 }
 
+function prepareMultipartPatch(payload: FormData): FormData {
+  if (!payload.has("_method")) {
+    payload.append("_method", "PATCH")
+  }
+
+  return payload
+}
+
 /**
  * Build FormData for multipart requests.
  * IMPORTANT: Laravel will not parse nested arrays/objects automatically from raw FormData
@@ -68,7 +76,7 @@ export default async function updateCompany(payload: UpdatePayload): Promise<Com
   // ✅ If caller already provides FormData
   if (isFormData(payload)) {
     // Best case: PATCH multipart works (it should with Laravel)
-    const response = await http.patch("/company", payload, {
+    const response = await http.post("/company", prepareMultipartPatch(payload), {
       headers: { "Content-Type": "multipart/form-data" },
     })
 
@@ -77,9 +85,9 @@ export default async function updateCompany(payload: UpdatePayload): Promise<Com
 
   // ✅ If JSON payload includes logo File -> switch to FormData
   if (hasLogoFile(payload)) {
-    const fd = buildCompanyFormData(payload)
+    const fd = prepareMultipartPatch(buildCompanyFormData(payload))
 
-    const response = await http.patch("/company", fd, {
+    const response = await http.post("/company", fd, {
       headers: { "Content-Type": "multipart/form-data" },
     })
 

@@ -118,6 +118,11 @@ function toFormData(payload: TransportJobUpdatePayload): FormData {
   )
   appendArrayOfObjects(fd, "packages", payload.packages as Record<string, any>[] | null | undefined)
   appendArrayOfObjects(fd, "charges", payload.charges as Record<string, any>[] | null | undefined)
+  appendValue(
+    fd,
+    "consolidation_details",
+    payload.consolidation_details as Record<string, any> | null | undefined,
+  )
 
   const files = payload.files ?? []
   const fileTypes = payload.file_types ?? []

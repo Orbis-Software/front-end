@@ -155,6 +155,28 @@
   line-height: 1.5;
 }
 
+.customer-quote-details__reference-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.customer-quote-details__reference-modal p {
+  margin: 0 0 4px;
+  color: #475569;
+  line-height: 1.5;
+}
+
+.customer-quote-details__reference-modal label {
+  color: #334155;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.customer-quote-details__reference-input {
+  width: 100%;
+}
+
 @media (max-width: 900px) {
   .customer-quote-details__header,
   .customer-quote-details__actions {

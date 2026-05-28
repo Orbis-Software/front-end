@@ -94,10 +94,6 @@ export function useCustomerQuotesPage() {
     })
   }
 
-  async function approveQuote(reference: string) {
-    await respondToQuote(reference, "accepted")
-  }
-
   async function declineQuote(reference: string) {
     await respondToQuote(reference, "rejected")
   }
@@ -253,7 +249,6 @@ export function useCustomerQuotesPage() {
     isActive,
     setActiveTab,
     openQuote,
-    approveQuote,
     declineQuote,
     downloadQuote,
   }

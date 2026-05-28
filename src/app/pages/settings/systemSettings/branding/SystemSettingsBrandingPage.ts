@@ -1,22 +1,392 @@
-import { computed } from "vue"
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue"
+import { useCompanyStore } from "@/app/stores/company"
+import type { Company } from "@/app/types/company"
+import { useToast } from "primevue/usetoast"
+
+type BrandingTab = "logo-assets" | "colours" | "documents"
+type DocumentFormat = "PDF" | "Email"
+type DocumentTone = "Formal" | "Operational" | "Customer Friendly"
+type PdfLayout = "Standard" | "Compact" | "Detailed"
+type SignatureFieldKey = "body" | "name" | "title" | "phone" | "email"
+
+type SignatureStyle = {
+  fontFamily: string
+  fontSize: string
+  color: string
+}
+
+type BrandingSignature = {
+  name: string
+  title: string
+  phone: string
+  email: string
+  body: string
+  imagePreview: string | null
+  styles: Record<SignatureFieldKey, SignatureStyle>
+}
+
+type BrandingDocumentSection = {
+  id: string
+  title: string
+  description: string
+  format: DocumentFormat
+  tone: DocumentTone
+  expanded: boolean
+  header: string
+  subject: string
+  body: string
+  footer: string
+  layout: PdfLayout
+  includeLogo: boolean
+  includeBankDetails: boolean
+  includeSignature: boolean
+}
+
+const fallbackLogo = "/orbis-logo.png"
+const signatureStorageKey = "pc-cargo.branding.signature"
+const defaultSignatureStyle: SignatureStyle = {
+  fontFamily: "Arial, sans-serif",
+  fontSize: "14px",
+  color: "#2f2f2f",
+}
+
+type StoredBrandingSignature = Partial<BrandingSignature> & Partial<SignatureStyle>
+
+function createDefaultStyles(): Record<SignatureFieldKey, SignatureStyle> {
+  return {
+    body: { ...defaultSignatureStyle },
+    name: { ...defaultSignatureStyle, fontSize: "15px" },
+    title: { ...defaultSignatureStyle, color: "#5f5f5f" },
+    phone: { ...defaultSignatureStyle, fontSize: "12px", color: "#5f5f5f" },
+    email: { ...defaultSignatureStyle, fontSize: "12px", color: "#5f5f5f" },
+  }
+}
+
+function normalizeStyles(
+  saved?: Partial<Record<SignatureFieldKey, Partial<SignatureStyle>>>,
+  legacy?: Partial<SignatureStyle>,
+) {
+  const defaults = createDefaultStyles()
+  const legacyStyle = {
+    ...defaultSignatureStyle,
+    ...(legacy?.fontFamily || legacy?.fontSize || legacy?.color ? legacy : {}),
+  }
+
+  return (Object.keys(defaults) as SignatureFieldKey[]).reduce(
+    (styles, key) => {
+      styles[key] = {
+        ...defaults[key],
+        ...(saved?.[key] ?? legacyStyle),
+      }
+      return styles
+    },
+    {} as Record<SignatureFieldKey, SignatureStyle>,
+  )
+}
 
 export function useSystemSettingsBrandingPage() {
-  const sections = computed(() => [
+  const store = useCompanyStore()
+  const toast = useToast()
+  const activeTab = ref<BrandingTab>("logo-assets")
+  const logoFile = ref<File | null>(null)
+  const logoPreview = ref<string | null>(null)
+  const localLogoUrl = ref<string | null>(null)
+  const errorMessage = ref("")
+  const savedSignature = ref<BrandingSignature | null>(null)
+  const documentFormatOptions: DocumentFormat[] = ["PDF", "Email"]
+  const documentToneOptions: DocumentTone[] = ["Formal", "Operational", "Customer Friendly"]
+  const pdfLayoutOptions: PdfLayout[] = ["Standard", "Compact", "Detailed"]
+
+  const documentSections = ref<BrandingDocumentSection[]>([
     {
-      title: "Logo & Assets",
-      description: "Upload company logos and supporting branding assets.",
+      id: "invoice-pdf",
+      title: "Invoice PDF",
+      description: "Layout and wording for generated customer invoice PDFs.",
+      format: "PDF",
+      tone: "Formal",
+      expanded: true,
+      header: "Tax Invoice",
+      subject: "",
+      body: "Line items, totals, tax summary, and payment information will be shown here.",
+      footer: "Thank you for your business.",
+      layout: "Standard",
+      includeLogo: true,
+      includeBankDetails: true,
+      includeSignature: false,
     },
     {
-      title: "Colours",
-      description: "Define brand colours used in documents and screens.",
+      id: "quote-pdf",
+      title: "Quote PDF",
+      description: "Branding for customer quotation and estimate PDF exports.",
+      format: "PDF",
+      tone: "Customer Friendly",
+      expanded: false,
+      header: "Quotation",
+      subject: "",
+      body: "Service details, quoted charges, validity, and acceptance information will be shown here.",
+      footer: "Rates are valid subject to availability and final shipment details.",
+      layout: "Detailed",
+      includeLogo: true,
+      includeBankDetails: false,
+      includeSignature: false,
     },
     {
-      title: "Documents",
-      description: "Apply branded styling to PDFs, emails, and exports.",
+      id: "job-pdf",
+      title: "Job Document PDF",
+      description: "Default styling for job sheets, delivery notes, and operational PDFs.",
+      format: "PDF",
+      tone: "Operational",
+      expanded: false,
+      header: "Job Document",
+      subject: "",
+      body: "Job references, routing details, cargo information, and operational notes will be shown here.",
+      footer: "Generated by operations.",
+      layout: "Compact",
+      includeLogo: true,
+      includeBankDetails: false,
+      includeSignature: false,
+    },
+    {
+      id: "invoice-email",
+      title: "Invoice Email",
+      description: "Subject line and body footer for sending customer invoices.",
+      format: "Email",
+      tone: "Formal",
+      expanded: false,
+      header: "Please find your invoice attached.",
+      subject: "Invoice {{ invoice_number }} from {{ company_name }}",
+      body: "<p>Hello {{ customer_name }},</p><p>Please find attached invoice <strong>{{ invoice_number }}</strong> for your records.</p><p>Payment details are included below.</p>",
+      footer: "If you have any questions, please reply to this email.",
+      layout: "Standard",
+      includeLogo: true,
+      includeBankDetails: true,
+      includeSignature: true,
+    },
+    {
+      id: "shipment-email",
+      title: "Shipment Update Email",
+      description: "Default format for milestone and tracking update emails.",
+      format: "Email",
+      tone: "Customer Friendly",
+      expanded: false,
+      header: "Your shipment has been updated.",
+      subject: "Shipment update for {{ job_number }}",
+      body: "<p>Hello {{ customer_name }},</p><p>Your shipment <strong>{{ job_number }}</strong> has a new status update.</p><p>Latest status: {{ shipment_status }}.</p>",
+      footer: "You can contact our team for any further assistance.",
+      layout: "Standard",
+      includeLogo: true,
+      includeBankDetails: false,
+      includeSignature: true,
+    },
+    {
+      id: "notification-email",
+      title: "System Notification Email",
+      description: "Short transactional email format for alerts and account notices.",
+      format: "Email",
+      tone: "Operational",
+      expanded: false,
+      header: "Notification",
+      subject: "{{ notification_title }}",
+      body: "<p>{{ notification_message }}</p>",
+      footer: "This is an automated message.",
+      layout: "Compact",
+      includeLogo: true,
+      includeBankDetails: false,
+      includeSignature: false,
     },
   ])
 
+  const company = computed(() => store.item as Company | null)
+  const loading = computed(() => store.loading)
+  const saving = computed(() => store.saving)
+
+  const tabs: Array<{ label: string; value: BrandingTab }> = [
+    { label: "Logo & Assets", value: "logo-assets" },
+    { label: "Colours", value: "colours" },
+    { label: "Documents", value: "documents" },
+  ]
+
+  const companyName = computed(() => {
+    return company.value?.trading_name || company.value?.legal_name || "Company"
+  })
+
+  const currentLogoSrc = computed(() => {
+    return logoPreview.value ?? localLogoUrl.value ?? fallbackLogo
+  })
+
+  const hasLogoChange = computed(() => !!logoFile.value)
+  const activeSignature = computed<BrandingSignature>(() => {
+    return (
+      savedSignature.value ?? {
+        name: "Operations Team",
+        title: "Customer Support",
+        phone: "",
+        email: "",
+        body: "Kind regards,",
+        imagePreview: null,
+        styles: createDefaultStyles(),
+      }
+    )
+  })
+  const hasSavedSignature = computed(() => !!savedSignature.value)
+
+  function getActiveSignatureFieldStyle(field: SignatureFieldKey) {
+    return activeSignature.value.styles[field]
+  }
+
+  function setActiveTab(tab: BrandingTab) {
+    activeTab.value = tab
+  }
+
+  function toggleDocumentSection(sectionId: string) {
+    const section = documentSections.value.find(item => item.id === sectionId)
+    if (section) section.expanded = !section.expanded
+  }
+
+  function updateDocumentBody(sectionId: string, event: Event) {
+    const section = documentSections.value.find(item => item.id === sectionId)
+    const element = event.target as HTMLElement | null
+    if (section && element) section.body = element.innerHTML
+  }
+
+  function applyEditorCommand(command: "bold" | "italic" | "insertUnorderedList") {
+    document.execCommand(command)
+  }
+
+  function revokePreview() {
+    if (logoPreview.value?.startsWith("blob:")) {
+      URL.revokeObjectURL(logoPreview.value)
+    }
+  }
+
+  function hydrateFromCompany() {
+    localLogoUrl.value = company.value?.logo_url ?? null
+
+    if (!logoFile.value) {
+      revokePreview()
+      logoPreview.value = null
+    }
+  }
+
+  async function onRefresh() {
+    errorMessage.value = ""
+    await store.fetch()
+    logoFile.value = null
+    hydrateFromCompany()
+  }
+
+  function onLogoSelect(event: any) {
+    const file: File | undefined = event?.files?.[0]
+    if (!file) return
+
+    errorMessage.value = ""
+    logoFile.value = file
+    revokePreview()
+    logoPreview.value = URL.createObjectURL(file)
+  }
+
+  function onClearLogoSelection() {
+    logoFile.value = null
+    revokePreview()
+    logoPreview.value = null
+    errorMessage.value = ""
+  }
+
+  function loadSavedSignature() {
+    try {
+      const raw = localStorage.getItem(signatureStorageKey)
+      if (!raw) return
+
+      const parsed = JSON.parse(raw) as StoredBrandingSignature
+      savedSignature.value = {
+        name: parsed.name ?? "",
+        title: parsed.title ?? "",
+        phone: parsed.phone ?? "",
+        email: parsed.email ?? "",
+        body: parsed.body ?? "",
+        imagePreview: parsed.imagePreview ?? null,
+        styles: normalizeStyles(parsed.styles, parsed),
+      }
+    } catch {
+      localStorage.removeItem(signatureStorageKey)
+    }
+  }
+
+  async function onSaveLogo() {
+    if (!company.value || !logoFile.value) return
+
+    errorMessage.value = ""
+
+    try {
+      const payload = new FormData()
+      payload.append("logo", logoFile.value)
+
+      await store.update(payload as any)
+      logoFile.value = null
+      hydrateFromCompany()
+
+      toast.add({
+        severity: "success",
+        summary: "Saved",
+        detail: "Company logo updated.",
+        life: 2500,
+      })
+    } catch (error: any) {
+      const detail =
+        error?.response?.data?.message ??
+        (error instanceof Error ? error.message : "Unable to save the logo. Please try again.")
+
+      errorMessage.value = detail
+
+      toast.add({
+        severity: "error",
+        summary: "Logo not saved",
+        detail,
+        life: 5000,
+      })
+    }
+  }
+
+  watch(company, hydrateFromCompany)
+
+  onMounted(async () => {
+    store.hydrateFromAuth()
+    hydrateFromCompany()
+    loadSavedSignature()
+
+    if (!company.value) {
+      await onRefresh()
+    }
+  })
+
+  onBeforeUnmount(() => {
+    revokePreview()
+  })
+
   return {
-    sections,
+    activeTab,
+    tabs,
+    company,
+    companyName,
+    currentLogoSrc,
+    errorMessage,
+    hasLogoChange,
+    activeSignature,
+    hasSavedSignature,
+    loading,
+    saving,
+    documentFormatOptions,
+    documentSections,
+    documentToneOptions,
+    pdfLayoutOptions,
+    setActiveTab,
+    getActiveSignatureFieldStyle,
+    toggleDocumentSection,
+    updateDocumentBody,
+    applyEditorCommand,
+    onClearLogoSelection,
+    onLogoSelect,
+    onRefresh,
+    onSaveLogo,
   }
 }

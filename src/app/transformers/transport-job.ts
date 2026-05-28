@@ -174,6 +174,13 @@ function fetchPackage(raw: any): JobPackage {
 
     package_type: nullableString(raw.package_type),
 
+    stackable:
+      raw.stackable === null || raw.stackable === undefined ? null : Boolean(Number(raw.stackable)),
+    at_the_top:
+      raw.at_the_top === null || raw.at_the_top === undefined
+        ? null
+        : Boolean(Number(raw.at_the_top)),
+
     quantity: nullableNumber(raw.quantity),
 
     length_cm: nullableNumber(raw.length_cm),
@@ -278,6 +285,7 @@ const transportJobTransformer = {
 
       packages: Array.isArray(raw.packages) ? raw.packages.map(fetchPackage) : [],
       charges: Array.isArray(raw.charges) ? raw.charges.map(fetchCharge) : [],
+      consolidation_details: raw.consolidation_details ?? raw.consolidationDetails ?? null,
 
       files: jobFileTransformer.fetchCollection(filesRaw),
 

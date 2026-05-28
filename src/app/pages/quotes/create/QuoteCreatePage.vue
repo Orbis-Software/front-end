@@ -376,7 +376,9 @@
               <th>CBM</th>
               <th v-if="mode === 'road'">LDM</th>
               <th v-if="mode === 'sea' || mode === 'rail'">Container</th>
-              <th>Stacking</th>
+              <th class="quote-table__check-heading">Stackable</th>
+              <th class="quote-table__check-heading">Non-Stack</th>
+              <th class="quote-table__check-heading">Top-Loadable</th>
               <th></th>
             </tr>
           </thead>
@@ -429,29 +431,26 @@
                   class="table-select"
                 />
               </td>
-              <td>
-                <div class="quote-stack-choice">
-                  <label>
-                    <Checkbox
-                      :model-value="row.stackable"
-                      binary
-                      @update:model-value="setDimensionStackable(row, true)"
-                    />
-                    <span>Stackable</span>
-                  </label>
-                  <label>
-                    <Checkbox
-                      :model-value="!row.stackable"
-                      binary
-                      @update:model-value="setDimensionStackable(row, false)"
-                    />
-                    <span>Non-stack</span>
-                  </label>
-                  <label>
-                    <Checkbox v-model="row.atTheTop" binary />
-                    <span>At the top</span>
-                  </label>
-                </div>
+              <td class="quote-table__check-cell">
+                <Checkbox
+                  :model-value="getPackageStackOption(row) === 'stackable'"
+                  binary
+                  @update:model-value="setPackageStackOption(row, 'stackable')"
+                />
+              </td>
+              <td class="quote-table__check-cell">
+                <Checkbox
+                  :model-value="getPackageStackOption(row) === 'non_stack'"
+                  binary
+                  @update:model-value="setPackageStackOption(row, 'non_stack')"
+                />
+              </td>
+              <td class="quote-table__check-cell">
+                <Checkbox
+                  :model-value="getPackageStackOption(row) === 'top_loadable'"
+                  binary
+                  @update:model-value="setPackageStackOption(row, 'top_loadable')"
+                />
               </td>
               <td>
                 <Button
@@ -808,7 +807,8 @@ const {
   onCustomerClear,
   addDimensionRow,
   removeDimensionRow,
-  setDimensionStackable,
+  getPackageStackOption,
+  setPackageStackOption,
   addChargeLine,
   removeChargeLine,
   getRowCbm,

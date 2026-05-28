@@ -13,7 +13,6 @@ const {
   isActive,
   setActiveTab,
   openQuote,
-  approveQuote,
   declineQuote,
   downloadQuote,
 } = useCustomerQuotesPage()
@@ -122,9 +121,8 @@ const {
                         v-if="quote.canApprove"
                         class="btn btn--primary"
                         label="Approve"
-                        :loading="actionProcessingId === quote.id"
                         :disabled="!!actionProcessingId"
-                        @click="approveQuote(quote.reference)"
+                        @click="openQuote(quote.reference)"
                       />
                       <Button
                         v-if="quote.canDecline"

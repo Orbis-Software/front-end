@@ -21,6 +21,13 @@ async function logout() {
 
 <template>
   <div class="user-dd" @click.stop>
+    <div class="dd-heading">User Setting</div>
+
+    <button class="dd-link" type="button" @click="go('/settings/user/signature')">
+      <i class="pi pi-pencil" />
+      <span>User Settings</span>
+    </button>
+
     <button class="dd-link" type="button" @click="go('/settings/login')">
       <i class="pi pi-key" />
       <span>Login Details</span>
@@ -79,6 +86,15 @@ async function logout() {
 .dd-link:hover {
   background: rgba(236, 105, 26, 0.08);
   color: var(--pc-primary);
+}
+
+.dd-heading {
+  padding: 8px 16px 6px;
+  color: var(--pc-text-muted, #777);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  text-transform: uppercase;
 }
 
 .dd-divider {

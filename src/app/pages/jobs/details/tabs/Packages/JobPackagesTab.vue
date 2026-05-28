@@ -2,8 +2,16 @@
 import "./JobPackagesTab.css"
 import { useJobPackagesTab } from "./JobPackagesTab.logic"
 
-const { rows, totals, addRow, removeRow, calculateRow, setStackable, packageTypeOptions } =
-  useJobPackagesTab()
+const {
+  rows,
+  totals,
+  addRow,
+  removeRow,
+  calculateRow,
+  getPackageStackOption,
+  setPackageStackOption,
+  packageTypeOptions,
+} = useJobPackagesTab()
 </script>
 
 <template>
@@ -34,7 +42,9 @@ const { rows, totals, addRow, removeRow, calculateRow, setStackable, packageType
               <th>Gross kg</th>
               <th>Vol kg</th>
               <th>CBM</th>
-              <th>Stacking</th>
+              <th class="job-packages-tab__check-heading">Stackable</th>
+              <th class="job-packages-tab__check-heading">Non-Stack</th>
+              <th class="job-packages-tab__check-heading">Top-Loadable</th>
               <th />
             </tr>
           </thead>
@@ -123,29 +133,29 @@ const { rows, totals, addRow, removeRow, calculateRow, setStackable, packageType
                 {{ row.cbm.toFixed(3) }}
               </td>
 
-              <td>
-                <div class="job-packages-tab__stack-choice">
-                  <label>
-                    <input
-                      :checked="row.stackable"
-                      type="checkbox"
-                      @change="setStackable(row, true)"
-                    />
-                    <span>Stackable</span>
-                  </label>
-                  <label>
-                    <input
-                      :checked="!row.stackable"
-                      type="checkbox"
-                      @change="setStackable(row, false)"
-                    />
-                    <span>Non-stack</span>
-                  </label>
-                  <label>
-                    <input v-model="row.atTheTop" type="checkbox" />
-                    <span>At the top</span>
-                  </label>
-                </div>
+              <td class="job-packages-tab__check-cell">
+                <input
+                  class="job-packages-tab__check-input"
+                  :checked="getPackageStackOption(row) === 'stackable'"
+                  type="checkbox"
+                  @change="setPackageStackOption(row, 'stackable')"
+                />
+              </td>
+              <td class="job-packages-tab__check-cell">
+                <input
+                  class="job-packages-tab__check-input"
+                  :checked="getPackageStackOption(row) === 'non_stack'"
+                  type="checkbox"
+                  @change="setPackageStackOption(row, 'non_stack')"
+                />
+              </td>
+              <td class="job-packages-tab__check-cell">
+                <input
+                  class="job-packages-tab__check-input"
+                  :checked="getPackageStackOption(row) === 'top_loadable'"
+                  type="checkbox"
+                  @change="setPackageStackOption(row, 'top_loadable')"
+                />
               </td>
 
               <td>
@@ -160,7 +170,7 @@ const { rows, totals, addRow, removeRow, calculateRow, setStackable, packageType
             </tr>
 
             <tr v-if="!rows.length">
-              <td colspan="12" class="job-packages-tab__empty">
+              <td colspan="14" class="job-packages-tab__empty">
                 No packages yet. Click “Add Package” to create one.
               </td>
             </tr>

@@ -55,7 +55,7 @@
 
 .job-packages-tab__table {
   width: 100%;
-  min-width: 1120px;
+  min-width: 1080px;
   border-collapse: collapse;
   font-size: 12px;
 }
@@ -112,6 +112,20 @@
   max-width: 76px;
 }
 
+.job-packages-tab__table .job-packages-tab__check-heading,
+.job-packages-tab__table .job-packages-tab__check-cell {
+  width: 72px;
+  min-width: 72px;
+  max-width: 72px;
+  padding-inline: 4px;
+  text-align: center;
+}
+
+.job-packages-tab__table .job-packages-tab__check-heading {
+  line-height: 1.15;
+  white-space: normal;
+}
+
 .job-packages-tab__table .job-packages-tab__compact-input {
   width: 68px;
   min-width: 0;
@@ -119,26 +133,10 @@
   text-align: right;
 }
 
-.job-packages-tab__stack-choice {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-width: 300px;
-}
-
-.job-packages-tab__stack-choice label {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: #40403d;
-  font-size: 11px;
-  font-weight: 800;
-  white-space: nowrap;
-}
-
-.job-packages-tab__stack-choice input {
-  width: 14px;
-  height: 14px;
+.job-packages-tab__table .job-packages-tab__check-input {
+  width: 16px;
+  height: 16px;
+  padding: 0;
 }
 
 .job-packages-tab__computed {

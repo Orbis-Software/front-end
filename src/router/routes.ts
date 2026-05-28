@@ -27,11 +27,22 @@ const DashboardPage = () => import("@/app/pages/dashboard/DashboardPage.vue")
 const JobPage = () => import("@/app/pages/jobs/JobPage.vue")
 const JobsListPage = () => import("@/app/pages/jobs/list/JobsListPage.vue")
 const JobDetailsPage = () => import("@/app/pages/jobs/details/JobDetailsPage.vue")
+const ConsolidationPage = () => import("@/app/pages/consolidations/ConsolidationPage.vue")
 
 const JobOverviewTab = () => import("@/app/pages/jobs/details/tabs/Overview/JobOverviewTab.vue")
 const JobPackagesTab = () => import("@/app/pages/jobs/details/tabs/Packages/JobPackagesTab.vue")
 const JobTransportTab = () => import("@/app/pages/jobs/details/tabs/Transport/JobTransportTab.vue")
 const JobCostsTab = () => import("@/app/pages/jobs/details/tabs/Costs/JobCostsTab.vue")
+const JobConsolidationSupplierInvoicesTab = () =>
+  import("@/app/pages/jobs/details/tabs/Consolidation/JobConsolidationSupplierInvoicesTab.vue")
+const JobConsolidationCollectionsTab = () =>
+  import("@/app/pages/jobs/details/tabs/Consolidation/JobConsolidationCollectionsTab.vue")
+const JobConsolidationInvoicesTab = () =>
+  import("@/app/pages/jobs/details/tabs/Consolidation/JobConsolidationInvoicesTab.vue")
+const JobConsolidationCustomerInvoiceTab = () =>
+  import("@/app/pages/jobs/details/tabs/Consolidation/JobConsolidationCustomerInvoiceTab.vue")
+const JobConsolidationWmsTab = () =>
+  import("@/app/pages/jobs/details/tabs/Consolidation/JobConsolidationWmsTab.vue")
 
 const QuoteListPage = () => import("@/app/pages/quotes/list/QuoteListPage.vue")
 const QuoteCreatePage = () => import("@/app/pages/quotes/create/QuoteCreatePage.vue")
@@ -42,7 +53,6 @@ const ContactCreatePage = () => import("@/app/pages/contacts/create/ContactCreat
 const ContactDetailsPage = () => import("@/app/pages/contacts/details/ContactDetailsPage.vue")
 const ContactsImportPage = () => import("@/app/pages/contacts/import/ContactsImportPage.vue")
 
-const ConsolidationPage = () => import("@/app/pages/consolidations/ConsolidationPage.vue")
 const LoginDetailsPage = () => import("@/app/pages/settings/loginDetails/LoginDetailsPage.vue")
 const SettingsPage = () => import("@/app/pages/general-settings/GeneralSettingsPage.vue")
 const TmsListPage = () => import("@/app/pages/tms/shared/TmsListPage.vue")
@@ -73,12 +83,15 @@ const SystemSettingsCompanyPage = () =>
   import("@/app/pages/settings/systemSettings/company/SystemSettingsCompanyPage.vue")
 const SystemSettingsBrandingPage = () =>
   import("@/app/pages/settings/systemSettings/branding/SystemSettingsBrandingPage.vue")
-const SystemSettingsShortcutsPage = () =>
-  import("@/app/pages/settings/systemSettings/shortcuts/SystemSettingsShortcutsPage.vue")
 const MasterSettingsPage = () =>
   import("@/app/pages/settings/systemSettings/master/SystemSettingsMasterPage.vue")
 const SystemSettingsAwbManagerPage = () =>
   import("@/app/pages/settings/systemSettings/awbManager/SystemSettingsAwbManagerPage.vue")
+const UserSettingsPage = () => import("@/app/pages/settings/userSettings/UserSettingsPage.vue")
+const UserSettingsSignaturePage = () =>
+  import("@/app/pages/settings/userSettings/signature/UserSettingsSignaturePage.vue")
+const UserSettingsShortcutsPage = () =>
+  import("@/app/pages/settings/userSettings/shortcuts/UserSettingsShortcutsPage.vue")
 
 /* =========================
    WMS Pages
@@ -262,6 +275,31 @@ export const routes: RouteRecordRaw[] = [
             path: "costs",
             name: "tms.jobs.show.costs",
             component: JobCostsTab,
+          },
+          {
+            path: "supplier-invoices",
+            name: "tms.jobs.show.supplier-invoices",
+            component: JobConsolidationSupplierInvoicesTab,
+          },
+          {
+            path: "collection-orders",
+            name: "tms.jobs.show.collection-orders",
+            component: JobConsolidationCollectionsTab,
+          },
+          {
+            path: "consolidated-invoices",
+            name: "tms.jobs.show.consolidated-invoices",
+            component: JobConsolidationInvoicesTab,
+          },
+          {
+            path: "customer-invoice",
+            name: "tms.jobs.show.customer-invoice",
+            component: JobConsolidationCustomerInvoiceTab,
+          },
+          {
+            path: "wms",
+            name: "tms.jobs.show.wms",
+            component: JobConsolidationWmsTab,
           },
         ],
       },
@@ -766,12 +804,6 @@ export const routes: RouteRecordRaw[] = [
             meta: { title: "System Settings • Branding" },
           },
           {
-            path: "shortcuts",
-            name: "settings.system.shortcuts",
-            component: SystemSettingsShortcutsPage,
-            meta: { title: "System Settings • Shortcuts" },
-          },
-          {
             path: "master",
             name: "settings.system.master",
             component: MasterSettingsPage,
@@ -782,6 +814,29 @@ export const routes: RouteRecordRaw[] = [
             name: "settings.system.awb_manager",
             component: SystemSettingsAwbManagerPage,
             meta: { title: "System Settings • AWB Manager" },
+          },
+        ],
+      },
+      {
+        path: "settings/user",
+        component: UserSettingsPage,
+        meta: { title: "User Settings" },
+        children: [
+          {
+            path: "",
+            redirect: { name: "settings.user.signature" },
+          },
+          {
+            path: "signature",
+            name: "settings.user.signature",
+            component: UserSettingsSignaturePage,
+            meta: { title: "User Settings - Signature" },
+          },
+          {
+            path: "shortcuts",
+            name: "settings.user.shortcuts",
+            component: UserSettingsShortcutsPage,
+            meta: { title: "User Settings - Shortcut" },
           },
         ],
       },

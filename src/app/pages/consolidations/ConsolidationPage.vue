@@ -3,7 +3,7 @@
     <header class="consolidation-page__hero">
       <div class="consolidation-page__hero-main">
         <div class="consolidation-page__eyebrow">CONSOLIDATED JOB</div>
-        <h1>{{ overview.jobNo }}</h1>
+        <h1>{{ overview.jobNo || "New Consolidation" }}</h1>
         <p>
           {{ overview.customer || "New customer consolidation" }} · {{ overview.shipFrom }} to
           {{ overview.deliveryAddress || "Final destination" }}
@@ -16,15 +16,24 @@
       </div>
 
       <div class="consolidation-page__actions">
-        <Button label="Save Draft" icon="pi pi-save" class="btn btn--ghost" />
+        <Button
+          label="Create Job"
+          icon="pi pi-check"
+          class="btn btn--primary"
+          :loading="creatingJob"
+          :disabled="creatingJob"
+          @click="createConsolidationJob"
+        />
         <Button
           label="Create Collection Order"
           icon="pi pi-plus"
-          class="btn btn--primary"
+          class="btn btn--ghost"
           @click="activeTab = 'collections'"
         />
       </div>
     </header>
+
+    <p v-if="createError" class="consolidation-page__error">{{ createError }}</p>
 
     <section class="consolidation-page__metrics">
       <article v-for="metric in metrics" :key="metric.label" class="consolidation-metric">
@@ -59,7 +68,12 @@
           <div class="consolidation-form-grid consolidation-form-grid--three">
             <label class="consolidation-field">
               <span>Job Number</span>
-              <InputText v-model="overview.jobNo" readonly />
+              <InputText
+                v-model="overview.jobNo"
+                :readonly="jobNumberUsesSystem"
+                :placeholder="jobNumberPlaceholder"
+                @input="jobNumberAuto = false"
+              />
             </label>
             <label class="consolidation-field">
               <span>Job Date</span>
@@ -296,6 +310,7 @@
             >
               <thead>
                 <tr>
+                  <th class="consolidation-table__item-heading">#</th>
                   <th>Package</th>
                   <th class="consolidation-table__compact-heading">Collie</th>
                   <th class="consolidation-table__compact-heading">Length</th>
@@ -304,12 +319,15 @@
                   <th>Net kg</th>
                   <th>Gross kg</th>
                   <th>ADR</th>
-                  <th>Stacking</th>
+                  <th class="consolidation-table__check-heading">Stackable</th>
+                  <th class="consolidation-table__check-heading">Non-Stack</th>
+                  <th class="consolidation-table__check-heading">Top-Loadable</th>
                   <th>Action</th>
                 </tr>
               </thead>
               <tbody>
                 <tr v-for="(item, index) in supplierDraft.items" :key="item.id">
+                  <td class="consolidation-table__item-number">{{ index + 1 }}</td>
                   <td><Dropdown v-model="item.packageType" :options="packageOptions" /></td>
                   <td class="consolidation-table__compact-cell">
                     <InputNumber
@@ -346,29 +364,26 @@
                   <td><InputNumber v-model="item.net" :min="0" :min-fraction-digits="1" /></td>
                   <td><InputNumber v-model="item.gross" :min="0" :min-fraction-digits="1" /></td>
                   <td><Dropdown v-model="item.adr" :options="yesNoOptions" /></td>
-                  <td>
-                    <div class="consolidation-stack-choice">
-                      <label>
-                        <Checkbox
-                          :model-value="item.stackable"
-                          binary
-                          @update:model-value="setSupplierStackable(item, true)"
-                        />
-                        <span>Stackable</span>
-                      </label>
-                      <label>
-                        <Checkbox
-                          :model-value="!item.stackable"
-                          binary
-                          @update:model-value="setSupplierStackable(item, false)"
-                        />
-                        <span>Non-stack</span>
-                      </label>
-                      <label>
-                        <Checkbox v-model="item.atTheTop" binary />
-                        <span>At the top</span>
-                      </label>
-                    </div>
+                  <td class="consolidation-table__check-cell">
+                    <Checkbox
+                      :model-value="getPackageStackOption(item) === 'stackable'"
+                      binary
+                      @update:model-value="setPackageStackOption(item, 'stackable')"
+                    />
+                  </td>
+                  <td class="consolidation-table__check-cell">
+                    <Checkbox
+                      :model-value="getPackageStackOption(item) === 'non_stack'"
+                      binary
+                      @update:model-value="setPackageStackOption(item, 'non_stack')"
+                    />
+                  </td>
+                  <td class="consolidation-table__check-cell">
+                    <Checkbox
+                      :model-value="getPackageStackOption(item) === 'top_loadable'"
+                      binary
+                      @update:model-value="setPackageStackOption(item, 'top_loadable')"
+                    />
                   </td>
                   <td>
                     <Button
@@ -412,6 +427,7 @@
               label="Add Supplier Invoice to Collection"
               icon="pi pi-link"
               class="btn btn--ghost"
+              @click="openSupplierCollectionLinkModal"
             />
           </div>
 
@@ -664,6 +680,7 @@
             >
               <thead>
                 <tr>
+                  <th class="consolidation-table__item-heading">#</th>
                   <th>Packaging</th>
                   <th class="consolidation-table__compact-heading">Qty</th>
                   <th class="consolidation-table__compact-heading">Length</th>
@@ -674,11 +691,14 @@
                   <th>CBM</th>
                   <th>LDM</th>
                   <th>ADR</th>
-                  <th>Stacking</th>
+                  <th class="consolidation-table__check-heading">Stackable</th>
+                  <th class="consolidation-table__check-heading">Non-Stack</th>
+                  <th class="consolidation-table__check-heading">Top-Loadable</th>
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="line in collectionDraft.lines" :key="line.id">
+                <tr v-for="(line, index) in collectionDraft.lines" :key="line.id">
+                  <td class="consolidation-table__item-number">{{ index + 1 }}</td>
                   <td><Dropdown v-model="line.packageType" :options="packageOptions" /></td>
                   <td class="consolidation-table__compact-cell">
                     <InputNumber
@@ -721,29 +741,26 @@
                   <td>{{ cbm(line).toFixed(3) }}</td>
                   <td>{{ ldm(line).toFixed(3) }}</td>
                   <td><Checkbox v-model="line.adr" binary /></td>
-                  <td>
-                    <div class="consolidation-stack-choice">
-                      <label>
-                        <Checkbox
-                          :model-value="line.stackable"
-                          binary
-                          @update:model-value="setCollectionStackable(line, true)"
-                        />
-                        <span>Stackable</span>
-                      </label>
-                      <label>
-                        <Checkbox
-                          :model-value="!line.stackable"
-                          binary
-                          @update:model-value="setCollectionStackable(line, false)"
-                        />
-                        <span>Non-stack</span>
-                      </label>
-                      <label>
-                        <Checkbox v-model="line.atTheTop" binary />
-                        <span>At the top</span>
-                      </label>
-                    </div>
+                  <td class="consolidation-table__check-cell">
+                    <Checkbox
+                      :model-value="getPackageStackOption(line) === 'stackable'"
+                      binary
+                      @update:model-value="setPackageStackOption(line, 'stackable')"
+                    />
+                  </td>
+                  <td class="consolidation-table__check-cell">
+                    <Checkbox
+                      :model-value="getPackageStackOption(line) === 'non_stack'"
+                      binary
+                      @update:model-value="setPackageStackOption(line, 'non_stack')"
+                    />
+                  </td>
+                  <td class="consolidation-table__check-cell">
+                    <Checkbox
+                      :model-value="getPackageStackOption(line) === 'top_loadable'"
+                      binary
+                      @update:model-value="setPackageStackOption(line, 'top_loadable')"
+                    />
                   </td>
                 </tr>
               </tbody>
@@ -1325,19 +1342,392 @@
         </section>
       </div>
     </section>
+
+    <Dialog
+      v-model:visible="showSupplierItemModal"
+      header="Add Supplier Package Item"
+      modal
+      :style="{ width: '720px', maxWidth: '94vw' }"
+    >
+      <div class="consolidation-form-grid consolidation-form-grid--three">
+        <label class="consolidation-field">
+          <span>Package</span>
+          <Dropdown v-model="supplierItemDraft.packageType" :options="packageOptions" />
+        </label>
+        <label class="consolidation-field">
+          <span>Collie</span>
+          <InputNumber v-model="supplierItemDraft.collie" :min="1" />
+        </label>
+        <label class="consolidation-field">
+          <span>ADR</span>
+          <Dropdown v-model="supplierItemDraft.adr" :options="yesNoOptions" />
+        </label>
+        <label class="consolidation-field">
+          <span>Length</span>
+          <InputNumber v-model="supplierItemDraft.length" :min="0" />
+        </label>
+        <label class="consolidation-field">
+          <span>Width</span>
+          <InputNumber v-model="supplierItemDraft.width" :min="0" />
+        </label>
+        <label class="consolidation-field">
+          <span>Height</span>
+          <InputNumber v-model="supplierItemDraft.height" :min="0" />
+        </label>
+        <label class="consolidation-field">
+          <span>Net kg</span>
+          <InputNumber v-model="supplierItemDraft.net" :min="0" :min-fraction-digits="1" />
+        </label>
+        <label class="consolidation-field">
+          <span>Gross kg</span>
+          <InputNumber v-model="supplierItemDraft.gross" :min="0" :min-fraction-digits="1" />
+        </label>
+      </div>
+      <div class="consolidation-modal-checks">
+        <label class="consolidation-check-row">
+          <Checkbox
+            :model-value="getPackageStackOption(supplierItemDraft) === 'stackable'"
+            binary
+            @update:model-value="setPackageStackOption(supplierItemDraft, 'stackable')"
+          />
+          <span>Stackable</span>
+        </label>
+        <label class="consolidation-check-row">
+          <Checkbox
+            :model-value="getPackageStackOption(supplierItemDraft) === 'non_stack'"
+            binary
+            @update:model-value="setPackageStackOption(supplierItemDraft, 'non_stack')"
+          />
+          <span>Non-Stack</span>
+        </label>
+        <label class="consolidation-check-row">
+          <Checkbox
+            :model-value="getPackageStackOption(supplierItemDraft) === 'top_loadable'"
+            binary
+            @update:model-value="setPackageStackOption(supplierItemDraft, 'top_loadable')"
+          />
+          <span>Top-Loadable</span>
+        </label>
+      </div>
+      <template #footer>
+        <div class="consolidation-dialog-footer">
+          <Button label="Cancel" class="btn btn--ghost" @click="showSupplierItemModal = false" />
+          <Button
+            label="Add Item"
+            icon="pi pi-plus"
+            class="btn btn--primary"
+            @click="confirmSupplierItem"
+          />
+        </div>
+      </template>
+    </Dialog>
+
+    <Dialog
+      v-model:visible="showSupplierCollectionLinkModal"
+      header="Add Supplier Invoice to Collection"
+      modal
+      :style="{ width: '560px', maxWidth: '94vw' }"
+    >
+      <div class="consolidation-form-grid consolidation-form-grid--two">
+        <label class="consolidation-field consolidation-field--wide">
+          <span>Supplier Invoice</span>
+          <Dropdown
+            v-model="supplierCollectionLinkDraft.supplierInvoiceId"
+            :options="supplierInvoiceLinkOptions"
+            option-label="label"
+            option-value="value"
+            placeholder="Select supplier invoice"
+          />
+        </label>
+        <label class="consolidation-field consolidation-field--wide">
+          <span>Collection Ref</span>
+          <Dropdown
+            v-if="collectionRefOptions.length"
+            v-model="supplierCollectionLinkDraft.collectionRef"
+            :options="collectionRefOptions"
+            placeholder="Select collection"
+          />
+          <InputText
+            v-else
+            v-model="supplierCollectionLinkDraft.collectionRef"
+            placeholder="Enter collection ref"
+          />
+        </label>
+      </div>
+      <template #footer>
+        <div class="consolidation-dialog-footer">
+          <Button
+            label="Cancel"
+            class="btn btn--ghost"
+            @click="showSupplierCollectionLinkModal = false"
+          />
+          <Button
+            label="Add Link"
+            icon="pi pi-link"
+            class="btn btn--primary"
+            :disabled="!supplierCollectionLinkDraft.supplierInvoiceId"
+            @click="confirmSupplierCollectionLink"
+          />
+        </div>
+      </template>
+    </Dialog>
+
+    <Dialog
+      v-model:visible="showCollectionLineModal"
+      header="Add Collection Package"
+      modal
+      :style="{ width: '760px', maxWidth: '94vw' }"
+    >
+      <div class="consolidation-form-grid consolidation-form-grid--three">
+        <label class="consolidation-field">
+          <span>Packaging</span>
+          <Dropdown v-model="collectionLineDraft.packageType" :options="packageOptions" />
+        </label>
+        <label class="consolidation-field">
+          <span>Qty</span>
+          <InputNumber v-model="collectionLineDraft.qty" :min="1" />
+        </label>
+        <label class="consolidation-check-row">
+          <Checkbox v-model="collectionLineDraft.adr" binary />
+          <span>ADR</span>
+        </label>
+        <label class="consolidation-field">
+          <span>Length</span>
+          <InputNumber v-model="collectionLineDraft.length" :min="0" />
+        </label>
+        <label class="consolidation-field">
+          <span>Width</span>
+          <InputNumber v-model="collectionLineDraft.width" :min="0" />
+        </label>
+        <label class="consolidation-field">
+          <span>Height</span>
+          <InputNumber v-model="collectionLineDraft.height" :min="0" />
+        </label>
+        <label class="consolidation-field">
+          <span>Net kg</span>
+          <InputNumber v-model="collectionLineDraft.netWeight" :min="0" :min-fraction-digits="1" />
+        </label>
+        <label class="consolidation-field">
+          <span>Gross kg</span>
+          <InputNumber
+            v-model="collectionLineDraft.grossWeight"
+            :min="0"
+            :min-fraction-digits="1"
+          />
+        </label>
+      </div>
+      <div class="consolidation-modal-checks">
+        <label class="consolidation-check-row">
+          <Checkbox
+            :model-value="getPackageStackOption(collectionLineDraft) === 'stackable'"
+            binary
+            @update:model-value="setPackageStackOption(collectionLineDraft, 'stackable')"
+          />
+          <span>Stackable</span>
+        </label>
+        <label class="consolidation-check-row">
+          <Checkbox
+            :model-value="getPackageStackOption(collectionLineDraft) === 'non_stack'"
+            binary
+            @update:model-value="setPackageStackOption(collectionLineDraft, 'non_stack')"
+          />
+          <span>Non-Stack</span>
+        </label>
+        <label class="consolidation-check-row">
+          <Checkbox
+            :model-value="getPackageStackOption(collectionLineDraft) === 'top_loadable'"
+            binary
+            @update:model-value="setPackageStackOption(collectionLineDraft, 'top_loadable')"
+          />
+          <span>Top-Loadable</span>
+        </label>
+      </div>
+      <template #footer>
+        <div class="consolidation-dialog-footer">
+          <Button label="Cancel" class="btn btn--ghost" @click="showCollectionLineModal = false" />
+          <Button
+            label="Add Package"
+            icon="pi pi-plus"
+            class="btn btn--primary"
+            @click="confirmCollectionLine"
+          />
+        </div>
+      </template>
+    </Dialog>
+
+    <Dialog
+      v-model:visible="showConsolidatedItemModal"
+      header="Add Consolidated Invoice Item"
+      modal
+      :style="{ width: '820px', maxWidth: '94vw' }"
+    >
+      <div class="consolidation-form-grid consolidation-form-grid--three">
+        <label class="consolidation-field">
+          <span>Currency</span>
+          <Dropdown v-model="consolidatedLineDraft.invoiceCurrency" :options="invoiceCurrencies" />
+        </label>
+        <label class="consolidation-field">
+          <span>PO Ref</span>
+          <InputText v-model="consolidatedLineDraft.poRef" />
+        </label>
+        <label class="consolidation-field">
+          <span>Shipping Label No</span>
+          <InputText v-model="consolidatedLineDraft.shippingLabelNo" />
+        </label>
+        <label class="consolidation-field consolidation-field--wide">
+          <span>Description</span>
+          <InputText v-model="consolidatedLineDraft.description" />
+        </label>
+        <label class="consolidation-field">
+          <span>Qty</span>
+          <InputNumber v-model="consolidatedLineDraft.qty" :min="0" />
+        </label>
+        <label class="consolidation-field">
+          <span>UOM</span>
+          <Dropdown v-model="consolidatedLineDraft.uom" :options="unitOptions" />
+        </label>
+        <label class="consolidation-field">
+          <span>Origin</span>
+          <InputText v-model="consolidatedLineDraft.countryOfOrigin" />
+        </label>
+        <label class="consolidation-field">
+          <span>HS Code</span>
+          <InputText v-model="consolidatedLineDraft.hsCode" />
+        </label>
+        <label class="consolidation-field">
+          <span>Unit Price</span>
+          <InputNumber v-model="consolidatedLineDraft.unitPrice" :min-fraction-digits="2" />
+        </label>
+        <label class="consolidation-field">
+          <span>Supplier</span>
+          <InputText v-model="consolidatedLineDraft.supplier" />
+        </label>
+        <label class="consolidation-field">
+          <span>GRN</span>
+          <InputText v-model="consolidatedLineDraft.grn" />
+        </label>
+      </div>
+      <template #footer>
+        <div class="consolidation-dialog-footer">
+          <Button
+            label="Cancel"
+            class="btn btn--ghost"
+            @click="showConsolidatedItemModal = false"
+          />
+          <Button
+            label="Add Item"
+            icon="pi pi-plus"
+            class="btn btn--primary"
+            @click="confirmConsolidatedItem"
+          />
+        </div>
+      </template>
+    </Dialog>
+
+    <Dialog
+      v-model:visible="showChargeModal"
+      :header="chargeModalTitle"
+      modal
+      :style="{ width: '560px', maxWidth: '94vw' }"
+    >
+      <div class="consolidation-form-grid consolidation-form-grid--two">
+        <label class="consolidation-field consolidation-field--wide">
+          <span>Description</span>
+          <Dropdown v-model="chargeDraft.description" :options="chargeOptions" />
+        </label>
+        <label class="consolidation-field">
+          <span>Qty</span>
+          <InputNumber v-model="chargeDraft.qty" :min="0" />
+        </label>
+        <label class="consolidation-field">
+          <span>Unit</span>
+          <Dropdown v-model="chargeDraft.unit" :options="unitOptions" />
+        </label>
+        <label class="consolidation-field">
+          <span>Rate</span>
+          <InputNumber v-model="chargeDraft.rate" :min-fraction-digits="2" />
+        </label>
+      </div>
+      <template #footer>
+        <div class="consolidation-dialog-footer">
+          <Button label="Cancel" class="btn btn--ghost" @click="showChargeModal = false" />
+          <Button
+            label="Add Charge"
+            icon="pi pi-plus"
+            class="btn btn--primary"
+            @click="confirmCharge"
+          />
+        </div>
+      </template>
+    </Dialog>
+
+    <Dialog
+      v-model:visible="showQuoteLineModal"
+      header="Add Quote Line"
+      modal
+      :style="{ width: '560px', maxWidth: '94vw' }"
+    >
+      <div class="consolidation-form-grid consolidation-form-grid--two">
+        <label class="consolidation-field consolidation-field--wide">
+          <span>Description</span>
+          <Dropdown v-model="quoteLineDraft.description" :options="chargeOptions" />
+        </label>
+        <label class="consolidation-field">
+          <span>Qty</span>
+          <InputNumber v-model="quoteLineDraft.qty" :min="0" />
+        </label>
+        <label class="consolidation-field">
+          <span>Unit</span>
+          <Dropdown v-model="quoteLineDraft.unit" :options="unitOptions" />
+        </label>
+        <label class="consolidation-field">
+          <span>Rate</span>
+          <InputNumber v-model="quoteLineDraft.rate" :min-fraction-digits="2" />
+        </label>
+      </div>
+      <template #footer>
+        <div class="consolidation-dialog-footer">
+          <Button label="Cancel" class="btn btn--ghost" @click="showQuoteLineModal = false" />
+          <Button
+            label="Add Line"
+            icon="pi pi-plus"
+            class="btn btn--primary"
+            @click="confirmQuoteLine"
+          />
+        </div>
+      </template>
+    </Dialog>
   </section>
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref } from "vue"
+import { computed, onMounted, reactive, ref, watch } from "vue"
+import { useRouter } from "vue-router"
+import { useToast } from "primevue/usetoast"
 import Button from "primevue/button"
 import Checkbox from "primevue/checkbox"
 import Column from "primevue/column"
 import DataTable from "primevue/datatable"
+import Dialog from "primevue/dialog"
 import Dropdown from "primevue/dropdown"
 import InputNumber from "primevue/inputnumber"
 import InputText from "primevue/inputtext"
 import Textarea from "primevue/textarea"
+import { useCompanyStore } from "@/app/stores/company"
+import { useTransportJobStore } from "@/app/stores/transport-job"
+import type { CompanyReferenceSequence } from "@/app/types/company"
+import type {
+  JobCharge,
+  JobConsolidationCollectionOrder,
+  JobConsolidationDetails,
+  JobConsolidationGoodsRow,
+  JobConsolidationInvoiceLine,
+  JobPackage,
+  JobTransportLeg,
+  TransportJobCreatePayload,
+} from "@/app/types/transport-job"
+import { buildReferenceNumber } from "@/app/utils/reference-sequence"
+import { getPackageStackOption, setPackageStackOption } from "@/app/utils/packageStacking"
 import "./ConsolidationPage.css"
 
 type TabId = "overview" | "orders" | "collections" | "invoices" | "custinv" | "goodsin"
@@ -1373,6 +1763,7 @@ type SupplierItem = {
 }
 
 type SupplierInvoice = {
+  id: number
   supplierName: string
   customerPoRef: string
   supplierInvoiceNumber: string
@@ -1394,6 +1785,11 @@ type InvoiceChargeLine = {
   sourceId?: number | string
 }
 
+const router = useRouter()
+const toast = useToast()
+const companyStore = useCompanyStore()
+const transportJobStore = useTransportJobStore()
+
 const tabs: Array<{ id: TabId; label: string }> = [
   { id: "overview", label: "Overview" },
   { id: "orders", label: "Supplier Invoices" },
@@ -1404,17 +1800,52 @@ const tabs: Array<{ id: TabId; label: string }> = [
 ]
 
 const activeTab = ref<TabId>("overview")
-const activeSupplierName = ref("DHL")
+const activeSupplierName = ref("")
 const selectedInvoiceCurrency = ref<Currency>("GBP")
-const collectionLineId = ref(3)
+const collectionLineId = ref(2)
+const supplierInvoiceId = ref(1)
 const supplierItemId = ref(2)
-const consolidatedLineId = ref(4)
-const domesticChargeId = ref(2)
-const exportChargeId = ref(4)
-const quoteLineId = ref(3)
+const collectionOrderId = ref(1)
+const goodsRowId = ref(1)
+const consolidatedLineId = ref(1)
+const domesticChargeId = ref(1)
+const exportChargeId = ref(1)
+const quoteLineId = ref(1)
 const taxRate = ref(20)
 const showQuotePanel = ref(false)
 const consolidatedFreightCharge = ref(0)
+const creatingJob = ref(false)
+const createError = ref("")
+const jobNumberAuto = ref(true)
+
+const showSupplierItemModal = ref(false)
+const showSupplierCollectionLinkModal = ref(false)
+const showCollectionLineModal = ref(false)
+const showConsolidatedItemModal = ref(false)
+const showChargeModal = ref(false)
+const showQuoteLineModal = ref(false)
+const chargeModalTarget = ref<"domestic" | "export">("domestic")
+
+const supplierItemDraft = reactive<SupplierItem>(emptySupplierItem())
+const supplierCollectionLinkDraft = reactive<{
+  supplierInvoiceId: number | null
+  collectionRef: string
+}>({
+  supplierInvoiceId: null,
+  collectionRef: "",
+})
+const collectionLineDraft = reactive<PackageLine>(emptyCollectionLine())
+const consolidatedLineDraft = reactive<JobConsolidationInvoiceLine>(emptyConsolidatedLine())
+const chargeOptions = [
+  "Consolidation handling",
+  "Export documentation",
+  "Domestic collection",
+  "Fuel surcharge",
+  "Customs clearance",
+  "Delivery",
+]
+const chargeDraft = reactive<InvoiceChargeLine>(emptyChargeLine())
+const quoteLineDraft = reactive<InvoiceChargeLine>(emptyChargeLine())
 
 const modeOptions = ["Road", "Rail", "Air", "Sea"].map(value => ({ label: value, value }))
 const currencyOptions = ["GBP", "USD", "EUR"].map(value => ({ label: value, value }))
@@ -1433,14 +1864,6 @@ const addressOptions = [
   "Final Destination",
 ]
 const carrierOptions = ["DHL", "Kuehne+Nagel", "DSV", "FedEx", "Manual Entry"]
-const chargeOptions = [
-  "Consolidation handling",
-  "Export documentation",
-  "Domestic collection",
-  "Fuel surcharge",
-  "Customs clearance",
-  "Delivery",
-]
 const quoteStatusOptions = ["Draft", "Sent", "Accepted", "Declined"]
 const invoiceCurrencies: Currency[] = ["GBP", "USD", "EUR"]
 const adrClassOptions = [
@@ -1456,11 +1879,11 @@ const adrClassOptions = [
 ]
 
 const overview = reactive({
-  jobNo: "CON-PE-000245",
-  jobDate: "2026-03-19",
+  jobNo: "",
+  jobDate: new Date().toISOString().slice(0, 10),
   mode: "Road",
   invoiceCurrency: "GBP" as Currency,
-  shipDate: "2026-03-20",
+  shipDate: "",
   shipFrom: "PC Cargo UK Depot",
   exitIncoterm: "EXW",
   entryIncoterm: "DAP",
@@ -1468,19 +1891,19 @@ const overview = reactive({
   notifyParty: "",
   shipper: "PC Cargo UK Depot",
   deliveryAddress: "",
-  goodsDescription: "Mixed supplier cargo for consolidation.",
+  goodsDescription: "",
   instructions: "",
   exportCustomsRef: "",
   importCustomsRef: "",
 })
 
 const transport = reactive<Record<TransportKey, string>>({
-  bookingRef: "BK-ROAD-245",
-  carrier: "DHL",
-  originPort: "Collection Hub",
-  destinationPort: "Final Destination",
-  etd: "2026-03-20",
-  eta: "2026-03-22",
+  bookingRef: "",
+  carrier: "",
+  originPort: "",
+  destinationPort: "",
+  etd: "",
+  eta: "",
 })
 
 const transportFields = computed<Array<{ key: TransportKey; label: string }>>(() => {
@@ -1522,312 +1945,94 @@ const transportFields = computed<Array<{ key: TransportKey; label: string }>>(()
   return labelsByMode[overview.mode] ?? roadFields
 })
 
+const jobSequence = computed<CompanyReferenceSequence | null>(() => {
+  const seqs = companyStore.item?.reference_sequences ?? []
+  if (!Array.isArray(seqs) || seqs.length === 0) return null
+
+  return seqs.find(seq => seq.type === "job") ?? null
+})
+
+const jobNumberUsesSystem = computed(() => Boolean(jobSequence.value?.use_system))
+const jobNumberPlaceholder = computed(() =>
+  jobNumberUsesSystem.value ? "Auto generated when created" : "Enter job number",
+)
+
 const collectionDraft = reactive({
   coRef: "CO-NEW",
   customerRef: "",
   collectionRef: "",
-  pickupDate: "2026-03-20",
-  pickupTime: "09:30",
-  vehicle: "7.5t",
-  collectionAddress: "Supplier Warehouse",
+  pickupDate: "",
+  pickupTime: "",
+  vehicle: "",
+  collectionAddress: "",
   deliveryAddress: "PC Cargo UK Depot",
-  deliveryDate: "2026-03-22",
-  deliveryTime: "17:00",
-  supplier: "DHL",
-  goodsDescription: "Collection goods",
+  deliveryDate: "",
+  deliveryTime: "",
+  supplier: "",
+  goodsDescription: "",
   hazardous: false,
   adrClass: "",
-  freight: 125,
-  fscPct: 12.5,
-  additional: 25,
+  freight: 0,
+  fscPct: 0,
+  additional: 0,
   lines: [
     {
       id: 1,
-      packageType: "Pallet",
-      stackable: true,
-      atTheTop: false,
-      qty: 1,
-      length: 120,
-      width: 80,
-      height: 100,
-      netWeight: 95,
-      grossWeight: 100,
-      adr: false,
-    },
-    {
-      id: 2,
       packageType: "Carton",
       stackable: true,
       atTheTop: false,
-      qty: 4,
-      length: 60,
-      width: 40,
-      height: 35,
-      netWeight: 72,
-      grossWeight: 78,
+      qty: 1,
+      length: 0,
+      width: 0,
+      height: 0,
+      netWeight: 0,
+      grossWeight: 0,
       adr: false,
     },
   ] as PackageLine[],
 })
 
 const supplierDraft = reactive({
-  supplierName: "Shenzhen ABC Components Co., Ltd.",
-  customerPoRef: "PO-1002",
-  supplierInvoiceNumber: "SZ-8841",
-  invoiceDate: "2026-03-17",
+  supplierName: "",
+  customerPoRef: "",
+  supplierInvoiceNumber: "",
+  invoiceDate: "",
   currency: "USD" as Currency,
-  invoiceValue: 845,
-  collectionRef: "CO-771",
-  label: "2",
+  invoiceValue: 0,
+  collectionRef: "",
+  label: "",
   items: [
     {
       id: 1,
       packageType: "Carton",
-      collie: 4,
-      length: 60,
-      width: 40,
-      height: 35,
+      collie: 1,
+      length: 0,
+      width: 0,
+      height: 0,
       stackable: true,
       atTheTop: false,
-      net: 72,
-      gross: 78,
+      net: 0,
+      gross: 0,
       adr: "No",
     },
   ] as SupplierItem[],
 })
 
-const supplierInvoices = ref<SupplierInvoice[]>([
-  {
-    supplierName: "DHL",
-    customerPoRef: "PO-1001",
-    supplierInvoiceNumber: "INV-001",
-    invoiceDate: "2026-03-18",
-    currency: "GBP" as Currency,
-    invoiceValue: 125,
-    collectionRef: "CO-771",
-    label: "1",
-    items: [
-      {
-        id: 1,
-        packageType: "Pallet",
-        collie: 1,
-        length: 120,
-        width: 80,
-        height: 100,
-        stackable: true,
-        atTheTop: false,
-        net: 95,
-        gross: 100,
-        adr: "No",
-      },
-    ],
-  },
-  {
-    supplierName: "Shenzhen ABC Components Co., Ltd.",
-    customerPoRef: "PO-1002",
-    supplierInvoiceNumber: "SZ-8841",
-    invoiceDate: "2026-03-17",
-    currency: "USD" as Currency,
-    invoiceValue: 845,
-    collectionRef: "CO-771",
-    label: "2",
-    items: [
-      {
-        id: 2,
-        packageType: "Carton",
-        collie: 4,
-        length: 60,
-        width: 40,
-        height: 35,
-        stackable: true,
-        atTheTop: false,
-        net: 72,
-        gross: 78,
-        adr: "No",
-      },
-    ],
-  },
-  {
-    supplierName: "Guangzhou DEF Plastics Ltd.",
-    customerPoRef: "PO-1003",
-    supplierInvoiceNumber: "GZ-4412",
-    invoiceDate: "2026-03-16",
-    currency: "EUR" as Currency,
-    invoiceValue: 610,
-    collectionRef: "CO-812",
-    label: "3",
-    items: [
-      {
-        id: 3,
-        packageType: "Crate",
-        collie: 2,
-        length: 100,
-        width: 80,
-        height: 90,
-        stackable: true,
-        atTheTop: false,
-        net: 110,
-        gross: 118,
-        adr: "Yes",
-      },
-    ],
-  },
-])
+const supplierInvoices = ref<SupplierInvoice[]>([])
 
-const supplierExaNumbers = reactive<Record<string, string>>({
-  DHL: "EXA-GB-000771",
-  "Shenzhen ABC Components Co., Ltd.": "EXA-CN-0008841",
-  "Guangzhou DEF Plastics Ltd.": "",
-})
+const supplierExaNumbers = reactive<Record<string, string>>({})
 
-const collectionOrders = ref([
-  {
-    coRef: "CO-771",
-    supplier: "DHL",
-    pickupDate: "2026-03-12",
-    pickupTime: "09:30",
-    vehicle: "7.5t",
-    pcs: 5,
-    weightKg: 178,
-    status: "Booked",
-    hazardous: false,
-    deliveryDate: "",
-    notes: "",
-    wmsRef: "WMS-10021",
-  },
-  {
-    coRef: "CO-812",
-    supplier: "Kuehne+Nagel",
-    pickupDate: "2026-03-12",
-    pickupTime: "14:00",
-    vehicle: "Van",
-    pcs: 2,
-    weightKg: 118,
-    status: "Pending",
-    hazardous: true,
-    deliveryDate: "",
-    notes: "",
-    wmsRef: "",
-  },
-])
+const collectionOrders = ref<JobConsolidationCollectionOrder[]>([])
 
-const goodsInRows = ref([
-  {
-    grn: "GRN-0001",
-    supplier: "DHL",
-    supplierInvoice: "INV-001",
-    supplierPO: "CO-771",
-    partNo: "-",
-    desc: "Domestic collection",
-    pcs: 1,
-    weightKg: 100,
-    cbm: 0.96,
-    location: "STAGING",
-    status: "Received",
-  },
-  {
-    grn: "GRN-0002",
-    supplier: "Shenzhen ABC Components Co., Ltd.",
-    supplierInvoice: "SZ-8841",
-    supplierPO: "PO-1002",
-    partNo: "-",
-    desc: "Integrated circuits",
-    pcs: 4,
-    weightKg: 78,
-    cbm: 0.202,
-    location: "STAGING",
-    status: "Received",
-  },
-  {
-    grn: "GRN-0003",
-    supplier: "Guangzhou DEF Plastics Ltd.",
-    supplierInvoice: "GZ-4412",
-    supplierPO: "PO-1003",
-    partNo: "-",
-    desc: "Plastic housings",
-    pcs: 2,
-    weightKg: 118,
-    cbm: 1.44,
-    location: "QA",
-    status: "Pending QA",
-  },
-])
+const goodsInRows = ref<JobConsolidationGoodsRow[]>([])
 
-const consolidatedLines = ref([
-  {
-    id: 1,
-    invoiceCurrency: "GBP" as Currency,
-    poRef: "PO-1001",
-    shippingLabelNo: "1",
-    description: "Domestic collection",
-    qty: 1,
-    uom: "Fixed",
-    countryOfOrigin: "GB",
-    hsCode: "",
-    unitPrice: 125,
-    supplier: "DHL",
-    grn: "GRN-0001",
-  },
-  {
-    id: 2,
-    invoiceCurrency: "USD" as Currency,
-    poRef: "PO-1002",
-    shippingLabelNo: "2",
-    description: "Integrated circuits",
-    qty: 3000,
-    uom: "Per Piece",
-    countryOfOrigin: "CN",
-    hsCode: "854239",
-    unitPrice: 0.28,
-    supplier: "Shenzhen ABC Components Co., Ltd.",
-    grn: "GRN-0002",
-  },
-  {
-    id: 3,
-    invoiceCurrency: "EUR" as Currency,
-    poRef: "PO-1003",
-    shippingLabelNo: "3",
-    description: "Plastic housings",
-    qty: 500,
-    uom: "Per Piece",
-    countryOfOrigin: "CN",
-    hsCode: "392690",
-    unitPrice: 1.22,
-    supplier: "Guangzhou DEF Plastics Ltd.",
-    grn: "GRN-0003",
-  },
-])
+const consolidatedLines = ref<JobConsolidationInvoiceLine[]>([])
 
-const domesticChargeRows = ref<InvoiceChargeLine[]>([
-  { id: 1, description: "Collection - CO-771 (DHL)", qty: 1, unit: "Fixed", rate: 125 },
-])
+const domesticChargeRows = ref<InvoiceChargeLine[]>([])
 
-const exportChargeRows = ref<InvoiceChargeLine[]>([
-  { id: 1, description: "Consolidation handling", qty: 1, unit: "Fixed", rate: 180 },
-  { id: 2, description: "Export documentation", qty: 1, unit: "Fixed", rate: 45 },
-  { id: 3, description: "Customs clearance", qty: 1, unit: "Fixed", rate: 95 },
-])
+const exportChargeRows = ref<InvoiceChargeLine[]>([])
 
-const quoteLines = ref<InvoiceChargeLine[]>([
-  {
-    id: 1,
-    description: "Domestic collection",
-    qty: 1,
-    unit: "Fixed",
-    rate: 125,
-    sourceType: "domestic",
-    sourceId: "CO-771",
-  },
-  {
-    id: 2,
-    description: "Export documentation",
-    qty: 1,
-    unit: "Fixed",
-    rate: 45,
-    sourceType: "export",
-    sourceId: 2,
-  },
-])
+const quoteLines = ref<InvoiceChargeLine[]>([])
 
 const domesticInvoice = reactive({
   posted: false,
@@ -1849,7 +2054,7 @@ const weightBreakRates = [
 ]
 
 const quote = reactive({
-  reference: "QUO-2026-001",
+  reference: "",
   validUntil: "",
   status: "Draft",
   notes: "",
@@ -1924,6 +2129,20 @@ const supplierSummaries = computed(() => {
   return Array.from(summaries.values()).sort((a, b) => a.name.localeCompare(b.name))
 })
 
+const supplierInvoiceLinkOptions = computed(() =>
+  supplierInvoices.value.map(invoice => ({
+    label:
+      [
+        invoice.supplierName || "Unnamed Supplier",
+        invoice.supplierInvoiceNumber,
+        invoice.customerPoRef,
+      ]
+        .filter(Boolean)
+        .join(" / ") || `Supplier Invoice ${invoice.id}`,
+    value: invoice.id,
+  })),
+)
+
 const selectedSupplierSummary = computed(() => {
   return (
     supplierSummaries.value.find(supplier => supplier.name === activeSupplierName.value) ||
@@ -1970,7 +2189,7 @@ const supplierTotalsByCurrency = computed(() => {
   }))
 })
 const consolidatedTotalsMap = computed(() => {
-  const totals = new Map<Currency, number>()
+  const totals = new Map<string, number>()
   invoiceCurrencies.forEach(currency => totals.set(currency, 0))
   consolidatedLines.value.forEach(line => {
     totals.set(
@@ -2053,6 +2272,55 @@ const metrics = computed(() => [
 const haulierQuoteText = ref("")
 refreshHaulierQuote()
 
+onMounted(async () => {
+  companyStore.hydrateFromAuth()
+
+  const hasSequence =
+    Array.isArray(companyStore.item?.reference_sequences) &&
+    companyStore.item.reference_sequences.length > 0
+
+  if (!hasSequence) {
+    try {
+      await companyStore.fetch()
+    } catch {
+      // The backend will still validate/generate the job number when the job is created.
+    }
+  }
+
+  refreshJobNumberPreview(true)
+})
+
+watch(
+  () => overview.jobDate,
+  () => refreshJobNumberPreview(true),
+)
+
+watch(
+  () => jobSequence.value?.next_number,
+  () => refreshJobNumberPreview(true),
+)
+
+function parseJobDate(value: string): Date {
+  if (!value) return new Date()
+
+  const parsed = new Date(`${value}T00:00:00`)
+  return Number.isNaN(parsed.getTime()) ? new Date() : parsed
+}
+
+function refreshJobNumberPreview(force = false) {
+  const seq = jobSequence.value
+
+  if (!seq?.use_system) return
+  if (!force && overview.jobNo && !jobNumberAuto.value) return
+
+  const preview = buildReferenceNumber(seq, parseJobDate(overview.jobDate), { separator: "-" })
+
+  if (preview) {
+    overview.jobNo = preview
+    jobNumberAuto.value = true
+  }
+}
+
 function summarizePackageLines(lines: PackageLine[]) {
   return lines.reduce(
     (sum, line) => {
@@ -2066,9 +2334,9 @@ function summarizePackageLines(lines: PackageLine[]) {
   )
 }
 
-function addCollectionLine() {
-  collectionDraft.lines.push({
-    id: collectionLineId.value++,
+function emptyCollectionLine(): PackageLine {
+  return {
+    id: 0,
     packageType: "Carton",
     stackable: true,
     atTheTop: false,
@@ -2079,12 +2347,12 @@ function addCollectionLine() {
     netWeight: 0,
     grossWeight: 0,
     adr: false,
-  })
+  }
 }
 
-function addSupplierItem() {
-  supplierDraft.items.push({
-    id: supplierItemId.value++,
+function emptySupplierItem(): SupplierItem {
+  return {
+    id: 0,
     packageType: "Carton",
     collie: 1,
     length: 0,
@@ -2095,92 +2363,16 @@ function addSupplierItem() {
     net: 0,
     gross: 0,
     adr: "No",
-  })
-}
-
-function removeSupplierItem(index: number) {
-  supplierDraft.items.splice(index, 1)
-}
-
-function setCollectionStackable(line: PackageLine, stackable: boolean) {
-  line.stackable = stackable
-}
-
-function setSupplierStackable(item: SupplierItem, stackable: boolean) {
-  item.stackable = stackable
-}
-
-function saveSupplierInvoice() {
-  const supplierName = supplierDraft.supplierName || "Unnamed Supplier"
-  if (!(supplierName in supplierExaNumbers)) {
-    supplierExaNumbers[supplierName] = ""
   }
-
-  supplierInvoices.value = [
-    {
-      supplierName,
-      customerPoRef: supplierDraft.customerPoRef,
-      supplierInvoiceNumber: supplierDraft.supplierInvoiceNumber,
-      invoiceDate: supplierDraft.invoiceDate,
-      currency: supplierDraft.currency,
-      invoiceValue: Number(supplierDraft.invoiceValue || 0),
-      collectionRef: supplierDraft.collectionRef,
-      label: supplierDraft.label,
-      items: supplierDraft.items.map(item => ({ ...item })),
-    },
-    ...supplierInvoices.value,
-  ]
-  activeSupplierName.value = supplierName
 }
 
-function saveCollectionOrder() {
-  const totals = collectionDraftTotals.value
-  const coRef = collectionDraft.coRef === "CO-NEW" ? nextCollectionRef.value : collectionDraft.coRef
-  const grn = nextGrnRef.value
-
-  collectionOrders.value = [
-    {
-      coRef,
-      supplier: collectionDraft.supplier,
-      pickupDate: collectionDraft.pickupDate,
-      pickupTime: collectionDraft.pickupTime,
-      vehicle: collectionDraft.vehicle,
-      pcs: totals.pieces,
-      weightKg: Number(totals.weight.toFixed(1)),
-      status: "Created",
-      hazardous: collectionDraft.hazardous || collectionDraft.lines.some(line => line.adr),
-      deliveryDate: collectionDraft.deliveryDate,
-      notes: "",
-      wmsRef: "",
-    },
-    ...collectionOrders.value,
-  ]
-
-  goodsInRows.value = [
-    {
-      grn,
-      supplier: collectionDraft.supplier,
-      supplierInvoice: "-",
-      supplierPO: coRef,
-      partNo: "-",
-      desc: collectionDraft.goodsDescription,
-      pcs: totals.pieces,
-      weightKg: Number(totals.weight.toFixed(1)),
-      cbm: Number(totals.volume.toFixed(3)),
-      location: "STAGING",
-      status: "Received",
-    },
-    ...goodsInRows.value,
-  ]
-}
-
-function addConsolidatedItem() {
-  consolidatedLines.value.push({
-    id: consolidatedLineId.value++,
+function emptyConsolidatedLine(): JobConsolidationInvoiceLine {
+  return {
+    id: 0,
     invoiceCurrency: selectedInvoiceCurrency.value,
     poRef: "",
     shippingLabelNo: "",
-    description: "New consolidated charge",
+    description: "",
     qty: 1,
     uom: "Fixed",
     countryOfOrigin: "",
@@ -2188,27 +2380,524 @@ function addConsolidatedItem() {
     unitPrice: 0,
     supplier: "",
     grn: "",
+  }
+}
+
+function emptyChargeLine(
+  description = chargeOptions[0] ?? "Consolidation handling",
+): InvoiceChargeLine {
+  return {
+    id: 0,
+    description,
+    qty: 1,
+    unit: "Fixed",
+    rate: 0,
+  }
+}
+
+function addCollectionLine() {
+  Object.assign(collectionLineDraft, emptyCollectionLine())
+  showCollectionLineModal.value = true
+}
+
+function confirmCollectionLine() {
+  collectionDraft.lines.push({
+    ...collectionLineDraft,
+    id: collectionLineId.value++,
   })
+  showCollectionLineModal.value = false
+}
+
+function addSupplierItem() {
+  Object.assign(supplierItemDraft, emptySupplierItem())
+  showSupplierItemModal.value = true
+}
+
+function confirmSupplierItem() {
+  supplierDraft.items.push({
+    ...supplierItemDraft,
+    id: supplierItemId.value++,
+  })
+  showSupplierItemModal.value = false
+}
+
+function removeSupplierItem(index: number) {
+  supplierDraft.items.splice(index, 1)
+}
+
+function hasSupplierDraftData() {
+  return Boolean(
+    supplierDraft.supplierName ||
+    supplierDraft.customerPoRef ||
+    supplierDraft.supplierInvoiceNumber ||
+    supplierDraft.invoiceDate ||
+    supplierDraft.invoiceValue ||
+    supplierDraft.collectionRef ||
+    supplierDraft.label ||
+    supplierDraft.items.some(
+      item =>
+        Number(item.length || 0) > 0 ||
+        Number(item.width || 0) > 0 ||
+        Number(item.height || 0) > 0 ||
+        Number(item.net || 0) > 0 ||
+        Number(item.gross || 0) > 0 ||
+        item.adr === "Yes",
+    ),
+  )
+}
+
+function supplierDraftToInvoice(options: { reserveId?: boolean } = {}): SupplierInvoice {
+  const supplierName = supplierDraft.supplierName || "Unnamed Supplier"
+  const id = options.reserveId === false ? supplierInvoiceId.value : supplierInvoiceId.value++
+
+  return {
+    id,
+    supplierName,
+    customerPoRef: supplierDraft.customerPoRef,
+    supplierInvoiceNumber: supplierDraft.supplierInvoiceNumber,
+    invoiceDate: supplierDraft.invoiceDate,
+    currency: supplierDraft.currency,
+    invoiceValue: Number(supplierDraft.invoiceValue || 0),
+    collectionRef: supplierDraft.collectionRef,
+    label: supplierDraft.label,
+    items: supplierDraft.items.map(item => ({ ...item })),
+  }
+}
+
+function saveSupplierInvoice() {
+  const invoice = supplierDraftToInvoice()
+  const supplierName = invoice.supplierName
+
+  if (!(supplierName in supplierExaNumbers)) {
+    supplierExaNumbers[supplierName] = ""
+  }
+
+  supplierInvoices.value = [invoice, ...supplierInvoices.value]
+  activeSupplierName.value = supplierName
+}
+
+function openSupplierCollectionLinkModal() {
+  supplierCollectionLinkDraft.supplierInvoiceId = supplierInvoices.value[0]?.id ?? null
+  supplierCollectionLinkDraft.collectionRef =
+    collectionRefOptions.value[0] ?? supplierDraft.collectionRef
+  showSupplierCollectionLinkModal.value = true
+}
+
+function confirmSupplierCollectionLink() {
+  const invoice = supplierInvoices.value.find(
+    row => row.id === supplierCollectionLinkDraft.supplierInvoiceId,
+  )
+
+  if (invoice) {
+    invoice.collectionRef = supplierCollectionLinkDraft.collectionRef
+  }
+
+  showSupplierCollectionLinkModal.value = false
+}
+
+function hasCollectionDraftData() {
+  return Boolean(
+    collectionDraft.customerRef ||
+    collectionDraft.collectionRef ||
+    collectionDraft.pickupDate ||
+    collectionDraft.pickupTime ||
+    collectionDraft.vehicle ||
+    collectionDraft.collectionAddress ||
+    collectionDraft.deliveryDate ||
+    collectionDraft.deliveryTime ||
+    collectionDraft.supplier ||
+    collectionDraft.goodsDescription ||
+    collectionDraft.hazardous ||
+    collectionDraft.freight ||
+    collectionDraft.fscPct ||
+    collectionDraft.additional ||
+    collectionDraft.lines.some(
+      line =>
+        Number(line.length || 0) > 0 ||
+        Number(line.width || 0) > 0 ||
+        Number(line.height || 0) > 0 ||
+        Number(line.netWeight || 0) > 0 ||
+        Number(line.grossWeight || 0) > 0 ||
+        line.adr,
+    ),
+  )
+}
+
+function collectionDraftToOrder(
+  options: { reserveId?: boolean } = {},
+): JobConsolidationCollectionOrder {
+  const totals = collectionDraftTotals.value
+  const coRef = collectionDraft.coRef === "CO-NEW" ? nextCollectionRef.value : collectionDraft.coRef
+  const id = options.reserveId === false ? collectionOrderId.value : collectionOrderId.value++
+
+  return {
+    id,
+    coRef,
+    customerRef: collectionDraft.customerRef,
+    collectionRef: collectionDraft.collectionRef,
+    supplier: collectionDraft.supplier,
+    pickupDate: collectionDraft.pickupDate,
+    pickupTime: collectionDraft.pickupTime,
+    vehicle: collectionDraft.vehicle,
+    collectionAddress: collectionDraft.collectionAddress,
+    deliveryAddress: collectionDraft.deliveryAddress,
+    deliveryDate: collectionDraft.deliveryDate,
+    deliveryTime: collectionDraft.deliveryTime,
+    goodsDescription: collectionDraft.goodsDescription,
+    hazardous: collectionDraft.hazardous || collectionDraft.lines.some(line => line.adr),
+    adrClass: collectionDraft.adrClass,
+    freight: Number(collectionDraft.freight || 0),
+    fscPct: Number(collectionDraft.fscPct || 0),
+    additional: Number(collectionDraft.additional || 0),
+    pcs: totals.pieces,
+    weightKg: Number(totals.weight.toFixed(1)),
+    volumeCbm: Number(totals.volume.toFixed(3)),
+    ldm: Number(totals.ldm.toFixed(3)),
+    status: "Created",
+    notes: "",
+    wmsRef: "",
+    lines: collectionDraft.lines.map(line => ({ ...line })),
+  }
+}
+
+function saveCollectionOrder() {
+  const order = collectionDraftToOrder()
+  const grn = nextGrnRef.value
+
+  collectionOrders.value = [order, ...collectionOrders.value]
+
+  goodsInRows.value = [
+    {
+      id: goodsRowId.value++,
+      grn,
+      supplier: order.supplier,
+      supplierInvoice: "-",
+      supplierPO: order.coRef,
+      partNo: "-",
+      desc: order.goodsDescription,
+      pcs: order.pcs,
+      weightKg: order.weightKg,
+      cbm: order.volumeCbm,
+      location: "STAGING",
+      status: "Received",
+    },
+    ...goodsInRows.value,
+  ]
+}
+
+function supplierInvoicesForPayload(): SupplierInvoice[] {
+  const rows = supplierInvoices.value.map(invoice => ({
+    ...invoice,
+    items: invoice.items.map(item => ({ ...item })),
+  }))
+
+  if (hasSupplierDraftData()) {
+    rows.push(supplierDraftToInvoice({ reserveId: false }))
+  }
+
+  return rows
+}
+
+function collectionOrdersForPayload(): JobConsolidationCollectionOrder[] {
+  const rows = collectionOrders.value.map(order => ({
+    ...order,
+    lines: order.lines.map(line => ({ ...line })),
+  }))
+
+  if (hasCollectionDraftData()) {
+    rows.push(collectionDraftToOrder({ reserveId: false }))
+  }
+
+  return rows
+}
+
+function goodsRowsForPayload(
+  orders: JobConsolidationCollectionOrder[],
+): JobConsolidationGoodsRow[] {
+  const rows = goodsInRows.value.map(row => ({ ...row }))
+  const existingOrderRefs = new Set(rows.map(row => row.supplierPO).filter(Boolean))
+
+  orders.forEach((order, index) => {
+    if (!order.coRef || existingOrderRefs.has(order.coRef)) return
+
+    rows.push({
+      id: goodsRowId.value + index,
+      grn: `GRN-${String(goodsRowId.value + index).padStart(4, "0")}`,
+      supplier: order.supplier,
+      supplierInvoice: "-",
+      supplierPO: order.coRef,
+      partNo: "-",
+      desc: order.goodsDescription,
+      pcs: order.pcs,
+      weightKg: order.weightKg,
+      cbm: order.volumeCbm,
+      location: "STAGING",
+      status: "Received",
+    })
+  })
+
+  return rows
+}
+
+function transportModeForLeg(): JobTransportLeg["mode"] {
+  const mode = overview.mode.toLowerCase()
+
+  if (mode === "air" || mode === "sea" || mode === "rail" || mode === "road") {
+    return mode
+  }
+
+  return "road"
+}
+
+function buildTransportLegs(): JobTransportLeg[] {
+  const hasLeg = [
+    transport.bookingRef,
+    transport.carrier,
+    transport.originPort,
+    transport.destinationPort,
+    transport.etd,
+    transport.eta,
+  ].some(value => String(value || "").trim())
+
+  if (!hasLeg) return []
+
+  return [
+    {
+      sequence: 1,
+      mode: transportModeForLeg(),
+      carrier: transport.carrier || null,
+      reference: transport.bookingRef || null,
+      origin: transport.originPort || overview.shipFrom || null,
+      destination: transport.destinationPort || overview.deliveryAddress || null,
+      etd: transport.etd || overview.shipDate || null,
+      eta: transport.eta || null,
+      notes: overview.instructions || null,
+      extra_data: {
+        consolidation_mode: overview.mode,
+      },
+    },
+  ]
+}
+
+function buildJobPackages(invoices: SupplierInvoice[]): JobPackage[] {
+  return invoices.flatMap(invoice =>
+    invoice.items.map(item => {
+      const quantity = Number(item.collie || 1)
+      const volume =
+        (quantity * Number(item.length || 0) * Number(item.width || 0) * Number(item.height || 0)) /
+        1_000_000
+
+      return {
+        package_type: item.packageType,
+        stackable: item.stackable,
+        at_the_top: item.atTheTop,
+        quantity,
+        length_cm: Number(item.length || 0),
+        width_cm: Number(item.width || 0),
+        height_cm: Number(item.height || 0),
+        weight: Number(item.gross || 0),
+        volume: Number(volume.toFixed(3)),
+        volume_weight_kg: Number((volume * 167).toFixed(2)),
+        description: [invoice.supplierName, invoice.supplierInvoiceNumber, invoice.customerPoRef]
+          .filter(Boolean)
+          .join(" / "),
+      }
+    }),
+  )
+}
+
+function buildJobCharges(
+  invoices: SupplierInvoice[],
+  orders: JobConsolidationCollectionOrder[],
+): JobCharge[] {
+  const supplierCharges: JobCharge[] = invoices
+    .filter(invoice => Number(invoice.invoiceValue || 0) > 0)
+    .map(invoice => ({
+      type: "buy",
+      description: `Supplier invoice${invoice.supplierInvoiceNumber ? ` - ${invoice.supplierInvoiceNumber}` : ""}`,
+      currency: invoice.currency,
+      amount: Number(invoice.invoiceValue || 0),
+    }))
+
+  const collectionCharges: JobCharge[] = orders
+    .map(order => ({
+      type: "buy" as const,
+      description: `Collection order${order.coRef ? ` - ${order.coRef}` : ""}`,
+      currency: "GBP",
+      amount:
+        Number(order.freight || 0) +
+        Number(order.freight || 0) * (Number(order.fscPct || 0) / 100) +
+        Number(order.additional || 0),
+    }))
+    .filter(charge => Number(charge.amount || 0) > 0)
+
+  const customerCharges: JobCharge[] = [...domesticChargeRows.value, ...exportChargeRows.value]
+    .map(line => ({
+      type: "sell" as const,
+      description: line.description,
+      currency: "GBP",
+      amount: Number(line.qty || 0) * Number(line.rate || 0),
+    }))
+    .filter(charge => Number(charge.amount || 0) > 0)
+
+  return [...supplierCharges, ...collectionCharges, ...customerCharges]
+}
+
+function buildConsolidationDetails(
+  invoices: SupplierInvoice[],
+  orders: JobConsolidationCollectionOrder[],
+  goodsRows: JobConsolidationGoodsRow[],
+): JobConsolidationDetails {
+  return {
+    supplierInvoices: invoices,
+    supplierExaNumbers: { ...supplierExaNumbers },
+    collectionOrders: orders,
+    goodsRows,
+    consolidatedLines: consolidatedLines.value.map(line => ({ ...line })),
+    domesticChargeRows: domesticChargeRows.value.map(line => ({ ...line })),
+    exportChargeRows: exportChargeRows.value.map(line => ({ ...line })),
+    quoteLines: quoteLines.value.map(line => ({ ...line })),
+    domesticInvoice: { ...domesticInvoice },
+    exportInvoice: { ...exportInvoice },
+    finalDelivery: {
+      deliveryRef: transport.bookingRef || "",
+      plannedDate: transport.eta || overview.shipDate || "",
+      plannedTime: "",
+      carrier: transport.carrier || "",
+      address: overview.deliveryAddress || transport.destinationPort || "",
+      instructions: overview.instructions || "",
+    },
+    quote: { ...quote },
+    selectedInvoiceCurrency: selectedInvoiceCurrency.value,
+    consolidatedFreightCharge: Number(consolidatedFreightCharge.value || 0),
+    taxRate: Number(taxRate.value || 0),
+    showQuotePanel: showQuotePanel.value,
+  }
+}
+
+function buildCreatePayload(): TransportJobCreatePayload {
+  const invoices = supplierInvoicesForPayload()
+  const orders = collectionOrdersForPayload()
+  const goodsRows = goodsRowsForPayload(orders)
+  const packages = buildJobPackages(invoices)
+  const charges = buildJobCharges(invoices, orders)
+  const transportLegs = buildTransportLegs()
+  const firstOrder = orders[0]
+  const firstInvoice = invoices[0]
+
+  return {
+    customer_id: null,
+    quote_ref: quote.reference || null,
+    job_number: jobNumberUsesSystem.value ? null : overview.jobNo || null,
+    job_date: overview.jobDate || null,
+    job_type: "consolidation",
+    mode_of_transport: "consolidation",
+    status: "Draft",
+    service_type: "Consolidation",
+    incoterms: [overview.exitIncoterm, overview.entryIncoterm].filter(Boolean).join(" / ") || null,
+    currency: overview.invoiceCurrency,
+    declared_value: supplierCostTotal.value || null,
+    description_of_goods: overview.goodsDescription || null,
+    customer_po_number: firstInvoice?.customerPoRef || null,
+    customer_booking_ref: transport.bookingRef || null,
+    our_reference: overview.exportCustomsRef || firstOrder?.collectionRef || null,
+    supplier_ref: overview.importCustomsRef || firstInvoice?.supplierInvoiceNumber || null,
+    consignee_name: overview.notifyParty || overview.customer || null,
+    note:
+      [
+        overview.customer ? `Customer: ${overview.customer}` : "",
+        overview.shipper ? `Shipper: ${overview.shipper}` : "",
+        overview.deliveryAddress ? `Delivery: ${overview.deliveryAddress}` : "",
+        overview.instructions,
+      ]
+        .filter(Boolean)
+        .join("\n") || null,
+    collection_date: firstOrder?.pickupDate || collectionDraft.pickupDate || null,
+    collection_time: firstOrder?.pickupTime || collectionDraft.pickupTime || null,
+    transport_legs: transportLegs.length ? transportLegs : undefined,
+    packages: packages.length ? packages : undefined,
+    charges: charges.length ? charges : undefined,
+    consolidation_details: buildConsolidationDetails(invoices, orders, goodsRows),
+  }
+}
+
+function extractErrorMessage(err: any): string {
+  return String(
+    err?.response?.data?.message ?? err?.message ?? "Unable to create consolidation job.",
+  )
+}
+
+async function createConsolidationJob() {
+  if (creatingJob.value) return
+
+  creatingJob.value = true
+  createError.value = ""
+
+  try {
+    const job = await transportJobStore.create(buildCreatePayload())
+
+    toast.add({
+      severity: "success",
+      summary: "Consolidation created",
+      detail: "The consolidation job has been created.",
+      life: 2500,
+    })
+
+    await router.push({ name: "tms.jobs.show", params: { id: job.id } })
+  } catch (err: any) {
+    createError.value = extractErrorMessage(err)
+    toast.add({
+      severity: "error",
+      summary: "Failed",
+      detail: createError.value,
+      life: 4000,
+    })
+  } finally {
+    creatingJob.value = false
+  }
+}
+
+function addConsolidatedItem() {
+  Object.assign(consolidatedLineDraft, emptyConsolidatedLine())
+  showConsolidatedItemModal.value = true
+}
+
+function confirmConsolidatedItem() {
+  consolidatedLines.value.push({
+    ...consolidatedLineDraft,
+    id: consolidatedLineId.value++,
+  })
+  selectedInvoiceCurrency.value = String(consolidatedLineDraft.invoiceCurrency) as Currency
+  showConsolidatedItemModal.value = false
 }
 
 function addDomesticCharge() {
-  domesticChargeRows.value.push({
-    id: domesticChargeId.value++,
-    description: "Additional domestic charge",
-    qty: 1,
-    unit: "Fixed",
-    rate: 0,
-  })
+  chargeModalTarget.value = "domestic"
+  Object.assign(chargeDraft, emptyChargeLine("Domestic collection"))
+  showChargeModal.value = true
 }
 
 function addExportCharge() {
-  exportChargeRows.value.push({
-    id: exportChargeId.value++,
-    description: "Consolidation handling",
-    qty: 1,
-    unit: "Fixed",
-    rate: 0,
+  chargeModalTarget.value = "export"
+  Object.assign(chargeDraft, emptyChargeLine("Consolidation handling"))
+  showChargeModal.value = true
+}
+
+const chargeModalTitle = computed(() =>
+  chargeModalTarget.value === "domestic" ? "Add Domestic Charge" : "Add Export Charge",
+)
+
+function confirmCharge() {
+  const target = chargeModalTarget.value === "domestic" ? domesticChargeRows : exportChargeRows
+  const id =
+    chargeModalTarget.value === "domestic" ? domesticChargeId.value++ : exportChargeId.value++
+
+  target.value.push({
+    ...chargeDraft,
+    id,
   })
+
+  showChargeModal.value = false
 }
 
 function calcWeightBreakCost(weightKg: number) {
@@ -2281,15 +2970,25 @@ function toggleExportLineQuote(lineId: number) {
 }
 
 function addQuoteLine() {
-  quoteLines.value.push({
-    id: quoteLineId.value++,
-    description: chargeOptions[0] ?? "Consolidation handling",
-    qty: 1,
-    unit: "Fixed",
-    rate: 0,
+  const nextId = quoteLineId.value
+  Object.assign(quoteLineDraft, {
+    ...emptyChargeLine(chargeOptions[0] ?? "Consolidation handling"),
     sourceType: "manual",
-    sourceId: `manual-${quoteLineId.value}`,
+    sourceId: `manual-${nextId}`,
   })
+  showQuoteLineModal.value = true
+}
+
+function confirmQuoteLine() {
+  const nextId = quoteLineId.value++
+
+  quoteLines.value.push({
+    ...quoteLineDraft,
+    id: nextId,
+    sourceType: "manual",
+    sourceId: `manual-${nextId}`,
+  })
+  showQuoteLineModal.value = false
 }
 
 function cancelQuote() {
@@ -2367,7 +3066,7 @@ function invoiceTotals(invoice: SupplierInvoice) {
   )
 }
 
-function formatCurrencyTotals(totals: Map<Currency, number>) {
+function formatCurrencyTotals(totals: Map<string, number>) {
   const entries = Array.from(totals.entries())
   if (!entries.length) return "£0.00"
   return entries.map(([currency, value]) => money(currency, value)).join(" / ")
@@ -2377,7 +3076,7 @@ function ldm(line: PackageLine) {
   return (Number(line.qty || 0) * Number(line.length || 0) * Number(line.width || 0)) / 24000
 }
 
-function money(currency: Currency, value: number) {
+function money(currency: string, value: number) {
   return new Intl.NumberFormat("en-GB", {
     style: "currency",
     currency,
