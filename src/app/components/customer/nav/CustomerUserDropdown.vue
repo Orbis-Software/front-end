@@ -26,9 +26,12 @@ const companyName = computed(() => {
   )
 })
 
-function go(path: string) {
+function goToSettings(tab: string) {
   emit("close")
-  router.push(path)
+  router.push({
+    name: "customer.settings",
+    query: { tab },
+  })
 }
 
 async function logout() {
@@ -36,7 +39,7 @@ async function logout() {
 
   emit("close")
 
-  router.push("/customer/login")
+  router.push({ name: "auth.customer.login" })
 }
 </script>
 
@@ -50,25 +53,25 @@ async function logout() {
 
     <div class="dropdown-divider" />
 
-    <button type="button" class="dropdown-link" @click="go('/customer/settings/profile')">
+    <button type="button" class="dropdown-link" @click="goToSettings('profile')">
       <i class="pi pi-user" />
 
       <span>Account Profile</span>
     </button>
 
-    <button type="button" class="dropdown-link" @click="go('/customer/settings/contacts')">
+    <button type="button" class="dropdown-link" @click="goToSettings('contacts')">
       <i class="pi pi-users" />
 
       <span>Contacts</span>
     </button>
 
-    <button type="button" class="dropdown-link" @click="go('/customer/settings/preferences')">
+    <button type="button" class="dropdown-link" @click="goToSettings('preferences')">
       <i class="pi pi-cog" />
 
       <span>Preferences</span>
     </button>
 
-    <button type="button" class="dropdown-link" @click="go('/customer/settings/security')">
+    <button type="button" class="dropdown-link" @click="goToSettings('security')">
       <i class="pi pi-shield" />
 
       <span>Security</span>

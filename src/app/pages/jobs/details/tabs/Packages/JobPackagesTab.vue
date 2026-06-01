@@ -1,5 +1,10 @@
 <script setup lang="ts">
 import "./JobPackagesTab.css"
+import Button from "primevue/button"
+import Checkbox from "primevue/checkbox"
+import Dropdown from "primevue/dropdown"
+import InputNumber from "primevue/inputnumber"
+import InputText from "primevue/inputtext"
 import { useJobPackagesTab } from "./JobPackagesTab.logic"
 
 const {
@@ -23,9 +28,13 @@ const {
           <p>Add package lines and calculate CBM / volume weight.</p>
         </div>
 
-        <button type="button" class="job-packages-tab__add-btn" @click="addRow">
-          + Add Package
-        </button>
+        <Button
+          type="button"
+          class="job-packages-tab__add-btn"
+          label="Add Package"
+          icon="pi pi-plus"
+          @click="addRow"
+        />
       </header>
 
       <div class="job-packages-tab__table-wrap">
@@ -56,72 +65,69 @@ const {
               </td>
 
               <td>
-                <select v-model="row.package_type">
-                  <option
-                    v-for="option in packageTypeOptions"
-                    :key="option.value"
-                    :value="option.value"
-                  >
-                    {{ option.label }}
-                  </option>
-                </select>
-              </td>
-
-              <td>
-                <input v-model="row.description" type="text" placeholder="Description" />
-              </td>
-
-              <td class="job-packages-tab__compact-cell">
-                <input
-                  v-model.number="row.quantity"
-                  class="job-packages-tab__compact-input"
-                  type="number"
-                  min="1"
-                  max="9999"
-                  @input="calculateRow(row)"
-                />
-              </td>
-
-              <td class="job-packages-tab__compact-cell">
-                <input
-                  v-model.number="row.lengthCm"
-                  class="job-packages-tab__compact-input"
-                  type="number"
-                  min="0"
-                  max="9999"
-                  @input="calculateRow(row)"
-                />
-              </td>
-
-              <td class="job-packages-tab__compact-cell">
-                <input
-                  v-model.number="row.widthCm"
-                  class="job-packages-tab__compact-input"
-                  type="number"
-                  min="0"
-                  max="9999"
-                  @input="calculateRow(row)"
-                />
-              </td>
-
-              <td class="job-packages-tab__compact-cell">
-                <input
-                  v-model.number="row.heightCm"
-                  class="job-packages-tab__compact-input"
-                  type="number"
-                  min="0"
-                  max="9999"
-                  @input="calculateRow(row)"
+                <Dropdown
+                  v-model="row.package_type"
+                  :options="packageTypeOptions"
+                  option-label="label"
+                  option-value="value"
                 />
               </td>
 
               <td>
-                <input
-                  v-model.number="row.grossWeightKg"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  @input="calculateRow(row)"
+                <InputText v-model="row.description" placeholder="Description" />
+              </td>
+
+              <td class="job-packages-tab__compact-cell">
+                <InputNumber
+                  v-model="row.quantity"
+                  class="job-packages-tab__compact-control"
+                  input-class="job-packages-tab__compact-input"
+                  :min="1"
+                  :max="9999"
+                  @update:model-value="calculateRow(row)"
+                />
+              </td>
+
+              <td class="job-packages-tab__compact-cell">
+                <InputNumber
+                  v-model="row.lengthCm"
+                  class="job-packages-tab__compact-control"
+                  input-class="job-packages-tab__compact-input"
+                  :min="0"
+                  :max="9999"
+                  @update:model-value="calculateRow(row)"
+                />
+              </td>
+
+              <td class="job-packages-tab__compact-cell">
+                <InputNumber
+                  v-model="row.widthCm"
+                  class="job-packages-tab__compact-control"
+                  input-class="job-packages-tab__compact-input"
+                  :min="0"
+                  :max="9999"
+                  @update:model-value="calculateRow(row)"
+                />
+              </td>
+
+              <td class="job-packages-tab__compact-cell">
+                <InputNumber
+                  v-model="row.heightCm"
+                  class="job-packages-tab__compact-control"
+                  input-class="job-packages-tab__compact-input"
+                  :min="0"
+                  :max="9999"
+                  @update:model-value="calculateRow(row)"
+                />
+              </td>
+
+              <td>
+                <InputNumber
+                  v-model="row.grossWeightKg"
+                  :min="0"
+                  :min-fraction-digits="2"
+                  :max-fraction-digits="2"
+                  @update:model-value="calculateRow(row)"
                 />
               </td>
 
@@ -134,38 +140,40 @@ const {
               </td>
 
               <td class="job-packages-tab__check-cell">
-                <input
+                <Checkbox
                   class="job-packages-tab__check-input"
-                  :checked="getPackageStackOption(row) === 'stackable'"
-                  type="checkbox"
-                  @change="setPackageStackOption(row, 'stackable')"
+                  :model-value="getPackageStackOption(row) === 'stackable'"
+                  binary
+                  @update:model-value="setPackageStackOption(row, 'stackable')"
                 />
               </td>
               <td class="job-packages-tab__check-cell">
-                <input
+                <Checkbox
                   class="job-packages-tab__check-input"
-                  :checked="getPackageStackOption(row) === 'non_stack'"
-                  type="checkbox"
-                  @change="setPackageStackOption(row, 'non_stack')"
+                  :model-value="getPackageStackOption(row) === 'non_stack'"
+                  binary
+                  @update:model-value="setPackageStackOption(row, 'non_stack')"
                 />
               </td>
               <td class="job-packages-tab__check-cell">
-                <input
+                <Checkbox
                   class="job-packages-tab__check-input"
-                  :checked="getPackageStackOption(row) === 'top_loadable'"
-                  type="checkbox"
-                  @change="setPackageStackOption(row, 'top_loadable')"
+                  :model-value="getPackageStackOption(row) === 'top_loadable'"
+                  binary
+                  @update:model-value="setPackageStackOption(row, 'top_loadable')"
                 />
               </td>
 
               <td>
-                <button
+                <Button
                   type="button"
                   class="job-packages-tab__remove-btn"
+                  icon="pi pi-times"
+                  text
+                  rounded
+                  aria-label="Remove package"
                   @click="removeRow(row.id)"
-                >
-                  ×
-                </button>
+                />
               </td>
             </tr>
 

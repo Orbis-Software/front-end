@@ -40,6 +40,7 @@
   border: 1px solid #d9d9d9;
   border-radius: 8px;
   background: #fff;
+  color: #1a1a18;
   font-size: 12px;
   font-weight: 800;
   cursor: pointer;
@@ -78,8 +79,13 @@
   vertical-align: middle;
 }
 
-.job-costs-tab__table input,
-.job-costs-tab__table select {
+.job-costs-tab__table .p-inputnumber {
+  width: 100%;
+}
+
+.job-costs-tab__table .p-inputtext,
+.job-costs-tab__table .p-dropdown,
+.job-costs-tab__table .p-inputnumber-input {
   width: 100%;
   height: 32px;
   border: 1px solid transparent;
@@ -90,12 +96,20 @@
   outline: none;
 }
 
-.job-costs-tab__table input:hover,
-.job-costs-tab__table select:hover,
-.job-costs-tab__table input:focus,
-.job-costs-tab__table select:focus {
+.job-costs-tab__table .p-inputtext:hover,
+.job-costs-tab__table .p-dropdown:hover,
+.job-costs-tab__table .p-inputnumber:hover .p-inputnumber-input,
+.job-costs-tab__table .p-inputtext:focus,
+.job-costs-tab__table .p-dropdown:not(.p-disabled).p-focus,
+.job-costs-tab__table .p-inputnumber-input:focus {
   border-color: #d9d9d9;
   background: #fff;
+}
+
+.job-costs-tab__table .p-dropdown-label {
+  align-items: center;
+  display: flex;
+  padding: 0;
 }
 
 .job-costs-tab__number {
@@ -119,7 +133,6 @@
   border-radius: 7px;
   background: transparent;
   color: #a32d2d;
-  font-size: 18px;
   cursor: pointer;
 }
 

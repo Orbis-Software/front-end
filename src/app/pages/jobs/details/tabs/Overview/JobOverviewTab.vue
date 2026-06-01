@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import "./JobOverviewTab.css"
-import { inject } from "vue"
+import { computed, inject } from "vue"
 
 import Dropdown from "primevue/dropdown"
 import InputText from "primevue/inputtext"
@@ -28,6 +28,7 @@ const {
   addressModalVisible,
   addressModalTarget,
   addressModalSaving,
+  isConsolidationJob,
   selectedOriginAddress,
   selectedDestinationAddress,
   openAddressModal,
@@ -75,6 +76,38 @@ function contactLine(address: ContactCollectionAddress | null): string {
 
   return [address.contact_person, address.phone].filter(Boolean).join(" / ") || "—"
 }
+const consolidationOverviewRows = computed(() => {
+  const overview = form.consolidation_details.overview
+
+  return [
+    { label: "Consolidation Mode", value: overview.mode },
+    { label: "Invoice Currency", value: overview.invoiceCurrency },
+    { label: "Ship Date", value: overview.shipDate },
+    { label: "Ship From", value: overview.shipFrom },
+    { label: "Exit Incoterm", value: overview.exitIncoterm },
+    { label: "Entry Incoterm", value: overview.entryIncoterm },
+    { label: "Customer Override", value: overview.customer },
+    { label: "Notify Party", value: overview.notifyParty },
+    { label: "Shipper", value: overview.shipper },
+    { label: "Delivery Address", value: overview.deliveryAddress },
+    { label: "Export Customs Ref", value: overview.exportCustomsRef },
+    { label: "Import Customs Ref", value: overview.importCustomsRef },
+  ]
+})
+
+const consolidationTransportRows = computed(() => {
+  const transport = form.consolidation_details.transport
+
+  return [
+    { label: "Transport Ref", value: transport.bookingRef },
+    { label: "Carrier", value: transport.carrier },
+    { label: "Origin", value: transport.originPort },
+    { label: "Destination", value: transport.destinationPort },
+    { label: "Final Destination", value: transport.finalDestination },
+    { label: "ETD", value: transport.etd },
+    { label: "ETA", value: transport.eta },
+  ]
+})
 </script>
 
 <template>
@@ -176,6 +209,56 @@ function contactLine(address: ContactCollectionAddress | null): string {
             placeholder="— Select —"
             show-clear
             :disabled="loading"
+          />
+        </label>
+      </div>
+    </div>
+
+    <div v-if="isConsolidationJob" class="job-overview-tab__section">
+      <header class="job-overview-tab__section-header">
+        <h2>Consolidation Snapshot</h2>
+      </header>
+
+      <div class="job-overview-tab__route-details job-overview-tab__route-details--top">
+        <div class="job-overview-tab__address-card">
+          <h3>Shipment Details</h3>
+
+          <dl>
+            <div v-for="row in consolidationOverviewRows" :key="row.label">
+              <dt>{{ row.label }}</dt>
+              <dd>{{ displayValue(row.value) }}</dd>
+            </div>
+          </dl>
+        </div>
+
+        <div class="job-overview-tab__address-card">
+          <h3>Transport Details</h3>
+
+          <dl>
+            <div v-for="row in consolidationTransportRows" :key="row.label">
+              <dt>{{ row.label }}</dt>
+              <dd>{{ displayValue(row.value) }}</dd>
+            </div>
+          </dl>
+        </div>
+      </div>
+
+      <div class="job-overview-tab__grid job-overview-tab__grid--2">
+        <label class="job-overview-tab__field">
+          <span>Goods Description</span>
+          <Textarea
+            :model-value="form.consolidation_details.overview.goodsDescription"
+            rows="3"
+            readonly
+          />
+        </label>
+
+        <label class="job-overview-tab__field">
+          <span>Special Instructions</span>
+          <Textarea
+            :model-value="form.consolidation_details.overview.instructions"
+            rows="3"
+            readonly
           />
         </label>
       </div>
