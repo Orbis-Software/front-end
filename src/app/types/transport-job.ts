@@ -42,6 +42,7 @@ export interface JobRoadDetail {
   vehicle_type?: string | null
   origin_city?: string | null
   destination_city?: string | null
+  final_destination?: string | null
   estimated_transit_days?: number | null
   estimated_distance_km?: number | null
   carrier?: string | null
@@ -95,6 +96,7 @@ export interface JobAirDetail {
   airport_of_departure?: string | null
   airport_of_arrival?: string | null
   via_transhipment?: string | null
+  final_destination?: string | null
   shipment_type?: string | null
   etd?: string | null
   eta?: string | null
@@ -117,6 +119,7 @@ export interface JobRailDetail {
   container_type?: string | null
   loading_terminal?: string | null
   discharge_terminal?: string | null
+  final_destination?: string | null
   estimated_transit_days?: number | null
   departure_date?: string | null
   departure_time?: string | null
@@ -131,6 +134,7 @@ export interface JobCourierDetail {
   courier_service?: string | null
   carrier?: string | null
   tracking_number?: string | null
+  final_destination?: string | null
   vehicle_type?: string | null
   driver_name?: string | null
   driver_mobile?: string | null
@@ -322,7 +326,38 @@ export interface JobConsolidationQuoteDetails {
   terms: string
 }
 
+export interface JobConsolidationOverviewSnapshot {
+  jobNo: string
+  jobDate: string
+  mode: string
+  invoiceCurrency: JobConsolidationCurrency
+  shipDate: string
+  shipFrom: string
+  exitIncoterm: string
+  entryIncoterm: string
+  customer: string
+  notifyParty: string
+  shipper: string
+  deliveryAddress: string
+  goodsDescription: string
+  instructions: string
+  exportCustomsRef: string
+  importCustomsRef: string
+}
+
+export interface JobConsolidationTransportSnapshot {
+  bookingRef: string
+  carrier: string
+  originPort: string
+  destinationPort: string
+  finalDestination: string
+  etd: string
+  eta: string
+}
+
 export interface JobConsolidationDetails {
+  overview: JobConsolidationOverviewSnapshot
+  transport: JobConsolidationTransportSnapshot
   supplierInvoices: JobConsolidationSupplierInvoice[]
   supplierExaNumbers: Record<string, string>
   collectionOrders: JobConsolidationCollectionOrder[]
@@ -437,6 +472,11 @@ export interface BaseTransportJobCreatePayload {
   destination_contact_collection_address_id?: number | null
   collection_date?: string | null
   collection_time?: string | null
+  road_detail?: JobRoadDetail | null
+  sea_detail?: JobSeaDetail | null
+  air_detail?: JobAirDetail | null
+  rail_detail?: JobRailDetail | null
+  courier_detail?: JobCourierDetail | null
   transport_legs?: JobTransportLeg[] | null
   packages?: JobPackage[] | null
   charges?: JobCharge[] | null

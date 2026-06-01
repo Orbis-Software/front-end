@@ -14,11 +14,13 @@ import {
   type JobConsolidationDetails,
   type JobConsolidationGoodsRow,
   type JobConsolidationInvoiceLine,
+  type JobConsolidationOverviewSnapshot,
   type JobConsolidationPackageLine,
   type JobConsolidationPostedInvoice,
   type JobConsolidationQuoteDetails,
   type JobConsolidationSupplierInvoice,
   type JobConsolidationSupplierItem,
+  type JobConsolidationTransportSnapshot,
   type JobAirDetail,
   type JobCourierDetail,
   type JobRailDetail,
@@ -285,6 +287,7 @@ function emptyRoadDetail(): JobRoadDetail {
     vehicle_type: null,
     origin_city: null,
     destination_city: null,
+    final_destination: null,
     estimated_transit_days: null,
     estimated_distance_km: null,
     carrier: null,
@@ -338,6 +341,7 @@ function emptyAirDetail(): JobAirDetail {
     airport_of_departure: null,
     airport_of_arrival: null,
     via_transhipment: null,
+    final_destination: null,
     shipment_type: null,
     etd: null,
     eta: null,
@@ -360,6 +364,7 @@ function emptyRailDetail(): JobRailDetail {
     container_type: null,
     loading_terminal: null,
     discharge_terminal: null,
+    final_destination: null,
     estimated_transit_days: null,
     departure_date: null,
     departure_time: null,
@@ -374,6 +379,7 @@ function emptyCourierDetail(): JobCourierDetail {
     courier_service: null,
     carrier: null,
     tracking_number: null,
+    final_destination: null,
     vehicle_type: null,
     driver_name: null,
     driver_mobile: null,
@@ -558,8 +564,48 @@ function normalizeQuote(row: any): JobConsolidationQuoteDetails {
   }
 }
 
+function normalizeConsolidationOverview(row: any): JobConsolidationOverviewSnapshot {
+  return {
+    jobNo: stringValue(row?.jobNo ?? row?.job_no),
+    jobDate: stringValue(row?.jobDate ?? row?.job_date),
+    mode: stringValue(row?.mode, "Road"),
+    invoiceCurrency: stringValue(row?.invoiceCurrency ?? row?.invoice_currency, "GBP"),
+    shipDate: stringValue(row?.shipDate ?? row?.ship_date),
+    shipFrom: stringValue(row?.shipFrom ?? row?.ship_from),
+    exitIncoterm: stringValue(row?.exitIncoterm ?? row?.exit_incoterm),
+    entryIncoterm: stringValue(row?.entryIncoterm ?? row?.entry_incoterm),
+    customer: stringValue(row?.customer),
+    notifyParty: stringValue(row?.notifyParty ?? row?.notify_party),
+    shipper: stringValue(row?.shipper),
+    deliveryAddress: stringValue(row?.deliveryAddress ?? row?.delivery_address),
+    goodsDescription: stringValue(row?.goodsDescription ?? row?.goods_description),
+    instructions: stringValue(row?.instructions),
+    exportCustomsRef: stringValue(row?.exportCustomsRef ?? row?.export_customs_ref),
+    importCustomsRef: stringValue(row?.importCustomsRef ?? row?.import_customs_ref),
+  }
+}
+
+function normalizeConsolidationTransport(row: any): JobConsolidationTransportSnapshot {
+  return {
+    bookingRef: stringValue(row?.bookingRef ?? row?.booking_ref),
+    carrier: stringValue(row?.carrier),
+    originPort: stringValue(row?.originPort ?? row?.origin_port),
+    destinationPort: stringValue(row?.destinationPort ?? row?.destination_port),
+    finalDestination: stringValue(
+      row?.finalDestination ??
+        row?.final_destination ??
+        row?.lastDestination ??
+        row?.last_destination,
+    ),
+    etd: stringValue(row?.etd),
+    eta: stringValue(row?.eta),
+  }
+}
+
 function emptyConsolidationDetails(): JobConsolidationDetails {
   return {
+    overview: normalizeConsolidationOverview(null),
+    transport: normalizeConsolidationTransport(null),
     supplierInvoices: [],
     supplierExaNumbers: {},
     collectionOrders: [],
@@ -598,6 +644,8 @@ function normalizeConsolidationDetails(raw: any): JobConsolidationDetails {
 
   return {
     ...base,
+    overview: normalizeConsolidationOverview(raw.overview),
+    transport: normalizeConsolidationTransport(raw.transport),
     supplierInvoices: arrayValue(
       raw.supplierInvoices ?? raw.supplier_invoices,
       normalizeConsolidationSupplierInvoice,

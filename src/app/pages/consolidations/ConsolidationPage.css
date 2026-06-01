@@ -83,12 +83,17 @@
 }
 
 .consolidation-page__actions,
+.consolidation-section__actions,
 .consolidation-section__head {
   display: flex;
   gap: 10px;
   align-items: flex-start;
   justify-content: space-between;
   flex-wrap: wrap;
+}
+
+.consolidation-section__actions {
+  justify-content: flex-end;
 }
 
 .consolidation-page .p-button.btn {
@@ -257,6 +262,7 @@
 }
 
 .consolidation-field .p-inputtext,
+.consolidation-field .p-calendar,
 .consolidation-field .p-dropdown,
 .consolidation-field .p-select,
 .consolidation-field .p-inputnumber,
@@ -270,6 +276,11 @@
 .consolidation-field .p-inputnumber-input {
   height: 40px;
   min-height: 40px;
+}
+
+.consolidation-field .p-calendar .p-inputtext {
+  border-bottom-right-radius: 0;
+  border-top-right-radius: 0;
 }
 
 .consolidation-field .p-dropdown,
@@ -288,6 +299,19 @@
 
 .consolidation-field .p-inputtextarea {
   min-height: 82px;
+}
+
+.consolidation-reference-option {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+  line-height: 1.25;
+}
+
+.consolidation-reference-option small {
+  color: #737373;
+  font-size: 11px;
 }
 
 .consolidation-field .p-inputtext[readonly],
@@ -581,6 +605,12 @@
   justify-content: flex-end;
   gap: 10px;
   flex-wrap: wrap;
+}
+
+.consolidation-modal-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
 }
 
 .consolidation-modal-checks {

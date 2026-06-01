@@ -4,7 +4,15 @@ import { useGlobalReferenceDataStore } from "@/app/stores/global-reference-data"
 import type { GlobalReferenceDataRow } from "@/app/types/globalReferenceData"
 import type { useJobDetailsPage } from "../../JobDetailsPage.logic"
 
-export type TransportMode = "" | "road" | "rail" | "sea" | "air" | "courier" | "multi_modal"
+export type TransportMode =
+  | ""
+  | "road"
+  | "rail"
+  | "sea"
+  | "air"
+  | "courier"
+  | "multi_modal"
+  | "consolidation"
 
 export type MultiModalLegMode = "road" | "rail" | "sea" | "air" | "courier"
 
@@ -219,7 +227,8 @@ export function useJobTransportTab() {
       value === "sea" ||
       value === "air" ||
       value === "courier" ||
-      value === "multi_modal"
+      value === "multi_modal" ||
+      value === "consolidation"
     ) {
       return value
     }
@@ -241,6 +250,8 @@ export function useJobTransportTab() {
         return "Courier"
       case "multi_modal":
         return "Multi Modal"
+      case "consolidation":
+        return "Consolidation"
       default:
         return "No mode selected"
     }

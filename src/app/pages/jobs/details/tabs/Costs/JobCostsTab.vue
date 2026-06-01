@@ -1,9 +1,25 @@
 <script setup lang="ts">
 import "./JobCostsTab.css"
+import Button from "primevue/button"
+import Dropdown from "primevue/dropdown"
+import InputNumber from "primevue/inputnumber"
+import InputText from "primevue/inputtext"
 import { useJobCostsTab } from "./JobCostsTab.logic"
 
 const { buyRows, sellRows, totals, addBuyRow, addSellRow, removeBuyRow, removeSellRow } =
   useJobCostsTab()
+
+const currencyOptions = [
+  { label: "GBP", value: "GBP" },
+  { label: "EUR", value: "EUR" },
+  { label: "USD", value: "USD" },
+]
+
+const vatRateOptions = [
+  { label: "20%", value: 20 },
+  { label: "5%", value: 5 },
+  { label: "0%", value: 0 },
+]
 </script>
 
 <template>
@@ -15,9 +31,13 @@ const { buyRows, sellRows, totals, addBuyRow, addSellRow, removeBuyRow, removeSe
           <p>Supplier costs for the job.</p>
         </div>
 
-        <button type="button" class="job-costs-tab__add-btn" @click="addBuyRow">
-          + Add Cost Line
-        </button>
+        <Button
+          type="button"
+          class="job-costs-tab__add-btn"
+          label="Add Cost Line"
+          icon="pi pi-plus"
+          @click="addBuyRow"
+        />
       </header>
 
       <div class="job-costs-tab__table-wrap">
@@ -38,28 +58,44 @@ const { buyRows, sellRows, totals, addBuyRow, addSellRow, removeBuyRow, removeSe
           <tbody>
             <tr v-for="(row, index) in buyRows" :key="row.id">
               <td class="job-costs-tab__number">{{ index + 1 }}</td>
-              <td><input v-model="row.description" type="text" placeholder="e.g. Haulage" /></td>
-              <td><input v-model="row.supplier" type="text" placeholder="Supplier name" /></td>
-              <td><input v-model.number="row.quantity" type="number" min="0" /></td>
-              <td><input v-model.number="row.unitCost" type="number" min="0" step="0.01" /></td>
               <td>
-                <select v-model="row.currency">
-                  <option>GBP</option>
-                  <option>EUR</option>
-                  <option>USD</option>
-                </select>
+                <InputText v-model="row.description" placeholder="e.g. Haulage" />
+              </td>
+              <td>
+                <InputText v-model="row.supplier" placeholder="Supplier name" />
+              </td>
+              <td>
+                <InputNumber v-model="row.quantity" :min="0" />
+              </td>
+              <td>
+                <InputNumber
+                  v-model="row.unitCost"
+                  :min="0"
+                  :min-fraction-digits="2"
+                  :max-fraction-digits="2"
+                />
+              </td>
+              <td>
+                <Dropdown
+                  v-model="row.currency"
+                  :options="currencyOptions"
+                  option-label="label"
+                  option-value="value"
+                />
               </td>
               <td class="job-costs-tab__computed">
                 £{{ (row.quantity * row.unitCost).toFixed(2) }}
               </td>
               <td>
-                <button
+                <Button
                   type="button"
                   class="job-costs-tab__remove-btn"
+                  icon="pi pi-times"
+                  text
+                  rounded
+                  aria-label="Remove cost line"
                   @click="removeBuyRow(row.id)"
-                >
-                  ×
-                </button>
+                />
               </td>
             </tr>
           </tbody>
@@ -74,9 +110,13 @@ const { buyRows, sellRows, totals, addBuyRow, addSellRow, removeBuyRow, removeSe
           <p>Customer charges and revenue lines.</p>
         </div>
 
-        <button type="button" class="job-costs-tab__add-btn" @click="addSellRow">
-          + Add Charge Line
-        </button>
+        <Button
+          type="button"
+          class="job-costs-tab__add-btn"
+          label="Add Charge Line"
+          icon="pi pi-plus"
+          @click="addSellRow"
+        />
       </header>
 
       <div class="job-costs-tab__table-wrap">
@@ -99,36 +139,49 @@ const { buyRows, sellRows, totals, addBuyRow, addSellRow, removeBuyRow, removeSe
             <tr v-for="(row, index) in sellRows" :key="row.id">
               <td class="job-costs-tab__number">{{ index + 1 }}</td>
               <td>
-                <input v-model="row.description" type="text" placeholder="e.g. Freight Charge" />
+                <InputText v-model="row.description" placeholder="e.g. Freight Charge" />
               </td>
-              <td><input v-model="row.chargeCode" type="text" placeholder="FRT" /></td>
-              <td><input v-model.number="row.quantity" type="number" min="0" /></td>
-              <td><input v-model.number="row.unitPrice" type="number" min="0" step="0.01" /></td>
+              <td><InputText v-model="row.chargeCode" placeholder="FRT" /></td>
               <td>
-                <select v-model="row.currency">
-                  <option>GBP</option>
-                  <option>EUR</option>
-                  <option>USD</option>
-                </select>
+                <InputNumber v-model="row.quantity" :min="0" />
               </td>
               <td>
-                <select v-model.number="row.vatRate">
-                  <option :value="20">20%</option>
-                  <option :value="5">5%</option>
-                  <option :value="0">0%</option>
-                </select>
+                <InputNumber
+                  v-model="row.unitPrice"
+                  :min="0"
+                  :min-fraction-digits="2"
+                  :max-fraction-digits="2"
+                />
+              </td>
+              <td>
+                <Dropdown
+                  v-model="row.currency"
+                  :options="currencyOptions"
+                  option-label="label"
+                  option-value="value"
+                />
+              </td>
+              <td>
+                <Dropdown
+                  v-model="row.vatRate"
+                  :options="vatRateOptions"
+                  option-label="label"
+                  option-value="value"
+                />
               </td>
               <td class="job-costs-tab__computed">
                 £{{ (row.quantity * row.unitPrice).toFixed(2) }}
               </td>
               <td>
-                <button
+                <Button
                   type="button"
                   class="job-costs-tab__remove-btn"
+                  icon="pi pi-times"
+                  text
+                  rounded
+                  aria-label="Remove charge line"
                   @click="removeSellRow(row.id)"
-                >
-                  ×
-                </button>
+                />
               </td>
             </tr>
           </tbody>

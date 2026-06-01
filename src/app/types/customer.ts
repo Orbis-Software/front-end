@@ -5,6 +5,24 @@ export interface CustomerCompany {
   name: string | null
 }
 
+export interface CustomerContactAccount {
+  id: number
+  contact_id: number
+
+  name: string
+  email: string
+  role: string
+
+  is_primary: boolean
+  is_active: boolean
+
+  email_verified_at: string | null
+  last_login_at: string | null
+
+  created_at: string
+  updated_at: string
+}
+
 export interface CustomerContact {
   id: number
   company_id: number | null
@@ -28,6 +46,7 @@ export interface CustomerContact {
   credit_limit: string | null
   currency_preference: string | null
   status: string | null
+  accounts: CustomerContactAccount[]
   company: CustomerCompany | null
 }
 

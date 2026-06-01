@@ -36,11 +36,150 @@ label {
   color: #262626;
 }
 
-input {
-  height: 40px;
-  border: 1px solid #c7c7c7;
+.settings-panel :deep(.p-inputtext),
+.settings-invite-form :deep(.p-inputtext),
+.settings-panel :deep(.p-select),
+.settings-invite-form :deep(.p-select) {
+  width: 100%;
+}
+
+.settings-panel :deep(.p-textarea) {
+  width: 100%;
+  resize: vertical;
+}
+
+.settings-section {
+  margin-top: 22px;
+}
+
+.settings-section h3 {
+  margin: 0 0 10px;
+  color: #737373;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.settings-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.settings-toolbar p {
+  margin: 0;
+  color: #737373;
+  font-size: 13px;
+}
+
+.settings-table-wrap {
+  overflow-x: auto;
+  border: 1px solid #dfe5ec;
+  border-radius: 12px;
+}
+
+.settings-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+}
+
+.settings-table th,
+.settings-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid #eef2f6;
+  text-align: left;
+  font-size: 13px;
+}
+
+.settings-table th {
+  background: #f8fafc;
+  color: #737373;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.settings-table tr:last-child td {
+  border-bottom: 0;
+}
+
+.settings-table strong {
+  display: block;
+  color: #262626;
+}
+
+.settings-muted {
+  display: block;
+  margin-top: 2px;
+  color: #737373;
+  font-size: 11px;
+}
+
+.settings-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 3px 9px;
+  background: #f3f4f6;
+  color: #6b7280;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.settings-badge--primary {
+  background: #dbeafe;
+  color: #2563eb;
+}
+
+.settings-badge--success {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.settings-badge--muted {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.settings-role-select {
+  min-width: 112px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.settings-status-toggle {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+.settings-invite-form {
+  display: grid;
+  gap: 16px;
+}
+
+.settings-error {
+  margin: 0;
+  border: 1px solid #fecaca;
   border-radius: 8px;
-  padding: 0 12px;
+  background: #fee2e2;
+  color: #b91c1c;
+  padding: 10px 12px;
+  font-size: 13px;
+}
+
+.settings-check {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
 }
 
 .toggle-row {
@@ -54,12 +193,6 @@ input {
 .toggle-row p {
   margin: 4px 0 0;
   color: #737373;
-}
-
-.panel-actions {
-  margin-top: 24px;
-  display: flex;
-  justify-content: flex-end;
 }
 
 @media (max-width: 900px) {

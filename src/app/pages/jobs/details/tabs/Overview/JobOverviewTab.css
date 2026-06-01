@@ -119,6 +119,10 @@
   padding: 0 14px 14px;
 }
 
+.job-overview-tab__route-details--top {
+  padding-top: 14px;
+}
+
 .job-overview-tab__address-card {
   border: 1px solid #e6e6e6;
   border-radius: 8px;

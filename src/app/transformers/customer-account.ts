@@ -1,4 +1,4 @@
-import type { CustomerAccount, CustomerContact } from "@/app/types/customer"
+import type { CustomerAccount, CustomerContact, CustomerContactAccount } from "@/app/types/customer"
 import transportJobTransformer from "@/app/transformers/transport-job"
 
 function nullableNumber(value: any): number | null {
@@ -38,6 +38,7 @@ function fetchContact(data: any): CustomerContact | null {
     credit_limit: nullableString(data.credit_limit),
     currency_preference: nullableString(data.currency_preference),
     status: nullableString(data.status),
+    accounts: fetchContactAccounts(data.accounts),
     company: data.company
       ? {
           id: Number(data.company.id),
@@ -45,6 +46,24 @@ function fetchContact(data: any): CustomerContact | null {
         }
       : null,
   }
+}
+
+function fetchContactAccounts(data: any): CustomerContactAccount[] {
+  if (!Array.isArray(data)) return []
+
+  return data.map(account => ({
+    id: Number(account.id),
+    contact_id: Number(account.contact_id),
+    name: account.name ?? "",
+    email: account.email ?? "",
+    role: account.role ?? "customer",
+    is_primary: !!account.is_primary,
+    is_active: !!account.is_active,
+    email_verified_at: nullableString(account.email_verified_at),
+    last_login_at: nullableString(account.last_login_at),
+    created_at: account.created_at,
+    updated_at: account.updated_at,
+  }))
 }
 
 export default {

@@ -141,6 +141,10 @@
   resize: vertical;
 }
 
+.job-transport-tab__field .p-inputnumber {
+  width: 100%;
+}
+
 .job-transport-tab__field input:hover,
 .job-transport-tab__field select:hover,
 .job-transport-tab__field textarea:hover {

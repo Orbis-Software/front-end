@@ -51,6 +51,11 @@ function toFormData(payload: TransportJobCreatePayload): FormData {
 
   if (payload.note !== undefined) fd.append("note", payload.note ?? "")
 
+  appendNestedValue(fd, "road_detail", payload.road_detail)
+  appendNestedValue(fd, "sea_detail", payload.sea_detail)
+  appendNestedValue(fd, "air_detail", payload.air_detail)
+  appendNestedValue(fd, "rail_detail", payload.rail_detail)
+  appendNestedValue(fd, "courier_detail", payload.courier_detail)
   appendNestedValue(fd, "transport_legs", payload.transport_legs)
   appendNestedValue(fd, "packages", payload.packages)
   appendNestedValue(fd, "charges", payload.charges)
