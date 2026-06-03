@@ -56,7 +56,7 @@ export function useJobCreatePage() {
   const modeLabel = computed(() => MODES.find(x => x.key === mode.value)?.title ?? "")
 
   const isNoModeJobType = computed(() => {
-    return jobType.value === "multi_modal" || jobType.value === "consolidation"
+    return jobType.value === "multi_modal"
   })
 
   const availableModes = computed<CardItem<TransportMode>[]>(() => {
@@ -293,10 +293,14 @@ export function useJobCreatePage() {
     }
 
     if (jobType.value === "consolidation") {
+      if (!mode.value) {
+        throw new Error("Job type and mode are required.")
+      }
+
       return {
         ...base,
         job_type: "consolidation",
-        mode_of_transport: "consolidation",
+        mode_of_transport: mode.value,
       }
     }
 

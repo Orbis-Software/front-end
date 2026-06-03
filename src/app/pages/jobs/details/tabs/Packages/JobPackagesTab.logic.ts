@@ -11,6 +11,7 @@ export type PackageRow = {
   description: string | null
   stackable: boolean
   atTheTop: boolean
+  adr: boolean
   quantity: number
   lengthCm: number
   widthCm: number
@@ -27,6 +28,7 @@ function createRow(defaultPackageType: string | null = "Pallet"): PackageRow {
     description: "",
     stackable: true,
     atTheTop: false,
+    adr: false,
     quantity: 1,
     lengthCm: 0,
     widthCm: 0,

@@ -12,7 +12,6 @@ export type TransportMode =
   | "air"
   | "courier"
   | "multi_modal"
-  | "consolidation"
 
 export type MultiModalLegMode = "road" | "rail" | "sea" | "air" | "courier"
 
@@ -227,8 +226,7 @@ export function useJobTransportTab() {
       value === "sea" ||
       value === "air" ||
       value === "courier" ||
-      value === "multi_modal" ||
-      value === "consolidation"
+      value === "multi_modal"
     ) {
       return value
     }
@@ -250,8 +248,6 @@ export function useJobTransportTab() {
         return "Courier"
       case "multi_modal":
         return "Multi Modal"
-      case "consolidation":
-        return "Consolidation"
       default:
         return "No mode selected"
     }
@@ -299,6 +295,7 @@ export function useJobTransportTab() {
 
   return {
     form,
+    isConsolidationJob: jobDetails.isConsolidationJob,
     mode,
     modeLabel,
     multiModalLegs,

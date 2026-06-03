@@ -383,21 +383,41 @@ function setAdrPackage(item: { adr: string }, checked: boolean) {
       </div>
     </div>
 
-    <div class="consolidation-table-wrap consolidation-table-wrap--mt">
-      <table class="consolidation-table consolidation-table--inputs consolidation-table--wide">
+    <div
+      class="consolidation-table-wrap consolidation-table-wrap--mt consolidation-collection-package-wrap"
+    >
+      <table
+        class="consolidation-table consolidation-table--inputs consolidation-collection-package-table"
+      >
+        <colgroup>
+          <col class="consolidation-package-col--index" />
+          <col class="consolidation-package-col--package" />
+          <col class="consolidation-package-col--qty" />
+          <col class="consolidation-package-col--measure" />
+          <col class="consolidation-package-col--measure" />
+          <col class="consolidation-package-col--measure" />
+          <col class="consolidation-package-col--kg" />
+          <col class="consolidation-package-col--kg" />
+          <col class="consolidation-package-col--computed" />
+          <col class="consolidation-package-col--computed" />
+          <col class="consolidation-package-col--check" />
+          <col class="consolidation-package-col--check-wide" />
+          <col class="consolidation-package-col--check-wide" />
+          <col class="consolidation-package-col--check-wide" />
+        </colgroup>
         <thead>
           <tr>
             <th class="consolidation-table__item-heading">#</th>
-            <th>Packaging</th>
+            <th class="consolidation-table__package-heading">Packaging</th>
             <th class="consolidation-table__compact-heading">Qty</th>
             <th class="consolidation-table__compact-heading">Length</th>
             <th class="consolidation-table__compact-heading">Width</th>
             <th class="consolidation-table__compact-heading">Height</th>
-            <th>Net kg</th>
-            <th>Gross kg</th>
-            <th>CBM</th>
-            <th>LDM</th>
-            <th>ADR</th>
+            <th class="consolidation-table__kg-heading">Net kg</th>
+            <th class="consolidation-table__kg-heading">Gross kg</th>
+            <th class="consolidation-table__computed-heading">CBM</th>
+            <th class="consolidation-table__computed-heading">LDM</th>
+            <th class="consolidation-table__check-heading">ADR</th>
             <th class="consolidation-table__check-heading">Stackable</th>
             <th class="consolidation-table__check-heading">Non-Stack</th>
             <th class="consolidation-table__check-heading">Top-Loadable</th>
@@ -405,9 +425,11 @@ function setAdrPackage(item: { adr: string }, checked: boolean) {
         </thead>
         <tbody>
           <tr v-for="(line, index) in collectionDraft.lines" :key="line.id">
-            <td class="consolidation-table__item-number">{{ index + 1 }}</td>
-            <td><Dropdown v-model="line.packageType" :options="packageOptions" /></td>
-            <td class="consolidation-table__compact-cell">
+            <td class="consolidation-table__item-number" data-label="#">{{ index + 1 }}</td>
+            <td class="consolidation-table__package-cell" data-label="Packaging">
+              <Dropdown v-model="line.packageType" :options="packageOptions" />
+            </td>
+            <td class="consolidation-table__compact-cell" data-label="Qty">
               <InputNumber
                 v-model="line.qty"
                 class="consolidation-number--compact"
@@ -415,7 +437,7 @@ function setAdrPackage(item: { adr: string }, checked: boolean) {
                 :max="9999"
               />
             </td>
-            <td class="consolidation-table__compact-cell">
+            <td class="consolidation-table__compact-cell" data-label="Length">
               <InputNumber
                 v-model="line.length"
                 class="consolidation-number--compact"
@@ -423,7 +445,7 @@ function setAdrPackage(item: { adr: string }, checked: boolean) {
                 :max="9999"
               />
             </td>
-            <td class="consolidation-table__compact-cell">
+            <td class="consolidation-table__compact-cell" data-label="Width">
               <InputNumber
                 v-model="line.width"
                 class="consolidation-number--compact"
@@ -431,7 +453,7 @@ function setAdrPackage(item: { adr: string }, checked: boolean) {
                 :max="9999"
               />
             </td>
-            <td class="consolidation-table__compact-cell">
+            <td class="consolidation-table__compact-cell" data-label="Height">
               <InputNumber
                 v-model="line.height"
                 class="consolidation-number--compact"
@@ -439,28 +461,46 @@ function setAdrPackage(item: { adr: string }, checked: boolean) {
                 :max="9999"
               />
             </td>
-            <td><InputNumber v-model="line.netWeight" :min="0" :min-fraction-digits="1" /></td>
-            <td>
-              <InputNumber v-model="line.grossWeight" :min="0" :min-fraction-digits="1" />
+            <td class="consolidation-table__kg-cell" data-label="Net kg">
+              <InputNumber
+                v-model="line.netWeight"
+                class="consolidation-number--kg"
+                :min="0"
+                :min-fraction-digits="1"
+              />
             </td>
-            <td>{{ cbm(line).toFixed(3) }}</td>
-            <td>{{ ldm(line).toFixed(3) }}</td>
-            <td><Checkbox v-model="line.adr" binary /></td>
-            <td class="consolidation-table__check-cell">
+            <td class="consolidation-table__kg-cell" data-label="Gross kg">
+              <InputNumber
+                v-model="line.grossWeight"
+                class="consolidation-number--kg"
+                :min="0"
+                :min-fraction-digits="1"
+              />
+            </td>
+            <td class="consolidation-table__computed-cell" data-label="CBM">
+              {{ cbm(line).toFixed(3) }}
+            </td>
+            <td class="consolidation-table__computed-cell" data-label="LDM">
+              {{ ldm(line).toFixed(3) }}
+            </td>
+            <td class="consolidation-table__check-cell" data-label="ADR">
+              <Checkbox v-model="line.adr" binary />
+            </td>
+            <td class="consolidation-table__check-cell" data-label="Stackable">
               <Checkbox
                 :model-value="getPackageStackOption(line) === 'stackable'"
                 binary
                 @update:model-value="setPackageStackOption(line, 'stackable')"
               />
             </td>
-            <td class="consolidation-table__check-cell">
+            <td class="consolidation-table__check-cell" data-label="Non-Stack">
               <Checkbox
                 :model-value="getPackageStackOption(line) === 'non_stack'"
                 binary
                 @update:model-value="setPackageStackOption(line, 'non_stack')"
               />
             </td>
-            <td class="consolidation-table__check-cell">
+            <td class="consolidation-table__check-cell" data-label="Top-Loadable">
               <Checkbox
                 :model-value="getPackageStackOption(line) === 'top_loadable'"
                 binary

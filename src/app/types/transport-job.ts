@@ -17,7 +17,6 @@ export type TransportMode =
   | "sea"
   | "courier"
   | "multi_modal"
-  | "consolidation"
 
 export const TRANSPORT_MODES: TransportMode[] = [
   "air",
@@ -26,7 +25,6 @@ export const TRANSPORT_MODES: TransportMode[] = [
   "sea",
   "courier",
   "multi_modal",
-  "consolidation",
 ]
 
 export interface TransportJobCreator {
@@ -151,7 +149,7 @@ export interface JobTransportLeg {
   id?: number
   job_id?: number
   sequence?: number | null
-  mode: Exclude<TransportMode, "multi_modal" | "consolidation">
+  mode: Exclude<TransportMode, "multi_modal">
   carrier?: string | null
   reference?: string | null
   origin?: string | null
@@ -169,6 +167,7 @@ export interface JobPackage {
   package_type?: string | null
   stackable?: boolean | null
   at_the_top?: boolean | null
+  adr?: boolean | null
   quantity?: number | null
 
   length_cm?: number | null
@@ -493,7 +492,7 @@ export type TransportJobCreatePayload =
     })
   | (BaseTransportJobCreatePayload & {
       job_type: "consolidation"
-      mode_of_transport: "consolidation"
+      mode_of_transport: TransportMode
     })
   | (BaseTransportJobCreatePayload & {
       job_type: Exclude<JobType, "multi_modal" | "consolidation">
