@@ -151,13 +151,6 @@
               <template #body="{ data }">
                 <div class="contacts-page__row-actions">
                   <Button text icon="pi pi-pencil" label="Edit" @click="onEdit(data.id)" />
-                  <Button
-                    text
-                    severity="danger"
-                    icon="pi pi-trash"
-                    label="Delete"
-                    @click="onDelete(data.id)"
-                  />
                 </div>
               </template>
             </Column>

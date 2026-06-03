@@ -127,6 +127,12 @@
   margin-top: 14px;
 }
 
+.accounts-charge-codes__table-wrap--scroll {
+  max-height: 620px;
+  overflow-y: auto;
+  border-bottom: 1px solid var(--border);
+}
+
 .accounts-charge-codes__table {
   width: 100%;
   border-collapse: collapse;
@@ -151,23 +157,16 @@
   user-select: none;
 }
 
+.accounts-charge-codes__table-wrap--scroll .accounts-charge-codes__table th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
 .accounts-charge-codes__table-actions {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
-}
-
-.accounts-charge-codes__paginator {
-  border: 0;
-  padding: 12px 16px 0;
-  background: #fff;
-}
-
-.accounts-charge-codes__paginator.p-paginator {
-  justify-content: flex-end;
-  border: 0;
-  background: #fff;
-  padding: 0;
 }
 
 .accounts-charge-codes__code {
@@ -220,8 +219,7 @@
     grid-column: auto;
   }
 
-  .accounts-charge-codes__list-tools,
-  .accounts-charge-codes__paginator.p-paginator {
+  .accounts-charge-codes__list-tools {
     justify-content: flex-start;
   }
 }

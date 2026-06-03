@@ -7,8 +7,7 @@ const emit = defineEmits<{ (e: "close"): void }>()
 const router = useRouter()
 const auth = useAuthStore()
 
-function go(path: string) {
-  router.push(path)
+function close() {
   emit("close")
 }
 
@@ -23,20 +22,20 @@ async function logout() {
   <div class="user-dd" @click.stop>
     <div class="dd-heading">User Setting</div>
 
-    <button class="dd-link" type="button" @click="go('/settings/user/signature')">
+    <RouterLink class="dd-link" to="/settings/user/signature" @click="close">
       <i class="pi pi-pencil" />
       <span>User Settings</span>
-    </button>
+    </RouterLink>
 
-    <button class="dd-link" type="button" @click="go('/settings/login')">
+    <RouterLink class="dd-link" to="/settings/login" @click="close">
       <i class="pi pi-key" />
       <span>Login Details</span>
-    </button>
+    </RouterLink>
 
-    <button class="dd-link" type="button" @click="go('/settings')">
+    <RouterLink class="dd-link" to="/settings" @click="close">
       <i class="pi pi-cog" />
       <span>General Settings</span>
-    </button>
+    </RouterLink>
 
     <div class="dd-divider" />
 
@@ -75,6 +74,7 @@ async function logout() {
 
   padding: 12px 16px;
   text-align: left;
+  text-decoration: none;
 
   font-weight: 900;
   color: var(--pc-text-main);

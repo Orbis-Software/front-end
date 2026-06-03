@@ -3,6 +3,8 @@ import { downloadCsv } from "@/app/composables/useAccountsDemo"
 import { useChargeCodeStore } from "@/app/stores/charge-codes"
 import type { ChargeCode, ChargeCodeFilters, ChargeCodePayload } from "@/app/types/charge-code"
 
+const ALL_FILTER_VALUE = "__all"
+
 export function useAccountsChargeCodesSection() {
   const chargeCodeStore = useChargeCodeStore()
   const editingId = ref<number | null>(null)
@@ -10,14 +12,14 @@ export function useAccountsChargeCodesSection() {
 
   const filterState = reactive({
     search: "",
-    classification: "",
-    purchaseNominal: "",
-    salesNominal: "",
-    isCustoms: "",
+    classification: ALL_FILTER_VALUE,
+    purchaseNominal: ALL_FILTER_VALUE,
+    salesNominal: ALL_FILTER_VALUE,
+    isCustoms: ALL_FILTER_VALUE,
     sort: "description",
     direction: "asc" as "asc" | "desc",
     page: 1,
-    perPage: 15,
+    perPage: 1000,
   })
 
   const form = reactive({
@@ -30,29 +32,38 @@ export function useAccountsChargeCodesSection() {
   })
 
   const classificationOptions = computed(() => [
-    { label: "All classifications", value: "" },
+    { label: "All classifications", value: ALL_FILTER_VALUE },
     ...chargeCodeStore.filters.classifications.map(value => ({ label: value, value })),
   ])
   const purchaseOptions = computed(() => [
-    { label: "All", value: "" },
+    { label: "All purchase nominals", value: ALL_FILTER_VALUE },
     ...chargeCodeStore.filters.purchaseNominals.map(value => ({ label: value, value })),
   ])
   const salesOptions = computed(() => [
-    { label: "All", value: "" },
+    { label: "All sales nominals", value: ALL_FILTER_VALUE },
     ...chargeCodeStore.filters.salesNominals.map(value => ({ label: value, value })),
   ])
   const customsOptions = [
-    { label: "Any", value: "" },
+    { label: "All customs", value: ALL_FILTER_VALUE },
     { label: "Yes", value: "1" },
     { label: "No", value: "0" },
   ]
+
+  function isAllFilter(value: string) {
+    return value === ALL_FILTER_VALUE
+  }
+
+  function filterParam(value: string) {
+    return isAllFilter(value) ? "" : value
+  }
+
   const hasFilters = computed(() =>
     Boolean(
       filterState.search ||
-      filterState.classification ||
-      filterState.purchaseNominal ||
-      filterState.salesNominal ||
-      filterState.isCustoms,
+      !isAllFilter(filterState.classification) ||
+      !isAllFilter(filterState.purchaseNominal) ||
+      !isAllFilter(filterState.salesNominal) ||
+      !isAllFilter(filterState.isCustoms),
     ),
   )
 
@@ -66,16 +77,16 @@ export function useAccountsChargeCodesSection() {
     return `Showing ${range} of ${chargeCodeStore.filtered} charges${suffix}`
   })
 
-  const firstRow = computed(() => (filterState.page - 1) * filterState.perPage)
+  const hasScrollableList = computed(() => chargeCodeStore.filtered > 10)
   const formTitle = computed(() => (editingId.value ? "Edit Charge Code" : "Add Charge Code"))
 
   function requestParams(): ChargeCodeFilters {
     return {
       search: filterState.search,
-      classification: filterState.classification,
-      purchaseNominal: filterState.purchaseNominal,
-      salesNominal: filterState.salesNominal,
-      isCustoms: filterState.isCustoms,
+      classification: filterParam(filterState.classification),
+      purchaseNominal: filterParam(filterState.purchaseNominal),
+      salesNominal: filterParam(filterState.salesNominal),
+      isCustoms: filterParam(filterState.isCustoms),
       sort: filterState.sort,
       direction: filterState.direction,
       page: filterState.page,
@@ -135,13 +146,6 @@ export function useAccountsChargeCodesSection() {
     }
 
     closeForm()
-    await fetchChargeCodes()
-  }
-
-  async function onPage(event: { first?: number; rows?: number }) {
-    const rows = Number(event.rows ?? filterState.perPage)
-    filterState.perPage = rows
-    filterState.page = Math.floor(Number(event.first ?? 0) / rows) + 1
     await fetchChargeCodes()
   }
 
@@ -267,7 +271,7 @@ export function useAccountsChargeCodesSection() {
     salesOptions,
     customsOptions,
     countsText,
-    firstRow,
+    hasScrollableList,
     formTitle,
     fetchChargeCodes,
     applyFilters,
@@ -279,7 +283,6 @@ export function useAccountsChargeCodesSection() {
     deleteCharge,
     resetToSeed,
     sortBy,
-    onPage,
     sortMarker,
     exportCsv,
     exportExcel,

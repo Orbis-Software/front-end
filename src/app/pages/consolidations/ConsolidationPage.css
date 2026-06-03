@@ -544,6 +544,192 @@
   text-align: right;
 }
 
+.consolidation-supplier-invoice-dialog .p-dialog-header {
+  padding: 16px 22px 8px;
+}
+
+.consolidation-supplier-invoice-dialog .p-dialog-content {
+  padding: 2px 22px 14px;
+}
+
+.consolidation-supplier-invoice-dialog .p-dialog-footer {
+  padding: 10px 22px 18px;
+}
+
+.consolidation-supplier-invoice-dialog .consolidation-modal-toolbar {
+  margin: 0 0 10px;
+}
+
+.consolidation-supplier-invoice-dialog .consolidation-modal-toolbar--packages {
+  margin: 8px 0 6px;
+}
+
+.consolidation-supplier-invoice-dialog .consolidation-form-grid {
+  gap: 8px 12px;
+}
+
+.consolidation-supplier-invoice-dialog .consolidation-field {
+  gap: 4px;
+}
+
+.consolidation-supplier-invoice-dialog .consolidation-field span {
+  font-size: 9px;
+}
+
+.consolidation-supplier-invoice-dialog .consolidation-field .p-inputtext,
+.consolidation-supplier-invoice-dialog .consolidation-field .p-dropdown,
+.consolidation-supplier-invoice-dialog .consolidation-field .p-select,
+.consolidation-supplier-invoice-dialog .consolidation-field .p-inputnumber-input {
+  height: 34px;
+  min-height: 34px;
+}
+
+.consolidation-supplier-invoice-dialog .consolidation-page__summary-row {
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.consolidation-supplier-invoice-dialog .consolidation-page__summary-row article {
+  padding: 9px 10px;
+}
+
+.consolidation-supplier-invoice-dialog .consolidation-page__summary-row strong {
+  font-size: 14px;
+}
+
+.consolidation-supplier-package-wrap {
+  overflow-x: hidden;
+  margin-top: 0;
+}
+
+.consolidation-supplier-package-table {
+  width: 100%;
+  min-width: 0;
+  table-layout: fixed;
+}
+
+.consolidation-supplier-package-table .consolidation-package-col--index {
+  width: 3.5%;
+}
+
+.consolidation-supplier-package-table .consolidation-package-col--package {
+  width: 16%;
+}
+
+.consolidation-supplier-package-table .consolidation-package-col--qty {
+  width: 6%;
+}
+
+.consolidation-supplier-package-table .consolidation-package-col--measure {
+  width: 6.3%;
+}
+
+.consolidation-supplier-package-table .consolidation-package-col--kg {
+  width: 8.5%;
+}
+
+.consolidation-supplier-package-table .consolidation-package-col--check {
+  width: 5%;
+}
+
+.consolidation-supplier-package-table .consolidation-package-col--check-wide {
+  width: 6%;
+}
+
+.consolidation-supplier-package-table .consolidation-package-col--action {
+  width: 9.6%;
+}
+
+.consolidation-supplier-package-table th,
+.consolidation-supplier-package-table td {
+  padding: 5px 6px;
+  vertical-align: middle;
+}
+
+.consolidation-supplier-package-table .consolidation-table__package-heading,
+.consolidation-supplier-package-table .consolidation-table__package-cell {
+  width: auto;
+}
+
+.consolidation-supplier-package-table .consolidation-table__compact-heading,
+.consolidation-supplier-package-table .consolidation-table__compact-cell {
+  width: auto;
+  max-width: none;
+}
+
+.consolidation-supplier-package-table .consolidation-table__kg-heading,
+.consolidation-supplier-package-table .consolidation-table__kg-cell {
+  width: auto;
+  max-width: none;
+}
+
+.consolidation-supplier-package-table .consolidation-table__action-heading,
+.consolidation-supplier-package-table .consolidation-table__action-cell {
+  width: auto;
+  max-width: none;
+}
+
+.consolidation-supplier-package-table .consolidation-table__check-heading,
+.consolidation-supplier-package-table .consolidation-table__check-cell {
+  width: auto;
+  min-width: 0;
+  max-width: none;
+}
+
+.consolidation-supplier-package-table .p-dropdown,
+.consolidation-supplier-package-table .p-select,
+.consolidation-supplier-package-table .p-inputnumber,
+.consolidation-supplier-package-table .p-inputnumber-input {
+  min-width: 0;
+}
+
+.consolidation-table--inputs.consolidation-supplier-package-table
+  .consolidation-number--compact.p-inputnumber,
+.consolidation-table--inputs.consolidation-supplier-package-table
+  .consolidation-number--compact
+  .p-inputnumber-input {
+  width: 100%;
+}
+
+.consolidation-table--inputs.consolidation-supplier-package-table
+  .consolidation-number--kg.p-inputnumber,
+.consolidation-table--inputs.consolidation-supplier-package-table
+  .consolidation-number--kg
+  .p-inputnumber-input {
+  width: 100%;
+}
+
+.consolidation-supplier-package-table .consolidation-number--compact .p-inputnumber-input,
+.consolidation-supplier-package-table .consolidation-number--kg .p-inputnumber-input {
+  padding-inline: 4px;
+  text-align: right;
+}
+
+.consolidation-supplier-package-table .consolidation-number--kg .p-inputnumber-input {
+  padding-inline: 6px;
+}
+
+.consolidation-supplier-package-table .p-inputtext,
+.consolidation-supplier-package-table .p-inputnumber-input,
+.consolidation-supplier-package-table .p-dropdown,
+.consolidation-supplier-package-table .p-select {
+  height: 34px;
+  min-height: 34px;
+}
+
+.consolidation-supplier-package-table .btn--small {
+  width: 100%;
+  min-height: 34px;
+  padding: 0 8px;
+}
+
+.consolidation-check-row--field {
+  justify-content: flex-start;
+  border: 1px solid #d8d8d4;
+  border-radius: 8px;
+  padding: 0 10px;
+}
+
 .consolidation-page__summary-row {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -797,6 +983,83 @@
   .consolidation-totals-card {
     position: static;
   }
+
+  .consolidation-supplier-package-table,
+  .consolidation-supplier-package-table thead,
+  .consolidation-supplier-package-table tbody,
+  .consolidation-supplier-package-table tr,
+  .consolidation-supplier-package-table th,
+  .consolidation-supplier-package-table td {
+    display: block;
+  }
+
+  .consolidation-supplier-package-table thead {
+    display: none;
+  }
+
+  .consolidation-supplier-package-table tbody {
+    display: grid;
+    gap: 6px;
+  }
+
+  .consolidation-supplier-package-table tr {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+    border: 1px solid #e7e7e4;
+    border-radius: 8px;
+    padding: 8px;
+    background: #fff;
+  }
+
+  .consolidation-supplier-package-table td {
+    width: auto !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    border-bottom: 0;
+    padding: 0;
+  }
+
+  .consolidation-supplier-package-table td::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 3px;
+    color: #737373;
+    font-size: 9px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .consolidation-supplier-package-table .consolidation-table__package-cell,
+  .consolidation-supplier-package-table .consolidation-table__action-cell {
+    grid-column: span 2;
+  }
+
+  .consolidation-supplier-package-table .consolidation-table__check-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .consolidation-supplier-package-table .consolidation-table__check-cell::before,
+  .consolidation-supplier-package-table .consolidation-table__item-number::before {
+    align-self: stretch;
+    text-align: left;
+  }
+
+  .consolidation-table--inputs.consolidation-supplier-package-table
+    .consolidation-number--compact.p-inputnumber,
+  .consolidation-table--inputs.consolidation-supplier-package-table
+    .consolidation-number--compact
+    .p-inputnumber-input,
+  .consolidation-table--inputs.consolidation-supplier-package-table
+    .consolidation-number--kg.p-inputnumber,
+  .consolidation-table--inputs.consolidation-supplier-package-table
+    .consolidation-number--kg
+    .p-inputnumber-input {
+    width: 100%;
+  }
 }
 
 @media (max-width: 560px) {
@@ -817,5 +1080,14 @@
 
   .consolidation-field--wide {
     grid-column: span 1;
+  }
+
+  .consolidation-supplier-package-table tr {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .consolidation-supplier-package-table .consolidation-table__package-cell,
+  .consolidation-supplier-package-table .consolidation-table__action-cell {
+    grid-column: span 2;
   }
 }

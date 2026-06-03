@@ -93,7 +93,6 @@
                   <button class="jobs-list-page__cell-link" type="button" @click="onEdit(data.id)">
                     {{ data.job_number || "—" }}
                   </button>
-                  <div class="jobs-list-page__cell-subtext">#{{ data.id }}</div>
                 </div>
               </template>
             </Column>
@@ -161,13 +160,6 @@
                     icon="pi pi-pencil"
                     label="Edit"
                     @click="onEdit(data.id)"
-                  />
-                  <Button
-                    text
-                    class="jobs-list-page__delete-btn"
-                    icon="pi pi-trash"
-                    label="Delete"
-                    @click="confirmDelete(data.id)"
                   />
                 </div>
               </template>
