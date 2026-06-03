@@ -74,6 +74,18 @@
   border-color: #ec691a !important;
 }
 
+.job-action-btn--danger {
+  color: #b42318 !important;
+  border-color: rgba(180, 35, 24, 0.35) !important;
+  background: #fff7f6 !important;
+}
+
+.job-action-btn--danger:hover {
+  color: #ffffff !important;
+  border-color: #b42318 !important;
+  background: #b42318 !important;
+}
+
 /* =========================================
    HEADER FORM
 ========================================= */

@@ -219,7 +219,16 @@
 }
 
 .form-control--date {
-  width: 170px;
+  width: 230px;
+}
+
+.customer-charges__calendar {
+  width: 280px;
+  flex: 0 0 280px;
+}
+
+.customer-charges__calendar .p-inputtext {
+  min-width: 230px;
 }
 
 .form-control--table {
@@ -398,5 +407,16 @@
 
   .field--currency {
     width: 100%;
+  }
+
+  .customer-charges__calendar {
+    width: 100%;
+    flex: 1 1 auto;
+  }
+
+  .customer-charges__calendar .p-inputtext,
+  .form-control--date {
+    width: 100%;
+    min-width: 0;
   }
 }

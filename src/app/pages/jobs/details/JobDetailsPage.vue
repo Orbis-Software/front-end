@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import "./JobDetailsPage.css"
 import { computed, ref } from "vue"
-import { RouterLink, RouterView } from "vue-router"
+import { RouterLink, RouterView, useRouter } from "vue-router"
+import ConfirmDialog from "primevue/confirmdialog"
+import { useConfirm } from "primevue/useconfirm"
 import { useToast } from "primevue/usetoast"
 
 import Button from "primevue/button"
@@ -31,8 +33,11 @@ const {
 } = useJobDetailsPage()
 
 const toast = useToast()
+const confirm = useConfirm()
+const router = useRouter()
 const transportJobStore = useTransportJobStore()
 const pdfLoading = ref(false)
+const archiveLoading = ref(false)
 
 const progressSteps = computed(() => [
   {
@@ -169,6 +174,50 @@ function onExportPdf() {
   loadPdf(true)
 }
 
+function archiveErrorMessage(error: any) {
+  return error?.response?.data?.message ?? error?.message ?? "Unable to archive job."
+}
+
+function onArchive() {
+  const id = Number(job.value?.id)
+
+  if (!Number.isFinite(id) || id <= 0) return
+
+  const label = form.job_number || job.value?.job_number || "this job"
+
+  confirm.require({
+    message: `Archive ${label}?`,
+    header: "Archive Job",
+    icon: "pi pi-exclamation-triangle",
+    acceptLabel: "Archive",
+    rejectLabel: "Cancel",
+    acceptClass: "p-button-danger",
+    accept: async () => {
+      archiveLoading.value = true
+
+      try {
+        await transportJobStore.remove(id)
+        toast.add({
+          severity: "success",
+          summary: "Archived",
+          detail: "Job archived successfully.",
+          life: 2500,
+        })
+        await router.push({ name: "tms.jobs.index" })
+      } catch (error: any) {
+        toast.add({
+          severity: "error",
+          summary: "Archive failed",
+          detail: archiveErrorMessage(error),
+          life: 4000,
+        })
+      } finally {
+        archiveLoading.value = false
+      }
+    },
+  })
+}
+
 function onBookJob() {
   form.status = "Booked"
   save()
@@ -177,6 +226,8 @@ function onBookJob() {
 
 <template>
   <section class="job-details-page">
+    <ConfirmDialog />
+
     <div class="job-header-card">
       <div class="job-header-main">
         <div class="job-header-left">
@@ -205,6 +256,15 @@ function onBookJob() {
             label="Export"
             :disabled="loading || pdfLoading"
             @click="onExportPdf"
+          />
+
+          <Button
+            class="job-action-btn job-action-btn--danger"
+            icon="pi pi-folder"
+            :label="archiveLoading ? 'Archiving...' : 'Archive'"
+            :loading="archiveLoading"
+            :disabled="loading || saving || archiveLoading || !job?.id"
+            @click="onArchive"
           />
 
           <Button

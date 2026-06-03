@@ -9,6 +9,7 @@ import Calendar from "primevue/calendar"
 import Toast from "primevue/toast"
 import { useToast } from "primevue/usetoast"
 
+import { useChargeCodeStore } from "@/app/stores/charge-codes"
 import { useContactStore } from "@/app/stores/contact"
 import type { ContactChargeTable, ContactChargeTablePayload } from "@/app/types/contact"
 
@@ -35,6 +36,7 @@ type ChargeSheet = {
 const route = useRoute()
 const toast = useToast()
 const contactStore = useContactStore()
+const chargeCodeStore = useChargeCodeStore()
 
 const AUTOSAVE_DELAY = 900
 const SUCCESS_TOAST_COOLDOWN = 10000
@@ -64,6 +66,32 @@ const lastSuccessToastAt = ref(0)
 
 const activeSheet = computed<ChargeSheet | null>(() => {
   return sheets.value.find(sheet => sheet.id === activeSheetId.value) ?? null
+})
+
+const chargeDescriptionOptions = computed(() => {
+  const seen = new Set<string>()
+  const descriptions: string[] = []
+
+  for (const line of activeSheet.value?.lines ?? []) {
+    const description = line.description.trim()
+    if (!description || seen.has(description)) continue
+
+    seen.add(description)
+    descriptions.push(description)
+  }
+
+  for (const chargeCode of chargeCodeStore.chargeCodes) {
+    const description = String(chargeCode.description ?? "").trim()
+    if (!description || seen.has(description)) continue
+
+    seen.add(description)
+    descriptions.push(description)
+  }
+
+  return descriptions.map(description => ({
+    label: description,
+    value: description,
+  }))
 })
 
 const autosaveStatus = computed(() => {
@@ -308,8 +336,24 @@ function setSavedStateFromSheet(sheet: ChargeSheet | null) {
   saveError.value = null
 }
 
-async function loadSheets() {
+async function createDefaultSheet() {
+  if (!contactId.value) {
+    throw new Error("Unable to create a charge sheet because the contact could not be identified.")
+  }
+
+  const draftSheet = createEmptySheet("Default Customer Charges")
+  const payload = {
+    ...sheetToPayload(draftSheet),
+    is_default: true,
+  }
+
+  return tableToSheet(await contactStore.createChargeTable(contactId.value, payload))
+}
+
+async function loadSheets(options: { ensureDefault?: boolean } = {}) {
   if (!contactId.value) return
+
+  const ensureDefault = options.ensureDefault ?? true
 
   isHydrating.value = true
 
@@ -320,7 +364,27 @@ async function loadSheets() {
       is_active: true,
     })
 
-    sheets.value = (contactStore.chargeTables ?? []).map(tableToSheet)
+    let loadedSheets = (contactStore.chargeTables ?? [])
+      .filter(table => table.charge_type === "customer_flat")
+      .map(tableToSheet)
+
+    if (!loadedSheets.length && ensureDefault) {
+      const created = await createDefaultSheet()
+
+      await contactStore.fetchChargeTables(contactId.value, {
+        charge_type: "customer_flat",
+        applies_to: "collection",
+        is_active: true,
+      })
+
+      loadedSheets = (contactStore.chargeTables ?? [])
+        .filter(table => table.charge_type === "customer_flat")
+        .map(tableToSheet)
+
+      activeSheetId.value = created.id
+    }
+
+    sheets.value = loadedSheets
 
     const maxLineId = sheets.value.reduce((max, sheet) => {
       const lineMax = sheet.lines.reduce(
@@ -349,6 +413,15 @@ async function loadSheets() {
   } finally {
     isHydrating.value = false
   }
+}
+
+async function loadChargeDescriptions() {
+  await chargeCodeStore.fetch({
+    sort: "description",
+    direction: "asc",
+    page: 1,
+    perPage: 1000,
+  })
 }
 
 function validateForCreate(name: string): boolean {
@@ -568,7 +641,18 @@ watch(
 )
 
 onMounted(async () => {
-  await loadSheets()
+  const results = await Promise.allSettled([loadSheets(), loadChargeDescriptions()])
+  const chargeDescriptionResult = results[1]
+
+  if (chargeDescriptionResult.status === "rejected") {
+    showError(
+      "Charge descriptions failed",
+      extractErrorMessage(
+        chargeDescriptionResult.reason,
+        "Failed to load charge code descriptions.",
+      ),
+    )
+  }
 })
 
 onUnmounted(() => {
@@ -719,7 +803,26 @@ onUnmounted(() => {
                     <td class="row-number">{{ index + 1 }}</td>
 
                     <td>
-                      <input v-model="line.description" class="form-control form-control--table" />
+                      <select
+                        v-model="line.description"
+                        class="form-control form-control--table"
+                        :disabled="chargeCodeStore.loading && !chargeDescriptionOptions.length"
+                      >
+                        <option value="" disabled>
+                          {{
+                            chargeCodeStore.loading
+                              ? "Loading descriptions..."
+                              : "Select description"
+                          }}
+                        </option>
+                        <option
+                          v-for="option in chargeDescriptionOptions"
+                          :key="option.value"
+                          :value="option.value"
+                        >
+                          {{ option.label }}
+                        </option>
+                      </select>
                     </td>
 
                     <td>

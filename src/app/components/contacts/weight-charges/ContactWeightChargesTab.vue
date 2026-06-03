@@ -10,12 +10,18 @@ import { useConfirm } from "primevue/useconfirm"
 import { useToast } from "primevue/usetoast"
 
 import { useContactStore } from "@/app/stores/contact"
+import { useReferenceDataStore } from "@/app/stores/reference-data"
 import type {
   ContactChargeBreakPayload,
   ContactChargeRowPayload,
   ContactChargeTable,
   ContactChargeTablePayload,
 } from "@/app/types/contact"
+
+type SelectOption = {
+  label: string
+  value: string
+}
 
 type WeightBreak = {
   id: number
@@ -39,23 +45,38 @@ const route = useRoute()
 const confirm = useConfirm()
 const toast = useToast()
 const contactStore = useContactStore()
+const referenceDataStore = useReferenceDataStore()
 
-const contactId = computed(() => Number(route.params.id))
+const fallbackCurrencyOptions: SelectOption[] = [
+  { label: "GBP", value: "GBP" },
+  { label: "USD", value: "USD" },
+  { label: "EUR", value: "EUR" },
+]
+
+const contactId = computed<number | null>(() => {
+  const id = Number(route.params.id)
+  return Number.isFinite(id) && id > 0 ? id : null
+})
 
 const loadingTables = computed(() => contactStore.chargeTablesLoading)
 const loadingCurrentTable = computed(() => contactStore.currentChargeTableLoading)
 
 const tables = computed<ChargeTableListItem[]>(() =>
-  (contactStore.chargeTables ?? []).map(table => ({
-    id: table.id,
-    name: table.name,
-  })),
+  (contactStore.chargeTables ?? [])
+    .filter(table => table.charge_type === "weight_break")
+    .map(table => ({
+      id: table.id,
+      name: table.name,
+    })),
 )
 
 const activeTableId = ref<number | null>(null)
 const newTableName = ref("")
 const saving = ref(false)
 const isHydrating = ref(false)
+const creating = ref(false)
+const deleting = ref(false)
+const loadError = ref<string | null>(null)
 
 const validityDate = ref<Date | null>(null)
 const currency = ref("GBP")
@@ -68,6 +89,42 @@ const weightBreaks = ref<WeightBreak[]>([])
 const charges = ref<ChargeRow[]>([])
 
 let autosaveTimer: ReturnType<typeof setTimeout> | null = null
+
+function cleanReferenceName(value: string): string {
+  return String(value ?? "")
+    .replace(/\*$/, "")
+    .trim()
+}
+
+function optionFromReference(option: any): SelectOption {
+  const name = cleanReferenceName(option?.name ?? option?.label ?? option)
+
+  return {
+    label: name,
+    value: name,
+  }
+}
+
+const currencyOptions = computed<SelectOption[]>(() => {
+  const category = referenceDataStore.getByKey("currency")
+  const options = (category?.options ?? []).map(optionFromReference).filter(option => option.value)
+
+  const nextOptions = options.length ? options : fallbackCurrencyOptions
+  const hasSelected = nextOptions.some(option => option.value === currency.value)
+
+  if (!currency.value || hasSelected) {
+    return nextOptions
+  }
+
+  return [{ label: currency.value, value: currency.value }, ...nextOptions]
+})
+
+const autosaveStatus = computed(() => {
+  if (saving.value) return "Saving..."
+  if (loadingCurrentTable.value) return "Loading..."
+  if (activeTableId.value) return "All changes saved"
+  return ""
+})
 
 function defaultWeightBreaks(): WeightBreak[] {
   return [
@@ -112,9 +169,26 @@ function formatDateForApi(value: Date | null): string | null {
 }
 
 function currentCurrencySymbol() {
-  if (currency.value === "USD") return "$"
-  if (currency.value === "EUR") return "€"
-  return "£"
+  try {
+    const parts = new Intl.NumberFormat("en-GB", {
+      style: "currency",
+      currency: currency.value || "GBP",
+      currencyDisplay: "narrowSymbol",
+    }).formatToParts(0)
+
+    return parts.find(part => part.type === "currency")?.value ?? currency.value
+  } catch {
+    return currency.value || "GBP"
+  }
+}
+
+function showError(summary: string, error: any, fallback: string) {
+  toast.add({
+    severity: "error",
+    summary,
+    detail: error?.response?.data?.message || error?.message || fallback,
+    life: 4000,
+  })
 }
 
 async function hydrateFromTable(table: ContactChargeTable | null) {
@@ -192,7 +266,7 @@ function buildPayload(nameOverride?: string): ContactChargeTablePayload {
     currency_code: currency.value,
     valid_until: formatDateForApi(validityDate.value),
     is_active: true,
-    is_default: tables.value.length <= 1,
+    is_default: tables.value.length === 0,
     sort_order: 1,
     notes: null,
     breaks,
@@ -201,28 +275,42 @@ function buildPayload(nameOverride?: string): ContactChargeTablePayload {
 }
 
 async function fetchTables() {
-  await contactStore.fetchChargeTables(contactId.value, {
+  if (!contactId.value) return []
+
+  const fetched = await contactStore.fetchChargeTables(contactId.value, {
     charge_type: "weight_break",
+    applies_to: "collection",
+    is_active: true,
   })
+
+  return fetched.filter(table => table.charge_type === "weight_break")
 }
 
 async function ensureAtLeastOneTable() {
-  await fetchTables()
+  if (!contactId.value) return null
 
-  if (contactStore.chargeTables.length > 0) {
-    return
+  const existingTables = await fetchTables()
+
+  if (existingTables.length > 0) {
+    return existingTables[0]
   }
+
+  resetLocalState()
 
   const created = await contactStore.createChargeTable(contactId.value, {
     ...buildPayload("Main Collection Charges"),
     is_default: true,
   })
 
+  await fetchTables()
   activeTableId.value = created.id
   await hydrateFromTable(created)
+  return created
 }
 
 async function selectTable(table: ChargeTableListItem) {
+  if (!contactId.value) return
+
   if (autosaveTimer) {
     clearTimeout(autosaveTimer)
     autosaveTimer = null
@@ -237,8 +325,17 @@ async function createTable() {
   const name = newTableName.value.trim()
   if (!name) return
 
+  creating.value = true
+
   try {
+    if (!contactId.value) {
+      throw new Error(
+        "Unable to create a charge table because the contact could not be identified.",
+      )
+    }
+
     const created = await contactStore.createChargeTable(contactId.value, buildPayload(name))
+    await fetchTables()
     activeTableId.value = created.id
     newTableName.value = ""
     await hydrateFromTable(created)
@@ -250,18 +347,14 @@ async function createTable() {
       life: 2500,
     })
   } catch (error: any) {
-    toast.add({
-      severity: "error",
-      summary: "Failed to create table",
-      detail: error?.response?.data?.message || error?.message || "Something went wrong.",
-      life: 4000,
-    })
+    showError("Failed to create table", error, "Something went wrong.")
+  } finally {
+    creating.value = false
   }
 }
 
 function deleteCurrentTable() {
   if (!activeTableId.value) return
-  if (tables.value.length <= 1) return
 
   const currentTable = tables.value.find(item => item.id === activeTableId.value)
   if (!currentTable) return
@@ -272,10 +365,19 @@ function deleteCurrentTable() {
     icon: "pi pi-exclamation-triangle",
     acceptClass: "p-button-danger",
     accept: async () => {
-      try {
-        await contactStore.removeChargeTable(contactId.value, currentTable.id)
+      deleting.value = true
 
-        const firstTable = contactStore.chargeTables[0]
+      try {
+        if (!contactId.value) {
+          throw new Error(
+            "Unable to delete a charge table because the contact could not be identified.",
+          )
+        }
+
+        await contactStore.removeChargeTable(contactId.value, currentTable.id)
+        const remainingTables = await fetchTables()
+
+        const firstTable = remainingTables[0]
         if (firstTable) {
           activeTableId.value = firstTable.id
           const loaded = await contactStore.loadChargeTable(contactId.value, firstTable.id)
@@ -291,19 +393,16 @@ function deleteCurrentTable() {
           life: 2500,
         })
       } catch (error: any) {
-        toast.add({
-          severity: "error",
-          summary: "Failed to delete table",
-          detail: error?.response?.data?.message || error?.message || "Something went wrong.",
-          life: 4000,
-        })
+        showError("Failed to delete table", error, "Something went wrong.")
+      } finally {
+        deleting.value = false
       }
     },
   })
 }
 
 async function saveCurrentTableSilently() {
-  if (!activeTableId.value || isHydrating.value) return
+  if (!contactId.value || !activeTableId.value || isHydrating.value) return
 
   saving.value = true
 
@@ -320,18 +419,11 @@ async function saveCurrentTableSilently() {
       tableTitle.value = updated.name
     }
 
-    await contactStore.fetchChargeTables(contactId.value, {
-      charge_type: "weight_break",
-    })
+    await fetchTables()
   } catch (error: any) {
     console.error("AUTOSAVE FAILED", error)
 
-    toast.add({
-      severity: "error",
-      summary: "Auto-save failed",
-      detail: error?.response?.data?.message || error?.message || "Something went wrong.",
-      life: 4000,
-    })
+    showError("Auto-save failed", error, "Something went wrong.")
   } finally {
     saving.value = false
   }
@@ -404,9 +496,43 @@ function confirmDeleteCharge(chargeId: number) {
 watch(
   () => contactStore.currentChargeTable,
   async table => {
-    if (table) {
+    if (table?.charge_type === "weight_break") {
       await hydrateFromTable(table)
     }
+  },
+)
+
+async function loadWeightChargeTables() {
+  if (autosaveTimer) {
+    clearTimeout(autosaveTimer)
+    autosaveTimer = null
+  }
+
+  loadError.value = null
+  contactStore.clearCurrentChargeTable()
+
+  try {
+    const firstTable = await ensureAtLeastOneTable()
+
+    if (firstTable && contactId.value) {
+      isHydrating.value = true
+      activeTableId.value = firstTable.id
+      const loaded = await contactStore.loadChargeTable(contactId.value, firstTable.id)
+      await hydrateFromTable(loaded)
+    }
+  } catch (error: any) {
+    loadError.value =
+      error?.response?.data?.message || error?.message || "Unable to load weight charges."
+    showError("Failed to load weight charges", error, "Unable to load weight charges.")
+  }
+}
+
+watch(
+  () => route.params.id,
+  async () => {
+    activeTableId.value = null
+    resetLocalState()
+    await loadWeightChargeTables()
   },
 )
 
@@ -426,15 +552,10 @@ watch(autosaveSnapshot, () => {
 })
 
 onMounted(async () => {
-  await ensureAtLeastOneTable()
-
-  const firstTable = contactStore.chargeTables[0]
-  if (firstTable) {
-    isHydrating.value = true
-    activeTableId.value = firstTable.id
-    const loaded = await contactStore.loadChargeTable(contactId.value, firstTable.id)
-    await hydrateFromTable(loaded)
-  }
+  await Promise.allSettled([
+    referenceDataStore.categories.length ? Promise.resolve() : referenceDataStore.fetchAll(),
+    loadWeightChargeTables(),
+  ])
 })
 
 onUnmounted(() => {
@@ -446,241 +567,270 @@ onUnmounted(() => {
 
 <template>
   <div class="weightCharges">
-    <div class="weightCharges__top">
-      <div class="weightCharges__titleWrap">
-        <h2 class="weightCharges__title">Weight Break Collection Charges</h2>
-        <p class="weightCharges__subtitle">
-          Create and manage weight-based charge tables for collection calculations
-        </p>
-      </div>
-    </div>
-
-    <section class="wcCard">
-      <div class="wcSplit">
-        <div class="wcSplit__col">
-          <div class="wcSectionTitle">Create Weight Table</div>
-
-          <input
-            v-model="newTableName"
-            type="text"
-            class="wcInput"
-            placeholder="Enter table name..."
-          />
-
-          <Button
-            label="Create"
-            icon="pi pi-plus"
-            class="btn btn--primary wcBtn wcBtn--block"
-            :disabled="!newTableName.trim()"
-            @click="createTable"
-          />
-
-          <Button
-            label="Delete"
-            icon="pi pi-trash"
-            class="p-button-outlined wcBtn wcBtn--danger wcBtn--block"
-            :disabled="!activeTableId || tables.length <= 1"
-            @click="deleteCurrentTable"
-          />
+    <div class="weightCharges__card">
+      <div class="weightCharges__top">
+        <div class="weightCharges__titleWrap">
+          <h2 class="weightCharges__title">Weight Break Collection Charges</h2>
+          <p class="weightCharges__subtitle">
+            Create and manage weight-based charge tables for collection calculations
+          </p>
         </div>
+      </div>
 
-        <div class="wcSplit__col">
-          <div class="wcSplit__head">
-            <div class="wcSectionTitle">Weight Break Tables</div>
-            <div class="wcCount">
-              <span v-if="loadingTables">Loading...</span>
-              <span v-else>{{ tables.length }} tables</span>
+      <div class="weightCharges__body">
+        <div v-if="loadError" class="wcLoadError">{{ loadError }}</div>
+
+        <section class="wcCard">
+          <div class="wcSplit">
+            <div class="wcSplit__col">
+              <div class="wcSectionTitle">Create New Weight Charge Sheet</div>
+
+              <input
+                v-model="newTableName"
+                type="text"
+                class="wcInput"
+                placeholder="Enter weight charge sheet name..."
+                @keydown.enter.prevent="createTable"
+              />
+
+              <div class="wcSheetActions">
+                <Button
+                  :label="creating ? 'Creating...' : 'Create'"
+                  icon="pi pi-plus"
+                  class="btn btn--primary wcBtn"
+                  :disabled="creating || !newTableName.trim()"
+                  @click="createTable"
+                />
+
+                <Button
+                  :label="deleting ? 'Deleting...' : 'Delete'"
+                  icon="pi pi-trash"
+                  class="btn btn--danger wcBtn"
+                  :disabled="!activeTableId || deleting"
+                  @click="deleteCurrentTable"
+                />
+              </div>
+            </div>
+
+            <div class="wcSplit__col">
+              <div class="wcSplit__head">
+                <div class="wcSectionTitle">Weight Charge Sheets</div>
+                <div class="wcCount">
+                  <span v-if="loadingTables">Loading...</span>
+                  <span v-else>{{ tables.length }} sheet{{ tables.length === 1 ? "" : "s" }}</span>
+                </div>
+              </div>
+
+              <div v-if="loadingTables" class="wcTableListEmpty">
+                Loading weight charge sheets...
+              </div>
+
+              <div v-else-if="!tables.length" class="wcTableListEmpty">
+                Creating default weight charge sheet...
+              </div>
+
+              <div v-else class="wcTableList">
+                <button
+                  v-for="table in tables"
+                  :key="table.id"
+                  type="button"
+                  class="wcTableListItem"
+                  :class="{ 'wcTableListItem--active': table.id === activeTableId }"
+                  @click="selectTable(table)"
+                >
+                  <span>{{ table.name }}</span>
+                  <i class="pi pi-pencil"></i>
+                </button>
+              </div>
             </div>
           </div>
+        </section>
 
-          <button
-            v-for="table in tables"
-            :key="table.id"
-            type="button"
-            class="wcTableListItem"
-            :class="{ 'wcTableListItem--active': table.id === activeTableId }"
-            @click="selectTable(table)"
-          >
-            <span>{{ table.name }}</span>
-            <i class="pi pi-pencil"></i>
-          </button>
-        </div>
-      </div>
-    </section>
-
-    <section class="wcCard">
-      <div class="wcValidity">
-        <div class="wcValidity__left">
-          <div class="wcSectionTitle wcSectionTitle--icon">
-            <i class="pi pi-calendar"></i>
-            <span>Validity Date</span>
+        <section class="wcCard">
+          <div class="wcValidity__head">
+            <div class="wcValidity__title">Validity Date</div>
+            <div class="wcValidity__statusGroup">
+              <span class="wcStatusBadge">Active</span>
+              <span class="wcFieldNote">{{ autosaveStatus }}</span>
+            </div>
           </div>
 
           <div class="wcValidity__row">
-            <span class="wcLabel">These charges are valid until:</span>
+            <span class="wcFieldNote">These charges are valid until:</span>
 
             <Calendar
               v-model="validityDate"
+              dateFormat="yy-mm-dd"
               showIcon
-              iconDisplay="input"
-              dateFormat="dd/mm/yy"
+              input-class="wcInput wcInput--date"
               class="wcCalendar"
+              placeholder="Select valid until date"
             />
-
-            <span class="wcHint">Charges become null and void after this date</span>
           </div>
+        </section>
+
+        <div class="wcToolbar">
+          <Button
+            label="Add break"
+            icon="pi pi-plus"
+            class="btn btn--primary wcBtn"
+            :disabled="!activeTableId"
+            @click="addWeightBreak"
+          />
         </div>
 
-        <div class="wcValidity__status">
-          <span v-if="saving">Saving...</span>
-          <span v-else-if="loadingCurrentTable">Loading...</span>
-          <span v-else>Valid</span>
-        </div>
-      </div>
-    </section>
-
-    <div class="wcToolbar">
-      <Button
-        label="Add break"
-        icon="pi pi-plus"
-        class="btn btn--primary wcBtn"
-        :disabled="!activeTableId"
-        @click="addWeightBreak"
-      />
-    </div>
-
-    <section class="wcCard">
-      <div class="wcPanelHead">
-        <div class="wcSectionTitle wcSectionTitle--icon">
-          <i class="pi pi-briefcase"></i>
-          <span>Custom Weight Breaks</span>
-          <i class="pi pi-chevron-down wcChevron"></i>
-        </div>
-      </div>
-
-      <p class="wcHelpText">
-        Define custom weight ranges for your collection charges. Each break will create a column in
-        the charges table.
-      </p>
-
-      <div class="wcBreaks">
-        <div v-for="weightBreak in weightBreaks" :key="weightBreak.id" class="wcBreakCard">
-          <div class="wcBreakCard__head">
-            <span>{{ weightBreak.label }}</span>
-            <div class="wcBreakCard__icons">
-              <i class="pi pi-pencil"></i>
-              <i class="pi pi-times" @click="removeWeightBreak(weightBreak.id)"></i>
+        <section class="wcCard">
+          <div class="wcPanelHead">
+            <div class="wcSectionTitle wcSectionTitle--icon">
+              <i class="pi pi-briefcase"></i>
+              <span>Custom Weight Breaks</span>
+              <i class="pi pi-chevron-down wcChevron"></i>
             </div>
           </div>
 
-          <div class="wcBreakCard__fields">
-            <div class="wcMiniField">
-              <label>Min (kg)</label>
-              <input v-model.number="weightBreak.min" type="number" />
-            </div>
+          <p class="wcHelpText">
+            Define custom weight ranges for your collection charges. Each break will create a column
+            in the charges table.
+          </p>
 
-            <div class="wcMiniField">
-              <label>Max (kg)</label>
-              <input v-model.number="weightBreak.max" type="number" />
-            </div>
-          </div>
-
-          <div class="wcBreakCard__foot">{{ weightBreak.min }} kg - {{ weightBreak.max }} kg</div>
-        </div>
-      </div>
-    </section>
-
-    <section class="wcCard wcCard--tight">
-      <div class="wcMetaRow">
-        <div class="wcMetaRow__field wcMetaRow__field--grow">
-          <label class="wcMetaLabel">Table Title</label>
-          <input v-model="tableTitle" type="text" class="wcInput" />
-        </div>
-
-        <div class="wcMetaRow__field wcMetaRow__field--currency">
-          <label class="wcMetaLabel">Select Currency</label>
-
-          <div class="wcCurrencyWrap">
-            <select v-model="currency" class="wcSelect">
-              <option value="GBP">GBP</option>
-              <option value="USD">USD</option>
-              <option value="EUR">EUR</option>
-            </select>
-
-            <div class="wcCurrencySymbol">
-              {{ currentCurrencySymbol() }}
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="wcCard wcCard--notice">
-      <div class="wcNotice">
-        Current Currency:
-        {{ currency }}
-        - All charges are displayed in this currency.
-      </div>
-    </section>
-
-    <section class="wcCard">
-      <div class="wcTableWrap">
-        <table class="wcChargeTable">
-          <thead>
-            <tr>
-              <th rowspan="2" class="is-description">Description</th>
-              <th rowspan="2" class="is-actions">Actions</th>
-              <th :colspan="weightBreaks.length" class="is-group">
-                {{ tableTitle || "Main Collection Charges" }}
-              </th>
-            </tr>
-            <tr>
-              <th v-for="weightBreak in weightBreaks" :key="weightBreak.id">
-                <div class="wcThMain">{{ weightBreak.label }}</div>
-                <div class="wcThSub">{{ weightBreak.min }} - {{ weightBreak.max }} kg</div>
-              </th>
-            </tr>
-          </thead>
-
-          <tbody>
-            <tr v-for="charge in charges" :key="charge.id">
-              <td>
-                <input
-                  v-model="charge.description"
-                  class="wcCellInput wcCellInput--text"
-                  type="text"
-                />
-              </td>
-
-              <td>
-                <Button
-                  type="button"
-                  icon="pi pi-trash"
-                  class="p-button-text wcRowDeleteBtn"
-                  @click="confirmDeleteCharge(charge.id)"
-                />
-              </td>
-
-              <td v-for="(_, index) in weightBreaks" :key="index">
-                <div class="wcMoneyInput">
-                  <span>{{ currentCurrencySymbol() }}</span>
-                  <input v-model.number="charge.values[index]" type="number" step="0.01" />
+          <div class="wcBreaks">
+            <div v-for="weightBreak in weightBreaks" :key="weightBreak.id" class="wcBreakCard">
+              <div class="wcBreakCard__head">
+                <span>{{ weightBreak.label }}</span>
+                <div class="wcBreakCard__icons">
+                  <i class="pi pi-pencil"></i>
+                  <i class="pi pi-times" @click="removeWeightBreak(weightBreak.id)"></i>
                 </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+              </div>
 
-      <div class="wcFooter">
-        <Button
-          label="Add charge"
-          icon="pi pi-plus-circle"
-          class="p-button-outlined wcBtn wcBtn--footer"
-          :disabled="!activeTableId"
-          @click="addCharge"
-        />
+              <div class="wcBreakCard__fields">
+                <div class="wcMiniField">
+                  <label>Min (kg)</label>
+                  <input v-model.number="weightBreak.min" type="number" />
+                </div>
+
+                <div class="wcMiniField">
+                  <label>Max (kg)</label>
+                  <input v-model.number="weightBreak.max" type="number" />
+                </div>
+              </div>
+
+              <div class="wcBreakCard__foot">
+                {{ weightBreak.min }} kg - {{ weightBreak.max }} kg
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="wcCard wcCard--tight">
+          <div class="wcMetaRow">
+            <div class="wcMetaRow__field wcMetaRow__field--grow">
+              <label class="wcMetaLabel">Table Title</label>
+              <input v-model="tableTitle" type="text" class="wcInput" />
+            </div>
+
+            <div class="wcMetaRow__field wcMetaRow__field--currency">
+              <label class="wcMetaLabel">Select Currency</label>
+
+              <div class="wcCurrencyWrap">
+                <select
+                  v-model="currency"
+                  class="wcSelect"
+                  :disabled="referenceDataStore.loading && !currencyOptions.length"
+                >
+                  <option
+                    v-for="option in currencyOptions"
+                    :key="option.value"
+                    :value="option.value"
+                  >
+                    {{ option.label }}
+                  </option>
+                </select>
+
+                <div class="wcCurrencySymbol">
+                  {{ currentCurrencySymbol() }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="wcCard wcCard--notice">
+          <div class="wcNotice">
+            Current Currency:
+            {{ currency }}
+            - All charges are displayed in this currency.
+          </div>
+        </section>
+
+        <section class="wcCard wcCard--table">
+          <div class="wcTableToolbar">
+            <div>
+              <div class="wcTableToolbar__title">Charge Matrix</div>
+              <div class="wcTableToolbar__meta">
+                {{ charges.length }} charge{{ charges.length === 1 ? "" : "s" }} across
+                {{ weightBreaks.length }} break{{ weightBreaks.length === 1 ? "" : "s" }}
+              </div>
+            </div>
+
+            <Button
+              label="Add charge"
+              icon="pi pi-plus"
+              class="btn btn--ghost wcBtn"
+              :disabled="!activeTableId"
+              @click="addCharge"
+            />
+          </div>
+
+          <div class="wcTableWrap">
+            <table class="wcChargeTable">
+              <thead>
+                <tr>
+                  <th rowspan="2" class="is-description">Description</th>
+                  <th rowspan="2" class="is-actions">Actions</th>
+                  <th :colspan="weightBreaks.length" class="is-group">
+                    {{ tableTitle || "Main Collection Charges" }}
+                  </th>
+                </tr>
+                <tr>
+                  <th v-for="weightBreak in weightBreaks" :key="weightBreak.id">
+                    <div class="wcThMain">{{ weightBreak.label }}</div>
+                    <div class="wcThSub">{{ weightBreak.min }} - {{ weightBreak.max }} kg</div>
+                  </th>
+                </tr>
+              </thead>
+
+              <tbody>
+                <tr v-for="charge in charges" :key="charge.id">
+                  <td>
+                    <input
+                      v-model="charge.description"
+                      class="wcCellInput wcCellInput--text"
+                      type="text"
+                    />
+                  </td>
+
+                  <td>
+                    <Button
+                      type="button"
+                      icon="pi pi-trash"
+                      class="p-button-text wcRowDeleteBtn"
+                      @click="confirmDeleteCharge(charge.id)"
+                    />
+                  </td>
+
+                  <td v-for="(_, index) in weightBreaks" :key="index">
+                    <div class="wcMoneyInput">
+                      <span>{{ currentCurrencySymbol() }}</span>
+                      <input v-model.number="charge.values[index]" type="number" step="0.01" />
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
       </div>
-    </section>
+    </div>
   </div>
 </template>

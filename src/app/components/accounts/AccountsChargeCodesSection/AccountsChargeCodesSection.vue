@@ -6,7 +6,6 @@ import Dialog from "primevue/dialog"
 import Dropdown from "primevue/dropdown"
 import InputText from "primevue/inputtext"
 import InputSwitch from "primevue/inputswitch"
-import Paginator from "primevue/paginator"
 import { useAccountsChargeCodesSection } from "./AccountsChargeCodesSection"
 
 const {
@@ -20,7 +19,7 @@ const {
   salesOptions,
   customsOptions,
   countsText,
-  firstRow,
+  hasScrollableList,
   formTitle,
   applyFilters,
   openCreateModal,
@@ -30,7 +29,6 @@ const {
   deleteCharge,
   resetToSeed,
   sortBy,
-  onPage,
   sortMarker,
   exportCsv,
   exportExcel,
@@ -170,7 +168,10 @@ const {
         {{ chargeCodeStore.error }}
       </div>
 
-      <div class="accounts-charge-codes__table-wrap">
+      <div
+        class="accounts-charge-codes__table-wrap"
+        :class="{ 'accounts-charge-codes__table-wrap--scroll': hasScrollableList }"
+      >
         <table class="accounts-charge-codes__table">
           <thead>
             <tr>
@@ -232,17 +233,6 @@ const {
           </tbody>
         </table>
       </div>
-
-      <Paginator
-        v-if="chargeCodeStore.filtered > 0"
-        :rows="filterState.perPage"
-        :total-records="chargeCodeStore.filtered"
-        :first="firstRow"
-        :rows-per-page-options="[15, 25, 50, 100]"
-        class="accounts-charge-codes__paginator"
-        template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown"
-        @page="onPage"
-      />
     </section>
   </div>
 </template>
