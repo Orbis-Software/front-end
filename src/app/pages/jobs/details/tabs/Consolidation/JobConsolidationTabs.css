@@ -396,48 +396,123 @@
   text-align: right;
 }
 
+.job-consolidation-tab__invoice-lines-table {
+  border-top: 1px solid #ececec;
+}
+
+.job-consolidation-tab__invoice-lines-table th {
+  padding-block: 6px;
+  white-space: nowrap;
+}
+
+.job-consolidation-tab__invoice-lines-table td {
+  overflow: hidden;
+}
+
+.job-consolidation-tab__invoice-lines-table .p-inputtext,
+.job-consolidation-tab__invoice-lines-table .p-dropdown,
+.job-consolidation-tab__invoice-lines-table .p-select,
+.job-consolidation-tab__invoice-lines-table .p-inputnumber,
+.job-consolidation-tab__invoice-lines-table .p-inputnumber-input {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  font-family: var(--font-body) !important;
+  font-size: 12px !important;
+}
+
+.job-consolidation-tab__invoice-lines-table .p-inputtext,
+.job-consolidation-tab__invoice-lines-table .p-inputnumber-input,
+.job-consolidation-tab__invoice-lines-table .p-dropdown,
+.job-consolidation-tab__invoice-lines-table .p-select {
+  height: 31px;
+  min-height: 31px;
+  border-color: #ccd7e6;
+  border-radius: 7px;
+  background: #fff;
+}
+
+.job-consolidation-tab__invoice-lines-table .p-inputtext,
+.job-consolidation-tab__invoice-lines-table .p-inputnumber-input {
+  padding: 0 8px;
+}
+
+.job-consolidation-tab__invoice-lines-table .p-inputnumber-input {
+  text-align: right;
+}
+
+.job-consolidation-tab__invoice-lines-table .p-dropdown-label,
+.job-consolidation-tab__invoice-lines-table .p-select-label {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  padding: 0 8px;
+  font-size: 12px !important;
+}
+
+.job-consolidation-tab__invoice-lines-table .p-dropdown-trigger,
+.job-consolidation-tab__invoice-lines-table .p-select-dropdown {
+  flex: 0 0 28px;
+  width: 28px;
+}
+
+.job-consolidation-tab__invoice-lines-table .job-consolidation-tab__item-number {
+  color: #202020;
+  font-weight: 700;
+  text-align: center;
+}
+
+.job-consolidation-tab__invoice-lines-table .job-consolidation-tab__computed-cell {
+  padding-right: 8px;
+  color: #202020;
+  font-size: 12px;
+  line-height: 31px;
+  white-space: nowrap;
+}
+
 .job-consolidation-tab__invoice-lines-table .job-consolidation-tab__invoice-col--index {
-  width: 3.5%;
+  width: 3.4%;
 }
 
 .job-consolidation-tab__invoice-lines-table .job-consolidation-tab__invoice-col--po {
-  width: 10%;
+  width: 10.5%;
 }
 
 .job-consolidation-tab__invoice-lines-table .job-consolidation-tab__invoice-col--supplier {
-  width: 11%;
+  width: 10.5%;
 }
 
 .job-consolidation-tab__invoice-lines-table .job-consolidation-tab__invoice-col--label {
-  width: 11%;
+  width: 10.8%;
 }
 
 .job-consolidation-tab__invoice-lines-table .job-consolidation-tab__invoice-col--description {
-  width: 17%;
+  width: 18%;
 }
 
 .job-consolidation-tab__invoice-lines-table .job-consolidation-tab__invoice-col--qty {
-  width: 6%;
+  width: 5.4%;
 }
 
 .job-consolidation-tab__invoice-lines-table .job-consolidation-tab__invoice-col--uom {
-  width: 9%;
+  width: 8.2%;
 }
 
 .job-consolidation-tab__invoice-lines-table .job-consolidation-tab__invoice-col--coo {
-  width: 7%;
+  width: 6.6%;
 }
 
 .job-consolidation-tab__invoice-lines-table .job-consolidation-tab__invoice-col--hs {
-  width: 8%;
+  width: 7.2%;
 }
 
 .job-consolidation-tab__invoice-lines-table .job-consolidation-tab__invoice-col--price {
-  width: 9%;
+  width: 8.8%;
 }
 
 .job-consolidation-tab__invoice-lines-table .job-consolidation-tab__invoice-col--total {
-  width: 8.5%;
+  width: 10.6%;
 }
 
 .job-consolidation-tab__compact {
