@@ -82,11 +82,6 @@ function addConsolidatedItem() {
 
 <template>
   <section class="job-consolidation-tab">
-    <div v-if="!context.isConsolidationJob.value" class="job-consolidation-tab__empty">
-      This tab is only available for consolidation jobs.
-    </div>
-
-    <template v-else>
       <div class="job-consolidation-tab__section">
         <header class="job-consolidation-tab__section-header">
           <div>
@@ -149,8 +144,24 @@ function addConsolidatedItem() {
           No consolidated invoice lines for {{ details.selectedInvoiceCurrency }} yet.
         </div>
 
-        <div v-else class="job-consolidation-tab__table-wrap">
-          <table class="job-consolidation-tab__table job-consolidation-tab__table--wide">
+        <div
+          v-else
+          class="job-consolidation-tab__table-wrap job-consolidation-tab__invoice-lines-wrap"
+        >
+          <table class="job-consolidation-tab__table job-consolidation-tab__invoice-lines-table">
+            <colgroup>
+              <col class="job-consolidation-tab__invoice-col--index" />
+              <col class="job-consolidation-tab__invoice-col--po" />
+              <col class="job-consolidation-tab__invoice-col--supplier" />
+              <col class="job-consolidation-tab__invoice-col--label" />
+              <col class="job-consolidation-tab__invoice-col--description" />
+              <col class="job-consolidation-tab__invoice-col--qty" />
+              <col class="job-consolidation-tab__invoice-col--uom" />
+              <col class="job-consolidation-tab__invoice-col--coo" />
+              <col class="job-consolidation-tab__invoice-col--hs" />
+              <col class="job-consolidation-tab__invoice-col--price" />
+              <col class="job-consolidation-tab__invoice-col--total" />
+            </colgroup>
             <thead>
               <tr>
                 <th>#</th>
@@ -168,17 +179,35 @@ function addConsolidatedItem() {
             </thead>
             <tbody>
               <tr v-for="(line, index) in filteredLines" :key="line.id">
-                <td>{{ index + 1 }}</td>
-                <td><InputText v-model="line.poRef" /></td>
-                <td><InputText v-model="line.supplier" /></td>
-                <td><InputText v-model="line.shippingLabelNo" /></td>
-                <td><InputText v-model="line.description" /></td>
-                <td><InputNumber v-model="line.qty" :min="0" /></td>
-                <td><Dropdown v-model="line.uom" :options="unitOptions" /></td>
-                <td><InputText v-model="line.countryOfOrigin" /></td>
-                <td><InputText v-model="line.hsCode" /></td>
-                <td><InputNumber v-model="line.unitPrice" :min-fraction-digits="2" /></td>
-                <td>{{ money(line.invoiceCurrency, line.qty * line.unitPrice) }}</td>
+                <td class="job-consolidation-tab__item-number" data-label="#">
+                  {{ index + 1 }}
+                </td>
+                <td data-label="PO Ref"><InputText v-model="line.poRef" /></td>
+                <td data-label="Supplier"><InputText v-model="line.supplier" /></td>
+                <td data-label="Shipping Label">
+                  <InputText v-model="line.shippingLabelNo" />
+                </td>
+                <td data-label="Description"><InputText v-model="line.description" /></td>
+                <td data-label="Qty">
+                  <InputNumber
+                    v-model="line.qty"
+                    class="job-consolidation-tab__number--compact"
+                    :min="0"
+                  />
+                </td>
+                <td data-label="UOM"><Dropdown v-model="line.uom" :options="unitOptions" /></td>
+                <td data-label="COO"><InputText v-model="line.countryOfOrigin" /></td>
+                <td data-label="HS Code"><InputText v-model="line.hsCode" /></td>
+                <td data-label="Unit Price">
+                  <InputNumber
+                    v-model="line.unitPrice"
+                    class="job-consolidation-tab__number--kg"
+                    :min-fraction-digits="2"
+                  />
+                </td>
+                <td class="job-consolidation-tab__computed-cell" data-label="Total">
+                  {{ money(line.invoiceCurrency, line.qty * line.unitPrice) }}
+                </td>
               </tr>
             </tbody>
           </table>
@@ -243,6 +272,5 @@ function addConsolidatedItem() {
           </label>
         </div>
       </div>
-    </template>
   </section>
 </template>

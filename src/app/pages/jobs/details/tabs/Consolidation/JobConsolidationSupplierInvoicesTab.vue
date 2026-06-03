@@ -39,6 +39,14 @@ const draft = reactive<JobConsolidationSupplierInvoice>({
   items: [createSupplierItem()],
 })
 
+function isAdrPackage(item: JobConsolidationSupplierItem) {
+  return item.adr === "Yes"
+}
+
+function setAdrPackage(item: JobConsolidationSupplierItem, checked: boolean) {
+  item.adr = checked ? "Yes" : "No"
+}
+
 const supplierSummaries = computed(() => {
   const summaries = new Map<
     string,
@@ -108,11 +116,6 @@ function addSupplierInvoice() {
 
 <template>
   <section class="job-consolidation-tab">
-    <div v-if="!context.isConsolidationJob.value" class="job-consolidation-tab__empty">
-      This tab is only available for consolidation jobs.
-    </div>
-
-    <template v-else>
       <div class="job-consolidation-tab__section">
         <header class="job-consolidation-tab__section-header">
           <div>
@@ -164,58 +167,127 @@ function addSupplierInvoice() {
           </label>
         </div>
 
-        <div class="job-consolidation-tab__table-wrap">
-          <table class="job-consolidation-tab__table job-consolidation-tab__table--wide">
+        <div
+          class="job-consolidation-tab__table-wrap job-consolidation-tab__supplier-package-wrap"
+        >
+          <table
+            class="job-consolidation-tab__table job-consolidation-tab__table--inputs job-consolidation-tab__supplier-package-table"
+          >
+            <colgroup>
+              <col class="job-consolidation-tab__package-col--index" />
+              <col class="job-consolidation-tab__package-col--package" />
+              <col class="job-consolidation-tab__package-col--qty" />
+              <col class="job-consolidation-tab__package-col--measure" />
+              <col class="job-consolidation-tab__package-col--measure" />
+              <col class="job-consolidation-tab__package-col--measure" />
+              <col class="job-consolidation-tab__package-col--kg" />
+              <col class="job-consolidation-tab__package-col--kg" />
+              <col class="job-consolidation-tab__package-col--check" />
+              <col class="job-consolidation-tab__package-col--check-wide" />
+              <col class="job-consolidation-tab__package-col--check-wide" />
+              <col class="job-consolidation-tab__package-col--check-wide" />
+              <col class="job-consolidation-tab__package-col--action" />
+            </colgroup>
             <thead>
               <tr>
-                <th>#</th>
-                <th>Packaging</th>
-                <th>Collie</th>
-                <th>Length</th>
-                <th>Width</th>
-                <th>Height</th>
-                <th>Net kg</th>
-                <th>Gross kg</th>
-                <th>ADR</th>
-                <th class="job-consolidation-tab__check">Stackable</th>
-                <th class="job-consolidation-tab__check">Non-Stack</th>
-                <th class="job-consolidation-tab__check">Top-Loadable</th>
-                <th></th>
+                <th class="job-consolidation-tab__item-heading">#</th>
+                <th class="job-consolidation-tab__package-heading">Package</th>
+                <th class="job-consolidation-tab__compact-heading">Qty</th>
+                <th class="job-consolidation-tab__compact-heading">Length</th>
+                <th class="job-consolidation-tab__compact-heading">Width</th>
+                <th class="job-consolidation-tab__compact-heading">Height</th>
+                <th class="job-consolidation-tab__kg-heading">Net kg</th>
+                <th class="job-consolidation-tab__kg-heading">Gross kg</th>
+                <th class="job-consolidation-tab__check-heading">ADR</th>
+                <th class="job-consolidation-tab__check-heading">Stackable</th>
+                <th class="job-consolidation-tab__check-heading">Non-Stack</th>
+                <th class="job-consolidation-tab__check-heading">Top-Loadable</th>
+                <th class="job-consolidation-tab__action-heading">Action</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="(item, index) in draft.items" :key="item.id">
-                <td>{{ index + 1 }}</td>
-                <td><Dropdown v-model="item.packageType" :options="packageOptions" /></td>
-                <td><InputNumber v-model="item.collie" :min="1" /></td>
-                <td><InputNumber v-model="item.length" :min="0" /></td>
-                <td><InputNumber v-model="item.width" :min="0" /></td>
-                <td><InputNumber v-model="item.height" :min="0" /></td>
-                <td><InputNumber v-model="item.net" :min="0" :min-fraction-digits="1" /></td>
-                <td><InputNumber v-model="item.gross" :min="0" :min-fraction-digits="1" /></td>
-                <td><Dropdown v-model="item.adr" :options="['No', 'Yes']" /></td>
-                <td class="job-consolidation-tab__check">
+                <td class="job-consolidation-tab__item-number" data-label="#">{{ index + 1 }}</td>
+                <td class="job-consolidation-tab__package-cell" data-label="Package">
+                  <Dropdown v-model="item.packageType" :options="packageOptions" />
+                </td>
+                <td class="job-consolidation-tab__compact-cell" data-label="Qty">
+                  <InputNumber
+                    v-model="item.collie"
+                    class="job-consolidation-tab__number--compact"
+                    :min="1"
+                    :max="9999"
+                  />
+                </td>
+                <td class="job-consolidation-tab__compact-cell" data-label="Length">
+                  <InputNumber
+                    v-model="item.length"
+                    class="job-consolidation-tab__number--compact"
+                    :min="0"
+                    :max="9999"
+                  />
+                </td>
+                <td class="job-consolidation-tab__compact-cell" data-label="Width">
+                  <InputNumber
+                    v-model="item.width"
+                    class="job-consolidation-tab__number--compact"
+                    :min="0"
+                    :max="9999"
+                  />
+                </td>
+                <td class="job-consolidation-tab__compact-cell" data-label="Height">
+                  <InputNumber
+                    v-model="item.height"
+                    class="job-consolidation-tab__number--compact"
+                    :min="0"
+                    :max="9999"
+                  />
+                </td>
+                <td class="job-consolidation-tab__kg-cell" data-label="Net kg">
+                  <InputNumber
+                    v-model="item.net"
+                    class="job-consolidation-tab__number--kg"
+                    :min="0"
+                    :min-fraction-digits="1"
+                  />
+                </td>
+                <td class="job-consolidation-tab__kg-cell" data-label="Gross kg">
+                  <InputNumber
+                    v-model="item.gross"
+                    class="job-consolidation-tab__number--kg"
+                    :min="0"
+                    :min-fraction-digits="1"
+                  />
+                </td>
+                <td class="job-consolidation-tab__check-cell" data-label="ADR">
+                  <Checkbox
+                    :model-value="isAdrPackage(item)"
+                    binary
+                    @update:model-value="setAdrPackage(item, $event)"
+                  />
+                </td>
+                <td class="job-consolidation-tab__check-cell" data-label="Stackable">
                   <Checkbox
                     :model-value="getPackageStackOption(item) === 'stackable'"
                     binary
                     @update:model-value="setPackageStackOption(item, 'stackable')"
                   />
                 </td>
-                <td class="job-consolidation-tab__check">
+                <td class="job-consolidation-tab__check-cell" data-label="Non-Stack">
                   <Checkbox
                     :model-value="getPackageStackOption(item) === 'non_stack'"
                     binary
                     @update:model-value="setPackageStackOption(item, 'non_stack')"
                   />
                 </td>
-                <td class="job-consolidation-tab__check">
+                <td class="job-consolidation-tab__check-cell" data-label="Top-Loadable">
                   <Checkbox
                     :model-value="getPackageStackOption(item) === 'top_loadable'"
                     binary
                     @update:model-value="setPackageStackOption(item, 'top_loadable')"
                   />
                 </td>
-                <td>
+                <td class="job-consolidation-tab__action-cell" data-label="Action">
                   <Button
                     icon="pi pi-trash"
                     class="job-consolidation-tab__button job-consolidation-tab__button--ghost"
@@ -303,6 +375,5 @@ function addSupplierInvoice() {
           </article>
         </div>
       </div>
-    </template>
   </section>
 </template>

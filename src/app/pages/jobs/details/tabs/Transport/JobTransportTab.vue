@@ -9,6 +9,7 @@ import { useJobTransportTab } from "./JobTransportTab.logic"
 
 const {
   form,
+  isConsolidationJob,
   mode,
   modeLabel,
   multiModalLegs,
@@ -149,7 +150,7 @@ const signatureRequiredOptions = [
       Select a mode of transport from the job header to load the transport inputs.
     </div>
 
-    <div v-if="mode === 'consolidation'" class="job-transport-tab__section">
+    <div v-if="isConsolidationJob" class="job-transport-tab__section">
       <header class="job-transport-tab__section-header">
         <h2>Consolidation Transport</h2>
         <span class="job-transport-tab__badge">Consolidation</span>

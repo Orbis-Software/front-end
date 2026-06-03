@@ -43,11 +43,6 @@ function addGoodsRow() {
 
 <template>
   <section class="job-consolidation-tab">
-    <div v-if="!context.isConsolidationJob.value" class="job-consolidation-tab__empty">
-      This tab is only available for consolidation jobs.
-    </div>
-
-    <template v-else>
       <div class="job-consolidation-tab__section">
         <header class="job-consolidation-tab__section-header">
           <div>
@@ -162,6 +157,5 @@ function addGoodsRow() {
           </label>
         </div>
       </div>
-    </template>
   </section>
 </template>

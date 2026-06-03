@@ -213,6 +213,12 @@ function labelFromMode(mode: TransportMode): string {
     .join(" ")
 }
 
+function normalizeTransportMode(value: unknown): TransportMode | null {
+  if (typeof value !== "string") return null
+
+  return TRANSPORT_MODES.includes(value as TransportMode) ? (value as TransportMode) : null
+}
+
 function optionFromReference(option: any): SelectOption {
   const name = cleanReferenceName(option?.name ?? option?.label ?? option)
 
@@ -229,6 +235,7 @@ function normalizePackageRow(row: any) {
     description: row.description ?? "",
     stackable: row.stackable ?? true,
     atTheTop: row.atTheTop ?? row.at_the_top ?? false,
+    adr: Boolean(row.adr ?? false),
     quantity: Number(row.quantity ?? 1),
 
     lengthCm: Number(row.lengthCm ?? row.length_cm ?? 0),
@@ -247,6 +254,7 @@ function serializePackageRow(row: any) {
     package_type: row.package_type ?? null,
     stackable: row.stackable ?? true,
     at_the_top: row.atTheTop ?? row.at_the_top ?? false,
+    adr: Boolean(row.adr ?? false),
     quantity: row.quantity ?? 1,
 
     length_cm: row.lengthCm ?? 0,
@@ -822,6 +830,11 @@ export function useJobDetailsPage() {
       key: "wms",
       showCount: true,
     },
+    {
+      label: "Load Planner",
+      name: "tms.jobs.show.load-planner",
+      key: "load-planner",
+    },
   ]
 
   type CustomerOption = {
@@ -936,11 +949,11 @@ export function useJobDetailsPage() {
 
   const currentRouteName = computed(() => String(route.name ?? ""))
   const isConsolidationJob = computed(() => {
-    return form.job_type === "consolidation" || form.mode_of_transport === "consolidation"
+    return form.job_type === "consolidation"
   })
 
   const tabs = computed<JobDetailsTab[]>(() => {
-    return isConsolidationJob.value ? [...baseTabs, ...consolidationTabs] : baseTabs
+    return [...baseTabs, ...consolidationTabs]
   })
 
   const title = computed(() => {
@@ -988,7 +1001,7 @@ export function useJobDetailsPage() {
     form.job_number = data.job_number ?? ""
     form.job_date = parseDate(data.job_date)
     form.job_type = data.job_type ?? ""
-    form.mode_of_transport = data.mode_of_transport ?? null
+    form.mode_of_transport = normalizeTransportMode(data.mode_of_transport)
     form.status = extra.status ?? "Draft"
     form.note = data.note ?? ""
 
@@ -1131,7 +1144,7 @@ export function useJobDetailsPage() {
         packages: form.packages.map(serializePackageRow),
         charges: [...form.buy_costs, ...form.sell_costs],
         transport_legs: serializeTransportLegs(form.multi_modal_legs, existingTransportLegIds),
-        consolidation_details: isConsolidationJob.value ? form.consolidation_details : undefined,
+        consolidation_details: form.consolidation_details,
       }
 
       const updated = await transportJobStore.update(jobId.value, payload)

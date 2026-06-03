@@ -43,6 +43,8 @@ const JobConsolidationCustomerInvoiceTab = () =>
   import("@/app/pages/jobs/details/tabs/Consolidation/JobConsolidationCustomerInvoiceTab.vue")
 const JobConsolidationWmsTab = () =>
   import("@/app/pages/jobs/details/tabs/Consolidation/JobConsolidationWmsTab.vue")
+const JobLoadPlannerTab = () =>
+  import("@/app/pages/jobs/details/tabs/LoadPlanner/JobLoadPlannerTab.vue")
 
 const QuoteListPage = () => import("@/app/pages/quotes/list/QuoteListPage.vue")
 const QuoteCreatePage = () => import("@/app/pages/quotes/create/QuoteCreatePage.vue")
@@ -300,6 +302,11 @@ export const routes: RouteRecordRaw[] = [
             path: "wms",
             name: "tms.jobs.show.wms",
             component: JobConsolidationWmsTab,
+          },
+          {
+            path: "load-planner",
+            name: "tms.jobs.show.load-planner",
+            component: JobLoadPlannerTab,
           },
         ],
       },

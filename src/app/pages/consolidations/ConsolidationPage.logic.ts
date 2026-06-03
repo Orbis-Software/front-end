@@ -18,6 +18,7 @@ import type {
   JobPackage,
   JobTransportLeg,
   TransportJobCreatePayload,
+  TransportMode,
 } from "@/app/types/transport-job"
 import { buildReferenceNumber } from "@/app/utils/reference-sequence"
 import { getPackageStackOption, setPackageStackOption } from "@/app/utils/packageStacking"
@@ -1322,6 +1323,22 @@ export function useConsolidationPage() {
     return "road"
   }
 
+  function transportModeForJob(): TransportMode {
+    const mode = overview.mode.toLowerCase()
+
+    if (
+      mode === "air" ||
+      mode === "sea" ||
+      mode === "rail" ||
+      mode === "road" ||
+      mode === "courier"
+    ) {
+      return mode
+    }
+
+    return "road"
+  }
+
   function buildTransportLegs(): JobTransportLeg[] {
     const etd = normalizedDate(transport.etd) ?? normalizedDate(overview.shipDate)
     const eta = normalizedDate(transport.eta)
@@ -1478,7 +1495,7 @@ export function useConsolidationPage() {
       job_number: jobNumberUsesSystem.value ? null : overview.jobNo || null,
       job_date: normalizedDate(overview.jobDate),
       job_type: "consolidation",
-      mode_of_transport: "consolidation",
+      mode_of_transport: transportModeForJob(),
       status: "Draft",
       service_type: "Consolidation",
       incoterms:

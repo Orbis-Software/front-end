@@ -51,6 +51,7 @@ const {
               <th>Gross kg</th>
               <th>Vol kg</th>
               <th>CBM</th>
+              <th class="job-packages-tab__check-heading">ADR</th>
               <th class="job-packages-tab__check-heading">Stackable</th>
               <th class="job-packages-tab__check-heading">Non-Stack</th>
               <th class="job-packages-tab__check-heading">Top-Loadable</th>
@@ -140,6 +141,10 @@ const {
               </td>
 
               <td class="job-packages-tab__check-cell">
+                <Checkbox v-model="row.adr" class="job-packages-tab__check-input" binary />
+              </td>
+
+              <td class="job-packages-tab__check-cell">
                 <Checkbox
                   class="job-packages-tab__check-input"
                   :model-value="getPackageStackOption(row) === 'stackable'"
@@ -178,8 +183,8 @@ const {
             </tr>
 
             <tr v-if="!rows.length">
-              <td colspan="14" class="job-packages-tab__empty">
-                No packages yet. Click “Add Package” to create one.
+              <td colspan="15" class="job-packages-tab__empty">
+                No packages yet. Click Add Package to create one.
               </td>
             </tr>
           </tbody>
