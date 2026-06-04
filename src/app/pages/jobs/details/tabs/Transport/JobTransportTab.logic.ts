@@ -295,7 +295,6 @@ export function useJobTransportTab() {
 
   return {
     form,
-    isConsolidationJob: jobDetails.isConsolidationJob,
     mode,
     modeLabel,
     multiModalLegs,
