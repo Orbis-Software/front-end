@@ -1,5 +1,5 @@
 import { computed, onMounted, provide, reactive, ref, watch } from "vue"
-import { useRoute } from "vue-router"
+import { useRoute, useRouter } from "vue-router"
 import { useToast } from "primevue/usetoast"
 
 import { useTransportJobStore } from "@/app/stores/transport-job"
@@ -708,6 +708,7 @@ function detailPayloadForMode(form: JobDetailsForm): Partial<TransportJobUpdateP
 
 export function useJobDetailsPage() {
   const route = useRoute()
+  const router = useRouter()
   const toast = useToast()
   const transportJobStore = useTransportJobStore()
   const contactStore = useContactStore()
@@ -797,6 +798,11 @@ export function useJobDetailsPage() {
       key: "costs",
       showCount: true,
     },
+    {
+      label: "Load Planner",
+      name: "tms.jobs.show.load-planner",
+      key: "load-planner",
+    },
   ]
 
   const consolidationTabs: JobDetailsTab[] = [
@@ -830,12 +836,8 @@ export function useJobDetailsPage() {
       key: "wms",
       showCount: true,
     },
-    {
-      label: "Load Planner",
-      name: "tms.jobs.show.load-planner",
-      key: "load-planner",
-    },
   ]
+  const consolidationTabNames = new Set(consolidationTabs.map(tab => tab.name))
 
   type CustomerOption = {
     label: string
@@ -953,8 +955,22 @@ export function useJobDetailsPage() {
   })
 
   const tabs = computed<JobDetailsTab[]>(() => {
-    return [...baseTabs, ...consolidationTabs]
+    return isConsolidationJob.value ? [...baseTabs, ...consolidationTabs] : baseTabs
   })
+
+  watch(
+    [isConsolidationJob, currentRouteName],
+    ([isConsolidation, routeName]) => {
+      if (!isConsolidation && consolidationTabNames.has(routeName)) {
+        router.replace({
+          name: "tms.jobs.show.overview",
+          params: route.params,
+          query: route.query,
+        })
+      }
+    },
+    { immediate: true },
+  )
 
   const title = computed(() => {
     return form.job_number || "Job Details"

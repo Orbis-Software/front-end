@@ -9,7 +9,6 @@ import { useJobTransportTab } from "./JobTransportTab.logic"
 
 const {
   form,
-  isConsolidationJob,
   mode,
   modeLabel,
   multiModalLegs,
@@ -148,109 +147,6 @@ const signatureRequiredOptions = [
 
     <div v-if="!mode" class="job-transport-tab__empty">
       Select a mode of transport from the job header to load the transport inputs.
-    </div>
-
-    <div v-if="isConsolidationJob" class="job-transport-tab__section">
-      <header class="job-transport-tab__section-header">
-        <h2>Consolidation Transport</h2>
-        <span class="job-transport-tab__badge">Consolidation</span>
-      </header>
-
-      <div v-if="multiModalLegs.length" class="job-transport-tab__legs">
-        <div
-          v-for="(leg, index) in multiModalLegs"
-          :key="leg.id"
-          class="job-transport-tab__leg-card"
-        >
-          <div class="job-transport-tab__leg-header">
-            <strong>Transport Leg {{ index + 1 }}</strong>
-          </div>
-
-          <div class="job-transport-tab__grid">
-            <label class="job-transport-tab__field">
-              <span>Leg Mode</span>
-              <Dropdown
-                v-model="leg.mode"
-                :options="legModeOptions"
-                option-label="label"
-                option-value="value"
-                class="job-transport-tab__prime-select"
-              />
-            </label>
-
-            <label class="job-transport-tab__field">
-              <span>Carrier</span>
-              <InputText v-model="leg.carrier" placeholder="Carrier" />
-            </label>
-
-            <label class="job-transport-tab__field">
-              <span>Reference</span>
-              <InputText v-model="leg.reference" placeholder="Booking / transport ref" />
-            </label>
-
-            <label class="job-transport-tab__field">
-              <span>Origin</span>
-              <InputText v-model="leg.origin" placeholder="Origin" />
-            </label>
-
-            <label class="job-transport-tab__field">
-              <span>Destination</span>
-              <InputText v-model="leg.destination" placeholder="Destination" />
-            </label>
-
-            <label class="job-transport-tab__field">
-              <span>ETD</span>
-              <InputText v-model="leg.etd" type="date" />
-            </label>
-
-            <label class="job-transport-tab__field">
-              <span>ETA</span>
-              <InputText v-model="leg.eta" type="date" />
-            </label>
-
-            <label class="job-transport-tab__field job-transport-tab__field--span-4">
-              <span>Notes</span>
-              <Textarea v-model="leg.notes" placeholder="Transport notes..." />
-            </label>
-          </div>
-        </div>
-      </div>
-
-      <div v-else class="job-transport-tab__empty">
-        No transport leg was captured for this consolidation.
-      </div>
-
-      <div class="job-transport-tab__grid">
-        <label class="job-transport-tab__field">
-          <span>Final Delivery Ref</span>
-          <InputText v-model="form.consolidation_details.finalDelivery.deliveryRef" />
-        </label>
-
-        <label class="job-transport-tab__field">
-          <span>Planned Delivery Date</span>
-          <InputText v-model="form.consolidation_details.finalDelivery.plannedDate" type="date" />
-        </label>
-
-        <label class="job-transport-tab__field">
-          <span>Planned Delivery Time</span>
-          <InputText v-model="form.consolidation_details.finalDelivery.plannedTime" type="time" />
-        </label>
-
-        <label class="job-transport-tab__field">
-          <span>Final Carrier</span>
-          <InputText v-model="form.consolidation_details.finalDelivery.carrier" />
-        </label>
-
-        <label class="job-transport-tab__field job-transport-tab__field--span-2">
-          <span>Final Delivery Address</span>
-          <InputText v-model="form.consolidation_details.finalDelivery.address" />
-        </label>
-
-        <label class="job-transport-tab__field job-transport-tab__field--span-2">
-          <span>Final Delivery Instructions</span>
-          <InputText v-model="form.consolidation_details.finalDelivery.instructions" />
-        </label>
-      </div>
     </div>
 
     <!-- =========================
