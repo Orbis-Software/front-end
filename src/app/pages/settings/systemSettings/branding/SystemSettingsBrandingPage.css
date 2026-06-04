@@ -234,10 +234,224 @@
   gap: 1rem;
 }
 
+.company-header-editor {
+  display: grid;
+  grid-template-columns: minmax(280px, 1fr) minmax(280px, 0.85fr);
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid #ededed;
+  border-radius: 14px;
+  background: #fafafa;
+}
+
+.company-header-editor__form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.company-header-editor__title {
+  margin: 0;
+  color: var(--text);
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.company-header-editor__subtitle {
+  margin: 0.35rem 0 0;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.company-header-editor__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.company-header-editor__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.company-header-editor__field > span {
+  color: var(--text);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.company-header-editor__field-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-height: 30px;
+}
+
+.company-header-editor__field-header .p-button {
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+}
+
+.company-header-editor__field--wide {
+  grid-column: 1 / -1;
+}
+
+.company-header-editor__field .p-inputtext,
+.company-header-editor__field .p-select,
+.company-header-editor__field .p-textarea {
+  width: 100%;
+}
+
+.company-header-editor__color-control {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  gap: 0.6rem;
+  align-items: center;
+}
+
+.company-header-editor__color-control input[type="color"] {
+  width: 48px;
+  height: 40px;
+  padding: 3px;
+  border: 1px solid #d9d9d9;
+  border-radius: 10px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.company-header-editor__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.company-header-editor__upload {
+  max-width: 100%;
+}
+
+.company-header-preview {
+  min-width: 0;
+}
+
+.company-header-preview__eyebrow {
+  display: block;
+  margin-bottom: 0.6rem;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.company-header-preview__shell {
+  display: grid;
+  grid-template-columns: minmax(120px, 180px) minmax(0, 1fr);
+  gap: 1rem;
+  min-width: 0;
+  padding: 1rem;
+  border: 1px solid #e3e3e3;
+  border-top: 4px solid var(--primary);
+  border-radius: 14px;
+  background: #fff;
+  color: var(--text);
+  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.08);
+}
+
+.company-header-preview__shell img {
+  width: 100%;
+  max-width: 180px;
+  max-height: 94px;
+  object-fit: contain;
+  object-position: left top;
+}
+
+.company-header-preview__copy,
+.company-header-preview__contact {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.company-header-preview__copy {
+  gap: 0.25rem;
+}
+
+.company-header-preview__copy strong,
+.company-header-preview__copy span,
+.company-header-preview__copy p,
+.company-header-preview__contact span {
+  overflow-wrap: anywhere;
+}
+
+.company-header-preview__copy p {
+  margin: 0.5rem 0 0;
+  line-height: 1.45;
+}
+
+.company-header-preview__contact {
+  grid-column: 1 / -1;
+  gap: 0.2rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid #ededed;
+  line-height: 1.35;
+}
+
+.company-header-style-dialog__body {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.company-header-style-dialog__preview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 1rem;
+  border: 1px solid #e3e3e3;
+  border-radius: 12px;
+  background: #fafafa;
+}
+
+.company-header-style-dialog__preview strong {
+  font-size: 1em;
+}
+
+.company-header-style-dialog__preview span {
+  color: var(--text-muted);
+  font-size: 0.9em;
+  font-weight: 800;
+}
+
 .document-branding {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+}
+
+.document-branding__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.document-branding__header h3 {
+  margin: 0;
+  color: var(--text);
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.document-branding__header p {
+  margin: 0.25rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.86rem;
+  line-height: 1.4;
 }
 
 .document-branding__section {
@@ -725,7 +939,9 @@
 }
 
 @media (max-width: 840px) {
-  .logo-editor {
+  .logo-editor,
+  .company-header-editor,
+  .company-header-editor__grid {
     grid-template-columns: 1fr;
   }
 
@@ -751,6 +967,10 @@
 }
 
 @media (max-width: 560px) {
+  .company-header-preview__shell {
+    grid-template-columns: 1fr;
+  }
+
   .document-branding__toggle {
     flex-direction: column;
   }

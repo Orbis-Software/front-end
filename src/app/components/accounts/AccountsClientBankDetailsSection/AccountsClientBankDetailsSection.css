@@ -35,11 +35,85 @@
   line-height: 1.35;
 }
 
+.accounts-client-bank-details__actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.accounts-client-bank-details__filters {
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) minmax(220px, 320px);
+  gap: 12px;
+  align-items: end;
+  margin-top: 20px;
+}
+
+.accounts-client-bank-details__filters .accounts-client-bank-details__field {
+  grid-column: auto;
+}
+
+.accounts-client-bank-details__dialog.p-dialog .p-dialog-content {
+  background: var(--bg-page);
+  padding-top: 14px;
+  padding-bottom: 14px;
+}
+
+.accounts-client-bank-details__dialog.p-dialog .p-dialog-footer {
+  background: var(--bg-page);
+  border-top: 0;
+  padding-top: 0;
+}
+
+.accounts-client-bank-details__dialog.p-dialog {
+  overflow: hidden;
+}
+
+.accounts-client-bank-details__dialog.p-dialog .p-dialog-header {
+  border-bottom: 0;
+}
+
+.accounts-client-bank-details__form-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.accounts-client-bank-details__form-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+  padding: 14px;
+}
+
+.accounts-client-bank-details__form-card-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.accounts-client-bank-details__form-card-head h3 {
+  margin: 0;
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.accounts-client-bank-details__form-card-kicker {
+  color: var(--primary);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .accounts-client-bank-details__form-grid {
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
   gap: 12px;
-  margin-top: 20px;
 }
 
 .accounts-client-bank-details__field {
@@ -49,8 +123,21 @@
   grid-column: span 3;
 }
 
+.accounts-client-bank-details__field--small {
+  grid-column: span 2;
+}
+
+.accounts-client-bank-details__field--medium,
 .accounts-client-bank-details__field--wide {
+  grid-column: span 3;
+}
+
+.accounts-client-bank-details__field--large {
   grid-column: span 4;
+}
+
+.accounts-client-bank-details__field--xlarge {
+  grid-column: span 6;
 }
 
 .accounts-client-bank-details__field label {
@@ -59,13 +146,61 @@
   color: var(--text-muted);
 }
 
-.accounts-client-bank-details__add-row {
+.accounts-client-bank-details__field .p-inputtext,
+.accounts-client-bank-details__field .p-dropdown {
+  width: 100%;
+  min-height: 40px;
+  border-color: var(--border);
+  background: var(--bg-card);
+}
+
+.accounts-client-bank-details__field .p-inputtext:enabled:focus,
+.accounts-client-bank-details__field .p-dropdown.p-focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 18%, transparent);
+}
+
+.accounts-client-bank-details__control {
+  width: 100%;
+}
+
+.accounts-client-bank-details__contact-option {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.accounts-client-bank-details__contact-option small {
+  color: var(--text-muted);
+}
+
+.accounts-client-bank-details__dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.accounts-client-bank-details__counts {
   margin-top: 14px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.accounts-client-bank-details__error {
+  margin-top: 10px;
+  border: 1px solid #e0aaaa;
+  background: #fff2f2;
+  color: #8c2c2c;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 13px;
 }
 
 .accounts-client-bank-details__table-wrap {
   overflow-x: auto;
-  margin-top: 12px;
+  margin-top: 14px;
 }
 
 .accounts-client-bank-details__table {
@@ -85,9 +220,11 @@
 }
 
 .accounts-client-bank-details__table th {
-  background: #fafafa;
+  background: var(--bg-page);
   color: var(--text-muted);
   font-weight: 700;
+  cursor: pointer;
+  user-select: none;
 }
 
 .accounts-client-bank-details__table-actions {
@@ -96,33 +233,57 @@
   flex-wrap: wrap;
 }
 
+.accounts-client-bank-details__paginator.p-paginator {
+  justify-content: flex-end;
+  border: 0;
+  background: var(--bg-card);
+  padding: 12px 16px 0;
+}
+
 @media (max-width: 1400px) {
-  .accounts-client-bank-details__field {
+  .accounts-client-bank-details__field,
+  .accounts-client-bank-details__field--small,
+  .accounts-client-bank-details__field--medium,
+  .accounts-client-bank-details__field--wide,
+  .accounts-client-bank-details__field--large {
     grid-column: span 4;
   }
 
-  .accounts-client-bank-details__field--wide {
-    grid-column: span 6;
+  .accounts-client-bank-details__field--xlarge {
+    grid-column: span 8;
   }
 }
 
 @media (max-width: 1024px) {
-  .accounts-client-bank-details__field {
-    grid-column: span 6;
-  }
-
-  .accounts-client-bank-details__field--wide {
+  .accounts-client-bank-details__field,
+  .accounts-client-bank-details__field--small,
+  .accounts-client-bank-details__field--medium,
+  .accounts-client-bank-details__field--wide,
+  .accounts-client-bank-details__field--large,
+  .accounts-client-bank-details__field--xlarge {
     grid-column: span 6;
   }
 }
 
 @media (max-width: 768px) {
+  .accounts-client-bank-details__filters,
   .accounts-client-bank-details__form-grid {
     grid-template-columns: 1fr;
   }
 
   .accounts-client-bank-details__field,
+  .accounts-client-bank-details__field--small,
+  .accounts-client-bank-details__field--medium,
   .accounts-client-bank-details__field--wide {
     grid-column: auto;
+  }
+
+  .accounts-client-bank-details__field--large,
+  .accounts-client-bank-details__field--xlarge {
+    grid-column: auto;
+  }
+
+  .accounts-client-bank-details__paginator.p-paginator {
+    justify-content: flex-start;
   }
 }

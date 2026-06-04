@@ -10,6 +10,8 @@ const {
   fontFamilyOptions,
   fontSizeOptions,
   hasSignatureImage,
+  loading,
+  saving,
   styleDialogVisible,
   getSignatureFieldStyle,
   openStyleDialog,
@@ -110,6 +112,7 @@ const {
             :maxFileSize="2000000"
             :auto="false"
             :customUpload="true"
+            :disabled="saving"
             chooseLabel="Upload Signature Image"
             class="user-signature-page__upload"
             @select="onSignatureImageSelect"
@@ -119,7 +122,7 @@ const {
             label="Clear Image"
             icon="pi pi-times"
             outlined
-            :disabled="!hasSignatureImage"
+            :disabled="!hasSignatureImage || saving"
             @click="onClearSignatureImage"
           />
 
@@ -127,6 +130,8 @@ const {
             label="Save Signature"
             icon="pi pi-save"
             class="btn btn--primary"
+            :loading="saving"
+            :disabled="loading"
             @click="onSaveSignature"
           />
         </div>

@@ -8,21 +8,36 @@ const {
   company,
   companyName,
   currentLogoSrc,
+  currentHeaderImageSrc,
   errorMessage,
   hasLogoChange,
+  hasHeaderImage,
+  headerSettings,
+  headerStyleDialogVisible,
+  activeHeaderFieldPreview,
+  activeHeaderFieldStyle,
+  activeHeaderStyleLabel,
   activeSignature,
   hasSavedSignature,
   loading,
   saving,
+  fontFamilyOptions,
+  fontSizeOptions,
   documentFormatOptions,
   documentSections,
   documentToneOptions,
   pdfLayoutOptions,
   setActiveTab,
+  getHeaderFieldStyle,
+  openHeaderStyleDialog,
   getActiveSignatureFieldStyle,
   toggleDocumentSection,
   updateDocumentBody,
   applyEditorCommand,
+  onSaveDocumentBranding,
+  onSaveHeaderBranding,
+  onHeaderImageSelect,
+  onClearHeaderImage,
   onClearLogoSelection,
   onLogoSelect,
   onSaveLogo,
@@ -124,7 +139,202 @@ const {
       </div>
     </div>
 
+    <div v-else-if="activeTab === 'header'" class="branding-panel">
+      <div class="company-header-editor">
+        <div class="company-header-editor__form">
+          <div>
+            <h3 class="company-header-editor__title">Company header</h3>
+            <p class="company-header-editor__subtitle">
+              Manage the shared company header shown in branded document and email previews.
+            </p>
+          </div>
+
+          <div class="company-header-editor__grid">
+            <label class="company-header-editor__field">
+              <span class="company-header-editor__field-header">
+                <span>Company name</span>
+                <Button
+                  icon="pi pi-sliders-h"
+                  text
+                  rounded
+                  aria-label="Style company name"
+                  @click="openHeaderStyleDialog('companyName')"
+                />
+              </span>
+              <InputText v-model="headerSettings.companyName" />
+            </label>
+
+            <label class="company-header-editor__field">
+              <span class="company-header-editor__field-header">
+                <span>Tagline</span>
+                <Button
+                  icon="pi pi-sliders-h"
+                  text
+                  rounded
+                  aria-label="Style tagline"
+                  @click="openHeaderStyleDialog('tagline')"
+                />
+              </span>
+              <InputText v-model="headerSettings.tagline" />
+            </label>
+
+            <label class="company-header-editor__field">
+              <span class="company-header-editor__field-header">
+                <span>Phone</span>
+                <Button
+                  icon="pi pi-sliders-h"
+                  text
+                  rounded
+                  aria-label="Style phone"
+                  @click="openHeaderStyleDialog('phone')"
+                />
+              </span>
+              <InputText v-model="headerSettings.phone" />
+            </label>
+
+            <label class="company-header-editor__field">
+              <span class="company-header-editor__field-header">
+                <span>Email</span>
+                <Button
+                  icon="pi pi-sliders-h"
+                  text
+                  rounded
+                  aria-label="Style email"
+                  @click="openHeaderStyleDialog('email')"
+                />
+              </span>
+              <InputText v-model="headerSettings.email" />
+            </label>
+
+            <label class="company-header-editor__field">
+              <span class="company-header-editor__field-header">
+                <span>Website</span>
+                <Button
+                  icon="pi pi-sliders-h"
+                  text
+                  rounded
+                  aria-label="Style website"
+                  @click="openHeaderStyleDialog('website')"
+                />
+              </span>
+              <InputText v-model="headerSettings.website" />
+            </label>
+
+            <label class="company-header-editor__field">
+              <span class="company-header-editor__field-header">
+                <span>Address</span>
+                <Button
+                  icon="pi pi-sliders-h"
+                  text
+                  rounded
+                  aria-label="Style address"
+                  @click="openHeaderStyleDialog('address')"
+                />
+              </span>
+              <InputText v-model="headerSettings.address" />
+            </label>
+
+            <label class="company-header-editor__field company-header-editor__field--wide">
+              <span class="company-header-editor__field-header">
+                <span>Header message</span>
+                <Button
+                  icon="pi pi-sliders-h"
+                  text
+                  rounded
+                  aria-label="Style header message"
+                  @click="openHeaderStyleDialog('message')"
+                />
+              </span>
+              <Textarea v-model="headerSettings.message" autoResize rows="3" />
+            </label>
+          </div>
+
+          <div class="company-header-editor__actions">
+            <FileUpload
+              mode="basic"
+              name="headerImage"
+              accept="image/*"
+              :maxFileSize="2000000"
+              :auto="false"
+              :customUpload="true"
+              :disabled="saving"
+              chooseLabel="Upload Header Image"
+              class="company-header-editor__upload"
+              @select="onHeaderImageSelect"
+            />
+
+            <Button
+              label="Clear Image"
+              icon="pi pi-times"
+              outlined
+              :disabled="!hasHeaderImage || saving"
+              @click="onClearHeaderImage"
+            />
+
+            <Button
+              label="Save Header"
+              icon="pi pi-save"
+              class="btn btn--primary"
+              :loading="saving"
+              @click="onSaveHeaderBranding"
+            />
+          </div>
+        </div>
+
+        <div class="company-header-preview">
+          <span class="company-header-preview__eyebrow">Preview</span>
+          <div class="company-header-preview__shell">
+            <img
+              v-if="currentHeaderImageSrc"
+              :src="currentHeaderImageSrc"
+              :alt="`${companyName} header`"
+            />
+            <div class="company-header-preview__copy">
+              <strong :style="getHeaderFieldStyle('companyName')">
+                {{ headerSettings.companyName || companyName }}
+              </strong>
+              <span v-if="headerSettings.tagline" :style="getHeaderFieldStyle('tagline')">
+                {{ headerSettings.tagline }}
+              </span>
+              <p v-if="headerSettings.message" :style="getHeaderFieldStyle('message')">
+                {{ headerSettings.message }}
+              </p>
+            </div>
+            <div class="company-header-preview__contact">
+              <span v-if="headerSettings.phone" :style="getHeaderFieldStyle('phone')">
+                {{ headerSettings.phone }}
+              </span>
+              <span v-if="headerSettings.email" :style="getHeaderFieldStyle('email')">
+                {{ headerSettings.email }}
+              </span>
+              <span v-if="headerSettings.website" :style="getHeaderFieldStyle('website')">
+                {{ headerSettings.website }}
+              </span>
+              <span v-if="headerSettings.address" :style="getHeaderFieldStyle('address')">
+                {{ headerSettings.address }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div v-else class="branding-panel">
+      <div class="document-branding__header">
+        <div>
+          <h3>Document branding</h3>
+          <p>Save PDF and email wording, layout, and display options for company documents.</p>
+        </div>
+
+        <Button
+          label="Save Document Branding"
+          icon="pi pi-save"
+          class="btn btn--primary"
+          :loading="saving"
+          @click="onSaveDocumentBranding"
+        />
+      </div>
+
       <div class="document-branding">
         <article
           v-for="section in documentSections"
@@ -378,5 +588,51 @@ const {
         </article>
       </div>
     </div>
+
+    <Dialog
+      v-model:visible="headerStyleDialogVisible"
+      modal
+      :header="`${activeHeaderStyleLabel} Style`"
+      class="company-header-style-dialog"
+      :style="{ width: 'min(94vw, 460px)' }"
+    >
+      <div class="company-header-style-dialog__body">
+        <label class="company-header-editor__field">
+          <span>Font style</span>
+          <Select v-model="activeHeaderFieldStyle.fontFamily" :options="fontFamilyOptions" />
+        </label>
+
+        <label class="company-header-editor__field">
+          <span>Font size</span>
+          <Select v-model="activeHeaderFieldStyle.fontSize" :options="fontSizeOptions" />
+        </label>
+
+        <label class="company-header-editor__field">
+          <span>Font color</span>
+          <span class="company-header-editor__color-control">
+            <input
+              v-model="activeHeaderFieldStyle.color"
+              type="color"
+              aria-label="Header font color"
+            />
+            <InputText v-model="activeHeaderFieldStyle.color" />
+          </span>
+        </label>
+
+        <div class="company-header-style-dialog__preview" :style="activeHeaderFieldStyle">
+          <span>{{ activeHeaderStyleLabel }}</span>
+          <strong>{{ activeHeaderFieldPreview }}</strong>
+        </div>
+      </div>
+
+      <template #footer>
+        <Button
+          label="Done"
+          icon="pi pi-check"
+          class="btn btn--primary"
+          @click="headerStyleDialogVisible = false"
+        />
+      </template>
+    </Dialog>
   </section>
 </template>

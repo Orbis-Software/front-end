@@ -1,19 +1,21 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue"
+import { useCompanyBrandingSettingsStore } from "@/app/stores/company-branding-settings"
 import { useCompanyStore } from "@/app/stores/company"
+import { useUserSignatureStore } from "@/app/stores/user-signature"
 import type { Company } from "@/app/types/company"
+import type {
+  BrandingDocumentFormat as DocumentFormat,
+  BrandingDocumentSection,
+  BrandingDocumentTone as DocumentTone,
+  BrandingHeaderFieldKey,
+  BrandingHeaderSettings,
+  BrandingHeaderStyle,
+  BrandingPdfLayout as PdfLayout,
+} from "@/app/types/company-branding-settings"
+import type { SignatureFieldKey, SignatureStyle } from "@/app/types/user-signature"
 import { useToast } from "primevue/usetoast"
 
-type BrandingTab = "logo-assets" | "colours" | "documents"
-type DocumentFormat = "PDF" | "Email"
-type DocumentTone = "Formal" | "Operational" | "Customer Friendly"
-type PdfLayout = "Standard" | "Compact" | "Detailed"
-type SignatureFieldKey = "body" | "name" | "title" | "phone" | "email"
-
-type SignatureStyle = {
-  fontFamily: string
-  fontSize: string
-  color: string
-}
+type BrandingTab = "logo-assets" | "header" | "colours" | "documents"
 
 type BrandingSignature = {
   name: string
@@ -25,32 +27,26 @@ type BrandingSignature = {
   styles: Record<SignatureFieldKey, SignatureStyle>
 }
 
-type BrandingDocumentSection = {
-  id: string
-  title: string
-  description: string
-  format: DocumentFormat
-  tone: DocumentTone
-  expanded: boolean
-  header: string
-  subject: string
-  body: string
-  footer: string
-  layout: PdfLayout
-  includeLogo: boolean
-  includeBankDetails: boolean
-  includeSignature: boolean
-}
-
 const fallbackLogo = "/orbis-logo.png"
-const signatureStorageKey = "pc-cargo.branding.signature"
 const defaultSignatureStyle: SignatureStyle = {
   fontFamily: "Arial, sans-serif",
   fontSize: "14px",
   color: "#2f2f2f",
 }
-
-type StoredBrandingSignature = Partial<BrandingSignature> & Partial<SignatureStyle>
+const defaultHeaderStyle: BrandingHeaderStyle = {
+  fontFamily: "Arial, sans-serif",
+  fontSize: "14px",
+  color: "#2f2f2f",
+}
+const headerFieldLabels: Record<BrandingHeaderFieldKey, string> = {
+  companyName: "Company name",
+  tagline: "Tagline",
+  phone: "Phone",
+  email: "Email",
+  website: "Website",
+  address: "Address",
+  message: "Header message",
+}
 
 function createDefaultStyles(): Record<SignatureFieldKey, SignatureStyle> {
   return {
@@ -59,6 +55,18 @@ function createDefaultStyles(): Record<SignatureFieldKey, SignatureStyle> {
     title: { ...defaultSignatureStyle, color: "#5f5f5f" },
     phone: { ...defaultSignatureStyle, fontSize: "12px", color: "#5f5f5f" },
     email: { ...defaultSignatureStyle, fontSize: "12px", color: "#5f5f5f" },
+  }
+}
+
+function createDefaultHeaderStyles(): Record<BrandingHeaderFieldKey, BrandingHeaderStyle> {
+  return {
+    companyName: { ...defaultHeaderStyle, fontSize: "20px", color: "#171717" },
+    tagline: { ...defaultHeaderStyle, fontSize: "13px", color: "#6b7280" },
+    phone: { ...defaultHeaderStyle, fontSize: "12px", color: "#4b5563" },
+    email: { ...defaultHeaderStyle, fontSize: "12px", color: "#4b5563" },
+    website: { ...defaultHeaderStyle, fontSize: "12px", color: "#4b5563" },
+    address: { ...defaultHeaderStyle, fontSize: "12px", color: "#4b5563" },
+    message: { ...defaultHeaderStyle, fontSize: "13px", color: "#2f2f2f" },
   }
 }
 
@@ -84,18 +92,60 @@ function normalizeStyles(
   )
 }
 
+function normalizeHeaderStyles(
+  saved?: Partial<Record<BrandingHeaderFieldKey, Partial<BrandingHeaderStyle>>>,
+) {
+  const defaults = createDefaultHeaderStyles()
+
+  return (Object.keys(defaults) as BrandingHeaderFieldKey[]).reduce(
+    (styles, key) => {
+      styles[key] = {
+        ...defaults[key],
+        ...(saved?.[key] ?? {}),
+      }
+      return styles
+    },
+    {} as Record<BrandingHeaderFieldKey, BrandingHeaderStyle>,
+  )
+}
+
 export function useSystemSettingsBrandingPage() {
   const store = useCompanyStore()
+  const brandingSettingsStore = useCompanyBrandingSettingsStore()
+  const signatureStore = useUserSignatureStore()
   const toast = useToast()
   const activeTab = ref<BrandingTab>("logo-assets")
   const logoFile = ref<File | null>(null)
   const logoPreview = ref<string | null>(null)
   const localLogoUrl = ref<string | null>(null)
+  const headerImageFile = ref<File | null>(null)
+  const headerImagePreview = ref<string | null>(null)
+  const clearHeaderImage = ref(false)
+  const headerStyleDialogVisible = ref(false)
+  const activeHeaderStyleField = ref<BrandingHeaderFieldKey>("companyName")
   const errorMessage = ref("")
   const savedSignature = ref<BrandingSignature | null>(null)
+  const fontFamilyOptions = [
+    "Arial, sans-serif",
+    "Georgia, serif",
+    "Inter, sans-serif",
+    "Times New Roman, serif",
+    "Verdana, sans-serif",
+  ]
+  const fontSizeOptions = ["12px", "13px", "14px", "15px", "16px", "18px", "20px", "24px"]
   const documentFormatOptions: DocumentFormat[] = ["PDF", "Email"]
   const documentToneOptions: DocumentTone[] = ["Formal", "Operational", "Customer Friendly"]
   const pdfLayoutOptions: PdfLayout[] = ["Standard", "Compact", "Detailed"]
+  const headerSettings = ref<BrandingHeaderSettings>({
+    companyName: "",
+    tagline: "Freight, customs, and logistics services",
+    phone: "",
+    email: "",
+    website: "",
+    address: "",
+    message: "Thank you for choosing our team.",
+    styles: createDefaultHeaderStyles(),
+  })
 
   const documentSections = ref<BrandingDocumentSection[]>([
     {
@@ -197,11 +247,12 @@ export function useSystemSettingsBrandingPage() {
   ])
 
   const company = computed(() => store.item as Company | null)
-  const loading = computed(() => store.loading)
-  const saving = computed(() => store.saving)
+  const loading = computed(() => store.loading || brandingSettingsStore.loading || signatureStore.loading)
+  const saving = computed(() => store.saving || brandingSettingsStore.saving)
 
   const tabs: Array<{ label: string; value: BrandingTab }> = [
     { label: "Logo & Assets", value: "logo-assets" },
+    { label: "Header", value: "header" },
     { label: "Colours", value: "colours" },
     { label: "Documents", value: "documents" },
   ]
@@ -215,6 +266,17 @@ export function useSystemSettingsBrandingPage() {
   })
 
   const hasLogoChange = computed(() => !!logoFile.value)
+  const currentHeaderImageSrc = computed(() => {
+    return headerImagePreview.value ?? brandingSettingsStore.settings?.headerImageUrl ?? currentLogoSrc.value
+  })
+  const hasHeaderImage = computed(() => {
+    return Boolean(headerImagePreview.value || brandingSettingsStore.settings?.headerImageUrl)
+  })
+  const activeHeaderStyleLabel = computed(() => headerFieldLabels[activeHeaderStyleField.value])
+  const activeHeaderFieldStyle = computed(() => headerSettings.value.styles[activeHeaderStyleField.value])
+  const activeHeaderFieldPreview = computed(() => {
+    return headerSettings.value[activeHeaderStyleField.value] || activeHeaderStyleLabel.value
+  })
   const activeSignature = computed<BrandingSignature>(() => {
     return (
       savedSignature.value ?? {
@@ -232,6 +294,15 @@ export function useSystemSettingsBrandingPage() {
 
   function getActiveSignatureFieldStyle(field: SignatureFieldKey) {
     return activeSignature.value.styles[field]
+  }
+
+  function getHeaderFieldStyle(field: BrandingHeaderFieldKey) {
+    return headerSettings.value.styles[field]
+  }
+
+  function openHeaderStyleDialog(field: BrandingHeaderFieldKey) {
+    activeHeaderStyleField.value = field
+    headerStyleDialogVisible.value = true
   }
 
   function setActiveTab(tab: BrandingTab) {
@@ -259,8 +330,19 @@ export function useSystemSettingsBrandingPage() {
     }
   }
 
+  function revokeHeaderPreview() {
+    if (headerImagePreview.value?.startsWith("blob:")) {
+      URL.revokeObjectURL(headerImagePreview.value)
+    }
+  }
+
   function hydrateFromCompany() {
     localLogoUrl.value = company.value?.logo_url ?? null
+    headerSettings.value.companyName =
+      headerSettings.value.companyName ||
+      company.value?.trading_name ||
+      company.value?.legal_name ||
+      ""
 
     if (!logoFile.value) {
       revokePreview()
@@ -270,9 +352,11 @@ export function useSystemSettingsBrandingPage() {
 
   async function onRefresh() {
     errorMessage.value = ""
-    await store.fetch()
+    await Promise.all([store.fetch(), brandingSettingsStore.fetch(), signatureStore.fetch()])
     logoFile.value = null
     hydrateFromCompany()
+    hydrateFromBrandingSettings()
+    hydrateFromSignature()
   }
 
   function onLogoSelect(event: any) {
@@ -292,24 +376,73 @@ export function useSystemSettingsBrandingPage() {
     errorMessage.value = ""
   }
 
-  function loadSavedSignature() {
-    try {
-      const raw = localStorage.getItem(signatureStorageKey)
-      if (!raw) return
+  function hydrateFromSignature() {
+    const parsed = signatureStore.signature
 
-      const parsed = JSON.parse(raw) as StoredBrandingSignature
-      savedSignature.value = {
-        name: parsed.name ?? "",
-        title: parsed.title ?? "",
-        phone: parsed.phone ?? "",
-        email: parsed.email ?? "",
-        body: parsed.body ?? "",
-        imagePreview: parsed.imagePreview ?? null,
-        styles: normalizeStyles(parsed.styles, parsed),
-      }
-    } catch {
-      localStorage.removeItem(signatureStorageKey)
+    if (!parsed) {
+      savedSignature.value = null
+      return
     }
+
+    savedSignature.value = {
+      name: parsed.name ?? "",
+      title: parsed.title ?? "",
+      phone: parsed.phone ?? "",
+      email: parsed.email ?? "",
+      body: parsed.body ?? "",
+      imagePreview: parsed.imageUrl ?? null,
+      styles: normalizeStyles(parsed.styles),
+    }
+  }
+
+  function hydrateFromBrandingSettings() {
+    const savedSections = brandingSettingsStore.settings?.documentSections
+    const savedHeader = brandingSettingsStore.settings?.headerSettings
+
+    if (savedHeader) {
+      headerSettings.value = {
+        companyName:
+          savedHeader.companyName ||
+          company.value?.trading_name ||
+          company.value?.legal_name ||
+          "",
+        tagline: savedHeader.tagline ?? "",
+        phone: savedHeader.phone ?? "",
+        email: savedHeader.email ?? "",
+        website: savedHeader.website ?? "",
+        address: savedHeader.address ?? "",
+        message: savedHeader.message ?? "",
+        styles: normalizeHeaderStyles(savedHeader.styles),
+      }
+      headerImageFile.value = null
+      clearHeaderImage.value = false
+      revokeHeaderPreview()
+      headerImagePreview.value = null
+    }
+
+    if (!savedSections?.length) return
+
+    documentSections.value = savedSections.map(section => ({
+      ...section,
+      expanded: Boolean(section.expanded),
+    }))
+  }
+
+  function onHeaderImageSelect(event: any) {
+    const file: File | undefined = event?.files?.[0]
+    if (!file) return
+
+    headerImageFile.value = file
+    clearHeaderImage.value = false
+    revokeHeaderPreview()
+    headerImagePreview.value = URL.createObjectURL(file)
+  }
+
+  function onClearHeaderImage() {
+    headerImageFile.value = null
+    clearHeaderImage.value = true
+    revokeHeaderPreview()
+    headerImagePreview.value = null
   }
 
   async function onSaveLogo() {
@@ -347,20 +480,90 @@ export function useSystemSettingsBrandingPage() {
     }
   }
 
+  async function onSaveDocumentBranding() {
+    try {
+      await brandingSettingsStore.saveDocuments(documentSections.value)
+
+      toast.add({
+        severity: "success",
+        summary: "Saved",
+        detail: "Document branding settings updated.",
+        life: 2500,
+      })
+    } catch (error: any) {
+      toast.add({
+        severity: "error",
+        summary: "Branding not saved",
+        detail:
+          error?.response?.data?.message ||
+          error?.message ||
+          brandingSettingsStore.error ||
+          "Unable to save document branding settings.",
+        life: 5000,
+      })
+    }
+  }
+
+  async function onSaveHeaderBranding() {
+    try {
+      const saved = await brandingSettingsStore.saveHeader(
+        {
+          ...headerSettings.value,
+          companyName: headerSettings.value.companyName.trim(),
+          tagline: headerSettings.value.tagline.trim(),
+          phone: headerSettings.value.phone.trim(),
+          email: headerSettings.value.email.trim(),
+          website: headerSettings.value.website.trim(),
+          address: headerSettings.value.address.trim(),
+          message: headerSettings.value.message.trim(),
+          styles: normalizeHeaderStyles(headerSettings.value.styles),
+        },
+        headerImageFile.value,
+        clearHeaderImage.value,
+      )
+
+      headerImageFile.value = null
+      clearHeaderImage.value = false
+      revokeHeaderPreview()
+      headerImagePreview.value = null
+      hydrateFromBrandingSettings()
+
+      toast.add({
+        severity: "success",
+        summary: "Saved",
+        detail: saved?.headerImageUrl
+          ? "Company header settings and image updated."
+          : "Company header settings updated.",
+        life: 2500,
+      })
+    } catch (error: any) {
+      toast.add({
+        severity: "error",
+        summary: "Header not saved",
+        detail:
+          error?.response?.data?.message ||
+          error?.message ||
+          brandingSettingsStore.error ||
+          "Unable to save company header settings.",
+        life: 5000,
+      })
+    }
+  }
+
   watch(company, hydrateFromCompany)
+  watch(() => brandingSettingsStore.settings, hydrateFromBrandingSettings)
+  watch(() => signatureStore.signature, hydrateFromSignature)
 
   onMounted(async () => {
     store.hydrateFromAuth()
     hydrateFromCompany()
-    loadSavedSignature()
 
-    if (!company.value) {
-      await onRefresh()
-    }
+    await onRefresh()
   })
 
   onBeforeUnmount(() => {
     revokePreview()
+    revokeHeaderPreview()
   })
 
   return {
@@ -369,21 +572,36 @@ export function useSystemSettingsBrandingPage() {
     company,
     companyName,
     currentLogoSrc,
+    currentHeaderImageSrc,
     errorMessage,
     hasLogoChange,
+    hasHeaderImage,
+    headerSettings,
+    headerStyleDialogVisible,
+    activeHeaderFieldPreview,
+    activeHeaderFieldStyle,
+    activeHeaderStyleLabel,
     activeSignature,
     hasSavedSignature,
     loading,
     saving,
+    fontFamilyOptions,
+    fontSizeOptions,
     documentFormatOptions,
     documentSections,
     documentToneOptions,
     pdfLayoutOptions,
     setActiveTab,
     getActiveSignatureFieldStyle,
+    getHeaderFieldStyle,
+    openHeaderStyleDialog,
     toggleDocumentSection,
     updateDocumentBody,
     applyEditorCommand,
+    onSaveDocumentBranding,
+    onSaveHeaderBranding,
+    onHeaderImageSelect,
+    onClearHeaderImage,
     onClearLogoSelection,
     onLogoSelect,
     onRefresh,
