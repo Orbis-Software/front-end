@@ -13,7 +13,6 @@ import AccountsExchangeRatesSection from "@/app/components/accounts/AccountsExch
 import AccountsChargeCodesSection from "@/app/components/accounts/AccountsChargeCodesSection/AccountsChargeCodesSection.vue"
 import AccountsTaxCodesSection from "@/app/components/accounts/AccountsTaxCodesSection/AccountsTaxCodesSection.vue"
 import AccountsClientBankDetailsSection from "@/app/components/accounts/AccountsClientBankDetailsSection/AccountsClientBankDetailsSection.vue"
-import { useAccountsDemo } from "@/app/composables/useAccountsDemo"
 
 export type AccountsTab =
   | "overview"
@@ -32,7 +31,6 @@ type TabItem = {
 }
 
 const activeTab = ref<AccountsTab>("overview")
-const { exportJson, resetDemo } = useAccountsDemo()
 
 const tabs: TabItem[] = [
   { id: "overview", label: "Overview" },
@@ -67,20 +65,6 @@ function printCurrentView() {
       </div>
 
       <div class="accounts-page__actions">
-        <Button
-          label="Reset Demo Data"
-          icon="pi pi-refresh"
-          text
-          class="accounts-page__action accounts-page__action--text"
-          @click="resetDemo"
-        />
-        <Button
-          label="Export JSON"
-          icon="pi pi-download"
-          text
-          class="accounts-page__action accounts-page__action--text"
-          @click="exportJson"
-        />
         <Button
           label="Print Current View"
           icon="pi pi-print"

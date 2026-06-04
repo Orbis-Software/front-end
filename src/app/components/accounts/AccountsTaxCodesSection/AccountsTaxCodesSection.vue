@@ -3,6 +3,7 @@ import "./AccountsTaxCodesSection.css"
 
 import { computed, onMounted, reactive, ref } from "vue"
 import Button from "primevue/button"
+import Dialog from "primevue/dialog"
 import InputText from "primevue/inputtext"
 import Paginator from "primevue/paginator"
 
@@ -11,6 +12,7 @@ import type { TaxCode } from "@/app/types/tax-code"
 
 const taxCodeStore = useTaxCodeStore()
 const editingId = ref<number | null>(null)
+const formVisible = ref(false)
 const filterState = reactive({
   search: "",
   sort: "country",
@@ -33,10 +35,21 @@ const countsText = computed(() => {
   return `Showing ${range} of ${taxCodeStore.filtered} tax codes`
 })
 const firstRow = computed(() => (filterState.page - 1) * filterState.perPage)
+const formTitle = computed(() => (editingId.value ? "Edit Tax Code" : "Add Tax Code"))
 
 function resetForm() {
   editingId.value = null
   Object.assign(form, { country: "", code: "", taxCode: "", rate: "", description: "" })
+}
+
+function openCreateModal() {
+  resetForm()
+  formVisible.value = true
+}
+
+function closeForm() {
+  formVisible.value = false
+  resetForm()
 }
 
 function requestParams() {
@@ -64,13 +77,14 @@ async function saveTaxCode() {
   if (editingId.value) await taxCodeStore.update(editingId.value, payload)
   else await taxCodeStore.create(payload)
 
-  resetForm()
+  closeForm()
   await fetchTaxCodes()
 }
 
 function editTaxCode(row: TaxCode) {
   editingId.value = row.id
   Object.assign(form, { ...row, rate: String(row.rate) })
+  formVisible.value = true
 }
 
 async function deleteTaxCode(row: TaxCode) {
@@ -119,6 +133,7 @@ onMounted(fetchTaxCodes)
           <h2 class="accounts-tax-codes__title">Country tax matrix for customer invoicing</h2>
         </div>
         <div class="accounts-tax-codes__actions">
+          <Button label="Add Tax Code" class="btn btn--primary" @click="openCreateModal" />
           <Button label="Reset" class="btn btn--ghost" @click="resetTaxCodes" />
         </div>
       </div>
@@ -134,38 +149,49 @@ onMounted(fetchTaxCodes)
         </div>
       </div>
 
-      <div class="accounts-tax-codes__form-grid">
-        <div class="accounts-tax-codes__field">
-          <label>Country</label>
-          <InputText v-model="form.country" />
+      <Dialog
+        v-model:visible="formVisible"
+        :header="formTitle"
+        modal
+        class="accounts-tax-codes__dialog"
+        :style="{ width: '640px', maxWidth: 'calc(100vw - 32px)' }"
+        @hide="resetForm"
+      >
+        <div class="accounts-tax-codes__form-grid">
+          <div class="accounts-tax-codes__field accounts-tax-codes__field--wide">
+            <label>Country</label>
+            <InputText v-model="form.country" placeholder="e.g. United Kingdom" autofocus />
+          </div>
+          <div class="accounts-tax-codes__field">
+            <label>Country Code</label>
+            <InputText v-model="form.code" placeholder="e.g. GB" />
+          </div>
+          <div class="accounts-tax-codes__field">
+            <label>Tax Code</label>
+            <InputText v-model="form.taxCode" placeholder="e.g. UK20" />
+          </div>
+          <div class="accounts-tax-codes__field">
+            <label>Rate %</label>
+            <InputText v-model="form.rate" placeholder="e.g. 20" />
+          </div>
+          <div class="accounts-tax-codes__field">
+            <label>Description</label>
+            <InputText v-model="form.description" placeholder="e.g. Standard VAT" />
+          </div>
         </div>
-        <div class="accounts-tax-codes__field">
-          <label>Country Code</label>
-          <InputText v-model="form.code" />
-        </div>
-        <div class="accounts-tax-codes__field">
-          <label>Tax Code</label>
-          <InputText v-model="form.taxCode" />
-        </div>
-        <div class="accounts-tax-codes__field">
-          <label>Rate %</label>
-          <InputText v-model="form.rate" />
-        </div>
-        <div class="accounts-tax-codes__field">
-          <label>Description</label>
-          <InputText v-model="form.description" />
-        </div>
-      </div>
 
-      <div class="accounts-tax-codes__add-row">
-        <Button
-          :label="editingId ? 'Save Tax Code' : 'Add Tax Code'"
-          class="btn btn--primary"
-          :loading="taxCodeStore.saving"
-          @click="saveTaxCode"
-        />
-        <Button v-if="editingId" label="Cancel Edit" class="btn btn--ghost" @click="resetForm" />
-      </div>
+        <template #footer>
+          <div class="accounts-tax-codes__dialog-actions">
+            <Button label="Cancel" class="btn btn--ghost" @click="closeForm" />
+            <Button
+              :label="editingId ? 'Save Tax Code' : 'Add Tax Code'"
+              class="btn btn--primary"
+              :loading="taxCodeStore.saving"
+              @click="saveTaxCode"
+            />
+          </div>
+        </template>
+      </Dialog>
 
       <div class="accounts-tax-codes__counts">{{ countsText }}</div>
       <div v-if="taxCodeStore.error" class="accounts-tax-codes__error">

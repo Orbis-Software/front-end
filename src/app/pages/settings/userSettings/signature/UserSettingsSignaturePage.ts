@@ -1,15 +1,13 @@
 import { computed, onMounted, ref } from "vue"
 import { useToast } from "primevue/usetoast"
+import { useUserSignatureStore } from "@/app/stores/user-signature"
+import type {
+  SignatureFieldKey,
+  SignatureStyle,
+  UserSignature as StoredUserSignature,
+} from "@/app/types/user-signature"
 
-type SignatureFieldKey = "body" | "name" | "title" | "phone" | "email"
-
-type SignatureStyle = {
-  fontFamily: string
-  fontSize: string
-  color: string
-}
-
-type UserSignature = {
+type UserSignatureForm = {
   name: string
   title: string
   phone: string
@@ -19,9 +17,6 @@ type UserSignature = {
   styles: Record<SignatureFieldKey, SignatureStyle>
 }
 
-type StoredUserSignature = Partial<UserSignature> & Partial<SignatureStyle>
-
-const signatureStorageKey = "pc-cargo.branding.signature"
 const defaultSignatureStyle: SignatureStyle = {
   fontFamily: "Arial, sans-serif",
   fontSize: "14px",
@@ -70,6 +65,7 @@ function normalizeStyles(
 
 export function useUserSettingsSignaturePage() {
   const toast = useToast()
+  const signatureStore = useUserSignatureStore()
   const fontFamilyOptions = [
     "Arial, sans-serif",
     "Georgia, serif",
@@ -80,7 +76,9 @@ export function useUserSettingsSignaturePage() {
   const fontSizeOptions = ["12px", "13px", "14px", "15px", "16px", "18px", "20px"]
   const styleDialogVisible = ref(false)
   const activeStyleField = ref<SignatureFieldKey>("body")
-  const signature = ref<UserSignature>({
+  const selectedImage = ref<File | null>(null)
+  const clearImage = ref(false)
+  const signature = ref<UserSignatureForm>({
     name: "Operations Team",
     title: "Customer Support",
     phone: "",
@@ -91,6 +89,8 @@ export function useUserSettingsSignaturePage() {
   })
 
   const hasSignatureImage = computed(() => !!signature.value.imagePreview)
+  const loading = computed(() => signatureStore.loading)
+  const saving = computed(() => signatureStore.saving)
   const activeStyleLabel = computed(() => signatureFieldLabels[activeStyleField.value])
   const activeFieldStyle = computed(() => signature.value.styles[activeStyleField.value])
   const activeFieldPreview = computed(() => {
@@ -107,23 +107,36 @@ export function useUserSettingsSignaturePage() {
     styleDialogVisible.value = true
   }
 
-  function loadSavedSignature() {
-    try {
-      const raw = localStorage.getItem(signatureStorageKey)
-      if (!raw) return
+  function applyStoredSignature(saved: StoredUserSignature | null) {
+    if (!saved) return
 
-      const parsed = JSON.parse(raw) as StoredUserSignature
-      signature.value = {
-        name: parsed.name ?? "",
-        title: parsed.title ?? "",
-        phone: parsed.phone ?? "",
-        email: parsed.email ?? "",
-        body: parsed.body ?? "",
-        imagePreview: parsed.imagePreview ?? null,
-        styles: normalizeStyles(parsed.styles, parsed),
-      }
-    } catch {
-      localStorage.removeItem(signatureStorageKey)
+    signature.value = {
+      name: saved.name ?? "",
+      title: saved.title ?? "",
+      phone: saved.phone ?? "",
+      email: saved.email ?? "",
+      body: saved.body ?? "",
+      imagePreview: saved.imageUrl ?? null,
+      styles: normalizeStyles(saved.styles),
+    }
+    selectedImage.value = null
+    clearImage.value = false
+  }
+
+  async function loadSavedSignature() {
+    try {
+      await signatureStore.fetch()
+      applyStoredSignature(signatureStore.signature)
+    } catch (error: any) {
+      toast.add({
+        severity: "error",
+        summary: "Load failed",
+        detail:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Unable to load your saved signature.",
+        life: 5000,
+      })
     }
   }
 
@@ -134,16 +147,20 @@ export function useUserSettingsSignaturePage() {
     const reader = new FileReader()
     reader.onload = () => {
       signature.value.imagePreview = typeof reader.result === "string" ? reader.result : null
+      selectedImage.value = file
+      clearImage.value = false
     }
     reader.readAsDataURL(file)
   }
 
   function onClearSignatureImage() {
     signature.value.imagePreview = null
+    selectedImage.value = null
+    clearImage.value = true
   }
 
-  function onSaveSignature() {
-    const nextSignature: UserSignature = {
+  async function onSaveSignature() {
+    const nextSignature: UserSignatureForm = {
       name: signature.value.name.trim(),
       title: signature.value.title.trim(),
       phone: signature.value.phone.trim(),
@@ -153,15 +170,38 @@ export function useUserSettingsSignaturePage() {
       styles: normalizeStyles(signature.value.styles),
     }
 
-    signature.value = nextSignature
-    localStorage.setItem(signatureStorageKey, JSON.stringify(nextSignature))
+    try {
+      const saved = await signatureStore.save({
+        name: nextSignature.name,
+        title: nextSignature.title,
+        phone: nextSignature.phone,
+        email: nextSignature.email,
+        body: nextSignature.body,
+        styles: nextSignature.styles,
+        image: selectedImage.value,
+        clearImage: clearImage.value,
+      })
 
-    toast.add({
-      severity: "success",
-      summary: "Saved",
-      detail: "Signature saved to your profile settings.",
-      life: 2500,
-    })
+      applyStoredSignature(saved)
+
+      toast.add({
+        severity: "success",
+        summary: "Saved",
+        detail: "Signature saved to your profile settings.",
+        life: 2500,
+      })
+    } catch (error: any) {
+      toast.add({
+        severity: "error",
+        summary: "Save failed",
+        detail:
+          error?.response?.data?.message ||
+          error?.message ||
+          signatureStore.error ||
+          "Unable to save your signature.",
+        life: 5000,
+      })
+    }
   }
 
   onMounted(loadSavedSignature)
@@ -175,6 +215,8 @@ export function useUserSettingsSignaturePage() {
     fontFamilyOptions,
     fontSizeOptions,
     hasSignatureImage,
+    loading,
+    saving,
     styleDialogVisible,
     getSignatureFieldStyle,
     openStyleDialog,
