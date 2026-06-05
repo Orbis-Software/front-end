@@ -1,11 +1,12 @@
 <script setup lang="ts">
+import { computed, ref } from "vue"
 import "./JobPackagesTab.css"
 import Button from "primevue/button"
 import Checkbox from "primevue/checkbox"
+import Dialog from "primevue/dialog"
 import Dropdown from "primevue/dropdown"
 import InputNumber from "primevue/inputnumber"
-import InputText from "primevue/inputtext"
-import { useJobPackagesTab } from "./JobPackagesTab.logic"
+import { useJobPackagesTab, type PackageRow } from "./JobPackagesTab.logic"
 
 const {
   rows,
@@ -17,6 +18,32 @@ const {
   setPackageStackOption,
   packageTypeOptions,
 } = useJobPackagesTab()
+
+const showRemoveDialog = ref(false)
+const pendingRemoveRow = ref<PackageRow | null>(null)
+const pendingRemoveLabel = computed(() => {
+  const row = pendingRemoveRow.value
+  if (!row) return "this package"
+
+  return `${row.package_type || "Package"} x ${Number(row.quantity || 1)}`
+})
+
+function requestRemoveRow(row: PackageRow) {
+  pendingRemoveRow.value = row
+  showRemoveDialog.value = true
+}
+
+function cancelRemoveRow() {
+  showRemoveDialog.value = false
+  pendingRemoveRow.value = null
+}
+
+function confirmRemoveRow() {
+  if (!pendingRemoveRow.value) return
+
+  removeRow(pendingRemoveRow.value)
+  cancelRemoveRow()
+}
 </script>
 
 <template>
@@ -43,7 +70,6 @@ const {
             <tr>
               <th>#</th>
               <th>Packaging</th>
-              <th>Description</th>
               <th class="job-packages-tab__compact-heading">Qty</th>
               <th class="job-packages-tab__compact-heading">Length</th>
               <th class="job-packages-tab__compact-heading">Width</th>
@@ -72,10 +98,6 @@ const {
                   option-label="label"
                   option-value="value"
                 />
-              </td>
-
-              <td>
-                <InputText v-model="row.description" placeholder="Description" />
               </td>
 
               <td class="job-packages-tab__compact-cell">
@@ -173,17 +195,17 @@ const {
                 <Button
                   type="button"
                   class="job-packages-tab__remove-btn"
-                  icon="pi pi-times"
+                  icon="pi pi-trash"
                   text
                   rounded
                   aria-label="Remove package"
-                  @click="removeRow(row.id)"
+                  @click="requestRemoveRow(row)"
                 />
               </td>
             </tr>
 
             <tr v-if="!rows.length">
-              <td colspan="15" class="job-packages-tab__empty">
+              <td colspan="14" class="job-packages-tab__empty">
                 No packages yet. Click Add Package to create one.
               </td>
             </tr>
@@ -216,5 +238,29 @@ const {
         <small>m³</small>
       </div>
     </div>
+
+    <Dialog
+      v-model:visible="showRemoveDialog"
+      header="Remove package"
+      modal
+      class="job-packages-tab__confirm-dialog"
+      :style="{ width: '420px' }"
+      @hide="pendingRemoveRow = null"
+    >
+      <p class="job-packages-tab__confirm-copy">
+        Remove {{ pendingRemoveLabel }} from this job?
+      </p>
+
+      <template #footer>
+        <Button type="button" label="Cancel" text @click="cancelRemoveRow" />
+        <Button
+          type="button"
+          label="Remove"
+          icon="pi pi-trash"
+          severity="danger"
+          @click="confirmRemoveRow"
+        />
+      </template>
+    </Dialog>
   </section>
 </template>

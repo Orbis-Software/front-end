@@ -838,6 +838,7 @@ export function useJobDetailsPage() {
     },
   ]
   const consolidationTabNames = new Set(consolidationTabs.map(tab => tab.name))
+  const consolidationBaseTabs = baseTabs.filter(tab => tab.key !== "packages")
 
   type CustomerOption = {
     label: string
@@ -955,12 +956,21 @@ export function useJobDetailsPage() {
   })
 
   const tabs = computed<JobDetailsTab[]>(() => {
-    return isConsolidationJob.value ? [...baseTabs, ...consolidationTabs] : baseTabs
+    return isConsolidationJob.value ? [...consolidationBaseTabs, ...consolidationTabs] : baseTabs
   })
 
   watch(
     [isConsolidationJob, currentRouteName],
     ([isConsolidation, routeName]) => {
+      if (isConsolidation && routeName === "tms.jobs.show.packages") {
+        router.replace({
+          name: "tms.jobs.show.load-planner",
+          params: route.params,
+          query: route.query,
+        })
+        return
+      }
+
       if (!isConsolidation && consolidationTabNames.has(routeName)) {
         router.replace({
           name: "tms.jobs.show.overview",

@@ -189,6 +189,13 @@
   color: #888780;
 }
 
+.job-packages-tab__confirm-copy {
+  margin: 0;
+  color: #1a1a18;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
 .job-packages-tab__totals {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));

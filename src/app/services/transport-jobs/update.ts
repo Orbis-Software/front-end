@@ -50,6 +50,11 @@ function appendArrayOfObjects(
     return
   }
 
+  if (value.length === 0) {
+    fd.append(`${prefix}__empty`, "1")
+    return
+  }
+
   value.forEach((row, index) => {
     Object.entries(row).forEach(([key, item]) => {
       appendValue(fd, `${prefix}[${index}][${key}]`, item)
