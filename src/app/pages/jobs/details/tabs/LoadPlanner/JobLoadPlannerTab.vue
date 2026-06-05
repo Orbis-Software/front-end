@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import * as THREE from "three"
 import { computed, inject, nextTick, onMounted, onUnmounted, reactive, ref, watch } from "vue"
 import type { JobDetailsContext } from "../../JobDetailsPage.logic"
 import "./JobLoadPlannerTab.css"
@@ -48,6 +49,17 @@ type PlannerLayout = {
   tWid: number
   tHei: number
   palH: number
+}
+
+type Orbit3D = {
+  target: THREE.Vector3
+  dragging: boolean
+  rightDrag: boolean
+  lastX: number
+  lastY: number
+  theta: number
+  phi: number
+  radius: number
 }
 
 const context = inject<JobDetailsContext>("jobDetails")
@@ -119,14 +131,19 @@ const presetGroups = [
 const activeView = ref<"2d" | "3d">("2d")
 const spacePresetKey = ref("road_standard")
 const layout = ref<PlannerLayout | null>(null)
-const isStale = ref(false)
 const showPalBases = ref(true)
+const wireframe3d = ref(false)
 const canvasTop = ref<HTMLCanvasElement | null>(null)
 const canvasSide = ref<HTMLCanvasElement | null>(null)
 const canvas3d = ref<HTMLCanvasElement | null>(null)
 const manualUnits = ref<LoadUnit[]>([])
-const drag3d = reactive({ active: false, x: 0, y: 0 })
-const view3d = reactive({ rotate: -0.7, zoom: 1, panX: 0, panY: 0 })
+let autoCalculateFrame = 0
+let renderer3d: THREE.WebGLRenderer | null = null
+let scene3d: THREE.Scene | null = null
+let camera3d: THREE.PerspectiveCamera | null = null
+let light3d: THREE.DirectionalLight | null = null
+let orbit3d: Orbit3D | null = null
+let sceneObjects3d: THREE.Object3D[] = []
 
 const space = reactive({
   l: 1360,
@@ -170,6 +187,7 @@ const modeLabel = computed(() => {
 
   return "Road"
 })
+const isConsolidationJob = computed(() => form.job_type === "consolidation")
 
 function colorAt(index: number) {
   return COLORS[index % COLORS.length] ?? DEFAULT_COLOR
@@ -188,7 +206,7 @@ function normalizeDimensionCm(value: unknown) {
   return number > 0 && number <= 20 && !Number.isInteger(number) ? number * 100 : number
 }
 
-const jobPackages = computed<LoadUnit[]>(() => {
+const standardJobPackages = computed<LoadUnit[]>(() => {
   return (Array.isArray(form.packages) ? form.packages : [])
     .map((row: any, index: number) => {
       const type = normalizeUnitType(row.package_type)
@@ -202,7 +220,7 @@ const jobPackages = computed<LoadUnit[]>(() => {
         id: `job-${row.id ?? index}`,
         sourceId: row.id,
         type,
-        desc: row.description || row.package_type || titleCase(type),
+        desc: row.package_type || titleCase(type),
         l: length,
         w: width,
         h: height,
@@ -216,13 +234,98 @@ const jobPackages = computed<LoadUnit[]>(() => {
     .filter(unit => unit.l > 0 && unit.w > 0 && unit.h > 0 && unit.qty > 0)
 })
 
+const collectionOrderPackages = computed<LoadUnit[]>(() => {
+  const orders = Array.isArray(form.consolidation_details?.collectionOrders)
+    ? form.consolidation_details.collectionOrders
+    : []
+  const units: LoadUnit[] = []
+
+  orders.forEach((order: any, orderIndex: number) => {
+    const lines = Array.isArray(order?.lines) ? order.lines : []
+    const orderRef = String(order?.coRef ?? order?.co_ref ?? order?.reference ?? "").trim()
+
+    lines.forEach((line: any, lineIndex: number) => {
+      const type = normalizeUnitType(line.packageType ?? line.package_type)
+      const length = normalizeDimensionCm(line.length ?? line.length_cm ?? 0)
+      const width = normalizeDimensionCm(line.width ?? line.width_cm ?? 0)
+      const height = normalizeDimensionCm(line.height ?? line.height_cm ?? 0)
+      const qty = Number(line.qty ?? line.quantity ?? 1)
+      const weight = Number(line.grossWeight ?? line.gross_weight ?? line.weightKg ?? line.weight ?? 0)
+      const packageLabel = String(line.packageType ?? line.package_type ?? "").trim() || titleCase(type)
+
+      units.push({
+        id: `collection-${order?.id ?? orderIndex}-${line?.id ?? lineIndex}`,
+        sourceId: line?.id,
+        type,
+        desc: orderRef ? `${orderRef} - ${packageLabel}` : packageLabel,
+        l: length,
+        w: width,
+        h: height,
+        wt: Number.isFinite(weight) ? weight : 0,
+        qty: Number.isFinite(qty) && qty > 0 ? qty : 1,
+        stackable: Boolean(line.stackable),
+        adr: Boolean(line.adr || order?.hazardous),
+        color: colorAt(units.length),
+      })
+    })
+  })
+
+  return units.filter(unit => unit.l > 0 && unit.w > 0 && unit.h > 0 && unit.qty > 0)
+})
+
+const jobPackages = computed<LoadUnit[]>(() => {
+  if (isConsolidationJob.value && collectionOrderPackages.value.length) {
+    return collectionOrderPackages.value
+  }
+
+  return standardJobPackages.value
+})
+
 const localPackages = computed(() => [...jobPackages.value, ...manualUnits.value])
+const loadUnitEmptyMessage = computed(() => {
+  return isConsolidationJob.value
+    ? "Add package lines in Collection Orders or add a manual unit here."
+    : "Add package dimensions in the Packages tab or add a manual unit here."
+})
 
 const totalUnits = computed(() => localPackages.value.reduce((sum, unit) => sum + unit.qty, 0))
 const totalWeight = computed(() => {
   return localPackages.value.reduce((sum, unit) => sum + unit.wt * unit.qty, 0)
 })
-const unplacedIds = computed(() => new Set((layout.value?.unplacedAll ?? []).map(unit => unit.id)))
+const unplacedCounts = computed(() => {
+  const counts = new Map<string, number>()
+
+  for (const unit of layout.value?.unplacedAll ?? []) {
+    counts.set(unit.id, (counts.get(unit.id) ?? 0) + 1)
+  }
+
+  return counts
+})
+const placedCounts = computed(() => {
+  const counts = new Map<string, number>()
+
+  for (const unit of layout.value?.allPlaced ?? []) {
+    counts.set(unit.id, (counts.get(unit.id) ?? 0) + 1)
+  }
+
+  return counts
+})
+const unplacedIds = computed(() => new Set(unplacedCounts.value.keys()))
+const unplacedSummary = computed(() => {
+  const names = new Map<string, { desc: string; count: number }>()
+
+  for (const unit of layout.value?.unplacedAll ?? []) {
+    const existing = names.get(unit.id)
+    names.set(unit.id, {
+      desc: unit.desc,
+      count: (existing?.count ?? 0) + 1,
+    })
+  }
+
+  return Array.from(names.values())
+    .map(unit => `${unit.desc} x ${unit.count}`)
+    .join(", ")
+})
 
 const stats = computed(() => {
   if (!layout.value) {
@@ -271,14 +374,44 @@ function titleCase(value: string) {
   return value.charAt(0).toUpperCase() + value.slice(1).replace("_", " ")
 }
 
-function markStale() {
-  isStale.value = true
+function scheduleCalculate() {
+  if (autoCalculateFrame) {
+    window.cancelAnimationFrame(autoCalculateFrame)
+  }
+
+  autoCalculateFrame = window.requestAnimationFrame(() => {
+    autoCalculateFrame = 0
+    calculate()
+  })
+}
+
+function unplacedCount(id: string) {
+  return unplacedCounts.value.get(id) ?? 0
+}
+
+function placedCount(id: string) {
+  return placedCounts.value.get(id) ?? 0
+}
+
+function hasPartialFit(unit: LoadUnit) {
+  return placedCount(unit.id) > 0 && unplacedCount(unit.id) > 0
+}
+
+function fitStatusText(unit: LoadUnit) {
+  const placed = placedCount(unit.id)
+  const unplaced = unplacedCount(unit.id)
+
+  if (placed && unplaced) return `Partial: ${placed} placed, ${unplaced} no space`
+  if (unplaced) return `No space (${unplaced})`
+  if (placed) return `Placed (${placed})`
+
+  return "Pending layout"
 }
 
 function applySpacePreset() {
   const preset = SPACE_PRESETS[spacePresetKey.value]
   if (!preset) {
-    markStale()
+    scheduleCalculate()
     return
   }
 
@@ -286,7 +419,7 @@ function applySpacePreset() {
   space.w = preset.w
   space.h = preset.h
   space.maxWt = preset.maxWt
-  markStale()
+  scheduleCalculate()
 }
 
 function applyUnitType() {
@@ -320,12 +453,12 @@ function addUnit() {
   ]
 
   formUnit.qty = 1
-  markStale()
+  scheduleCalculate()
 }
 
 function removeUnit(id: string) {
   manualUnits.value = manualUnits.value.filter(unit => unit.id !== id)
-  markStale()
+  scheduleCalculate()
 }
 
 function expandUnits(units: LoadUnit[]): PlacedUnit[] {
@@ -350,7 +483,6 @@ function calculate() {
   if (!tLen || !tWid || !tHei || !units.length) {
     layout.value = null
     drawAll()
-    isStale.value = false
     return
   }
 
@@ -417,7 +549,6 @@ function calculate() {
     palH,
   }
 
-  isStale.value = false
   drawAll()
 }
 
@@ -652,142 +783,270 @@ function drawSide() {
 }
 
 function draw3D() {
-  const canvas = canvas3d.value
   const plan = layout.value
-  if (!canvas) return
+  if (!ensure3DRenderer()) return
 
-  const prepared = prepareCanvas(canvas)
-  if (!prepared) return
+  clear3DObjects()
 
-  const { ctx, width, height } = prepared
-  ctx.clearRect(0, 0, width, height)
-  const gradient = ctx.createLinearGradient(0, 0, 0, height)
-  gradient.addColorStop(0, "#2f3135")
-  gradient.addColorStop(1, "#141516")
-  ctx.fillStyle = gradient
-  ctx.fillRect(0, 0, width, height)
-
-  if (!plan) {
-    drawEmptyCanvas(ctx, width, height, "Calculate a layout to show the 3D view", "#f8fafc")
+  if (!plan || !scene3d || !renderer3d || !camera3d) {
+    render3DFrame()
     return
   }
 
-  const scale = Math.min(width / plan.tLen, height / Math.max(plan.tWid, plan.tHei)) * 0.72 * view3d.zoom
-  const project = (x: number, y: number, z: number) => {
-    const cx = x - plan.tLen / 2
-    const cy = y - plan.tWid / 2
-    const cos = Math.cos(view3d.rotate)
-    const sin = Math.sin(view3d.rotate)
-    const rx = cx * cos - cy * sin
-    const ry = cx * sin + cy * cos
+  add3DContainer(plan)
+  add3DFloor(plan)
 
-    return {
-      x: width / 2 + rx * scale + view3d.panX,
-      y: height * 0.66 + ry * scale * 0.44 - z * scale * 0.82 + view3d.panY,
-    }
+  if (light3d) {
+    light3d.position.set(plan.tLen, plan.tHei * 2, plan.tWid)
   }
 
-  draw3DFloor(ctx, project, plan)
-
-  const placed = [...plan.allPlaced].sort((a, b) => a.x + a.y + a.z - (b.x + b.y + b.z))
-  for (const unit of placed) {
+  for (const unit of plan.allPlaced) {
     const baseZ = unit.z + (unit.z === 0 && showPalBases.value ? plan.palH : 0)
+
     if (showPalBases.value && plan.palH > 0 && unit.z === 0) {
-      draw3DBox(ctx, project, unit.x, unit.y, 0, unit.l, unit.w, plan.palH, "#c8a879")
+      add3DBox(unit.x + unit.l / 2, plan.palH / 2, unit.y + unit.w / 2, unit.l, plan.palH, unit.w, "#c8a879", 0.95)
     }
-    draw3DBox(ctx, project, unit.x, unit.y, baseZ, unit.l, unit.w, unit.h, unit.color)
+
+    add3DBox(unit.x + unit.l / 2, baseZ + unit.h / 2, unit.y + unit.w / 2, unit.l, unit.h, unit.w, unit.color, 0.88)
   }
+
+  add3DUnplaced(plan)
+
+  if (!orbit3d) {
+    reset3DCamera()
+  }
+
+  render3DFrame()
 }
 
-function draw3DFloor(
-  ctx: CanvasRenderingContext2D,
-  project: (x: number, y: number, z: number) => { x: number; y: number },
-  plan: PlannerLayout,
-) {
-  const corners = [
-    project(0, 0, 0),
-    project(plan.tLen, 0, 0),
-    project(plan.tLen, plan.tWid, 0),
-    project(0, plan.tWid, 0),
-  ]
+function ensure3DRenderer() {
+  const canvas = canvas3d.value
+  if (!canvas || !canvas.clientWidth || !canvas.clientHeight) return false
 
-  ctx.fillStyle = "rgba(255,255,255,0.08)"
-  ctx.strokeStyle = "rgba(255,255,255,0.34)"
-  ctx.lineWidth = 1.5
-  drawPolygon(ctx, corners)
-  ctx.stroke()
+  if (!renderer3d) {
+    renderer3d = new THREE.WebGLRenderer({ canvas, antialias: true })
+    renderer3d.setPixelRatio(window.devicePixelRatio || 1)
+    renderer3d.setClearColor(0x1a1a2e, 1)
+    scene3d = new THREE.Scene()
+    camera3d = new THREE.PerspectiveCamera(45, canvas.clientWidth / canvas.clientHeight, 1, 500000)
+    scene3d.add(new THREE.AmbientLight(0xffffff, 0.6))
+    light3d = new THREE.DirectionalLight(0xffffff, 0.85)
+    scene3d.add(light3d)
+  }
+
+  renderer3d.setSize(canvas.clientWidth, canvas.clientHeight, false)
+  if (camera3d) {
+    camera3d.aspect = canvas.clientWidth / canvas.clientHeight
+    camera3d.updateProjectionMatrix()
+  }
+
+  return true
 }
 
-function draw3DBox(
-  ctx: CanvasRenderingContext2D,
-  project: (x: number, y: number, z: number) => { x: number; y: number },
-  x: number,
-  y: number,
-  z: number,
-  l: number,
-  w: number,
-  h: number,
+function add3DContainer(plan: PlannerLayout) {
+  add3DEdge(plan.tLen / 2, plan.tHei / 2, plan.tWid / 2, plan.tLen, plan.tHei, plan.tWid, 0x94a3b8)
+}
+
+function add3DFloor(plan: PlannerLayout) {
+  if (!scene3d) return
+
+  const geometry = new THREE.PlaneGeometry(plan.tLen, plan.tWid)
+  const material = new THREE.MeshLambertMaterial({
+    color: 0x1e293b,
+    side: THREE.DoubleSide,
+  })
+  const floor = new THREE.Mesh(geometry, material)
+  floor.rotation.x = -Math.PI / 2
+  floor.position.set(plan.tLen / 2, 0, plan.tWid / 2)
+  scene3d.add(floor)
+  sceneObjects3d.push(floor)
+}
+
+function add3DBox(
+  cx: number,
+  cy: number,
+  cz: number,
+  width: number,
+  height: number,
+  depth: number,
   color: string,
+  opacity = 0.88,
 ) {
-  const p = {
-    a: project(x, y, z),
-    b: project(x + l, y, z),
-    c: project(x + l, y + w, z),
-    d: project(x, y + w, z),
-    e: project(x, y, z + h),
-    f: project(x + l, y, z + h),
-    g: project(x + l, y + w, z + h),
-    i: project(x, y + w, z + h),
+  if (!scene3d) return
+
+  const geometry = new THREE.BoxGeometry(width, height, depth)
+  const material = new THREE.MeshLambertMaterial({
+    color: new THREE.Color(color),
+    opacity,
+    transparent: opacity < 1,
+    wireframe: wireframe3d.value,
+  })
+  const mesh = new THREE.Mesh(geometry, material)
+  mesh.position.set(cx, cy, cz)
+  scene3d.add(mesh)
+  sceneObjects3d.push(mesh)
+
+  if (!wireframe3d.value) {
+    const edges = new THREE.LineSegments(
+      new THREE.EdgesGeometry(geometry),
+      new THREE.LineBasicMaterial({
+        color: 0x000000,
+        opacity: 0.15,
+        transparent: true,
+      }),
+    )
+    edges.position.copy(mesh.position)
+    scene3d.add(edges)
+    sceneObjects3d.push(edges)
+  }
+}
+
+function add3DEdge(cx: number, cy: number, cz: number, width: number, height: number, depth: number, color: number) {
+  if (!scene3d) return
+
+  const geometry = new THREE.BoxGeometry(width, height, depth)
+  const edge = new THREE.LineSegments(
+    new THREE.EdgesGeometry(geometry),
+    new THREE.LineBasicMaterial({ color }),
+  )
+  edge.position.set(cx, cy, cz)
+  scene3d.add(edge)
+  sceneObjects3d.push(edge)
+}
+
+function add3DUnplaced(plan: PlannerLayout) {
+  if (!plan.unplacedAll.length) return
+
+  const groups = new Map<string, { unit: PlacedUnit; count: number }>()
+
+  for (const unit of plan.unplacedAll) {
+    const existing = groups.get(unit.id)
+    groups.set(unit.id, {
+      unit,
+      count: (existing?.count ?? 0) + 1,
+    })
   }
 
-  ctx.fillStyle = shadeColor(color, -18)
-  drawPolygon(ctx, [p.b, p.c, p.g, p.f])
-  ctx.fill()
-  ctx.fillStyle = shadeColor(color, -28)
-  drawPolygon(ctx, [p.c, p.d, p.i, p.g])
-  ctx.fill()
-  ctx.fillStyle = shadeColor(color, 8)
-  drawPolygon(ctx, [p.e, p.f, p.g, p.i])
-  ctx.fill()
+  const gap = Math.max(35, plan.tWid * 0.2)
+  const sideZ = plan.tWid + gap
+  let cursorX = 0
 
-  ctx.strokeStyle = "rgba(0,0,0,0.28)"
-  ctx.lineWidth = 1
-  ;[
-    [p.a, p.b, p.c, p.d],
-    [p.e, p.f, p.g, p.i],
-    [p.a, p.e],
-    [p.b, p.f],
-    [p.c, p.g],
-    [p.d, p.i],
-  ].forEach(points => {
-    ctx.beginPath()
-    points.forEach((point, index) => {
-      if (index === 0) ctx.moveTo(point.x, point.y)
-      else ctx.lineTo(point.x, point.y)
-    })
-    if (points.length > 2) ctx.closePath()
-    ctx.stroke()
+  Array.from(groups.values()).forEach(({ unit, count }) => {
+    const width = Math.min(unit.l, plan.tLen * 0.28)
+    const depth = Math.min(unit.w, plan.tWid * 0.9)
+    const height = Math.min(unit.h, plan.tHei * 0.9)
+    const x = Math.min(cursorX + width / 2, Math.max(width / 2, plan.tLen - width / 2))
+
+    add3DBox(x, height / 2, sideZ + depth / 2, width, height, depth, "#dc2626", 0.88)
+    add3DLabel(`No space x${count}`, new THREE.Vector3(x, height + Math.max(14, plan.tHei * 0.05), sideZ + depth / 2))
+
+    cursorX += width + gap
   })
 }
 
-function drawPolygon(ctx: CanvasRenderingContext2D, points: { x: number; y: number }[]) {
-  ctx.beginPath()
-  points.forEach((point, index) => {
-    if (index === 0) ctx.moveTo(point.x, point.y)
-    else ctx.lineTo(point.x, point.y)
+function add3DLabel(text: string, position: THREE.Vector3) {
+  if (!scene3d) return
+
+  const canvas = document.createElement("canvas")
+  const context = canvas.getContext("2d")
+  if (!context) return
+
+  canvas.width = 256
+  canvas.height = 64
+  context.fillStyle = "#dc2626"
+  context.fillRect(0, 0, canvas.width, canvas.height)
+  context.fillStyle = "#ffffff"
+  context.font = "800 24px system-ui"
+  context.textAlign = "center"
+  context.textBaseline = "middle"
+  context.fillText(text, canvas.width / 2, canvas.height / 2)
+
+  const texture = new THREE.CanvasTexture(canvas)
+  const material = new THREE.SpriteMaterial({
+    map: texture,
+    transparent: true,
+    depthTest: true,
   })
-  ctx.closePath()
+  const sprite = new THREE.Sprite(material)
+  sprite.position.copy(position)
+  sprite.scale.set(130, 32, 1)
+  scene3d.add(sprite)
+  sceneObjects3d.push(sprite)
 }
 
-function shadeColor(color: string, percent: number) {
-  const amount = Math.round((percent / 100) * 255)
-  const value = color.replace("#", "")
-  const num = parseInt(value, 16)
-  const r = Math.max(0, Math.min(255, (num >> 16) + amount))
-  const g = Math.max(0, Math.min(255, ((num >> 8) & 0xff) + amount))
-  const b = Math.max(0, Math.min(255, (num & 0xff) + amount))
+function render3DFrame() {
+  if (!renderer3d || !scene3d || !camera3d) return
+  renderer3d.render(scene3d, camera3d)
+}
 
-  return `rgb(${r}, ${g}, ${b})`
+function reset3DCamera() {
+  const plan = layout.value
+  if (!plan || !camera3d) return
+
+  orbit3d = {
+    target: new THREE.Vector3(plan.tLen / 2, plan.tHei / 3, plan.tWid / 2),
+    dragging: false,
+    rightDrag: false,
+    lastX: 0,
+    lastY: 0,
+    theta: 0.7,
+    phi: 0.6,
+    radius: Math.max(plan.tLen, plan.tWid, plan.tHei) * 2.2,
+  }
+  update3DCamera()
+}
+
+function update3DCamera() {
+  if (!camera3d || !orbit3d) return
+
+  const { target, theta, phi, radius } = orbit3d
+  camera3d.position.set(
+    target.x + radius * Math.sin(phi) * Math.sin(theta),
+    target.y + radius * Math.cos(phi),
+    target.z + radius * Math.sin(phi) * Math.cos(theta),
+  )
+  camera3d.lookAt(target)
+  render3DFrame()
+}
+
+function clear3DObjects() {
+  if (!scene3d) return
+
+  sceneObjects3d.forEach(object => {
+    scene3d?.remove(object)
+    dispose3DObject(object)
+  })
+  sceneObjects3d = []
+}
+
+function dispose3DObject(object: THREE.Object3D) {
+  const mesh = object as THREE.Mesh | THREE.LineSegments | THREE.Sprite
+  const geometry = (mesh as THREE.Mesh | THREE.LineSegments).geometry as THREE.BufferGeometry | undefined
+  const material = mesh.material as THREE.Material | THREE.Material[] | undefined
+
+  geometry?.dispose()
+
+  const disposeMaterial = (item: THREE.Material) => {
+    const spriteMaterial = item as THREE.SpriteMaterial
+    spriteMaterial.map?.dispose()
+    item.dispose()
+  }
+
+  if (Array.isArray(material)) {
+    material.forEach(disposeMaterial)
+  } else {
+    material && disposeMaterial(material)
+  }
+}
+
+function destroy3DRenderer() {
+  clear3DObjects()
+  renderer3d?.dispose()
+  renderer3d = null
+  scene3d = null
+  camera3d = null
+  light3d = null
+  orbit3d = null
 }
 
 function drawDimension(
@@ -843,44 +1102,71 @@ function trimLabel(value: string, max: number) {
 }
 
 function handle3DMouseDown(event: MouseEvent) {
-  drag3d.active = true
-  drag3d.x = event.clientX
-  drag3d.y = event.clientY
+  if (!orbit3d) reset3DCamera()
+  if (!orbit3d) return
+
+  orbit3d.dragging = true
+  orbit3d.rightDrag = event.button === 2
+  orbit3d.lastX = event.clientX
+  orbit3d.lastY = event.clientY
+  event.preventDefault()
 }
 
 function handle3DMouseMove(event: MouseEvent) {
-  if (!drag3d.active) return
+  if (!orbit3d?.dragging) return
 
-  const dx = event.clientX - drag3d.x
-  const dy = event.clientY - drag3d.y
-  drag3d.x = event.clientX
-  drag3d.y = event.clientY
-  view3d.rotate += dx * 0.008
-  view3d.panY += dy * 0.3
-  draw3D()
+  const dx = event.clientX - orbit3d.lastX
+  const dy = event.clientY - orbit3d.lastY
+  orbit3d.lastX = event.clientX
+  orbit3d.lastY = event.clientY
+
+  if (orbit3d.rightDrag) {
+    const scale = orbit3d.radius * 0.001
+    orbit3d.target.x -= dx * scale
+    orbit3d.target.y += dy * scale
+  } else {
+    orbit3d.theta -= dx * 0.005
+    orbit3d.phi = Math.max(0.05, Math.min(Math.PI - 0.05, orbit3d.phi - dy * 0.005))
+  }
+
+  update3DCamera()
 }
 
 function handle3DMouseUp() {
-  drag3d.active = false
+  if (orbit3d) orbit3d.dragging = false
 }
 
 function handle3DWheel(event: WheelEvent) {
   event.preventDefault()
-  view3d.zoom = Math.max(0.35, Math.min(2.4, view3d.zoom * (1 - event.deltaY * 0.001)))
-  draw3D()
+  if (!orbit3d) reset3DCamera()
+  if (!orbit3d) return
+
+  orbit3d.radius = Math.max(10, orbit3d.radius * (1 + event.deltaY * 0.001))
+  update3DCamera()
 }
 
 function reset3D() {
-  view3d.rotate = -0.7
-  view3d.zoom = 1
-  view3d.panX = 0
-  view3d.panY = 0
+  reset3DCamera()
+  render3DFrame()
+}
+
+function toggleWireframe3D() {
+  wireframe3d.value = !wireframe3d.value
   draw3D()
 }
 
 function printPlan() {
   activeView.value = "2d"
+  enablePrintMode()
   nextTick(() => window.print())
+}
+
+function enablePrintMode() {
+  document.body.classList.add("job-load-planner-printing")
+}
+
+function disablePrintMode() {
+  document.body.classList.remove("job-load-planner-printing")
 }
 
 function selectDefaultPresetForMode() {
@@ -893,19 +1179,23 @@ function selectDefaultPresetForMode() {
 
 watch(
   () => [space.l, space.w, space.h, space.maxWt, space.palH, showPalBases.value],
-  () => markStale(),
+  () => scheduleCalculate(),
 )
 
 watch(
   localPackages,
   () => {
-    markStale()
+    scheduleCalculate()
   },
-  { deep: true },
+  { deep: true, flush: "post" },
 )
 
 watch(activeView, () => {
   nextTick(() => window.requestAnimationFrame(drawAll))
+})
+
+watch(wireframe3d, () => {
+  nextTick(() => window.requestAnimationFrame(draw3D))
 })
 
 onMounted(() => {
@@ -913,11 +1203,22 @@ onMounted(() => {
   calculate()
   window.addEventListener("mouseup", handle3DMouseUp)
   window.addEventListener("resize", drawAll)
+  window.addEventListener("beforeprint", enablePrintMode)
+  window.addEventListener("afterprint", disablePrintMode)
 })
 
 onUnmounted(() => {
+  if (autoCalculateFrame) {
+    window.cancelAnimationFrame(autoCalculateFrame)
+    autoCalculateFrame = 0
+  }
+
   window.removeEventListener("mouseup", handle3DMouseUp)
   window.removeEventListener("resize", drawAll)
+  window.removeEventListener("beforeprint", enablePrintMode)
+  window.removeEventListener("afterprint", disablePrintMode)
+  disablePrintMode()
+  destroy3DRenderer()
 })
 </script>
 
@@ -941,6 +1242,17 @@ onUnmounted(() => {
         <button type="button" class="job-load-planner-tab__button job-load-planner-tab__button--primary" @click="calculate">
           Calculate Layout
         </button>
+      </div>
+    </header>
+
+    <header class="job-load-planner-tab__print-header">
+      <div>
+        <h1>Load Planner</h1>
+        <p>{{ vehicleLabel }}</p>
+      </div>
+      <div>
+        <span>Job Number</span>
+        <strong>{{ jobRefLocal || "Load Plan" }}</strong>
       </div>
     </header>
 
@@ -1056,22 +1368,31 @@ onUnmounted(() => {
 
           <div class="job-load-planner-tab__unit-list">
             <div v-if="!localPackages.length" class="job-load-planner-tab__empty">
-              Add package dimensions in the Packages tab or add a manual unit here.
+              {{ loadUnitEmptyMessage }}
             </div>
 
             <article
               v-for="unit in localPackages"
               :key="unit.id"
               class="job-load-planner-tab__unit"
-              :class="{ 'job-load-planner-tab__unit--warn': unplacedIds.has(unit.id) }"
+              :class="{
+                'job-load-planner-tab__unit--warn': unplacedIds.has(unit.id),
+                'job-load-planner-tab__unit--partial': hasPartialFit(unit),
+              }"
             >
               <span class="job-load-planner-tab__dot" :style="{ background: unit.color }"></span>
               <div>
                 <strong>
                   {{ unit.desc }} x {{ unit.qty }}
                   <em v-if="unit.adr">ADR</em>
+                  <em v-if="hasPartialFit(unit)" class="job-load-planner-tab__placed-badge">
+                    Placed x{{ placedCount(unit.id) }}
+                  </em>
+                  <em v-if="unplacedCount(unit.id)" class="job-load-planner-tab__unfit-badge">
+                    No space<span v-if="unplacedCount(unit.id) > 1"> x{{ unplacedCount(unit.id) }}</span>
+                  </em>
                 </strong>
-                <small>{{ unit.l }} x {{ unit.w }} x {{ unit.h }} cm / {{ unit.wt }} kg</small>
+                <small>{{ unit.l }} x {{ unit.w }} x {{ unit.h }} cm / {{ unit.wt }} kg / {{ fitStatusText(unit) }}</small>
               </div>
               <button
                 v-if="unit.id.startsWith('manual-')"
@@ -1087,14 +1408,9 @@ onUnmounted(() => {
       </aside>
 
       <main class="job-load-planner-tab__viewer">
-        <div v-if="isStale" class="job-load-planner-tab__banner">
-          Items or settings changed.
-          <button type="button" @click="calculate">Recalculate</button>
-        </div>
-
         <div v-if="layout?.unplacedAll.length" class="job-load-planner-tab__banner job-load-planner-tab__banner--danger">
-          {{ layout.unplacedAll.length }} unit(s) could not be placed:
-          {{ [...new Set(layout.unplacedAll.map(unit => unit.desc))].join(", ") }}
+          No more space: {{ layout.unplacedAll.length }} unit(s) cannot fit in the selected vehicle/container:
+          {{ unplacedSummary }}
         </div>
 
         <div v-if="overweight" class="job-load-planner-tab__banner job-load-planner-tab__banner--danger">
@@ -1150,17 +1466,34 @@ onUnmounted(() => {
             @mousedown="handle3DMouseDown"
             @mousemove="handle3DMouseMove"
             @wheel="handle3DWheel"
+            @contextmenu.prevent
           ></canvas>
-          <div class="job-load-planner-tab__three-hint">Drag to rotate / scroll to zoom</div>
-          <button type="button" class="job-load-planner-tab__three-reset" @click="reset3D">
-            Reset
-          </button>
+          <div class="job-load-planner-tab__three-hint">Drag to rotate / scroll to zoom / right-drag to pan</div>
+          <div class="job-load-planner-tab__three-actions">
+            <button type="button" @click="reset3D">
+              Reset
+            </button>
+            <button
+              type="button"
+              :class="{ active: wireframe3d }"
+              :aria-pressed="wireframe3d"
+              @click="toggleWireframe3D"
+            >
+              Wireframe
+            </button>
+          </div>
         </section>
 
         <section class="job-load-planner-tab__card job-load-planner-tab__legend">
           <h3>Legend</h3>
           <span v-for="unit in localPackages" :key="unit.id">
             <i :style="{ background: unit.color }"></i>{{ unit.desc }} x {{ unit.qty }}
+            <em v-if="hasPartialFit(unit)" class="job-load-planner-tab__placed-badge">
+              Placed x{{ placedCount(unit.id) }}
+            </em>
+            <em v-if="unplacedCount(unit.id)" class="job-load-planner-tab__unfit-badge">
+              No space<span v-if="unplacedCount(unit.id) > 1"> x{{ unplacedCount(unit.id) }}</span>
+            </em>
           </span>
           <span v-if="showPalBases && space.palH > 0">
             <i style="background: #c8a879"></i>Pallet base
@@ -1173,7 +1506,7 @@ onUnmounted(() => {
           <table>
             <thead>
               <tr>
-                <th>Description</th>
+                <th>Package</th>
                 <th>L</th>
                 <th>W</th>
                 <th>H</th>
@@ -1184,7 +1517,11 @@ onUnmounted(() => {
               </tr>
             </thead>
             <tbody>
-              <tr v-for="unit in localPackages" :key="unit.id">
+              <tr
+                v-for="unit in localPackages"
+                :key="unit.id"
+                :class="{ 'job-load-planner-tab__manifest-row--warn': unplacedCount(unit.id) }"
+              >
                 <td>{{ unit.desc }}</td>
                 <td>{{ unit.l }}</td>
                 <td>{{ unit.w }}</td>
@@ -1192,7 +1529,7 @@ onUnmounted(() => {
                 <td>{{ unit.wt }}</td>
                 <td>{{ unit.qty }}</td>
                 <td>{{ unit.adr ? "Yes" : "No" }}</td>
-                <td>{{ unplacedIds.has(unit.id) ? "Cannot fit" : "Placed" }}</td>
+                <td>{{ fitStatusText(unit) }}</td>
               </tr>
             </tbody>
           </table>

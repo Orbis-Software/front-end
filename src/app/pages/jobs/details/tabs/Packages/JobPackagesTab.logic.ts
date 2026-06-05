@@ -45,6 +45,10 @@ function cleanReferenceName(value: string): string {
     .trim()
 }
 
+function packageRowKey(value: number | string | null | undefined): string {
+  return String(value ?? "")
+}
+
 export function useJobPackagesTab() {
   const context = inject<JobDetailsContext>("jobDetails")
 
@@ -67,7 +71,7 @@ export function useJobPackagesTab() {
 
   const rows = computed<PackageRow[]>({
     get() {
-      return form.packages as PackageRow[]
+      return Array.isArray(form.packages) ? (form.packages as PackageRow[]) : []
     },
     set(value) {
       form.packages = value
@@ -95,8 +99,17 @@ export function useJobPackagesTab() {
     rows.value = [...rows.value, row]
   }
 
-  function removeRow(id: number | string) {
-    rows.value = rows.value.filter(row => row.id !== id)
+  function removeRow(target: number | string | PackageRow) {
+    const currentRows = rows.value
+    const targetRow = typeof target === "object" ? target : null
+    const targetKey = targetRow ? packageRowKey(targetRow.id) : packageRowKey(target as number | string)
+    const nextRows = currentRows.filter(row => {
+      if (targetRow && row === targetRow) return false
+
+      return packageRowKey(row.id) !== targetKey
+    })
+
+    rows.value = nextRows.length === currentRows.length && targetRow && currentRows.length === 1 ? [] : nextRows
   }
 
   const totals = computed(() => {
