@@ -66,6 +66,14 @@
           v-else-if="activeTab === 'collections'"
           :context="consolidationPage"
         />
+        <LoadPlannerPanel
+          v-else-if="activeTab === 'load-planner'"
+          :packages="loadPlannerPackages"
+          :plan-ref="overview.jobNo || 'Consolidation Load Plan'"
+          reference-label="Job Ref"
+          :transport-mode="overview.mode || 'road'"
+          empty-message="Add package lines in Collection Orders or add a manual load unit here."
+        />
         <ConsolidationInvoicesTab
           v-else-if="activeTab === 'invoices'"
           :context="consolidationPage"
@@ -94,6 +102,7 @@ import ConsolidationGoodsWmsTab from "@/app/components/consolidations/tabs/Conso
 import ConsolidationInvoicesTab from "@/app/components/consolidations/tabs/ConsolidationInvoicesTab.vue"
 import ConsolidationOverviewTab from "@/app/components/consolidations/tabs/ConsolidationOverviewTab.vue"
 import ConsolidationSupplierInvoicesTab from "@/app/components/consolidations/tabs/ConsolidationSupplierInvoicesTab.vue"
+import LoadPlannerPanel from "@/app/components/load-planner/LoadPlannerPanel.vue"
 import { useConsolidationPage } from "./ConsolidationPage.logic"
 
 const consolidationPage = useConsolidationPage()
@@ -104,6 +113,7 @@ const {
   createError,
   creatingJob,
   hasAdr,
+  loadPlannerPackages,
   metrics,
   openCollectionOrderModal,
   overview,

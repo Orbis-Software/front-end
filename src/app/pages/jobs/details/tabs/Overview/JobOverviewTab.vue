@@ -42,6 +42,13 @@ const {
   commodityTypeOptions,
   insuranceLevelOptions,
   dangerousGoodsOptions,
+  roadLocalCollectionTypeOptions: localCollectionTypeOptions,
+  roadServiceLevelOptions: localServiceLevelOptions,
+  roadLoadTypeOptions: loadTypeOptions,
+  vehicleTypeOptions: localVehicleOptions,
+  palletTypeOptions,
+  podMethodOptions,
+  temperatureRequirementOptions: temperatureOptions,
 } = referenceOptions
 
 const isRoadMode = computed(() => form.mode_of_transport === "road")
@@ -66,65 +73,9 @@ const hazardousOptions = [
   { label: "Yes - ADR/IMDG", value: true },
 ]
 
-const temperatureOptions = [
-  { label: "No", value: "No" },
-  { label: "Chilled (2-8 C)", value: "Chilled (2-8 C)" },
-  { label: "Frozen (-18 C)", value: "Frozen (-18 C)" },
-  { label: "Ambient Controlled", value: "Ambient Controlled" },
-]
-
 const yesNoOptions = [
   { label: "No", value: false },
   { label: "Yes", value: true },
-]
-
-const localCollectionTypeOptions = [
-  "On-Demand",
-  "Scheduled",
-  "Return Collection",
-  "Multi-Stop Local",
-  "Overnight Parcel",
-]
-
-const localServiceLevelOptions = [
-  "Standard",
-  "Express (Same-Day)",
-  "Next-Day AM (Pre-12)",
-  "Next-Day PM",
-  "Economy (2-3 Day)",
-  "Time-Critical",
-]
-
-const localVehicleOptions = [
-  "Motorbike Courier",
-  "Car / Estate",
-  "Small Van (SWB)",
-  "Transit Van (LWB)",
-  "Luton Box Van",
-  "7.5t Rigid",
-]
-
-const podMethodOptions = [
-  "Paper POD",
-  "ePOD (App)",
-  "Photo Confirmation",
-  "Email Confirmation",
-  "None Required",
-]
-
-const loadTypeOptions = [
-  "FTL - Full Truck Load",
-  "LTL - Part Load",
-  "Groupage / Consolidation",
-  "Dedicated Vehicle",
-]
-
-const palletTypeOptions = [
-  "Euro Pallet (120x80)",
-  "UK Pallet (120x100)",
-  "Half Pallet",
-  "Mixed",
-  "N/A - Bulk",
 ]
 
 const localMileageCost = computed(() => {
@@ -354,6 +305,8 @@ const consolidationTransportRows = computed(() => {
             <Dropdown
               v-model="form.road_detail.local_collection_type"
               :options="localCollectionTypeOptions"
+              option-label="label"
+              option-value="value"
               placeholder="Select collection type"
               show-clear
               :disabled="loading"
@@ -365,6 +318,8 @@ const consolidationTransportRows = computed(() => {
             <Dropdown
               v-model="form.road_detail.local_service_level"
               :options="localServiceLevelOptions"
+              option-label="label"
+              option-value="value"
               placeholder="Select service level"
               show-clear
               :disabled="loading"
@@ -376,6 +331,8 @@ const consolidationTransportRows = computed(() => {
             <Dropdown
               v-model="form.road_detail.local_vehicle_required"
               :options="localVehicleOptions"
+              option-label="label"
+              option-value="value"
               placeholder="Select vehicle"
               show-clear
               :disabled="loading"
@@ -472,6 +429,8 @@ const consolidationTransportRows = computed(() => {
             <Dropdown
               v-model="form.road_detail.local_pod_method"
               :options="podMethodOptions"
+              option-label="label"
+              option-value="value"
               placeholder="Select POD method"
               show-clear
               :disabled="loading"
@@ -559,6 +518,8 @@ const consolidationTransportRows = computed(() => {
             <Dropdown
               v-model="form.road_detail.full_load_type"
               :options="loadTypeOptions"
+              option-label="label"
+              option-value="value"
               placeholder="Select load type"
               show-clear
               :disabled="loading"
@@ -609,6 +570,8 @@ const consolidationTransportRows = computed(() => {
             <Dropdown
               v-model="form.road_detail.pallet_type"
               :options="palletTypeOptions"
+              option-label="label"
+              option-value="value"
               placeholder="Select pallet type"
               show-clear
               :disabled="loading"
@@ -755,6 +718,8 @@ const consolidationTransportRows = computed(() => {
             <Dropdown
               v-model="form.road_detail.pod_method"
               :options="podMethodOptions"
+              option-label="label"
+              option-value="value"
               placeholder="Select POD method"
               show-clear
               :disabled="loading"

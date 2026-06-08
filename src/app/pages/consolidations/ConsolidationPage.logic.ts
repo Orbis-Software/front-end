@@ -23,7 +23,14 @@ import type {
 import { buildReferenceNumber } from "@/app/utils/reference-sequence"
 import { getPackageStackOption, setPackageStackOption } from "@/app/utils/packageStacking"
 
-type TabId = "overview" | "orders" | "collections" | "invoices" | "custinv" | "goodsin"
+type TabId =
+  | "overview"
+  | "orders"
+  | "collections"
+  | "load-planner"
+  | "invoices"
+  | "custinv"
+  | "goodsin"
 type Currency = "GBP" | "USD" | "EUR"
 type TransportKey =
   | "bookingRef"
@@ -109,6 +116,7 @@ export function useConsolidationPage() {
     { id: "overview", label: "Overview" },
     { id: "orders", label: "Supplier Invoices" },
     { id: "collections", label: "Collection Orders" },
+    { id: "load-planner", label: "Load Planner" },
     { id: "invoices", label: "Consolidated Invoices" },
     { id: "custinv", label: "Customer Invoice" },
     { id: "goodsin", label: "Goods In/Out (WMS)" },
@@ -652,6 +660,27 @@ export function useConsolidationPage() {
   })
 
   const collectionRefOptions = computed(() => collectionOrders.value.map(order => order.coRef))
+  const loadPlannerPackages = computed(() =>
+    collectionOrders.value.flatMap((order, orderIndex) =>
+      (Array.isArray(order.lines) ? order.lines : []).map((line, lineIndex) => {
+        const packageType = line.packageType || "Package"
+
+        return {
+          id: `collection-${order.id ?? orderIndex}-${line.id ?? lineIndex}`,
+          sourceId: line.id,
+          type: packageType,
+          desc: order.coRef ? `${order.coRef} - ${packageType}` : packageType,
+          length: line.length,
+          width: line.width,
+          height: line.height,
+          qty: line.qty,
+          weight: line.grossWeight,
+          stackable: getPackageStackOption(line) === "stackable",
+          adr: Boolean(line.adr || order.hazardous),
+        }
+      }),
+    ),
+  )
   const nextCollectionRef = computed(
     () => `CO-${String(collectionOrders.value.length + 1).padStart(3, "0")}`,
   )
@@ -1855,6 +1884,7 @@ export function useConsolidationPage() {
     jobNumberAuto,
     jobNumberPlaceholder,
     jobNumberUsesSystem,
+    loadPlannerPackages,
     ldm,
     metrics,
     modeOptions,

@@ -18,6 +18,14 @@ export interface User {
   is_admin: boolean
   is_dev: boolean
 
+  mfa: {
+    enabled: boolean
+    email_enabled: boolean
+    authenticator_enabled: boolean
+    confirmed_at: string | null
+    last_used_at: string | null
+  }
+
   company: Company | null
 
   created_at: string

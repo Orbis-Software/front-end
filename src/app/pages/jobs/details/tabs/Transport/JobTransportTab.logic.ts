@@ -97,7 +97,7 @@ export function useJobTransportTab() {
     throw new Error("Job details context is missing")
   }
 
-  const { form } = jobDetails
+  const { form, referenceOptions } = jobDetails
 
   const airportOptions = computed(() => {
     return terminalOptions(row => row.type === "Airport")
@@ -296,6 +296,7 @@ export function useJobTransportTab() {
     railTerminalOptions,
     roadTerminalOptions,
     cityOptions,
+    referenceOptions,
     getLocationOptions,
     getOriginLabel,
     getDestinationLabel,

@@ -151,6 +151,14 @@ export type JobDetailsContext = {
     commodityTypeOptions: any
     insuranceLevelOptions: any
     dangerousGoodsOptions: any
+    roadLocalCollectionTypeOptions: any
+    roadServiceLevelOptions: any
+    roadLoadTypeOptions: any
+    roadServiceTypeOptions: any
+    vehicleTypeOptions: any
+    palletTypeOptions: any
+    podMethodOptions: any
+    temperatureRequirementOptions: any
   }
 }
 
@@ -971,25 +979,28 @@ export function useJobDetailsPage() {
     )
   })
 
+  function referenceOptionsFor(categoryKey: string, fallback: SelectOption[] = []): SelectOption[] {
+    const category = referenceDataStore.getByKey(categoryKey)
+    const options = (category?.options ?? []).map(optionFromReference)
+
+    return options.length ? options : fallback
+  }
+
   const referenceOptions = {
     serviceTypeOptions: computed<SelectOption[]>(() => {
-      const category = referenceDataStore.getByKey("service_types")
-      return (category?.options ?? []).map(optionFromReference)
+      return referenceOptionsFor("service_types")
     }),
 
     incotermOptions: computed<SelectOption[]>(() => {
-      const category = referenceDataStore.getByKey("incoterms")
-      return (category?.options ?? []).map(optionFromReference)
+      return referenceOptionsFor("incoterms")
     }),
 
     currencyOptions: computed<SelectOption[]>(() => {
-      const category = referenceDataStore.getByKey("currency")
-      return (category?.options ?? []).map(optionFromReference)
+      return referenceOptionsFor("currency")
     }),
 
     commodityTypeOptions: computed<SelectOption[]>(() => {
-      const category = referenceDataStore.getByKey("commodity_types")
-      return (category?.options ?? []).map(optionFromReference)
+      return referenceOptionsFor("commodity_types")
     }),
 
     insuranceLevelOptions: computed<SelectOption[]>(() => [
@@ -1000,22 +1011,101 @@ export function useJobDetailsPage() {
     ]),
 
     dangerousGoodsOptions: computed<SelectOption[]>(() => {
-      const category = referenceDataStore.getByKey("dangerous_goods")
-      const options = (category?.options ?? []).map(optionFromReference)
+      return referenceOptionsFor("dangerous_goods", [
+        { label: "Class 1 - Explosives", value: "Class 1 - Explosives" },
+        { label: "Class 2 - Gases", value: "Class 2 - Gases" },
+        { label: "Class 3 - Flammable liquids", value: "Class 3 - Flammable liquids" },
+        { label: "Class 4 - Flammable solids", value: "Class 4 - Flammable solids" },
+        { label: "Class 5 - Oxidisers", value: "Class 5 - Oxidisers" },
+        { label: "Class 6 - Toxic substances", value: "Class 6 - Toxic substances" },
+        { label: "Class 7 - Radioactive", value: "Class 7 - Radioactive" },
+        { label: "Class 8 - Corrosives", value: "Class 8 - Corrosives" },
+        { label: "Class 9 - Misc dangerous", value: "Class 9 - Misc dangerous" },
+      ])
+    }),
 
-      return options.length
-        ? options
-        : [
-            { label: "Class 1 - Explosives", value: "Class 1 - Explosives" },
-            { label: "Class 2 - Gases", value: "Class 2 - Gases" },
-            { label: "Class 3 - Flammable liquids", value: "Class 3 - Flammable liquids" },
-            { label: "Class 4 - Flammable solids", value: "Class 4 - Flammable solids" },
-            { label: "Class 5 - Oxidisers", value: "Class 5 - Oxidisers" },
-            { label: "Class 6 - Toxic substances", value: "Class 6 - Toxic substances" },
-            { label: "Class 7 - Radioactive", value: "Class 7 - Radioactive" },
-            { label: "Class 8 - Corrosives", value: "Class 8 - Corrosives" },
-            { label: "Class 9 - Misc dangerous", value: "Class 9 - Misc dangerous" },
-          ]
+    roadLocalCollectionTypeOptions: computed<SelectOption[]>(() => {
+      return referenceOptionsFor("road_local_collection_types", [
+        { label: "On-Demand", value: "On-Demand" },
+        { label: "Scheduled", value: "Scheduled" },
+        { label: "Return Collection", value: "Return Collection" },
+        { label: "Multi-Stop Local", value: "Multi-Stop Local" },
+        { label: "Overnight Parcel", value: "Overnight Parcel" },
+      ])
+    }),
+
+    roadServiceLevelOptions: computed<SelectOption[]>(() => {
+      return referenceOptionsFor("road_service_levels", [
+        { label: "Standard", value: "Standard" },
+        { label: "Express (Same-Day)", value: "Express (Same-Day)" },
+        { label: "Next-Day AM (Pre-12)", value: "Next-Day AM (Pre-12)" },
+        { label: "Next-Day PM", value: "Next-Day PM" },
+        { label: "Economy (2-3 Day)", value: "Economy (2-3 Day)" },
+        { label: "Time-Critical", value: "Time-Critical" },
+      ])
+    }),
+
+    roadLoadTypeOptions: computed<SelectOption[]>(() => {
+      return referenceOptionsFor("road_load_types", [
+        { label: "FTL - Full Truck Load", value: "FTL - Full Truck Load" },
+        { label: "LTL - Part Load", value: "LTL - Part Load" },
+        { label: "Groupage / Consolidation", value: "Groupage / Consolidation" },
+        { label: "Dedicated Vehicle", value: "Dedicated Vehicle" },
+      ])
+    }),
+
+    roadServiceTypeOptions: computed<SelectOption[]>(() => {
+      return referenceOptionsFor("road_service_types", [
+        { label: "FTL - Full Truck Load", value: "FTL - Full Truck Load" },
+        { label: "LTL - Part Load", value: "LTL - Part Load" },
+        { label: "Groupage / Consolidation", value: "Groupage / Consolidation" },
+        { label: "Dedicated Transport", value: "Dedicated Transport" },
+        { label: "Temperature Controlled", value: "Temperature Controlled" },
+        { label: "Hazardous Goods (ADR)", value: "Hazardous Goods (ADR)" },
+      ])
+    }),
+
+    vehicleTypeOptions: computed<SelectOption[]>(() => {
+      return referenceOptionsFor("vehicle_types", [
+        { label: "Standard Trailer (13.6m)", value: "Standard Trailer (13.6m)" },
+        { label: "Curtainsider", value: "Curtainsider" },
+        { label: "Flatbed Trailer", value: "Flatbed Trailer" },
+        { label: "Refrigerated Trailer", value: "Refrigerated Trailer" },
+        { label: "Mega Trailer", value: "Mega Trailer" },
+        { label: "Low Loader", value: "Low Loader" },
+        { label: "Rigid Vehicle", value: "Rigid Vehicle" },
+        { label: "Sprinter Van", value: "Sprinter Van" },
+        { label: "Luton Box Van", value: "Luton Box Van" },
+      ])
+    }),
+
+    palletTypeOptions: computed<SelectOption[]>(() => {
+      return referenceOptionsFor("pallet_types", [
+        { label: "Euro Pallet (120x80)", value: "Euro Pallet (120x80)" },
+        { label: "UK Pallet (120x100)", value: "UK Pallet (120x100)" },
+        { label: "Half Pallet", value: "Half Pallet" },
+        { label: "Mixed", value: "Mixed" },
+        { label: "N/A - Bulk", value: "N/A - Bulk" },
+      ])
+    }),
+
+    podMethodOptions: computed<SelectOption[]>(() => {
+      return referenceOptionsFor("pod_methods", [
+        { label: "Paper POD", value: "Paper POD" },
+        { label: "ePOD (App)", value: "ePOD (App)" },
+        { label: "Photo Confirmation", value: "Photo Confirmation" },
+        { label: "Email Confirmation", value: "Email Confirmation" },
+        { label: "None Required", value: "None Required" },
+      ])
+    }),
+
+    temperatureRequirementOptions: computed<SelectOption[]>(() => {
+      return referenceOptionsFor("temperature_requirements", [
+        { label: "No", value: "No" },
+        { label: "Chilled (2-8 C)", value: "Chilled (2-8 C)" },
+        { label: "Frozen (-18 C)", value: "Frozen (-18 C)" },
+        { label: "Ambient Controlled", value: "Ambient Controlled" },
+      ])
     }),
   }
 

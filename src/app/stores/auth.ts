@@ -1,6 +1,7 @@
 import { defineStore } from "pinia"
 import type { User } from "@/app/types/user"
 import type { CustomerAccount } from "@/app/types/customer"
+import type { MfaChallengeResult } from "@/app/types/auth"
 import AuthService from "@/app/services/auth"
 import { useCompanyStore } from "@/app/stores/company"
 import { useSystemSettingsStore } from "@/app/stores/system-settings"
@@ -10,6 +11,10 @@ const AUTH_TYPE_KEY = "auth_type"
 
 type AuthType = "user" | "customer"
 
+function isMfaChallenge(result: unknown): result is MfaChallengeResult {
+  return typeof result === "object" && result !== null && "mfa_required" in result
+}
+
 export const useAuthStore = defineStore("auth", {
   state: () => ({
     user: null as User | null,
@@ -17,6 +22,7 @@ export const useAuthStore = defineStore("auth", {
 
     token: localStorage.getItem(TOKEN_KEY),
     authType: localStorage.getItem(AUTH_TYPE_KEY) as AuthType | null,
+    mfaChallenge: null as MfaChallengeResult | null,
 
     ready: false,
   }),
@@ -56,6 +62,7 @@ export const useAuthStore = defineStore("auth", {
       this.customer = null
       this.token = null
       this.authType = null
+      this.mfaChallenge = null
 
       localStorage.removeItem(TOKEN_KEY)
       localStorage.removeItem(AUTH_TYPE_KEY)
@@ -83,8 +90,14 @@ export const useAuthStore = defineStore("auth", {
     async login(email: string, password: string) {
       const result = await AuthService.login({ email, password })
 
+      if (isMfaChallenge(result)) {
+        this.mfaChallenge = result
+        return result
+      }
+
       this.token = result.token
       this.authType = "user"
+      this.mfaChallenge = null
 
       this.setUser(result.user)
       this.setCustomer(null)
@@ -93,6 +106,34 @@ export const useAuthStore = defineStore("auth", {
       localStorage.setItem(AUTH_TYPE_KEY, "user")
 
       await this.initializeAppData()
+
+      return result
+    },
+
+    async verifyMfaLogin(method: "authenticator" | "email" | "recovery", code: string) {
+      if (!this.mfaChallenge) {
+        throw new Error("MFA challenge is missing. Please sign in again.")
+      }
+
+      const result = await AuthService.verifyMfaChallenge({
+        challenge_id: this.mfaChallenge.challenge_id,
+        method,
+        code,
+      })
+
+      this.token = result.token
+      this.authType = "user"
+      this.mfaChallenge = null
+
+      this.setUser(result.user)
+      this.setCustomer(null)
+
+      localStorage.setItem(TOKEN_KEY, result.token)
+      localStorage.setItem(AUTH_TYPE_KEY, "user")
+
+      await this.initializeAppData()
+
+      return result
     },
 
     async customerLogin(email: string, password: string) {

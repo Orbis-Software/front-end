@@ -80,6 +80,27 @@ export function useQuoteDetailsPage() {
 
     return mapTransportQuoteToDetails(quoteStore.selectedQuote)
   })
+  const loadPlannerPackages = computed(() =>
+    (quoteStore.selectedQuote?.dimensions ?? []).map((row, index) => ({
+      id: row.id ?? index,
+      type:
+        quoteStore.selectedQuote?.mode_of_transport === "road"
+          ? "Pallet"
+          : row.container_type || "Package",
+      desc:
+        quoteStore.selectedQuote?.mode_of_transport === "road"
+          ? `Pallet ${index + 1}`
+          : `Package ${index + 1}`,
+      length: row.length ?? 0,
+      width: row.width ?? 0,
+      height: row.height ?? 0,
+      qty: row.pieces ?? 1,
+      weight: row.weight ?? 0,
+      stackable: row.stackable ?? true,
+      adr: Boolean(quoteStore.selectedQuote?.is_hazardous),
+    })),
+  )
+  const loadPlannerReference = computed(() => quote.value?.quote_number || "Quote Load Plan")
 
   const actionDialogTitle = computed(() => {
     switch (selectedAction.value) {
@@ -388,6 +409,8 @@ export function useQuoteDetailsPage() {
 
   return {
     quote,
+    loadPlannerPackages,
+    loadPlannerReference,
     loading,
     actionProcessing,
     actionDialogVisible,

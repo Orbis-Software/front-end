@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import * as THREE from "three"
-import { computed, inject, nextTick, onMounted, onUnmounted, reactive, ref, watch } from "vue"
-import type { JobDetailsContext } from "../../JobDetailsPage.logic"
-import "./JobLoadPlannerTab.css"
+import { computed, nextTick, onMounted, onUnmounted, reactive, ref, watch } from "vue"
+import "./LoadPlannerPanel.css"
 
 type LoadMode = "road" | "rail" | "sea"
 type LoadUnitType = "pallet" | "carton" | "crate" | "drum" | "bag" | "ibc" | "roll" | "other"
@@ -29,6 +28,40 @@ type LoadUnit = {
   stackable: boolean
   adr: boolean
   color: string
+}
+
+type LoadPlannerSourcePackage = {
+  id?: string | number
+  sourceId?: string | number
+  type?: string
+  packageType?: string
+  package_type?: string
+  desc?: string
+  description?: string
+  l?: number | string
+  length?: number | string
+  lengthCm?: number | string
+  length_cm?: number | string
+  w?: number | string
+  width?: number | string
+  widthCm?: number | string
+  width_cm?: number | string
+  h?: number | string
+  height?: number | string
+  heightCm?: number | string
+  height_cm?: number | string
+  wt?: number | string
+  weight?: number | string
+  weightKg?: number | string
+  grossWeight?: number | string
+  gross_weight?: number | string
+  grossWeightKg?: number | string
+  qty?: number | string
+  quantity?: number | string
+  pieces?: number | string
+  stackable?: boolean
+  adr?: boolean
+  color?: string
 }
 
 type PlacedUnit = LoadUnit & {
@@ -62,13 +95,22 @@ type Orbit3D = {
   radius: number
 }
 
-const context = inject<JobDetailsContext>("jobDetails")
-
-if (!context) {
-  throw new Error("JobLoadPlannerTab must be used inside JobDetailsPage.")
-}
-
-const { form } = context
+const props = withDefaults(
+  defineProps<{
+    packages?: LoadPlannerSourcePackage[]
+    planRef?: string
+    referenceLabel?: string
+    transportMode?: string
+    emptyMessage?: string
+  }>(),
+  {
+    packages: () => [],
+    planRef: "",
+    referenceLabel: "Reference",
+    transportMode: "road",
+    emptyMessage: "Add package dimensions or add a manual unit here.",
+  },
+)
 
 const COLORS = [
   "#2563eb",
@@ -282,11 +324,9 @@ const formUnit = reactive({
 
 const jobRefLocal = computed({
   get() {
-    return form.job_number || ""
+    return props.planRef || ""
   },
-  set(value: string) {
-    form.job_number = value
-  },
+  set() {},
 })
 
 const vehicleLabel = computed(() => {
@@ -303,7 +343,6 @@ const modeLabel = computed(() => {
 
   return "Road"
 })
-const isConsolidationJob = computed(() => form.job_type === "consolidation")
 
 function colorAt(index: number) {
   return COLORS[index % COLORS.length] ?? DEFAULT_COLOR
@@ -322,21 +361,32 @@ function normalizeDimensionCm(value: unknown) {
   return number > 0 && number <= 20 && !Number.isInteger(number) ? number * 100 : number
 }
 
-const standardJobPackages = computed<LoadUnit[]>(() => {
-  return (Array.isArray(form.packages) ? form.packages : [])
-    .map((row: any, index: number) => {
-      const type = normalizeUnitType(row.package_type)
-      const length = normalizeDimensionCm(row.lengthCm ?? row.length_cm ?? row.length ?? 0)
-      const width = normalizeDimensionCm(row.widthCm ?? row.width_cm ?? row.width ?? 0)
-      const height = normalizeDimensionCm(row.heightCm ?? row.height_cm ?? row.height ?? 0)
-      const qty = Number(row.quantity ?? row.qty ?? 1)
-      const weight = Number(row.grossWeightKg ?? row.weight ?? row.grossWeight ?? 0)
+const jobPackages = computed<LoadUnit[]>(() => {
+  return (Array.isArray(props.packages) ? props.packages : [])
+    .map((row, index) => {
+      const packageLabel = String(
+        row.desc ?? row.description ?? row.packageType ?? row.package_type ?? row.type ?? "",
+      ).trim()
+      const type = normalizeUnitType(row.type ?? row.packageType ?? row.package_type ?? packageLabel)
+      const length = normalizeDimensionCm(row.l ?? row.lengthCm ?? row.length_cm ?? row.length ?? 0)
+      const width = normalizeDimensionCm(row.w ?? row.widthCm ?? row.width_cm ?? row.width ?? 0)
+      const height = normalizeDimensionCm(row.h ?? row.heightCm ?? row.height_cm ?? row.height ?? 0)
+      const qty = Number(row.qty ?? row.quantity ?? row.pieces ?? 1)
+      const weight = Number(
+        row.wt ??
+          row.grossWeightKg ??
+          row.grossWeight ??
+          row.gross_weight ??
+          row.weightKg ??
+          row.weight ??
+          0,
+      )
 
       return {
-        id: `job-${row.id ?? index}`,
-        sourceId: row.id,
+        id: `source-${row.id ?? row.sourceId ?? index}`,
+        sourceId: row.sourceId ?? row.id,
         type,
-        desc: row.package_type || titleCase(type),
+        desc: packageLabel || titleCase(type),
         l: length,
         w: width,
         h: height,
@@ -344,68 +394,14 @@ const standardJobPackages = computed<LoadUnit[]>(() => {
         qty: Number.isFinite(qty) && qty > 0 ? qty : 1,
         stackable: Boolean(row.stackable),
         adr: Boolean(row.adr),
-        color: colorAt(index),
+        color: row.color || colorAt(index),
       }
     })
     .filter(unit => unit.l > 0 && unit.w > 0 && unit.h > 0 && unit.qty > 0)
 })
 
-const collectionOrderPackages = computed<LoadUnit[]>(() => {
-  const orders = Array.isArray(form.consolidation_details?.collectionOrders)
-    ? form.consolidation_details.collectionOrders
-    : []
-  const units: LoadUnit[] = []
-
-  orders.forEach((order: any, orderIndex: number) => {
-    const lines = Array.isArray(order?.lines) ? order.lines : []
-    const orderRef = String(order?.coRef ?? order?.co_ref ?? order?.reference ?? "").trim()
-
-    lines.forEach((line: any, lineIndex: number) => {
-      const type = normalizeUnitType(line.packageType ?? line.package_type)
-      const length = normalizeDimensionCm(line.length ?? line.length_cm ?? 0)
-      const width = normalizeDimensionCm(line.width ?? line.width_cm ?? 0)
-      const height = normalizeDimensionCm(line.height ?? line.height_cm ?? 0)
-      const qty = Number(line.qty ?? line.quantity ?? 1)
-      const weight = Number(
-        line.grossWeight ?? line.gross_weight ?? line.weightKg ?? line.weight ?? 0,
-      )
-      const packageLabel =
-        String(line.packageType ?? line.package_type ?? "").trim() || titleCase(type)
-
-      units.push({
-        id: `collection-${order?.id ?? orderIndex}-${line?.id ?? lineIndex}`,
-        sourceId: line?.id,
-        type,
-        desc: orderRef ? `${orderRef} - ${packageLabel}` : packageLabel,
-        l: length,
-        w: width,
-        h: height,
-        wt: Number.isFinite(weight) ? weight : 0,
-        qty: Number.isFinite(qty) && qty > 0 ? qty : 1,
-        stackable: Boolean(line.stackable),
-        adr: Boolean(line.adr || order?.hazardous),
-        color: colorAt(units.length),
-      })
-    })
-  })
-
-  return units.filter(unit => unit.l > 0 && unit.w > 0 && unit.h > 0 && unit.qty > 0)
-})
-
-const jobPackages = computed<LoadUnit[]>(() => {
-  if (isConsolidationJob.value && collectionOrderPackages.value.length) {
-    return collectionOrderPackages.value
-  }
-
-  return standardJobPackages.value
-})
-
 const localPackages = computed(() => [...jobPackages.value, ...manualUnits.value])
-const loadUnitEmptyMessage = computed(() => {
-  return isConsolidationJob.value
-    ? "Add package lines in Collection Orders or add a manual unit here."
-    : "Add package dimensions in the Packages tab or add a manual unit here."
-})
+const loadUnitEmptyMessage = computed(() => props.emptyMessage)
 
 const totalUnits = computed(() => localPackages.value.reduce((sum, unit) => sum + unit.qty, 0))
 const totalWeight = computed(() => {
@@ -1374,7 +1370,7 @@ function disablePrintMode() {
 }
 
 function selectDefaultPresetForMode() {
-  const mode = String(form.mode_of_transport ?? "")
+  const mode = String(props.transportMode ?? "").toLowerCase()
   if (mode === "sea") spacePresetKey.value = "sea_40std"
   else if (mode === "rail") spacePresetKey.value = "rail_fea"
   else spacePresetKey.value = "road_standard"
@@ -1435,7 +1431,7 @@ onUnmounted(() => {
       </div>
 
       <label class="job-load-planner-tab__job-ref">
-        <span>Job Ref</span>
+        <span>{{ referenceLabel }}</span>
         <input v-model="jobRefLocal" type="text" />
       </label>
 
@@ -1464,7 +1460,7 @@ onUnmounted(() => {
         <p>{{ vehicleLabel }}</p>
       </div>
       <div>
-        <span>Job Number</span>
+        <span>{{ referenceLabel }}</span>
         <strong>{{ jobRefLocal || "Load Plan" }}</strong>
       </div>
     </header>
