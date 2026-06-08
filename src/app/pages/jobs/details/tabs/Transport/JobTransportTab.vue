@@ -17,12 +17,20 @@ const {
   railTerminalOptions,
   roadTerminalOptions,
   cityOptions,
+  referenceOptions,
   getLocationOptions,
   getOriginLabel,
   getDestinationLabel,
   addLeg,
   removeLeg,
 } = useJobTransportTab()
+
+const {
+  roadServiceTypeOptions: roadServiceOptions,
+  vehicleTypeOptions: roadVehicleOptions,
+  palletTypeOptions,
+  podMethodOptions,
+} = referenceOptions
 
 const legModeOptions = [
   { label: "Road", value: "road" },
@@ -31,30 +39,6 @@ const legModeOptions = [
   { label: "Air", value: "air" },
   { label: "Courier", value: "courier" },
 ]
-
-const roadServiceOptions = [
-  "FTL - Full Truck Load",
-  "LTL - Part Load",
-  "Groupage / Consolidation",
-  "Dedicated Transport",
-  "Temperature Controlled",
-  "Hazardous Goods (ADR)",
-]
-
-const roadVehicleOptions = [
-  "Standard Trailer (13.6m)",
-  "Curtainsider",
-  "Flatbed Trailer",
-  "Refrigerated Trailer",
-  "Mega Trailer",
-  "Low Loader",
-  "Rigid Vehicle",
-  "Sprinter Van",
-  "Luton Box Van",
-]
-
-const palletTypeOptions = ["Euro Pallet (120x80)", "UK Pallet (120x100)", "Half Pallet", "Mixed"]
-const podMethodOptions = ["Paper POD", "ePOD (App)", "Photo Confirmation", "Email Confirmation"]
 
 const seaShipmentOptions = [
   "FCL - Full Container",
@@ -290,6 +274,8 @@ const signatureRequiredOptions = [
               <Dropdown
                 v-model="leg.extra_data.service_type"
                 :options="roadServiceOptions"
+                option-label="label"
+                option-value="value"
                 placeholder="Select service"
                 class="job-transport-tab__prime-select"
                 show-clear
@@ -301,6 +287,8 @@ const signatureRequiredOptions = [
               <Dropdown
                 v-model="leg.extra_data.vehicle_type"
                 :options="roadVehicleOptions"
+                option-label="label"
+                option-value="value"
                 placeholder="Select vehicle"
                 class="job-transport-tab__prime-select"
                 show-clear
@@ -350,6 +338,8 @@ const signatureRequiredOptions = [
               <Dropdown
                 v-model="leg.extra_data.pallet_type"
                 :options="palletTypeOptions"
+                option-label="label"
+                option-value="value"
                 placeholder="Select pallet type"
                 class="job-transport-tab__prime-select"
                 show-clear
@@ -366,6 +356,8 @@ const signatureRequiredOptions = [
               <Dropdown
                 v-model="leg.extra_data.pod_method"
                 :options="podMethodOptions"
+                option-label="label"
+                option-value="value"
                 placeholder="Select POD method"
                 class="job-transport-tab__prime-select"
                 show-clear
@@ -780,6 +772,8 @@ const signatureRequiredOptions = [
           <Dropdown
             v-model="form.road_detail.service_type"
             :options="roadServiceOptions"
+            option-label="label"
+            option-value="value"
             placeholder="Select service"
             class="job-transport-tab__prime-select"
             show-clear
@@ -791,6 +785,8 @@ const signatureRequiredOptions = [
           <Dropdown
             v-model="form.road_detail.vehicle_type"
             :options="roadVehicleOptions"
+            option-label="label"
+            option-value="value"
             placeholder="Select vehicle"
             class="job-transport-tab__prime-select"
             show-clear
@@ -900,6 +896,8 @@ const signatureRequiredOptions = [
           <Dropdown
             v-model="form.road_detail.pallet_type"
             :options="palletTypeOptions"
+            option-label="label"
+            option-value="value"
             placeholder="Select pallet type"
             class="job-transport-tab__prime-select"
             show-clear
@@ -916,6 +914,8 @@ const signatureRequiredOptions = [
           <Dropdown
             v-model="form.road_detail.pod_method"
             :options="podMethodOptions"
+            option-label="label"
+            option-value="value"
             placeholder="Select POD method"
             class="job-transport-tab__prime-select"
             show-clear
@@ -1606,6 +1606,8 @@ const signatureRequiredOptions = [
           <Dropdown
             v-model="form.courier_detail.pod_method"
             :options="podMethodOptions"
+            option-label="label"
+            option-value="value"
             placeholder="Select POD method"
             class="job-transport-tab__prime-select"
             show-clear

@@ -181,9 +181,50 @@
   font-weight: 800;
 }
 
+.login-details-page__loading {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: #555;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.login-details-page__mfa-layout {
+  display: grid;
+  gap: 16px;
+}
+
+.login-details-page__method {
+  border: 1px solid #e1e1de;
+  border-radius: 10px;
+  background: #fbfbfa;
+  padding: 14px;
+}
+
+.login-details-page__method-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.login-details-page__method h3 {
+  margin: 0;
+  color: #1a1a18;
+  font-size: 15px;
+}
+
+.login-details-page__method-body {
+  display: grid;
+  max-width: 520px;
+  gap: 14px;
+}
+
 .login-details-page__auth-grid {
   display: grid;
-  grid-template-columns: 240px minmax(0, 1fr) minmax(280px, 0.8fr);
+  grid-template-columns: 240px minmax(0, 1fr);
   gap: 18px;
   align-items: start;
 }
@@ -195,27 +236,34 @@
 
 .login-details-page__qr {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
+  place-items: center;
   width: 210px;
   aspect-ratio: 1;
   border: 1px solid #d8d8d4;
   border-radius: 12px;
-  background:
-    linear-gradient(135deg, #fff 25%, transparent 25%) 0 0 / 18px 18px,
-    linear-gradient(225deg, #fff 25%, transparent 25%) 0 0 / 18px 18px,
-    #1a1a18;
-  padding: 14px;
+  background: #fff;
+  padding: 10px;
 }
 
-.login-details-page__qr span {
-  border-radius: 4px;
-  background: rgba(255, 255, 255, 0.88);
+.login-details-page__qr img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
-.login-details-page__qr span:nth-child(2n) {
-  background: #1a1a18;
-  border: 2px solid #fff;
+.login-details-page__qr-empty {
+  display: grid;
+  place-items: center;
+  gap: 8px;
+  color: #737373;
+  font-size: 12px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.login-details-page__qr-empty i {
+  color: #ec691a;
+  font-size: 30px;
 }
 
 .login-details-page__setup {
@@ -269,6 +317,10 @@
   text-align: center;
 }
 
+.login-details-page__empty {
+  margin: 0;
+}
+
 @media (max-width: 1180px) {
   .login-details-page__grid,
   .login-details-page__auth-grid {
@@ -283,6 +335,7 @@
 
   .login-details-page__header,
   .login-details-card__head,
+  .login-details-page__method-head,
   .login-details-page__recovery-head {
     flex-direction: column;
   }

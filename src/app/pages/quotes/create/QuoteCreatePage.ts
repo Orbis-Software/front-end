@@ -402,6 +402,21 @@ export function useQuoteCreatePage() {
     dimensionRows.value.reduce((total, row) => total + getRowLdm(row), 0),
   )
   const revenueTonne = computed(() => Math.max(totalActualWeight.value / 1000, totalCbm.value))
+  const loadPlannerPackages = computed(() =>
+    dimensionRows.value.map((row, index) => ({
+      id: row.id,
+      type: mode.value === "road" ? "Pallet" : row.container_type || "Package",
+      desc: mode.value === "road" ? `Pallet ${index + 1}` : `Package ${index + 1}`,
+      length: row.length,
+      width: row.width,
+      height: row.height,
+      qty: row.pieces,
+      weight: row.weight,
+      stackable: getPackageStackOption(row) === "stackable",
+      adr: Boolean(form.is_hazardous),
+    })),
+  )
+  const loadPlannerReference = computed(() => form.quote_ref || "Quote Load Plan")
 
   const subtotalSell = computed(() =>
     chargeLines.value.reduce((total, line) => total + getChargeSellTotal(line), 0),
@@ -931,6 +946,8 @@ export function useQuoteCreatePage() {
     totalCbm,
     totalLdm,
     revenueTonne,
+    loadPlannerPackages,
+    loadPlannerReference,
 
     subtotalSellDisplay,
     subtotalCostDisplay,

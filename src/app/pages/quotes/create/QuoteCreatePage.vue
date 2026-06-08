@@ -466,6 +466,15 @@
           </tbody>
         </table>
       </div>
+
+      <LoadPlannerPanel
+        class="mt-16"
+        :packages="loadPlannerPackages"
+        :plan-ref="loadPlannerReference"
+        reference-label="Quote Ref"
+        :transport-mode="mode || 'road'"
+        empty-message="Add package rows above or add a manual load unit here."
+      />
     </section>
 
     <section v-if="canShowForm" class="card section">
@@ -739,6 +748,7 @@ import InputSwitch from "primevue/inputswitch"
 import Checkbox from "primevue/checkbox"
 
 import ModeSelector from "@/app/components/jobs/ModeSelector.vue"
+import LoadPlannerPanel from "@/app/components/load-planner/LoadPlannerPanel.vue"
 import QuoteStepHeader from "./QuoteStepHeader.vue"
 import QuoteTypeSelector from "./QuoteTypeSelector.vue"
 import { useQuoteCreatePage } from "./QuoteCreatePage"
@@ -790,6 +800,8 @@ const {
   totalCbm,
   totalLdm,
   revenueTonne,
+  loadPlannerPackages,
+  loadPlannerReference,
 
   subtotalSellDisplay,
   subtotalCostDisplay,

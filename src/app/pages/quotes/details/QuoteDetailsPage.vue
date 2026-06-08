@@ -230,6 +230,14 @@
         </section>
       </div>
 
+      <LoadPlannerPanel
+        :packages="loadPlannerPackages"
+        :plan-ref="loadPlannerReference"
+        reference-label="Quote Ref"
+        :transport-mode="quote.mode_of_transport || 'road'"
+        empty-message="No package dimensions are saved on this quote yet."
+      />
+
       <section class="quote-details-page__card">
         <div class="quote-details-page__card-header">
           <h2>Charge Lines</h2>
@@ -349,10 +357,13 @@ import Dialog from "primevue/dialog"
 import Textarea from "primevue/textarea"
 import Toast from "primevue/toast"
 
+import LoadPlannerPanel from "@/app/components/load-planner/LoadPlannerPanel.vue"
 import { useQuoteDetailsPage } from "./QuoteDetailsPage"
 
 const {
   quote,
+  loadPlannerPackages,
+  loadPlannerReference,
   loading,
   actionProcessing,
   actionDialogVisible,
