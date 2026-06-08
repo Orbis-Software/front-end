@@ -13,6 +13,7 @@ import Calendar from "primevue/calendar"
 
 import JobProgressStepper from "@/app/components/jobs/details/JobProgressStepper.vue"
 import { useTransportJobStore } from "@/app/stores/transport-job"
+import type { JobPdfDocument } from "@/app/services/transport-jobs/job-pdf"
 import { useJobDetailsPage } from "./JobDetailsPage.logic"
 
 const {
@@ -36,8 +37,10 @@ const toast = useToast()
 const confirm = useConfirm()
 const router = useRouter()
 const transportJobStore = useTransportJobStore()
-const pdfLoading = ref(false)
+const pdfLoading = ref<JobPdfDocument | null>(null)
 const archiveLoading = ref(false)
+const isPdfLoading = computed(() => pdfLoading.value !== null)
+const isRoadMode = computed(() => form.mode_of_transport === "road")
 
 const progressSteps = computed(() => [
   {
@@ -138,15 +141,15 @@ async function extractPdfError(error: any) {
   return error?.response?.data?.message ?? error?.message ?? "Unable to generate the job PDF."
 }
 
-async function loadPdf(download = false) {
+async function loadPdf(download = false, document: JobPdfDocument = "job_details") {
   const id = Number(job.value?.id)
 
   if (!Number.isFinite(id) || id <= 0) return
 
-  pdfLoading.value = true
+  pdfLoading.value = document
 
   try {
-    const blob = await transportJobStore.jobPdf(id)
+    const blob = await transportJobStore.jobPdf(id, document)
 
     if (!(blob instanceof Blob) || blob.type !== "application/pdf") {
       const text = blob instanceof Blob ? await blob.text() : ""
@@ -162,16 +165,28 @@ async function loadPdf(download = false) {
       life: 4500,
     })
   } finally {
-    pdfLoading.value = false
+    pdfLoading.value = null
   }
 }
 
 function onPrint() {
-  loadPdf(false)
+  loadPdf(false, "job_details")
 }
 
 function onExportPdf() {
-  loadPdf(true)
+  loadPdf(true, "job_details")
+}
+
+function onCollectionOrder() {
+  if (!isRoadMode.value) return
+
+  loadPdf(false, "collection_order")
+}
+
+function onTransportOrder() {
+  if (!isRoadMode.value) return
+
+  loadPdf(false, "transport_order")
 }
 
 function archiveErrorMessage(error: any) {
@@ -244,9 +259,9 @@ function onBookJob() {
           <Button
             class="job-action-btn"
             icon="pi pi-print"
-            :label="pdfLoading ? 'Opening...' : 'Print'"
-            :loading="pdfLoading"
-            :disabled="loading || pdfLoading"
+            :label="pdfLoading === 'job_details' ? 'Opening...' : 'Print'"
+            :loading="pdfLoading === 'job_details'"
+            :disabled="loading || isPdfLoading"
             @click="onPrint"
           />
 
@@ -254,8 +269,28 @@ function onBookJob() {
             class="job-action-btn"
             icon="pi pi-download"
             label="Export"
-            :disabled="loading || pdfLoading"
+            :disabled="loading || isPdfLoading"
             @click="onExportPdf"
+          />
+
+          <Button
+            v-if="isRoadMode"
+            class="job-action-btn"
+            icon="pi pi-file"
+            :label="pdfLoading === 'collection_order' ? 'Opening...' : 'Collection Order'"
+            :loading="pdfLoading === 'collection_order'"
+            :disabled="loading || isPdfLoading"
+            @click="onCollectionOrder"
+          />
+
+          <Button
+            v-if="isRoadMode"
+            class="job-action-btn"
+            icon="pi pi-truck"
+            :label="pdfLoading === 'transport_order' ? 'Opening...' : 'Transport Order'"
+            :loading="pdfLoading === 'transport_order'"
+            :disabled="loading || isPdfLoading"
+            @click="onTransportOrder"
           />
 
           <Button

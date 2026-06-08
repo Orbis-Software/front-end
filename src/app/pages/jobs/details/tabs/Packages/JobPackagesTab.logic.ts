@@ -102,14 +102,19 @@ export function useJobPackagesTab() {
   function removeRow(target: number | string | PackageRow) {
     const currentRows = rows.value
     const targetRow = typeof target === "object" ? target : null
-    const targetKey = targetRow ? packageRowKey(targetRow.id) : packageRowKey(target as number | string)
+    const targetKey = targetRow
+      ? packageRowKey(targetRow.id)
+      : packageRowKey(target as number | string)
     const nextRows = currentRows.filter(row => {
       if (targetRow && row === targetRow) return false
 
       return packageRowKey(row.id) !== targetKey
     })
 
-    rows.value = nextRows.length === currentRows.length && targetRow && currentRows.length === 1 ? [] : nextRows
+    rows.value =
+      nextRows.length === currentRows.length && targetRow && currentRows.length === 1
+        ? []
+        : nextRows
   }
 
   const totals = computed(() => {

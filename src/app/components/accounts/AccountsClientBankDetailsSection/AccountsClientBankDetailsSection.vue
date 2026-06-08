@@ -14,10 +14,7 @@ import { useClientBankDetailStore } from "@/app/stores/client-bank-details"
 import { useContactStore } from "@/app/stores/contact"
 import { useGlobalReferenceDataStore } from "@/app/stores/global-reference-data"
 import { useReferenceDataStore } from "@/app/stores/reference-data"
-import type {
-  ClientBankDetail,
-  ClientBankDetailPayload,
-} from "@/app/types/client-bank-detail"
+import type { ClientBankDetail, ClientBankDetailPayload } from "@/app/types/client-bank-detail"
 import type { Contact } from "@/app/types/contact"
 import type { GlobalReferenceDataRow } from "@/app/types/globalReferenceData"
 
@@ -194,10 +191,7 @@ function errorMessage(error: unknown, fallback: string): string {
   const nextError = error as any
 
   return (
-    nextError?.response?.data?.message ||
-    nextError?.message ||
-    bankDetailStore.error ||
-    fallback
+    nextError?.response?.data?.message || nextError?.message || bankDetailStore.error || fallback
   )
 }
 
@@ -424,7 +418,9 @@ onMounted(async () => {
       </div>
 
       <div class="accounts-client-bank-details__filters">
-        <div class="accounts-client-bank-details__field accounts-client-bank-details__field--search">
+        <div
+          class="accounts-client-bank-details__field accounts-client-bank-details__field--search"
+        >
           <label>Search</label>
           <InputText
             v-model="filterState.search"
@@ -473,7 +469,9 @@ onMounted(async () => {
             </div>
 
             <div class="accounts-client-bank-details__form-grid">
-              <div class="accounts-client-bank-details__field accounts-client-bank-details__field--xlarge">
+              <div
+                class="accounts-client-bank-details__field accounts-client-bank-details__field--xlarge"
+              >
                 <label>Contact</label>
                 <Dropdown
                   v-model="form.contactId"
@@ -495,19 +493,27 @@ onMounted(async () => {
                 </Dropdown>
               </div>
 
-              <div class="accounts-client-bank-details__field accounts-client-bank-details__field--xlarge">
+              <div
+                class="accounts-client-bank-details__field accounts-client-bank-details__field--xlarge"
+              >
                 <label>Account Name</label>
                 <InputText v-model="form.account" placeholder="PC Cargo UK Ltd - GBP" autofocus />
               </div>
-              <div class="accounts-client-bank-details__field accounts-client-bank-details__field--large">
+              <div
+                class="accounts-client-bank-details__field accounts-client-bank-details__field--large"
+              >
                 <label>Branch Name</label>
                 <InputText v-model="form.branch" />
               </div>
-              <div class="accounts-client-bank-details__field accounts-client-bank-details__field--small">
+              <div
+                class="accounts-client-bank-details__field accounts-client-bank-details__field--small"
+              >
                 <label>Prefix</label>
                 <InputText v-model="form.prefix" />
               </div>
-              <div class="accounts-client-bank-details__field accounts-client-bank-details__field--small">
+              <div
+                class="accounts-client-bank-details__field accounts-client-bank-details__field--small"
+              >
                 <label>Currency</label>
                 <Dropdown
                   v-model="form.currency"
@@ -530,27 +536,39 @@ onMounted(async () => {
             </div>
 
             <div class="accounts-client-bank-details__form-grid">
-              <div class="accounts-client-bank-details__field accounts-client-bank-details__field--medium">
+              <div
+                class="accounts-client-bank-details__field accounts-client-bank-details__field--medium"
+              >
                 <label>Account Number</label>
                 <InputText v-model="form.accountNo" />
               </div>
-              <div class="accounts-client-bank-details__field accounts-client-bank-details__field--small">
+              <div
+                class="accounts-client-bank-details__field accounts-client-bank-details__field--small"
+              >
                 <label>Sort Code</label>
                 <InputText v-model="form.sortCode" />
               </div>
-              <div class="accounts-client-bank-details__field accounts-client-bank-details__field--medium">
+              <div
+                class="accounts-client-bank-details__field accounts-client-bank-details__field--medium"
+              >
                 <label>BIC</label>
                 <InputText v-model="form.bic" />
               </div>
-              <div class="accounts-client-bank-details__field accounts-client-bank-details__field--medium">
+              <div
+                class="accounts-client-bank-details__field accounts-client-bank-details__field--medium"
+              >
                 <label>SWIFT</label>
                 <InputText v-model="form.swift" />
               </div>
-              <div class="accounts-client-bank-details__field accounts-client-bank-details__field--xlarge">
+              <div
+                class="accounts-client-bank-details__field accounts-client-bank-details__field--xlarge"
+              >
                 <label>IBAN</label>
                 <InputText v-model="form.iban" />
               </div>
-              <div class="accounts-client-bank-details__field accounts-client-bank-details__field--xlarge">
+              <div
+                class="accounts-client-bank-details__field accounts-client-bank-details__field--xlarge"
+              >
                 <label>Bank Name</label>
                 <InputText v-model="form.bank" />
               </div>
@@ -564,19 +582,27 @@ onMounted(async () => {
             </div>
 
             <div class="accounts-client-bank-details__form-grid">
-              <div class="accounts-client-bank-details__field accounts-client-bank-details__field--large">
+              <div
+                class="accounts-client-bank-details__field accounts-client-bank-details__field--large"
+              >
                 <label>Address Line 1</label>
                 <InputText v-model="form.addressLine1" />
               </div>
-              <div class="accounts-client-bank-details__field accounts-client-bank-details__field--large">
+              <div
+                class="accounts-client-bank-details__field accounts-client-bank-details__field--large"
+              >
                 <label>Address Line 2</label>
                 <InputText v-model="form.addressLine2" />
               </div>
-              <div class="accounts-client-bank-details__field accounts-client-bank-details__field--large">
+              <div
+                class="accounts-client-bank-details__field accounts-client-bank-details__field--large"
+              >
                 <label>Address Line 3</label>
                 <InputText v-model="form.addressLine3" />
               </div>
-              <div class="accounts-client-bank-details__field accounts-client-bank-details__field--medium">
+              <div
+                class="accounts-client-bank-details__field accounts-client-bank-details__field--medium"
+              >
                 <label>City</label>
                 <Dropdown
                   v-model="form.city"
@@ -598,15 +624,21 @@ onMounted(async () => {
                   </template>
                 </Dropdown>
               </div>
-              <div class="accounts-client-bank-details__field accounts-client-bank-details__field--medium">
+              <div
+                class="accounts-client-bank-details__field accounts-client-bank-details__field--medium"
+              >
                 <label>County / State</label>
                 <InputText v-model="form.countyState" />
               </div>
-              <div class="accounts-client-bank-details__field accounts-client-bank-details__field--small">
+              <div
+                class="accounts-client-bank-details__field accounts-client-bank-details__field--small"
+              >
                 <label>Post Code / ZIP</label>
                 <InputText v-model="form.postCodeZip" />
               </div>
-              <div class="accounts-client-bank-details__field accounts-client-bank-details__field--small">
+              <div
+                class="accounts-client-bank-details__field accounts-client-bank-details__field--small"
+              >
                 <label>Country Code</label>
                 <InputText v-model="form.country" maxlength="3" />
               </div>

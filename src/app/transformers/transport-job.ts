@@ -22,12 +22,54 @@ function nullableString(value: any): string | null {
   return String(value)
 }
 
+function nullableTime(value: any): string | null {
+  const text = nullableString(value)
+
+  return text ? text.slice(0, 5) : null
+}
+
+function nullableBoolean(value: any): boolean | null {
+  if (value === null || value === undefined || value === "") return null
+  if (typeof value === "boolean") return value
+  if (typeof value === "number") return value === 1
+
+  return ["1", "true", "yes", "on"].includes(String(value).toLowerCase())
+}
+
 function fetchRoadDetail(raw: any): JobRoadDetail | null {
   if (!raw) return null
 
   return {
     id: nullableNumber(raw.id) ?? undefined,
     job_id: nullableNumber(raw.job_id) ?? undefined,
+    order_type: nullableString(raw.order_type),
+    local_collection_type: nullableString(raw.local_collection_type),
+    local_service_level: nullableString(raw.local_service_level),
+    local_vehicle_required: nullableString(raw.local_vehicle_required),
+    local_zone_area: nullableString(raw.local_zone_area),
+    local_estimated_distance_miles: nullableNumber(raw.local_estimated_distance_miles),
+    local_estimated_duration_hours: nullableNumber(raw.local_estimated_duration_hours),
+    local_rate_per_mile: nullableNumber(raw.local_rate_per_mile),
+    local_estimated_mileage_cost: nullableNumber(raw.local_estimated_mileage_cost),
+    local_round_trip: nullableBoolean(raw.local_round_trip),
+    local_signature_required: nullableBoolean(raw.local_signature_required),
+    local_pod_method: nullableString(raw.local_pod_method),
+    local_parking_access_code: nullableString(raw.local_parking_access_code),
+    local_time_critical: nullableBoolean(raw.local_time_critical),
+    local_exact_delivery_time: nullableTime(raw.local_exact_delivery_time),
+    local_driver_assigned: nullableString(raw.local_driver_assigned),
+    local_driver_mobile: nullableString(raw.local_driver_mobile),
+    local_collection_notes: nullableString(raw.local_collection_notes),
+    full_load_type: nullableString(raw.full_load_type),
+    full_load_plan_ref: nullableString(raw.full_load_plan_ref),
+    full_max_stack_height_cm: nullableNumber(raw.full_max_stack_height_cm),
+    full_multi_drop: nullableBoolean(raw.full_multi_drop),
+    full_intermodal_leg: nullableBoolean(raw.full_intermodal_leg),
+    full_customs_required: nullableBoolean(raw.full_customs_required),
+    full_subcontractor_used: nullableBoolean(raw.full_subcontractor_used),
+    full_vehicle_registration: nullableString(raw.full_vehicle_registration),
+    full_seal_number: nullableString(raw.full_seal_number),
+    full_route_via: nullableString(raw.full_route_via),
     service_type: nullableString(raw.service_type),
     vehicle_type: nullableString(raw.vehicle_type),
     origin_city: nullableString(raw.origin_city),
@@ -184,6 +226,7 @@ function fetchPackage(raw: any): JobPackage {
       raw.at_the_top === null || raw.at_the_top === undefined
         ? null
         : Boolean(Number(raw.at_the_top)),
+    adr: raw.adr === null || raw.adr === undefined ? null : Boolean(Number(raw.adr)),
 
     quantity: nullableNumber(raw.quantity),
 
@@ -237,13 +280,23 @@ const transportJobTransformer = {
       job_type: raw.job_type,
       status: raw.status ?? null,
 
+      order_type: raw.order_type ?? null,
+      consignment_number: raw.consignment_number ?? null,
       service_type: raw.service_type ?? null,
       incoterms: raw.incoterms ?? null,
       currency: raw.currency ?? null,
       declared_value: nullableNumber(raw.declared_value),
       description_of_goods: raw.description_of_goods ?? null,
       commodity_code: raw.commodity_code ?? null,
+      hs_code: raw.hs_code ?? null,
       insurance_level: raw.insurance_level ?? null,
+      is_hazardous:
+        raw.is_hazardous === null || raw.is_hazardous === undefined
+          ? null
+          : Boolean(Number(raw.is_hazardous)),
+      hazardous_class: raw.hazardous_class ?? null,
+      un_number: raw.un_number ?? null,
+      temperature_requirement: raw.temperature_requirement ?? null,
 
       customer_po_number: raw.customer_po_number ?? null,
       customer_booking_ref: raw.customer_booking_ref ?? null,
@@ -268,6 +321,14 @@ const transportJobTransformer = {
       destination_address: raw.destination_address ?? raw.destinationAddress ?? null,
       collection_date: raw.collection_date ?? null,
       collection_time: raw.collection_time ?? null,
+      latest_collection_time: raw.latest_collection_time ?? null,
+      delivery_date: raw.delivery_date ?? null,
+      delivery_from_time: raw.delivery_from_time ?? null,
+      delivery_by_time: raw.delivery_by_time ?? null,
+      loading_reference: raw.loading_reference ?? null,
+      delivery_booking_ref: raw.delivery_booking_ref ?? null,
+      collection_instructions: raw.collection_instructions ?? null,
+      delivery_instructions: raw.delivery_instructions ?? null,
 
       creator: creatorRaw
         ? {

@@ -10,13 +10,7 @@ export type JobType =
   | "consolidation"
   | "cross_trade"
 
-export type TransportMode =
-  | "air"
-  | "rail"
-  | "road"
-  | "sea"
-  | "courier"
-  | "multi_modal"
+export type TransportMode = "air" | "rail" | "road" | "sea" | "courier" | "multi_modal"
 
 export const TRANSPORT_MODES: TransportMode[] = [
   "air",
@@ -36,6 +30,34 @@ export interface TransportJobCreator {
 export interface JobRoadDetail {
   id?: number
   job_id?: number
+  order_type?: string | null
+  local_collection_type?: string | null
+  local_service_level?: string | null
+  local_vehicle_required?: string | null
+  local_zone_area?: string | null
+  local_estimated_distance_miles?: number | null
+  local_estimated_duration_hours?: number | null
+  local_rate_per_mile?: number | null
+  local_estimated_mileage_cost?: number | null
+  local_round_trip?: boolean | null
+  local_signature_required?: boolean | null
+  local_pod_method?: string | null
+  local_parking_access_code?: string | null
+  local_time_critical?: boolean | null
+  local_exact_delivery_time?: string | null
+  local_driver_assigned?: string | null
+  local_driver_mobile?: string | null
+  local_collection_notes?: string | null
+  full_load_type?: string | null
+  full_load_plan_ref?: string | null
+  full_max_stack_height_cm?: number | null
+  full_multi_drop?: boolean | null
+  full_intermodal_leg?: boolean | null
+  full_customs_required?: boolean | null
+  full_subcontractor_used?: boolean | null
+  full_vehicle_registration?: string | null
+  full_seal_number?: string | null
+  full_route_via?: string | null
   service_type?: string | null
   vehicle_type?: string | null
   origin_city?: string | null
@@ -394,13 +416,20 @@ export interface TransportJob {
   job_type: JobType
   status?: string | null
 
+  order_type?: string | null
+  consignment_number?: string | null
   service_type?: string | null
   incoterms?: string | null
   currency?: string | null
   declared_value?: number | null
   description_of_goods?: string | null
   commodity_code?: string | null
+  hs_code?: string | null
   insurance_level?: string | null
+  is_hazardous?: boolean | number | null
+  hazardous_class?: string | null
+  un_number?: string | null
+  temperature_requirement?: string | null
 
   customer_po_number?: string | null
   customer_booking_ref?: string | null
@@ -421,6 +450,14 @@ export interface TransportJob {
   destination_address?: ContactCollectionAddress | null
   collection_date?: string | null
   collection_time?: string | null
+  latest_collection_time?: string | null
+  delivery_date?: string | null
+  delivery_from_time?: string | null
+  delivery_by_time?: string | null
+  loading_reference?: string | null
+  delivery_booking_ref?: string | null
+  collection_instructions?: string | null
+  delivery_instructions?: string | null
 
   road_detail?: JobRoadDetail | null
   sea_detail?: JobSeaDetail | null
@@ -448,13 +485,20 @@ export interface BaseTransportJobCreatePayload {
   job_date?: string | null
   status?: string | null
 
+  order_type?: string | null
+  consignment_number?: string | null
   service_type?: string | null
   incoterms?: string | null
   currency?: string | null
   declared_value?: number | null
   description_of_goods?: string | null
   commodity_code?: string | null
+  hs_code?: string | null
   insurance_level?: string | null
+  is_hazardous?: boolean | null
+  hazardous_class?: string | null
+  un_number?: string | null
+  temperature_requirement?: string | null
 
   customer_po_number?: string | null
   customer_booking_ref?: string | null
@@ -471,6 +515,14 @@ export interface BaseTransportJobCreatePayload {
   destination_contact_collection_address_id?: number | null
   collection_date?: string | null
   collection_time?: string | null
+  latest_collection_time?: string | null
+  delivery_date?: string | null
+  delivery_from_time?: string | null
+  delivery_by_time?: string | null
+  loading_reference?: string | null
+  delivery_booking_ref?: string | null
+  collection_instructions?: string | null
+  delivery_instructions?: string | null
   road_detail?: JobRoadDetail | null
   sea_detail?: JobSeaDetail | null
   air_detail?: JobAirDetail | null
@@ -511,7 +563,14 @@ export interface TransportJobUpdatePayload extends Partial<BaseTransportJobCreat
   declared_value?: number | null
   description_of_goods?: string | null
   commodity_code?: string | null
+  hs_code?: string | null
   insurance_level?: string | null
+  order_type?: string | null
+  consignment_number?: string | null
+  is_hazardous?: boolean | null
+  hazardous_class?: string | null
+  un_number?: string | null
+  temperature_requirement?: string | null
 
   customer_po_number?: string | null
   customer_booking_ref?: string | null
@@ -527,6 +586,14 @@ export interface TransportJobUpdatePayload extends Partial<BaseTransportJobCreat
   destination_contact_collection_address_id?: number | null
   collection_date?: string | null
   collection_time?: string | null
+  latest_collection_time?: string | null
+  delivery_date?: string | null
+  delivery_from_time?: string | null
+  delivery_by_time?: string | null
+  loading_reference?: string | null
+  delivery_booking_ref?: string | null
+  collection_instructions?: string | null
+  delivery_instructions?: string | null
 
   road_detail?: JobRoadDetail | null
   sea_detail?: JobSeaDetail | null

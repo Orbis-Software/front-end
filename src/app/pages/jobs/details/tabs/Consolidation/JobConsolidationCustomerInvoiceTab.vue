@@ -149,319 +149,319 @@ function postExportInvoice() {
 
 <template>
   <section class="job-consolidation-tab">
-      <div class="job-consolidation-tab__section">
-        <header class="job-consolidation-tab__section-header">
+    <div class="job-consolidation-tab__section">
+      <header class="job-consolidation-tab__section-header">
+        <div>
+          <h2>Customer Invoice</h2>
+          <p>Post domestic and export invoices, then build the customer delivery quotation.</p>
+        </div>
+
+        <div class="job-consolidation-tab__actions">
+          <Button
+            label="Add Domestic Charge"
+            icon="pi pi-plus"
+            class="job-consolidation-tab__button job-consolidation-tab__button--ghost"
+            type="button"
+            @click="addDomesticCharge"
+          />
+          <Button
+            label="Add Export Charge"
+            icon="pi pi-plus"
+            class="job-consolidation-tab__button job-consolidation-tab__button--ghost"
+            type="button"
+            @click="addExportCharge"
+          />
+          <Button
+            :label="details.showQuotePanel ? 'Hide Quote' : 'View Quote'"
+            icon="pi pi-file-edit"
+            class="job-consolidation-tab__button job-consolidation-tab__button--primary"
+            type="button"
+            @click="details.showQuotePanel = !details.showQuotePanel"
+          />
+        </div>
+      </header>
+
+      <div class="job-consolidation-tab__two-column">
+        <div class="job-consolidation-tab">
           <div>
-            <h2>Customer Invoice</h2>
-            <p>Post domestic and export invoices, then build the customer delivery quotation.</p>
-          </div>
-
-          <div class="job-consolidation-tab__actions">
-            <Button
-              label="Add Domestic Charge"
-              icon="pi pi-plus"
-              class="job-consolidation-tab__button job-consolidation-tab__button--ghost"
-              type="button"
-              @click="addDomesticCharge"
-            />
-            <Button
-              label="Add Export Charge"
-              icon="pi pi-plus"
-              class="job-consolidation-tab__button job-consolidation-tab__button--ghost"
-              type="button"
-              @click="addExportCharge"
-            />
-            <Button
-              :label="details.showQuotePanel ? 'Hide Quote' : 'View Quote'"
-              icon="pi pi-file-edit"
-              class="job-consolidation-tab__button job-consolidation-tab__button--primary"
-              type="button"
-              @click="details.showQuotePanel = !details.showQuotePanel"
-            />
-          </div>
-        </header>
-
-        <div class="job-consolidation-tab__two-column">
-          <div class="job-consolidation-tab">
-            <div>
-              <div class="job-consolidation-tab__section-header">
-                <div>
-                  <h3>Domestic Charges - from Collection Orders</h3>
-                  <p>Domestic charges use the collection weight-break calculation.</p>
-                </div>
-                <span
-                  class="job-consolidation-tab__status"
-                  :class="{
-                    'job-consolidation-tab__status--success': details.domesticInvoice.posted,
-                  }"
-                >
-                  {{
-                    details.domesticInvoice.posted
-                      ? `Posted - ${details.domesticInvoice.ref}`
-                      : "Unposted"
-                  }}
-                </span>
+            <div class="job-consolidation-tab__section-header">
+              <div>
+                <h3>Domestic Charges - from Collection Orders</h3>
+                <p>Domestic charges use the collection weight-break calculation.</p>
               </div>
-
-              <div class="job-consolidation-tab__table-wrap">
-                <table class="job-consolidation-tab__table">
-                  <thead>
-                    <tr>
-                      <th>Collection Ref</th>
-                      <th>Supplier / Carrier</th>
-                      <th>Pickup</th>
-                      <th>Delivery</th>
-                      <th>Pieces</th>
-                      <th>Weight kg</th>
-                      <th>Cost</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="row in domesticRows" :key="row.id">
-                      <td>{{ row.coRef }}</td>
-                      <td>{{ row.supplier }}</td>
-                      <td>{{ row.pickupDate }}</td>
-                      <td>{{ row.deliveryDate }}</td>
-                      <td>{{ row.pcs }}</td>
-                      <td>{{ row.weightKg }}</td>
-                      <td>{{ money("GBP", row.cost) }}</td>
-                    </tr>
-                    <tr v-if="!domesticRows.length">
-                      <td colspan="7">No collection orders yet.</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              <div class="job-consolidation-tab__table-wrap">
-                <table class="job-consolidation-tab__table">
-                  <thead>
-                    <tr>
-                      <th>Additional Domestic Charge</th>
-                      <th>Qty</th>
-                      <th>Unit</th>
-                      <th>Rate</th>
-                      <th>Total</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="line in details.domesticChargeRows" :key="line.id">
-                      <td><Dropdown v-model="line.description" :options="chargeOptions" /></td>
-                      <td><InputNumber v-model="line.qty" :min="0" /></td>
-                      <td><Dropdown v-model="line.unit" :options="unitOptions" /></td>
-                      <td><InputNumber v-model="line.rate" :min-fraction-digits="2" /></td>
-                      <td>{{ money("GBP", line.qty * line.rate) }}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              <div class="job-consolidation-tab__actions" style="margin-top: 12px">
-                <Button
-                  label="Create / View Quote"
-                  icon="pi pi-file-edit"
-                  class="job-consolidation-tab__button job-consolidation-tab__button--ghost"
-                  type="button"
-                  @click="addDomesticToQuote"
-                />
-                <Button
-                  label="Post Domestic Invoice"
-                  icon="pi pi-check"
-                  class="job-consolidation-tab__button job-consolidation-tab__button--primary"
-                  type="button"
-                  @click="postDomesticInvoice"
-                />
-              </div>
-            </div>
-
-            <div class="job-consolidation-tab__subsection">
-              <div class="job-consolidation-tab__section-header">
-                <div>
-                  <h3>Export Invoice Charges</h3>
-                  <p>Export charges can be quoted line-by-line or posted as the export invoice.</p>
-                </div>
-                <span
-                  class="job-consolidation-tab__status"
-                  :class="{
-                    'job-consolidation-tab__status--success': details.exportInvoice.posted,
-                  }"
-                >
-                  {{
-                    details.exportInvoice.posted
-                      ? `Posted - ${details.exportInvoice.ref}`
-                      : "Unposted"
-                  }}
-                </span>
-              </div>
-
-              <div class="job-consolidation-tab__table-wrap">
-                <table class="job-consolidation-tab__table">
-                  <thead>
-                    <tr>
-                      <th>Description</th>
-                      <th>Qty</th>
-                      <th>Unit</th>
-                      <th>Rate</th>
-                      <th>Total</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="line in details.exportChargeRows" :key="line.id">
-                      <td><Dropdown v-model="line.description" :options="chargeOptions" /></td>
-                      <td><InputNumber v-model="line.qty" :min="0" /></td>
-                      <td><Dropdown v-model="line.unit" :options="unitOptions" /></td>
-                      <td><InputNumber v-model="line.rate" :min-fraction-digits="2" /></td>
-                      <td>{{ money("GBP", line.qty * line.rate) }}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              <div class="job-consolidation-tab__actions" style="margin-top: 12px">
-                <Button
-                  label="Create / View Quote"
-                  icon="pi pi-file-edit"
-                  class="job-consolidation-tab__button job-consolidation-tab__button--ghost"
-                  type="button"
-                  @click="addExportToQuote"
-                />
-                <Button
-                  label="Post Export Invoice"
-                  icon="pi pi-check"
-                  class="job-consolidation-tab__button job-consolidation-tab__button--primary"
-                  type="button"
-                  @click="postExportInvoice"
-                />
-              </div>
-            </div>
-
-            <div v-if="details.showQuotePanel" class="job-consolidation-tab__subsection">
-              <div class="job-consolidation-tab__section-header">
-                <div>
-                  <h3>Delivery Quotation</h3>
-                  <span class="job-consolidation-tab__status">{{ details.quote.status }}</span>
-                </div>
-                <div class="job-consolidation-tab__actions">
-                  <Button
-                    label="Add Line"
-                    icon="pi pi-plus"
-                    class="job-consolidation-tab__button job-consolidation-tab__button--ghost"
-                    type="button"
-                    @click="addQuoteLine"
-                  />
-                  <Button
-                    label="Convert to Export Invoice"
-                    icon="pi pi-arrow-right"
-                    class="job-consolidation-tab__button job-consolidation-tab__button--primary"
-                    type="button"
-                    @click="convertQuoteToExportInvoice"
-                  />
-                  <Button
-                    label="Cancel Quote"
-                    icon="pi pi-times"
-                    class="job-consolidation-tab__button job-consolidation-tab__button--ghost"
-                    type="button"
-                    @click="cancelQuote"
-                  />
-                </div>
-              </div>
-
-              <div class="job-consolidation-tab__grid job-consolidation-tab__grid--three">
-                <label class="job-consolidation-tab__field">
-                  <span>Quote Reference</span>
-                  <InputText v-model="details.quote.reference" />
-                </label>
-                <label class="job-consolidation-tab__field">
-                  <span>Valid Until</span>
-                  <InputText v-model="details.quote.validUntil" type="date" />
-                </label>
-                <label class="job-consolidation-tab__field">
-                  <span>Status</span>
-                  <Dropdown v-model="details.quote.status" :options="quoteStatusOptions" />
-                </label>
-              </div>
-
-              <div class="job-consolidation-tab__table-wrap">
-                <table class="job-consolidation-tab__table">
-                  <thead>
-                    <tr>
-                      <th>Description</th>
-                      <th>Qty</th>
-                      <th>Unit</th>
-                      <th>Rate</th>
-                      <th>Amount</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="line in details.quoteLines" :key="line.id">
-                      <td><Dropdown v-model="line.description" :options="chargeOptions" /></td>
-                      <td><InputNumber v-model="line.qty" :min="0" /></td>
-                      <td><Dropdown v-model="line.unit" :options="unitOptions" /></td>
-                      <td><InputNumber v-model="line.rate" :min-fraction-digits="2" /></td>
-                      <td>{{ money("GBP", line.qty * line.rate) }}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              <div
-                class="job-consolidation-tab__grid job-consolidation-tab__grid--two"
-                style="margin-top: 12px"
+              <span
+                class="job-consolidation-tab__status"
+                :class="{
+                  'job-consolidation-tab__status--success': details.domesticInvoice.posted,
+                }"
               >
-                <label class="job-consolidation-tab__field">
-                  <span>Notes to Customer</span>
-                  <Textarea v-model="details.quote.notes" rows="3" />
-                </label>
-                <label class="job-consolidation-tab__field">
-                  <span>Terms and Conditions</span>
-                  <Textarea v-model="details.quote.terms" rows="3" />
-                </label>
-              </div>
+                {{
+                  details.domesticInvoice.posted
+                    ? `Posted - ${details.domesticInvoice.ref}`
+                    : "Unposted"
+                }}
+              </span>
+            </div>
 
-              <div class="job-consolidation-tab__summary-row">
-                <article>
-                  <span>Quote Subtotal</span>
-                  <strong>{{ money("GBP", quoteSubtotal) }}</strong>
-                </article>
-              </div>
+            <div class="job-consolidation-tab__table-wrap">
+              <table class="job-consolidation-tab__table">
+                <thead>
+                  <tr>
+                    <th>Collection Ref</th>
+                    <th>Supplier / Carrier</th>
+                    <th>Pickup</th>
+                    <th>Delivery</th>
+                    <th>Pieces</th>
+                    <th>Weight kg</th>
+                    <th>Cost</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="row in domesticRows" :key="row.id">
+                    <td>{{ row.coRef }}</td>
+                    <td>{{ row.supplier }}</td>
+                    <td>{{ row.pickupDate }}</td>
+                    <td>{{ row.deliveryDate }}</td>
+                    <td>{{ row.pcs }}</td>
+                    <td>{{ row.weightKg }}</td>
+                    <td>{{ money("GBP", row.cost) }}</td>
+                  </tr>
+                  <tr v-if="!domesticRows.length">
+                    <td colspan="7">No collection orders yet.</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
-          </div>
 
-          <aside class="job-consolidation-tab__side-card">
-            <div>
-              <span>Domestic Total</span>
-              <strong>{{ money("GBP", domesticTotal) }}</strong>
+            <div class="job-consolidation-tab__table-wrap">
+              <table class="job-consolidation-tab__table">
+                <thead>
+                  <tr>
+                    <th>Additional Domestic Charge</th>
+                    <th>Qty</th>
+                    <th>Unit</th>
+                    <th>Rate</th>
+                    <th>Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="line in details.domesticChargeRows" :key="line.id">
+                    <td><Dropdown v-model="line.description" :options="chargeOptions" /></td>
+                    <td><InputNumber v-model="line.qty" :min="0" /></td>
+                    <td><Dropdown v-model="line.unit" :options="unitOptions" /></td>
+                    <td><InputNumber v-model="line.rate" :min-fraction-digits="2" /></td>
+                    <td>{{ money("GBP", line.qty * line.rate) }}</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
-            <div>
-              <span>Export Total</span>
-              <strong>{{ money("GBP", exportTotal) }}</strong>
-            </div>
-            <div>
-              <span>Subtotal</span>
-              <strong>{{ money("GBP", customerInvoiceSubtotal) }}</strong>
-            </div>
-            <div>
-              <span>Tax Rate</span>
-              <InputNumber
-                v-model="details.taxRate"
-                suffix="%"
-                :min="0"
-                :max="100"
-                :min-fraction-digits="1"
+
+            <div class="job-consolidation-tab__actions" style="margin-top: 12px">
+              <Button
+                label="Create / View Quote"
+                icon="pi pi-file-edit"
+                class="job-consolidation-tab__button job-consolidation-tab__button--ghost"
+                type="button"
+                @click="addDomesticToQuote"
+              />
+              <Button
+                label="Post Domestic Invoice"
+                icon="pi pi-check"
+                class="job-consolidation-tab__button job-consolidation-tab__button--primary"
+                type="button"
+                @click="postDomesticInvoice"
               />
             </div>
-            <div>
-              <span>Tax</span>
-              <strong>{{ money("GBP", customerInvoiceTax) }}</strong>
+          </div>
+
+          <div class="job-consolidation-tab__subsection">
+            <div class="job-consolidation-tab__section-header">
+              <div>
+                <h3>Export Invoice Charges</h3>
+                <p>Export charges can be quoted line-by-line or posted as the export invoice.</p>
+              </div>
+              <span
+                class="job-consolidation-tab__status"
+                :class="{
+                  'job-consolidation-tab__status--success': details.exportInvoice.posted,
+                }"
+              >
+                {{
+                  details.exportInvoice.posted
+                    ? `Posted - ${details.exportInvoice.ref}`
+                    : "Unposted"
+                }}
+              </span>
             </div>
-            <div>
-              <span>Invoice Total</span>
-              <strong class="job-consolidation-tab__grand-total">
-                {{ money("GBP", customerInvoiceTotal) }}
-              </strong>
+
+            <div class="job-consolidation-tab__table-wrap">
+              <table class="job-consolidation-tab__table">
+                <thead>
+                  <tr>
+                    <th>Description</th>
+                    <th>Qty</th>
+                    <th>Unit</th>
+                    <th>Rate</th>
+                    <th>Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="line in details.exportChargeRows" :key="line.id">
+                    <td><Dropdown v-model="line.description" :options="chargeOptions" /></td>
+                    <td><InputNumber v-model="line.qty" :min="0" /></td>
+                    <td><Dropdown v-model="line.unit" :options="unitOptions" /></td>
+                    <td><InputNumber v-model="line.rate" :min-fraction-digits="2" /></td>
+                    <td>{{ money("GBP", line.qty * line.rate) }}</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
-          </aside>
+
+            <div class="job-consolidation-tab__actions" style="margin-top: 12px">
+              <Button
+                label="Create / View Quote"
+                icon="pi pi-file-edit"
+                class="job-consolidation-tab__button job-consolidation-tab__button--ghost"
+                type="button"
+                @click="addExportToQuote"
+              />
+              <Button
+                label="Post Export Invoice"
+                icon="pi pi-check"
+                class="job-consolidation-tab__button job-consolidation-tab__button--primary"
+                type="button"
+                @click="postExportInvoice"
+              />
+            </div>
+          </div>
+
+          <div v-if="details.showQuotePanel" class="job-consolidation-tab__subsection">
+            <div class="job-consolidation-tab__section-header">
+              <div>
+                <h3>Delivery Quotation</h3>
+                <span class="job-consolidation-tab__status">{{ details.quote.status }}</span>
+              </div>
+              <div class="job-consolidation-tab__actions">
+                <Button
+                  label="Add Line"
+                  icon="pi pi-plus"
+                  class="job-consolidation-tab__button job-consolidation-tab__button--ghost"
+                  type="button"
+                  @click="addQuoteLine"
+                />
+                <Button
+                  label="Convert to Export Invoice"
+                  icon="pi pi-arrow-right"
+                  class="job-consolidation-tab__button job-consolidation-tab__button--primary"
+                  type="button"
+                  @click="convertQuoteToExportInvoice"
+                />
+                <Button
+                  label="Cancel Quote"
+                  icon="pi pi-times"
+                  class="job-consolidation-tab__button job-consolidation-tab__button--ghost"
+                  type="button"
+                  @click="cancelQuote"
+                />
+              </div>
+            </div>
+
+            <div class="job-consolidation-tab__grid job-consolidation-tab__grid--three">
+              <label class="job-consolidation-tab__field">
+                <span>Quote Reference</span>
+                <InputText v-model="details.quote.reference" />
+              </label>
+              <label class="job-consolidation-tab__field">
+                <span>Valid Until</span>
+                <InputText v-model="details.quote.validUntil" type="date" />
+              </label>
+              <label class="job-consolidation-tab__field">
+                <span>Status</span>
+                <Dropdown v-model="details.quote.status" :options="quoteStatusOptions" />
+              </label>
+            </div>
+
+            <div class="job-consolidation-tab__table-wrap">
+              <table class="job-consolidation-tab__table">
+                <thead>
+                  <tr>
+                    <th>Description</th>
+                    <th>Qty</th>
+                    <th>Unit</th>
+                    <th>Rate</th>
+                    <th>Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="line in details.quoteLines" :key="line.id">
+                    <td><Dropdown v-model="line.description" :options="chargeOptions" /></td>
+                    <td><InputNumber v-model="line.qty" :min="0" /></td>
+                    <td><Dropdown v-model="line.unit" :options="unitOptions" /></td>
+                    <td><InputNumber v-model="line.rate" :min-fraction-digits="2" /></td>
+                    <td>{{ money("GBP", line.qty * line.rate) }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div
+              class="job-consolidation-tab__grid job-consolidation-tab__grid--two"
+              style="margin-top: 12px"
+            >
+              <label class="job-consolidation-tab__field">
+                <span>Notes to Customer</span>
+                <Textarea v-model="details.quote.notes" rows="3" />
+              </label>
+              <label class="job-consolidation-tab__field">
+                <span>Terms and Conditions</span>
+                <Textarea v-model="details.quote.terms" rows="3" />
+              </label>
+            </div>
+
+            <div class="job-consolidation-tab__summary-row">
+              <article>
+                <span>Quote Subtotal</span>
+                <strong>{{ money("GBP", quoteSubtotal) }}</strong>
+              </article>
+            </div>
+          </div>
         </div>
+
+        <aside class="job-consolidation-tab__side-card">
+          <div>
+            <span>Domestic Total</span>
+            <strong>{{ money("GBP", domesticTotal) }}</strong>
+          </div>
+          <div>
+            <span>Export Total</span>
+            <strong>{{ money("GBP", exportTotal) }}</strong>
+          </div>
+          <div>
+            <span>Subtotal</span>
+            <strong>{{ money("GBP", customerInvoiceSubtotal) }}</strong>
+          </div>
+          <div>
+            <span>Tax Rate</span>
+            <InputNumber
+              v-model="details.taxRate"
+              suffix="%"
+              :min="0"
+              :max="100"
+              :min-fraction-digits="1"
+            />
+          </div>
+          <div>
+            <span>Tax</span>
+            <strong>{{ money("GBP", customerInvoiceTax) }}</strong>
+          </div>
+          <div>
+            <span>Invoice Total</span>
+            <strong class="job-consolidation-tab__grand-total">
+              {{ money("GBP", customerInvoiceTotal) }}
+            </strong>
+          </div>
+        </aside>
       </div>
+    </div>
   </section>
 </template>

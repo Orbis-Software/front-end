@@ -247,7 +247,9 @@ export function useSystemSettingsBrandingPage() {
   ])
 
   const company = computed(() => store.item as Company | null)
-  const loading = computed(() => store.loading || brandingSettingsStore.loading || signatureStore.loading)
+  const loading = computed(
+    () => store.loading || brandingSettingsStore.loading || signatureStore.loading,
+  )
   const saving = computed(() => store.saving || brandingSettingsStore.saving)
 
   const tabs: Array<{ label: string; value: BrandingTab }> = [
@@ -267,13 +269,19 @@ export function useSystemSettingsBrandingPage() {
 
   const hasLogoChange = computed(() => !!logoFile.value)
   const currentHeaderImageSrc = computed(() => {
-    return headerImagePreview.value ?? brandingSettingsStore.settings?.headerImageUrl ?? currentLogoSrc.value
+    return (
+      headerImagePreview.value ??
+      brandingSettingsStore.settings?.headerImageUrl ??
+      currentLogoSrc.value
+    )
   })
   const hasHeaderImage = computed(() => {
     return Boolean(headerImagePreview.value || brandingSettingsStore.settings?.headerImageUrl)
   })
   const activeHeaderStyleLabel = computed(() => headerFieldLabels[activeHeaderStyleField.value])
-  const activeHeaderFieldStyle = computed(() => headerSettings.value.styles[activeHeaderStyleField.value])
+  const activeHeaderFieldStyle = computed(
+    () => headerSettings.value.styles[activeHeaderStyleField.value],
+  )
   const activeHeaderFieldPreview = computed(() => {
     return headerSettings.value[activeHeaderStyleField.value] || activeHeaderStyleLabel.value
   })
@@ -402,10 +410,7 @@ export function useSystemSettingsBrandingPage() {
     if (savedHeader) {
       headerSettings.value = {
         companyName:
-          savedHeader.companyName ||
-          company.value?.trading_name ||
-          company.value?.legal_name ||
-          "",
+          savedHeader.companyName || company.value?.trading_name || company.value?.legal_name || "",
         tagline: savedHeader.tagline ?? "",
         phone: savedHeader.phone ?? "",
         email: savedHeader.email ?? "",

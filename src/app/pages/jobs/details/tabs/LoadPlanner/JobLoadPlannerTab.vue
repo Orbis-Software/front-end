@@ -87,32 +87,118 @@ const COLORS = [
 const DEFAULT_COLOR = "#ec691a"
 
 const SPACE_PRESETS: Record<string, SpacePreset> = {
-  road_standard: { l: 1360, w: 240, h: 270, maxWt: 26000, mode: "road", label: "Standard Curtainsider / Box (13.6 m)" },
-  road_mega: { l: 1360, w: 240, h: 300, maxWt: 26000, mode: "road", label: "Mega Trailer (13.6 m)" },
+  road_standard: {
+    l: 1360,
+    w: 240,
+    h: 270,
+    maxWt: 26000,
+    mode: "road",
+    label: "Standard Curtainsider / Box (13.6 m)",
+  },
+  road_mega: {
+    l: 1360,
+    w: 240,
+    h: 300,
+    maxWt: 26000,
+    mode: "road",
+    label: "Mega Trailer (13.6 m)",
+  },
   road_flatbed: { l: 1360, w: 240, h: 400, maxWt: 26000, mode: "road", label: "Flatbed (13.6 m)" },
   road_lowloader: { l: 1200, w: 300, h: 180, maxWt: 40000, mode: "road", label: "Low Loader" },
   road_rigid18: { l: 900, w: 240, h: 250, maxWt: 11000, mode: "road", label: "Rigid 18t" },
   road_rigid75: { l: 640, w: 230, h: 220, maxWt: 3500, mode: "road", label: "Rigid 7.5t" },
   road_luton: { l: 380, w: 200, h: 185, maxWt: 900, mode: "road", label: "Luton / Box Van" },
-  road_sprinter: { l: 290, w: 165, h: 165, maxWt: 900, mode: "road", label: "Sprinter / Transit Van" },
+  road_sprinter: {
+    l: 290,
+    w: 165,
+    h: 165,
+    maxWt: 900,
+    mode: "road",
+    label: "Sprinter / Transit Van",
+  },
   rail_fea: { l: 1980, w: 246, h: 290, maxWt: 68500, mode: "rail", label: "FEA Spine Wagon (UK)" },
   rail_ika: { l: 2092, w: 278, h: 290, maxWt: 70000, mode: "rail", label: "IKA Bogie Flat (UK)" },
-  rail_covered_eu: { l: 2100, w: 278, h: 270, maxWt: 58000, mode: "rail", label: "Covered Wagon Habiss (EU)" },
-  rail_open_eu: { l: 1400, w: 280, h: 180, maxWt: 55000, mode: "rail", label: "Open Wagon Eaos (EU)" },
+  rail_covered_eu: {
+    l: 2100,
+    w: 278,
+    h: 270,
+    maxWt: 58000,
+    mode: "rail",
+    label: "Covered Wagon Habiss (EU)",
+  },
+  rail_open_eu: {
+    l: 1400,
+    w: 280,
+    h: 180,
+    maxWt: 55000,
+    mode: "rail",
+    label: "Open Wagon Eaos (EU)",
+  },
   rail_flat_eu: { l: 1980, w: 280, h: 400, maxWt: 60000, mode: "rail", label: "Flat Wagon (EU)" },
-  sea_20std: { l: 589, w: 235, h: 239, maxWt: 21700, mode: "sea", label: "20ft Standard Container" },
-  sea_40std: { l: 1203, w: 235, h: 239, maxWt: 26580, mode: "sea", label: "40ft Standard Container" },
-  sea_40hc: { l: 1203, w: 235, h: 269, maxWt: 26330, mode: "sea", label: "40ft High Cube Container" },
-  sea_45hc: { l: 1352, w: 235, h: 269, maxWt: 27700, mode: "sea", label: "45ft High Cube Container" },
-  sea_20reefer: { l: 550, w: 225, h: 220, maxWt: 20000, mode: "sea", label: "20ft Reefer Container" },
-  sea_40reefer: { l: 1167, w: 225, h: 220, maxWt: 22000, mode: "sea", label: "40ft Reefer Container" },
+  sea_20std: {
+    l: 589,
+    w: 235,
+    h: 239,
+    maxWt: 21700,
+    mode: "sea",
+    label: "20ft Standard Container",
+  },
+  sea_40std: {
+    l: 1203,
+    w: 235,
+    h: 239,
+    maxWt: 26580,
+    mode: "sea",
+    label: "40ft Standard Container",
+  },
+  sea_40hc: {
+    l: 1203,
+    w: 235,
+    h: 269,
+    maxWt: 26330,
+    mode: "sea",
+    label: "40ft High Cube Container",
+  },
+  sea_45hc: {
+    l: 1352,
+    w: 235,
+    h: 269,
+    maxWt: 27700,
+    mode: "sea",
+    label: "45ft High Cube Container",
+  },
+  sea_20reefer: {
+    l: 550,
+    w: 225,
+    h: 220,
+    maxWt: 20000,
+    mode: "sea",
+    label: "20ft Reefer Container",
+  },
+  sea_40reefer: {
+    l: 1167,
+    w: 225,
+    h: 220,
+    maxWt: 22000,
+    mode: "sea",
+    label: "40ft Reefer Container",
+  },
   sea_20ot: { l: 589, w: 235, h: 234, maxWt: 21500, mode: "sea", label: "20ft Open Top Container" },
-  sea_40ot: { l: 1203, w: 235, h: 233, maxWt: 26000, mode: "sea", label: "40ft Open Top Container" },
+  sea_40ot: {
+    l: 1203,
+    w: 235,
+    h: 233,
+    maxWt: 26000,
+    mode: "sea",
+    label: "40ft Open Top Container",
+  },
   sea_20fr: { l: 562, w: 222, h: 213, maxWt: 27000, mode: "sea", label: "20ft Flat Rack" },
   sea_40fr: { l: 1203, w: 201, h: 213, maxWt: 39000, mode: "sea", label: "40ft Flat Rack" },
 }
 
-const UNIT_PRESETS: Partial<Record<LoadUnitType, { l: number; w: number; h: number; stackable: boolean }>> = {
+const UNIT_PRESETS: Partial<
+  Record<LoadUnitType, { l: number; w: number; h: number; stackable: boolean }>
+> = {
   pallet: { l: 120, w: 100, h: 175, stackable: false },
   carton: { l: 60, w: 40, h: 40, stackable: true },
   crate: { l: 120, w: 80, h: 100, stackable: false },
@@ -123,9 +209,38 @@ const UNIT_PRESETS: Partial<Record<LoadUnitType, { l: number; w: number; h: numb
 }
 
 const presetGroups = [
-  { label: "Road Freight", keys: ["road_standard", "road_mega", "road_flatbed", "road_lowloader", "road_rigid18", "road_rigid75", "road_luton", "road_sprinter"] },
-  { label: "Rail Freight", keys: ["rail_fea", "rail_ika", "rail_covered_eu", "rail_open_eu", "rail_flat_eu"] },
-  { label: "Sea Freight", keys: ["sea_20std", "sea_40std", "sea_40hc", "sea_45hc", "sea_20reefer", "sea_40reefer", "sea_20ot", "sea_40ot", "sea_20fr", "sea_40fr"] },
+  {
+    label: "Road Freight",
+    keys: [
+      "road_standard",
+      "road_mega",
+      "road_flatbed",
+      "road_lowloader",
+      "road_rigid18",
+      "road_rigid75",
+      "road_luton",
+      "road_sprinter",
+    ],
+  },
+  {
+    label: "Rail Freight",
+    keys: ["rail_fea", "rail_ika", "rail_covered_eu", "rail_open_eu", "rail_flat_eu"],
+  },
+  {
+    label: "Sea Freight",
+    keys: [
+      "sea_20std",
+      "sea_40std",
+      "sea_40hc",
+      "sea_45hc",
+      "sea_20reefer",
+      "sea_40reefer",
+      "sea_20ot",
+      "sea_40ot",
+      "sea_20fr",
+      "sea_40fr",
+    ],
+  },
 ]
 
 const activeView = ref<"2d" | "3d">("2d")
@@ -250,8 +365,11 @@ const collectionOrderPackages = computed<LoadUnit[]>(() => {
       const width = normalizeDimensionCm(line.width ?? line.width_cm ?? 0)
       const height = normalizeDimensionCm(line.height ?? line.height_cm ?? 0)
       const qty = Number(line.qty ?? line.quantity ?? 1)
-      const weight = Number(line.grossWeight ?? line.gross_weight ?? line.weightKg ?? line.weight ?? 0)
-      const packageLabel = String(line.packageType ?? line.package_type ?? "").trim() || titleCase(type)
+      const weight = Number(
+        line.grossWeight ?? line.gross_weight ?? line.weightKg ?? line.weight ?? 0,
+      )
+      const packageLabel =
+        String(line.packageType ?? line.package_type ?? "").trim() || titleCase(type)
 
       units.push({
         id: `collection-${order?.id ?? orderIndex}-${line?.id ?? lineIndex}`,
@@ -339,11 +457,12 @@ const stats = computed(() => {
   }
 
   const floorItems = layout.value.allPlaced.filter(unit => unit.z === 0)
-  const usedLen = floorItems.length
-    ? Math.max(...floorItems.map(unit => unit.x + unit.l))
-    : 0
+  const usedLen = floorItems.length ? Math.max(...floorItems.map(unit => unit.x + unit.l)) : 0
   const floorArea = floorItems.reduce((sum, unit) => sum + unit.l * unit.w, 0)
-  const util = Math.min(100, Math.round((floorArea / (layout.value.tLen * layout.value.tWid)) * 100))
+  const util = Math.min(
+    100,
+    Math.round((floorArea / (layout.value.tLen * layout.value.tWid)) * 100),
+  )
 
   return {
     units: String(totalUnits.value),
@@ -804,10 +923,28 @@ function draw3D() {
     const baseZ = unit.z + (unit.z === 0 && showPalBases.value ? plan.palH : 0)
 
     if (showPalBases.value && plan.palH > 0 && unit.z === 0) {
-      add3DBox(unit.x + unit.l / 2, plan.palH / 2, unit.y + unit.w / 2, unit.l, plan.palH, unit.w, "#c8a879", 0.95)
+      add3DBox(
+        unit.x + unit.l / 2,
+        plan.palH / 2,
+        unit.y + unit.w / 2,
+        unit.l,
+        plan.palH,
+        unit.w,
+        "#c8a879",
+        0.95,
+      )
     }
 
-    add3DBox(unit.x + unit.l / 2, baseZ + unit.h / 2, unit.y + unit.w / 2, unit.l, unit.h, unit.w, unit.color, 0.88)
+    add3DBox(
+      unit.x + unit.l / 2,
+      baseZ + unit.h / 2,
+      unit.y + unit.w / 2,
+      unit.l,
+      unit.h,
+      unit.w,
+      unit.color,
+      0.88,
+    )
   }
 
   add3DUnplaced(plan)
@@ -901,7 +1038,15 @@ function add3DBox(
   }
 }
 
-function add3DEdge(cx: number, cy: number, cz: number, width: number, height: number, depth: number, color: number) {
+function add3DEdge(
+  cx: number,
+  cy: number,
+  cz: number,
+  width: number,
+  height: number,
+  depth: number,
+  color: number,
+) {
   if (!scene3d) return
 
   const geometry = new THREE.BoxGeometry(width, height, depth)
@@ -938,7 +1083,10 @@ function add3DUnplaced(plan: PlannerLayout) {
     const x = Math.min(cursorX + width / 2, Math.max(width / 2, plan.tLen - width / 2))
 
     add3DBox(x, height / 2, sideZ + depth / 2, width, height, depth, "#dc2626", 0.88)
-    add3DLabel(`No space x${count}`, new THREE.Vector3(x, height + Math.max(14, plan.tHei * 0.05), sideZ + depth / 2))
+    add3DLabel(
+      `No space x${count}`,
+      new THREE.Vector3(x, height + Math.max(14, plan.tHei * 0.05), sideZ + depth / 2),
+    )
 
     cursorX += width + gap
   })
@@ -1021,7 +1169,9 @@ function clear3DObjects() {
 
 function dispose3DObject(object: THREE.Object3D) {
   const mesh = object as THREE.Mesh | THREE.LineSegments | THREE.Sprite
-  const geometry = (mesh as THREE.Mesh | THREE.LineSegments).geometry as THREE.BufferGeometry | undefined
+  const geometry = (mesh as THREE.Mesh | THREE.LineSegments).geometry as
+    | THREE.BufferGeometry
+    | undefined
   const material = mesh.material as THREE.Material | THREE.Material[] | undefined
 
   geometry?.dispose()
@@ -1236,10 +1386,12 @@ onUnmounted(() => {
       </label>
 
       <div class="job-load-planner-tab__toolbar-actions">
-        <button type="button" class="job-load-planner-tab__button" @click="printPlan">
-          Print
-        </button>
-        <button type="button" class="job-load-planner-tab__button job-load-planner-tab__button--primary" @click="calculate">
+        <button type="button" class="job-load-planner-tab__button" @click="printPlan">Print</button>
+        <button
+          type="button"
+          class="job-load-planner-tab__button job-load-planner-tab__button--primary"
+          @click="calculate"
+        >
           Calculate Layout
         </button>
       </div>
@@ -1358,7 +1510,11 @@ onUnmounted(() => {
             </label>
           </div>
 
-          <button type="button" class="job-load-planner-tab__button job-load-planner-tab__button--full" @click="addUnit">
+          <button
+            type="button"
+            class="job-load-planner-tab__button job-load-planner-tab__button--full"
+            @click="addUnit"
+          >
             Add Load Unit
           </button>
         </section>
@@ -1389,10 +1545,15 @@ onUnmounted(() => {
                     Placed x{{ placedCount(unit.id) }}
                   </em>
                   <em v-if="unplacedCount(unit.id)" class="job-load-planner-tab__unfit-badge">
-                    No space<span v-if="unplacedCount(unit.id) > 1"> x{{ unplacedCount(unit.id) }}</span>
+                    No space<span v-if="unplacedCount(unit.id) > 1">
+                      x{{ unplacedCount(unit.id) }}</span
+                    >
                   </em>
                 </strong>
-                <small>{{ unit.l }} x {{ unit.w }} x {{ unit.h }} cm / {{ unit.wt }} kg / {{ fitStatusText(unit) }}</small>
+                <small
+                  >{{ unit.l }} x {{ unit.w }} x {{ unit.h }} cm / {{ unit.wt }} kg /
+                  {{ fitStatusText(unit) }}</small
+                >
               </div>
               <button
                 v-if="unit.id.startsWith('manual-')"
@@ -1408,12 +1569,19 @@ onUnmounted(() => {
       </aside>
 
       <main class="job-load-planner-tab__viewer">
-        <div v-if="layout?.unplacedAll.length" class="job-load-planner-tab__banner job-load-planner-tab__banner--danger">
-          No more space: {{ layout.unplacedAll.length }} unit(s) cannot fit in the selected vehicle/container:
+        <div
+          v-if="layout?.unplacedAll.length"
+          class="job-load-planner-tab__banner job-load-planner-tab__banner--danger"
+        >
+          No more space: {{ layout.unplacedAll.length }} unit(s) cannot fit in the selected
+          vehicle/container:
           {{ unplacedSummary }}
         </div>
 
-        <div v-if="overweight" class="job-load-planner-tab__banner job-load-planner-tab__banner--danger">
+        <div
+          v-if="overweight"
+          class="job-load-planner-tab__banner job-load-planner-tab__banner--danger"
+        >
           Total weight exceeds the selected load-space maximum.
         </div>
 
@@ -1468,11 +1636,11 @@ onUnmounted(() => {
             @wheel="handle3DWheel"
             @contextmenu.prevent
           ></canvas>
-          <div class="job-load-planner-tab__three-hint">Drag to rotate / scroll to zoom / right-drag to pan</div>
+          <div class="job-load-planner-tab__three-hint">
+            Drag to rotate / scroll to zoom / right-drag to pan
+          </div>
           <div class="job-load-planner-tab__three-actions">
-            <button type="button" @click="reset3D">
-              Reset
-            </button>
+            <button type="button" @click="reset3D">Reset</button>
             <button
               type="button"
               :class="{ active: wireframe3d }"

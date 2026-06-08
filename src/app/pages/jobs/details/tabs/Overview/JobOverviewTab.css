@@ -24,6 +24,18 @@
   color: #1a1a18;
 }
 
+.job-overview-tab__section-header--with-note {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.job-overview-tab__section-header--with-note p {
+  margin: 4px 0 0;
+  font-size: 11px;
+  color: #737373;
+}
+
 .job-overview-tab__grid {
   display: grid;
   gap: 12px;
@@ -86,6 +98,108 @@
 
 .job-overview-tab__field--span-4 {
   grid-column: span 4;
+}
+
+.job-overview-tab__order-type {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  padding: 14px;
+}
+
+.job-overview-tab__order-button {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  gap: 4px 10px;
+  align-items: center;
+  min-height: 74px;
+  border: 1px solid #d9d9d9;
+  border-radius: 8px;
+  background: #fff;
+  padding: 12px;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    background 0.15s ease;
+}
+
+.job-overview-tab__order-button i {
+  grid-row: span 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: #f7f7f5;
+  color: #ec691a;
+  font-size: 15px;
+}
+
+.job-overview-tab__order-button span {
+  font-size: 13px;
+  font-weight: 800;
+  color: #1a1a18;
+}
+
+.job-overview-tab__order-button small {
+  font-size: 11px;
+  line-height: 1.35;
+  color: #737373;
+}
+
+.job-overview-tab__order-button:hover,
+.job-overview-tab__order-button--active {
+  border-color: #ec691a;
+  background: #fff8f3;
+  box-shadow: 0 0 0 2px rgba(236, 105, 26, 0.12);
+}
+
+.job-overview-tab__order-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.job-overview-tab__order-panel {
+  padding: 0 14px 14px;
+}
+
+.job-overview-tab__order-panel .job-overview-tab__grid {
+  border: 1px solid #e6e6e6;
+  border-top: 0;
+  border-radius: 0 0 8px 8px;
+}
+
+.job-overview-tab__order-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid #e6e6e6;
+  border-radius: 8px 8px 0 0;
+  padding: 10px 12px;
+  font-size: 12px;
+  color: #1a1a18;
+}
+
+.job-overview-tab__order-banner i {
+  color: #ec691a;
+}
+
+.job-overview-tab__order-banner strong {
+  margin-right: 4px;
+}
+
+.job-overview-tab__order-banner--local {
+  background: #f0f9ff;
+  border-color: #bae6fd;
+}
+
+.job-overview-tab__order-banner--transport {
+  background: #f5f3ff;
+  border-color: #ddd6fe;
 }
 
 .job-overview-tab__address-select {
@@ -209,6 +323,10 @@
 
   .job-overview-tab__field--span-4 {
     grid-column: span 2;
+  }
+
+  .job-overview-tab__order-type {
+    grid-template-columns: 1fr;
   }
 
   .job-overview-tab__split {

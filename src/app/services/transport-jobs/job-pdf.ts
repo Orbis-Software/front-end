@@ -1,7 +1,13 @@
 import http from "@/api/http"
 
-export default async function jobPdf(id: number): Promise<Blob> {
-  const response = await http.get(`/transport-jobs/${id}/collection-note-pdf`, {
+export type JobPdfDocument = "job_details" | "collection_order" | "transport_order"
+
+export default async function jobPdf(
+  id: number,
+  document: JobPdfDocument = "job_details",
+): Promise<Blob> {
+  const response = await http.get(`/transport-jobs/${id}/pdf`, {
+    params: { document },
     responseType: "blob",
     headers: {
       Accept: "application/pdf",
