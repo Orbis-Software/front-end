@@ -64,13 +64,20 @@ export type JobDetailsForm = {
   status: string
   note: string
 
+  order_type: string
+  consignment_number: string
   service_type: string
   incoterms: string
   currency: string
   declared_value: number | null
   description_of_goods: string
   commodity_code: string
+  hs_code: string
   insurance_level: string
+  is_hazardous: boolean | null
+  hazardous_class: string
+  un_number: string
+  temperature_requirement: string
 
   customer_po_number: string
   customer_booking_ref: string
@@ -86,6 +93,14 @@ export type JobDetailsForm = {
   destination_contact_collection_address_id: number | null
   collection_date: Date | null
   collection_time: string
+  latest_collection_time: string
+  delivery_date: Date | null
+  delivery_from_time: string
+  delivery_by_time: string
+  loading_reference: string
+  delivery_booking_ref: string
+  collection_instructions: string
+  delivery_instructions: string
 
   packages: any[]
   charges: any[]
@@ -135,6 +150,7 @@ export type JobDetailsContext = {
     currencyOptions: any
     commodityTypeOptions: any
     insuranceLevelOptions: any
+    dangerousGoodsOptions: any
   }
 }
 
@@ -291,6 +307,34 @@ function serializeTransportLegs(legs: any[], existingIds: Set<number>) {
 
 function emptyRoadDetail(): JobRoadDetail {
   return {
+    order_type: null,
+    local_collection_type: null,
+    local_service_level: null,
+    local_vehicle_required: null,
+    local_zone_area: null,
+    local_estimated_distance_miles: null,
+    local_estimated_duration_hours: null,
+    local_rate_per_mile: null,
+    local_estimated_mileage_cost: null,
+    local_round_trip: null,
+    local_signature_required: null,
+    local_pod_method: null,
+    local_parking_access_code: null,
+    local_time_critical: null,
+    local_exact_delivery_time: null,
+    local_driver_assigned: null,
+    local_driver_mobile: null,
+    local_collection_notes: null,
+    full_load_type: null,
+    full_load_plan_ref: null,
+    full_max_stack_height_cm: null,
+    full_multi_drop: null,
+    full_intermodal_leg: null,
+    full_customs_required: null,
+    full_subcontractor_used: null,
+    full_vehicle_registration: null,
+    full_seal_number: null,
+    full_route_via: null,
     service_type: null,
     vehicle_type: null,
     origin_city: null,
@@ -697,13 +741,26 @@ function normalizeConsolidationDetails(raw: any): JobConsolidationDetails {
 }
 
 function detailPayloadForMode(form: JobDetailsForm): Partial<TransportJobUpdatePayload> {
-  if (form.mode_of_transport === "road") return { road_detail: form.road_detail }
+  if (form.mode_of_transport === "road") {
+    form.road_detail.order_type = form.order_type || null
+    form.road_detail.local_estimated_mileage_cost = localMileageCost(form)
+
+    return { road_detail: form.road_detail }
+  }
   if (form.mode_of_transport === "sea") return { sea_detail: form.sea_detail }
   if (form.mode_of_transport === "air") return { air_detail: form.air_detail }
   if (form.mode_of_transport === "rail") return { rail_detail: form.rail_detail }
   if (form.mode_of_transport === "courier") return { courier_detail: form.courier_detail }
 
   return {}
+}
+
+function localMileageCost(form: JobDetailsForm): number | null {
+  const distance = Number(form.road_detail.local_estimated_distance_miles ?? 0)
+  const rate = Number(form.road_detail.local_rate_per_mile ?? 0)
+  const cost = distance * rate
+
+  return cost > 0 ? Number(cost.toFixed(2)) : null
 }
 
 export function useJobDetailsPage() {
@@ -736,13 +793,20 @@ export function useJobDetailsPage() {
     status: "Draft",
     note: "",
 
+    order_type: "",
+    consignment_number: "",
     service_type: "",
     incoterms: "",
     currency: "",
     declared_value: null,
     description_of_goods: "",
     commodity_code: "",
+    hs_code: "",
     insurance_level: "",
+    is_hazardous: null,
+    hazardous_class: "",
+    un_number: "",
+    temperature_requirement: "",
 
     customer_po_number: "",
     customer_booking_ref: "",
@@ -757,6 +821,14 @@ export function useJobDetailsPage() {
     destination_contact_collection_address_id: null,
     collection_date: null,
     collection_time: "",
+    latest_collection_time: "",
+    delivery_date: null,
+    delivery_from_time: "",
+    delivery_by_time: "",
+    loading_reference: "",
+    delivery_booking_ref: "",
+    collection_instructions: "",
+    delivery_instructions: "",
 
     packages: [],
     charges: [],
@@ -926,6 +998,25 @@ export function useJobDetailsPage() {
       { label: "Full Declared Value", value: "Full Declared Value" },
       { label: "Customer's Own Insurance", value: "Customer's Own Insurance" },
     ]),
+
+    dangerousGoodsOptions: computed<SelectOption[]>(() => {
+      const category = referenceDataStore.getByKey("dangerous_goods")
+      const options = (category?.options ?? []).map(optionFromReference)
+
+      return options.length
+        ? options
+        : [
+            { label: "Class 1 - Explosives", value: "Class 1 - Explosives" },
+            { label: "Class 2 - Gases", value: "Class 2 - Gases" },
+            { label: "Class 3 - Flammable liquids", value: "Class 3 - Flammable liquids" },
+            { label: "Class 4 - Flammable solids", value: "Class 4 - Flammable solids" },
+            { label: "Class 5 - Oxidisers", value: "Class 5 - Oxidisers" },
+            { label: "Class 6 - Toxic substances", value: "Class 6 - Toxic substances" },
+            { label: "Class 7 - Radioactive", value: "Class 7 - Radioactive" },
+            { label: "Class 8 - Corrosives", value: "Class 8 - Corrosives" },
+            { label: "Class 9 - Misc dangerous", value: "Class 9 - Misc dangerous" },
+          ]
+    }),
   }
 
   const modeOptions = computed<SelectOption[]>(() => {
@@ -1031,6 +1122,8 @@ export function useJobDetailsPage() {
     form.status = extra.status ?? "Draft"
     form.note = data.note ?? ""
 
+    form.order_type = extra.order_type ?? ""
+    form.consignment_number = extra.consignment_number ?? ""
     form.service_type = extra.service_type ?? ""
     form.incoterms = extra.incoterms ?? ""
     form.currency = extra.currency ?? ""
@@ -1043,7 +1136,15 @@ export function useJobDetailsPage() {
 
     form.description_of_goods = extra.description_of_goods ?? ""
     form.commodity_code = extra.commodity_code ?? ""
+    form.hs_code = extra.hs_code ?? ""
     form.insurance_level = extra.insurance_level ?? ""
+    form.is_hazardous =
+      extra.is_hazardous === null || extra.is_hazardous === undefined || extra.is_hazardous === ""
+        ? null
+        : booleanValue(extra.is_hazardous, false)
+    form.hazardous_class = extra.hazardous_class ?? ""
+    form.un_number = extra.un_number ?? ""
+    form.temperature_requirement = extra.temperature_requirement ?? ""
 
     form.customer_po_number = extra.customer_po_number ?? ""
     form.customer_booking_ref = extra.customer_booking_ref ?? ""
@@ -1068,6 +1169,14 @@ export function useJobDetailsPage() {
         : Number(extra.destination_contact_collection_address_id)
     form.collection_date = parseDate(extra.collection_date)
     form.collection_time = extra.collection_time ?? ""
+    form.latest_collection_time = extra.latest_collection_time ?? ""
+    form.delivery_date = parseDate(extra.delivery_date)
+    form.delivery_from_time = extra.delivery_from_time ?? ""
+    form.delivery_by_time = extra.delivery_by_time ?? ""
+    form.loading_reference = extra.loading_reference ?? ""
+    form.delivery_booking_ref = extra.delivery_booking_ref ?? ""
+    form.collection_instructions = extra.collection_instructions ?? ""
+    form.delivery_instructions = extra.delivery_instructions ?? ""
 
     if (extra.customer_contact?.id === data.customer_id) {
       selectedCustomerRef.value = extra.customer_contact
@@ -1082,6 +1191,10 @@ export function useJobDetailsPage() {
     form.sell_costs = form.charges.filter((charge: any) => charge.type === "sell")
 
     Object.assign(form.road_detail, emptyRoadDetail(), extra.road_detail ?? {})
+    form.order_type =
+      form.mode_of_transport === "road"
+        ? (form.road_detail.order_type ?? extra.order_type ?? "")
+        : ""
     Object.assign(form.sea_detail, emptySeaDetail(), extra.sea_detail ?? {})
     Object.assign(form.air_detail, emptyAirDetail(), extra.air_detail ?? {})
     Object.assign(form.rail_detail, emptyRailDetail(), extra.rail_detail ?? {})
@@ -1130,6 +1243,7 @@ export function useJobDetailsPage() {
           .map((leg: any) => Number(leg.id))
           .filter((id: number) => Number.isFinite(id) && id > 0),
       )
+      const isRoadMode = form.mode_of_transport === "road"
 
       const payload: TransportJobUpdatePayload = {
         customer_id: form.customer_id,
@@ -1141,13 +1255,20 @@ export function useJobDetailsPage() {
         mode_of_transport: form.mode_of_transport,
         status: form.status || null,
 
+        order_type: isRoadMode ? form.order_type || null : undefined,
+        consignment_number: isRoadMode ? form.consignment_number || null : undefined,
         service_type: form.service_type || null,
         incoterms: form.incoterms || null,
         currency: form.currency || null,
         declared_value: form.declared_value,
         description_of_goods: form.description_of_goods || null,
         commodity_code: form.commodity_code || null,
+        hs_code: isRoadMode ? form.hs_code || null : undefined,
         insurance_level: form.insurance_level || null,
+        is_hazardous: isRoadMode ? form.is_hazardous : undefined,
+        hazardous_class: isRoadMode ? form.hazardous_class || null : undefined,
+        un_number: isRoadMode ? form.un_number || null : undefined,
+        temperature_requirement: isRoadMode ? form.temperature_requirement || null : undefined,
 
         customer_po_number: form.customer_po_number || null,
         customer_booking_ref: form.customer_booking_ref || null,
@@ -1162,6 +1283,14 @@ export function useJobDetailsPage() {
         destination_contact_collection_address_id: form.destination_contact_collection_address_id,
         collection_date: formatDate(form.collection_date),
         collection_time: form.collection_time || null,
+        latest_collection_time: isRoadMode ? form.latest_collection_time || null : undefined,
+        delivery_date: isRoadMode ? formatDate(form.delivery_date) : undefined,
+        delivery_from_time: isRoadMode ? form.delivery_from_time || null : undefined,
+        delivery_by_time: isRoadMode ? form.delivery_by_time || null : undefined,
+        loading_reference: isRoadMode ? form.loading_reference || null : undefined,
+        delivery_booking_ref: isRoadMode ? form.delivery_booking_ref || null : undefined,
+        collection_instructions: isRoadMode ? form.collection_instructions || null : undefined,
+        delivery_instructions: isRoadMode ? form.delivery_instructions || null : undefined,
 
         note: form.note || null,
 

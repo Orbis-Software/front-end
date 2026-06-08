@@ -41,19 +41,104 @@ const {
   currencyOptions,
   commodityTypeOptions,
   insuranceLevelOptions,
+  dangerousGoodsOptions,
 } = referenceOptions
 
+const isRoadMode = computed(() => form.mode_of_transport === "road")
+
+const roadOrderTypes = [
+  {
+    label: "Local Collection",
+    value: "Local Collection",
+    icon: "pi pi-clock",
+    description: "Short-distance collection and delivery. Usually same-day or next-day.",
+  },
+  {
+    label: "Full Transport Order",
+    value: "Full Transport Order",
+    icon: "pi pi-truck",
+    description: "Longer road freight with carrier, load, delivery and optional customs detail.",
+  },
+]
+
 const hazardousOptions = [
-  { label: "No", value: "No" },
-  { label: "Yes – ADR/IMDG", value: "Yes – ADR/IMDG" },
+  { label: "No", value: false },
+  { label: "Yes - ADR/IMDG", value: true },
 ]
 
 const temperatureOptions = [
   { label: "No", value: "No" },
-  { label: "Chilled (2–8°C)", value: "Chilled (2–8°C)" },
-  { label: "Frozen (-18°C)", value: "Frozen (-18°C)" },
+  { label: "Chilled (2-8 C)", value: "Chilled (2-8 C)" },
+  { label: "Frozen (-18 C)", value: "Frozen (-18 C)" },
   { label: "Ambient Controlled", value: "Ambient Controlled" },
 ]
+
+const yesNoOptions = [
+  { label: "No", value: false },
+  { label: "Yes", value: true },
+]
+
+const localCollectionTypeOptions = [
+  "On-Demand",
+  "Scheduled",
+  "Return Collection",
+  "Multi-Stop Local",
+  "Overnight Parcel",
+]
+
+const localServiceLevelOptions = [
+  "Standard",
+  "Express (Same-Day)",
+  "Next-Day AM (Pre-12)",
+  "Next-Day PM",
+  "Economy (2-3 Day)",
+  "Time-Critical",
+]
+
+const localVehicleOptions = [
+  "Motorbike Courier",
+  "Car / Estate",
+  "Small Van (SWB)",
+  "Transit Van (LWB)",
+  "Luton Box Van",
+  "7.5t Rigid",
+]
+
+const podMethodOptions = [
+  "Paper POD",
+  "ePOD (App)",
+  "Photo Confirmation",
+  "Email Confirmation",
+  "None Required",
+]
+
+const loadTypeOptions = [
+  "FTL - Full Truck Load",
+  "LTL - Part Load",
+  "Groupage / Consolidation",
+  "Dedicated Vehicle",
+]
+
+const palletTypeOptions = [
+  "Euro Pallet (120x80)",
+  "UK Pallet (120x100)",
+  "Half Pallet",
+  "Mixed",
+  "N/A - Bulk",
+]
+
+const localMileageCost = computed(() => {
+  const distance = Number(form.road_detail.local_estimated_distance_miles ?? 0)
+  const rate = Number(form.road_detail.local_rate_per_mile ?? 0)
+  const cost = distance * rate
+
+  return cost > 0 ? Number(cost.toFixed(2)) : null
+})
+
+function setOrderType(value: string): void {
+  form.order_type = value
+  form.road_detail.order_type = value
+}
 
 function displayValue(value: string | number | null | undefined): string {
   const text = String(value ?? "").trim()
@@ -118,6 +203,16 @@ const consolidationTransportRows = computed(() => {
       </header>
 
       <div class="job-overview-tab__grid job-overview-tab__grid--4">
+        <label v-if="isRoadMode" class="job-overview-tab__field">
+          <span>AWB / Consignment No.</span>
+
+          <InputText
+            v-model="form.consignment_number"
+            placeholder="123-45678901 / consignment ref"
+            :disabled="loading"
+          />
+        </label>
+
         <label class="job-overview-tab__field">
           <span>Service Type</span>
 
@@ -211,6 +306,461 @@ const consolidationTransportRows = computed(() => {
             :disabled="loading"
           />
         </label>
+
+        <label v-if="isRoadMode" class="job-overview-tab__field">
+          <span>Commodity Code (HS)</span>
+
+          <InputText v-model="form.hs_code" placeholder="e.g. 8471.30" :disabled="loading" />
+        </label>
+      </div>
+    </div>
+
+    <div v-if="isRoadMode" class="job-overview-tab__section">
+      <header class="job-overview-tab__section-header job-overview-tab__section-header--with-note">
+        <div>
+          <h2>Order Type</h2>
+          <p>Select the type of order to reveal the relevant fields below</p>
+        </div>
+      </header>
+
+      <div class="job-overview-tab__order-type">
+        <button
+          v-for="option in roadOrderTypes"
+          :key="option.value"
+          type="button"
+          class="job-overview-tab__order-button"
+          :class="{ 'job-overview-tab__order-button--active': form.order_type === option.value }"
+          :disabled="loading"
+          @click="setOrderType(option.value)"
+        >
+          <i :class="option.icon" />
+          <span>{{ option.label }}</span>
+          <small>{{ option.description }}</small>
+        </button>
+      </div>
+
+      <div v-if="form.order_type === 'Local Collection'" class="job-overview-tab__order-panel">
+        <div class="job-overview-tab__order-banner job-overview-tab__order-banner--local">
+          <i class="pi pi-clock" />
+          <span>
+            <strong>Local Collection</strong>
+            Short-distance, same-area collection and delivery. Typically same-day or next-day.
+          </span>
+        </div>
+
+        <div class="job-overview-tab__grid job-overview-tab__grid--4">
+          <label class="job-overview-tab__field">
+            <span>Collection Type</span>
+            <Dropdown
+              v-model="form.road_detail.local_collection_type"
+              :options="localCollectionTypeOptions"
+              placeholder="Select collection type"
+              show-clear
+              :disabled="loading"
+            />
+          </label>
+
+          <label class="job-overview-tab__field">
+            <span>Priority / Service Level</span>
+            <Dropdown
+              v-model="form.road_detail.local_service_level"
+              :options="localServiceLevelOptions"
+              placeholder="Select service level"
+              show-clear
+              :disabled="loading"
+            />
+          </label>
+
+          <label class="job-overview-tab__field">
+            <span>Vehicle Required</span>
+            <Dropdown
+              v-model="form.road_detail.local_vehicle_required"
+              :options="localVehicleOptions"
+              placeholder="Select vehicle"
+              show-clear
+              :disabled="loading"
+            />
+          </label>
+
+          <label class="job-overview-tab__field">
+            <span>Zone / Area</span>
+            <InputText
+              v-model="form.road_detail.local_zone_area"
+              placeholder="e.g. London Zone 1, M60 Corridor"
+              :disabled="loading"
+            />
+          </label>
+
+          <label class="job-overview-tab__field">
+            <span>Est. Distance (miles)</span>
+            <InputNumber
+              v-model="form.road_detail.local_estimated_distance_miles"
+              :min="0"
+              :min-fraction-digits="0"
+              :max-fraction-digits="1"
+              placeholder="0"
+              :disabled="loading"
+            />
+          </label>
+
+          <label class="job-overview-tab__field">
+            <span>Est. Duration (hrs)</span>
+            <InputNumber
+              v-model="form.road_detail.local_estimated_duration_hours"
+              :min="0"
+              :step="0.25"
+              :min-fraction-digits="0"
+              :max-fraction-digits="2"
+              placeholder="0.0"
+              :disabled="loading"
+            />
+          </label>
+
+          <label class="job-overview-tab__field">
+            <span>Rate per Mile (GBP)</span>
+            <InputNumber
+              v-model="form.road_detail.local_rate_per_mile"
+              mode="currency"
+              currency="GBP"
+              locale="en-GB"
+              :min="0"
+              placeholder="0.00"
+              :disabled="loading"
+            />
+          </label>
+
+          <label class="job-overview-tab__field">
+            <span>Estimated Mileage Cost</span>
+            <InputNumber
+              :model-value="localMileageCost"
+              mode="currency"
+              currency="GBP"
+              locale="en-GB"
+              placeholder="Auto-calculated"
+              disabled
+            />
+          </label>
+
+          <label class="job-overview-tab__field">
+            <span>Round Trip?</span>
+            <Dropdown
+              v-model="form.road_detail.local_round_trip"
+              :options="yesNoOptions"
+              option-label="label"
+              option-value="value"
+              placeholder="Select"
+              show-clear
+              :disabled="loading"
+            />
+          </label>
+
+          <label class="job-overview-tab__field">
+            <span>Signature Required?</span>
+            <Dropdown
+              v-model="form.road_detail.local_signature_required"
+              :options="yesNoOptions"
+              option-label="label"
+              option-value="value"
+              placeholder="Select"
+              show-clear
+              :disabled="loading"
+            />
+          </label>
+
+          <label class="job-overview-tab__field">
+            <span>POD Method</span>
+            <Dropdown
+              v-model="form.road_detail.local_pod_method"
+              :options="podMethodOptions"
+              placeholder="Select POD method"
+              show-clear
+              :disabled="loading"
+            />
+          </label>
+
+          <label class="job-overview-tab__field">
+            <span>Parking / Access Code</span>
+            <InputText
+              v-model="form.road_detail.local_parking_access_code"
+              placeholder="e.g. barrier code, bay number"
+              :disabled="loading"
+            />
+          </label>
+
+          <label class="job-overview-tab__field">
+            <span>Time Critical?</span>
+            <Dropdown
+              v-model="form.road_detail.local_time_critical"
+              :options="yesNoOptions"
+              option-label="label"
+              option-value="value"
+              placeholder="Select"
+              show-clear
+              :disabled="loading"
+            />
+          </label>
+
+          <label class="job-overview-tab__field">
+            <span>Exact Delivery Time</span>
+            <InputText
+              v-model="form.road_detail.local_exact_delivery_time"
+              type="time"
+              placeholder="hh:mm"
+              :disabled="loading"
+            />
+          </label>
+
+          <label class="job-overview-tab__field">
+            <span>Driver Assigned</span>
+            <InputText
+              v-model="form.road_detail.local_driver_assigned"
+              placeholder="Driver name / ID"
+              :disabled="loading"
+            />
+          </label>
+
+          <label class="job-overview-tab__field">
+            <span>Driver Mobile</span>
+            <InputText
+              v-model="form.road_detail.local_driver_mobile"
+              type="tel"
+              placeholder="+44 ..."
+              :disabled="loading"
+            />
+          </label>
+
+          <label class="job-overview-tab__field job-overview-tab__field--span-4">
+            <span>Local Collection Notes</span>
+            <Textarea
+              v-model="form.road_detail.local_collection_notes"
+              rows="3"
+              placeholder="Safe place instructions, access codes, return address if undelivered..."
+              :disabled="loading"
+            />
+          </label>
+        </div>
+      </div>
+
+      <div
+        v-else-if="form.order_type === 'Full Transport Order'"
+        class="job-overview-tab__order-panel"
+      >
+        <div class="job-overview-tab__order-banner job-overview-tab__order-banner--transport">
+          <i class="pi pi-truck" />
+          <span>
+            <strong>Full Transport Order</strong>
+            Long-distance road freight with carrier, load, delivery and optional customs detail.
+          </span>
+        </div>
+
+        <div class="job-overview-tab__grid job-overview-tab__grid--4">
+          <label class="job-overview-tab__field">
+            <span>Load Type</span>
+            <Dropdown
+              v-model="form.road_detail.full_load_type"
+              :options="loadTypeOptions"
+              placeholder="Select load type"
+              show-clear
+              :disabled="loading"
+            />
+          </label>
+
+          <label class="job-overview-tab__field">
+            <span>Est. Transit Days</span>
+            <InputNumber
+              v-model="form.road_detail.estimated_transit_days"
+              :min="0"
+              placeholder="0"
+              :disabled="loading"
+            />
+          </label>
+
+          <label class="job-overview-tab__field">
+            <span>Est. Distance (km)</span>
+            <InputNumber
+              v-model="form.road_detail.estimated_distance_km"
+              :min="0"
+              placeholder="0"
+              :disabled="loading"
+            />
+          </label>
+
+          <label class="job-overview-tab__field">
+            <span>Load Plan Ref</span>
+            <InputText
+              v-model="form.road_detail.full_load_plan_ref"
+              placeholder="Load plan / manifest ref"
+              :disabled="loading"
+            />
+          </label>
+
+          <label class="job-overview-tab__field">
+            <span>Pallet Spaces Required</span>
+            <InputNumber
+              v-model="form.road_detail.pallet_spaces"
+              :min="0"
+              placeholder="0"
+              :disabled="loading"
+            />
+          </label>
+
+          <label class="job-overview-tab__field">
+            <span>Pallet Type</span>
+            <Dropdown
+              v-model="form.road_detail.pallet_type"
+              :options="palletTypeOptions"
+              placeholder="Select pallet type"
+              show-clear
+              :disabled="loading"
+            />
+          </label>
+
+          <label class="job-overview-tab__field">
+            <span>Max Stack Height (cm)</span>
+            <InputNumber
+              v-model="form.road_detail.full_max_stack_height_cm"
+              :min="0"
+              placeholder="220"
+              :disabled="loading"
+            />
+          </label>
+
+          <label class="job-overview-tab__field">
+            <span>Multi-Drop?</span>
+            <Dropdown
+              v-model="form.road_detail.full_multi_drop"
+              :options="yesNoOptions"
+              option-label="label"
+              option-value="value"
+              placeholder="Select"
+              show-clear
+              :disabled="loading"
+            />
+          </label>
+
+          <label class="job-overview-tab__field">
+            <span>Intermodal Leg?</span>
+            <Dropdown
+              v-model="form.road_detail.full_intermodal_leg"
+              :options="yesNoOptions"
+              option-label="label"
+              option-value="value"
+              placeholder="Select"
+              show-clear
+              :disabled="loading"
+            />
+          </label>
+
+          <label class="job-overview-tab__field">
+            <span>Customs Required?</span>
+            <Dropdown
+              v-model="form.road_detail.full_customs_required"
+              :options="yesNoOptions"
+              option-label="label"
+              option-value="value"
+              placeholder="Select"
+              show-clear
+              :disabled="loading"
+            />
+          </label>
+
+          <label class="job-overview-tab__field">
+            <span>Subcontractor Used?</span>
+            <Dropdown
+              v-model="form.road_detail.full_subcontractor_used"
+              :options="yesNoOptions"
+              option-label="label"
+              option-value="value"
+              placeholder="Select"
+              show-clear
+              :disabled="loading"
+            />
+          </label>
+
+          <label class="job-overview-tab__field">
+            <span>Carrier / Haulier</span>
+            <InputText
+              v-model="form.road_detail.carrier"
+              placeholder="Carrier name"
+              :disabled="loading"
+            />
+          </label>
+
+          <label class="job-overview-tab__field">
+            <span>Driver Name</span>
+            <InputText
+              v-model="form.road_detail.driver_name"
+              placeholder="Driver full name"
+              :disabled="loading"
+            />
+          </label>
+
+          <label class="job-overview-tab__field">
+            <span>Driver Mobile</span>
+            <InputText
+              v-model="form.road_detail.driver_mobile"
+              type="tel"
+              placeholder="+44 ..."
+              :disabled="loading"
+            />
+          </label>
+
+          <label class="job-overview-tab__field">
+            <span>Vehicle Registration</span>
+            <InputText
+              v-model="form.road_detail.full_vehicle_registration"
+              placeholder="AB12 CDE"
+              :disabled="loading"
+            />
+          </label>
+
+          <label class="job-overview-tab__field">
+            <span>Trailer / Container No.</span>
+            <InputText
+              v-model="form.road_detail.trailer_number"
+              placeholder="Trailer number"
+              :disabled="loading"
+            />
+          </label>
+
+          <label class="job-overview-tab__field">
+            <span>Seal Number</span>
+            <InputText
+              v-model="form.road_detail.full_seal_number"
+              placeholder="Seal no."
+              :disabled="loading"
+            />
+          </label>
+
+          <label class="job-overview-tab__field">
+            <span>CMR / Waybill No.</span>
+            <InputText
+              v-model="form.road_detail.cmr_number"
+              placeholder="CMR reference"
+              :disabled="loading"
+            />
+          </label>
+
+          <label class="job-overview-tab__field">
+            <span>Route / Via</span>
+            <InputText
+              v-model="form.road_detail.full_route_via"
+              placeholder="e.g. UK > BE > DE"
+              :disabled="loading"
+            />
+          </label>
+
+          <label class="job-overview-tab__field">
+            <span>POD Method</span>
+            <Dropdown
+              v-model="form.road_detail.pod_method"
+              :options="podMethodOptions"
+              placeholder="Select POD method"
+              show-clear
+              :disabled="loading"
+            />
+          </label>
+        </div>
       </div>
     </div>
 
@@ -376,12 +926,47 @@ const consolidationTransportRows = computed(() => {
             </label>
 
             <label class="job-overview-tab__field">
-              <span>Collection Time</span>
+              <span>Ready Time</span>
 
               <InputText
                 v-model="form.collection_time"
                 type="time"
                 placeholder="hh:mm"
+                :disabled="loading"
+              />
+            </label>
+
+            <label v-if="isRoadMode" class="job-overview-tab__field">
+              <span>Latest Collection</span>
+
+              <InputText
+                v-model="form.latest_collection_time"
+                type="time"
+                placeholder="hh:mm"
+                :disabled="loading"
+              />
+            </label>
+
+            <label v-if="isRoadMode" class="job-overview-tab__field">
+              <span>Loading Ref / Bay</span>
+
+              <InputText
+                v-model="form.loading_reference"
+                placeholder="Dock / bay ref"
+                :disabled="loading"
+              />
+            </label>
+
+            <label
+              v-if="isRoadMode"
+              class="job-overview-tab__field job-overview-tab__field--span-2"
+            >
+              <span>Collection Instructions</span>
+
+              <Textarea
+                v-model="form.collection_instructions"
+                rows="3"
+                placeholder="Access codes, parking, dock height, forklift availability..."
                 :disabled="loading"
               />
             </label>
@@ -427,11 +1012,71 @@ const consolidationTransportRows = computed(() => {
               <dd>{{ contactLine(selectedDestinationAddress) }}</dd>
             </div>
           </dl>
+
+          <div class="job-overview-tab__schedule-grid">
+            <label v-if="isRoadMode" class="job-overview-tab__field">
+              <span>Delivery Date</span>
+
+              <Calendar
+                v-model="form.delivery_date"
+                date-format="dd/mm/yy"
+                placeholder="dd/mm/yyyy"
+                showIcon
+                :disabled="loading"
+              />
+            </label>
+
+            <label v-if="isRoadMode" class="job-overview-tab__field">
+              <span>Delivery From</span>
+
+              <InputText
+                v-model="form.delivery_from_time"
+                type="time"
+                placeholder="hh:mm"
+                :disabled="loading"
+              />
+            </label>
+
+            <label v-if="isRoadMode" class="job-overview-tab__field">
+              <span>Delivery By</span>
+
+              <InputText
+                v-model="form.delivery_by_time"
+                type="time"
+                placeholder="hh:mm"
+                :disabled="loading"
+              />
+            </label>
+
+            <label v-if="isRoadMode" class="job-overview-tab__field">
+              <span>Delivery Booking Ref</span>
+
+              <InputText
+                v-model="form.delivery_booking_ref"
+                placeholder="Booking / delivery ref"
+                :disabled="loading"
+              />
+            </label>
+
+            <label
+              v-if="isRoadMode"
+              class="job-overview-tab__field job-overview-tab__field--span-2"
+            >
+              <span>Delivery Instructions</span>
+
+              <Textarea
+                v-model="form.delivery_instructions"
+                rows="3"
+                placeholder="Access codes, parking, unloading notes, POD requirements..."
+                :disabled="loading"
+              />
+            </label>
+          </div>
         </div>
       </div>
     </div>
 
-    <div class="job-overview-tab__section">
+    <div v-if="isRoadMode" class="job-overview-tab__section">
       <header class="job-overview-tab__section-header">
         <h2>Customer & References</h2>
       </header>
@@ -521,6 +1166,7 @@ const consolidationTransportRows = computed(() => {
           <span>Hazardous?</span>
 
           <Dropdown
+            v-model="form.is_hazardous"
             :options="hazardousOptions"
             option-label="label"
             option-value="value"
@@ -532,19 +1178,29 @@ const consolidationTransportRows = computed(() => {
         <label class="job-overview-tab__field">
           <span>ADR / Hazmat Class</span>
 
-          <InputText placeholder="e.g. Class 3" :disabled="loading" />
+          <Dropdown
+            v-model="form.hazardous_class"
+            :options="dangerousGoodsOptions"
+            option-label="label"
+            option-value="value"
+            placeholder="Select dangerous goods class"
+            show-clear
+            filter
+            :disabled="loading"
+          />
         </label>
 
         <label class="job-overview-tab__field">
           <span>UN Number</span>
 
-          <InputText placeholder="UN1234" :disabled="loading" />
+          <InputText v-model="form.un_number" placeholder="UN1234" :disabled="loading" />
         </label>
 
         <label class="job-overview-tab__field">
           <span>Temperature Controlled?</span>
 
           <Dropdown
+            v-model="form.temperature_requirement"
             :options="temperatureOptions"
             option-label="label"
             option-value="value"

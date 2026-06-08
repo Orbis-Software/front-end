@@ -4,14 +4,7 @@ import { useGlobalReferenceDataStore } from "@/app/stores/global-reference-data"
 import type { GlobalReferenceDataRow } from "@/app/types/globalReferenceData"
 import type { useJobDetailsPage } from "../../JobDetailsPage.logic"
 
-export type TransportMode =
-  | ""
-  | "road"
-  | "rail"
-  | "sea"
-  | "air"
-  | "courier"
-  | "multi_modal"
+export type TransportMode = "" | "road" | "rail" | "sea" | "air" | "courier" | "multi_modal"
 
 export type MultiModalLegMode = "road" | "rail" | "sea" | "air" | "courier"
 

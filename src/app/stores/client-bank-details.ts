@@ -67,9 +67,7 @@ export const useClientBankDetailStore = defineStore("client-bank-details", {
         return await clientBankDetailService.create(payload)
       } catch (error: any) {
         this.error =
-          error?.response?.data?.message ||
-          error?.message ||
-          "Failed to create client bank detail."
+          error?.response?.data?.message || error?.message || "Failed to create client bank detail."
         throw error
       } finally {
         this.saving = false
@@ -84,9 +82,7 @@ export const useClientBankDetailStore = defineStore("client-bank-details", {
         return await clientBankDetailService.update(id, payload)
       } catch (error: any) {
         this.error =
-          error?.response?.data?.message ||
-          error?.message ||
-          "Failed to update client bank detail."
+          error?.response?.data?.message || error?.message || "Failed to update client bank detail."
         throw error
       } finally {
         this.saving = false
@@ -101,9 +97,7 @@ export const useClientBankDetailStore = defineStore("client-bank-details", {
         await clientBankDetailService.remove(id)
       } catch (error: any) {
         this.error =
-          error?.response?.data?.message ||
-          error?.message ||
-          "Failed to delete client bank detail."
+          error?.response?.data?.message || error?.message || "Failed to delete client bank detail."
         throw error
       } finally {
         this.saving = false

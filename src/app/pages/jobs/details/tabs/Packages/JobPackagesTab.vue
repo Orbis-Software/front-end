@@ -247,9 +247,7 @@ function confirmRemoveRow() {
       :style="{ width: '420px' }"
       @hide="pendingRemoveRow = null"
     >
-      <p class="job-packages-tab__confirm-copy">
-        Remove {{ pendingRemoveLabel }} from this job?
-      </p>
+      <p class="job-packages-tab__confirm-copy">Remove {{ pendingRemoveLabel }} from this job?</p>
 
       <template #footer>
         <Button type="button" label="Cancel" text @click="cancelRemoveRow" />

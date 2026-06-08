@@ -21,13 +21,20 @@ function toFormData(payload: TransportJobCreatePayload): FormData {
   if (payload.status !== undefined) fd.append("status", payload.status ?? "")
 
   appendFlatValue(fd, "account_number", payload.account_number)
+  appendFlatValue(fd, "order_type", payload.order_type)
+  appendFlatValue(fd, "consignment_number", payload.consignment_number)
   appendFlatValue(fd, "service_type", payload.service_type)
   appendFlatValue(fd, "incoterms", payload.incoterms)
   appendFlatValue(fd, "currency", payload.currency)
   appendFlatValue(fd, "declared_value", payload.declared_value)
   appendFlatValue(fd, "description_of_goods", payload.description_of_goods)
   appendFlatValue(fd, "commodity_code", payload.commodity_code)
+  appendFlatValue(fd, "hs_code", payload.hs_code)
   appendFlatValue(fd, "insurance_level", payload.insurance_level)
+  appendFlatValue(fd, "is_hazardous", payload.is_hazardous)
+  appendFlatValue(fd, "hazardous_class", payload.hazardous_class)
+  appendFlatValue(fd, "un_number", payload.un_number)
+  appendFlatValue(fd, "temperature_requirement", payload.temperature_requirement)
   appendFlatValue(fd, "customer_po_number", payload.customer_po_number)
   appendFlatValue(fd, "customer_booking_ref", payload.customer_booking_ref)
   appendFlatValue(fd, "our_reference", payload.our_reference)
@@ -48,6 +55,14 @@ function toFormData(payload: TransportJobCreatePayload): FormData {
   )
   appendFlatValue(fd, "collection_date", payload.collection_date)
   appendFlatValue(fd, "collection_time", payload.collection_time)
+  appendFlatValue(fd, "latest_collection_time", payload.latest_collection_time)
+  appendFlatValue(fd, "delivery_date", payload.delivery_date)
+  appendFlatValue(fd, "delivery_from_time", payload.delivery_from_time)
+  appendFlatValue(fd, "delivery_by_time", payload.delivery_by_time)
+  appendFlatValue(fd, "loading_reference", payload.loading_reference)
+  appendFlatValue(fd, "delivery_booking_ref", payload.delivery_booking_ref)
+  appendFlatValue(fd, "collection_instructions", payload.collection_instructions)
+  appendFlatValue(fd, "delivery_instructions", payload.delivery_instructions)
 
   if (payload.note !== undefined) fd.append("note", payload.note ?? "")
 
@@ -81,6 +96,10 @@ function toFormData(payload: TransportJobCreatePayload): FormData {
 
 function appendFlatValue(fd: FormData, key: string, value: any): void {
   if (value === undefined) return
+  if (typeof value === "boolean") {
+    fd.append(key, value ? "1" : "0")
+    return
+  }
   fd.append(key, value === null ? "" : String(value))
 }
 
