@@ -5,6 +5,7 @@ import { useSystemSettingsStore } from "@/app/stores/system-settings"
 type SystemSettingsTabName =
   | "settings.system.company"
   | "settings.system.branding"
+  | "settings.system.email_notifications"
   | "settings.system.master"
   | "settings.system.awb_manager"
 
@@ -21,6 +22,7 @@ export function useSystemSettingsPage() {
     const items: SystemSettingsTab[] = [
       { label: "Company", name: "settings.system.company" },
       { label: "Branding", name: "settings.system.branding" },
+      { label: "Email & Notifications", name: "settings.system.email_notifications" },
       { label: "Master Settings", name: "settings.system.master" },
     ]
 

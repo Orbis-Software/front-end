@@ -4,10 +4,8 @@
     <ConfirmDialog />
 
     <header class="login-details-page__header">
-      <div>
-        <p class="login-details-page__eyebrow">Account Security</p>
-        <h1>Login Details</h1>
-        <p>Manage your sign-in details and require MFA when your account signs in.</p>
+      <div class="login-details-page__title-wrap">
+        <h1 class="login-details-page__title">Login Details</h1>
       </div>
       <span
         class="login-details-page__status"
@@ -18,273 +16,454 @@
       </span>
     </header>
 
-    <div class="login-details-page__grid">
-      <section class="login-details-card login-details-card--profile">
-        <div class="login-details-card__head">
-          <div>
-            <h2>Account Details</h2>
-            <p>Your current login identity in Orbis.</p>
-          </div>
-          <div class="login-details-page__avatar">{{ initials }}</div>
-        </div>
-
-        <div class="login-details-page__details">
-          <label>
-            <span>Name</span>
-            <InputText :model-value="displayName" readonly />
-          </label>
-          <label>
-            <span>Email Address</span>
-            <InputText :model-value="displayEmail" readonly />
-          </label>
-          <label>
-            <span>Role</span>
-            <InputText :model-value="roleLabel" readonly />
-          </label>
-        </div>
-      </section>
-
-      <section class="login-details-card">
-        <div class="login-details-card__head">
-          <div>
-            <h2>Password</h2>
-            <p>Update the password used to access your account.</p>
-          </div>
-          <i class="pi pi-key login-details-card__icon" />
-        </div>
-
-        <div class="login-details-page__details">
-          <label>
-            <span>Current Password</span>
-            <Password
-              v-model="passwordForm.currentPassword"
-              toggle-mask
-              :feedback="false"
-              input-class="login-details-page__password-input"
-            />
-          </label>
-          <label>
-            <span>New Password</span>
-            <Password
-              v-model="passwordForm.newPassword"
-              toggle-mask
-              input-class="login-details-page__password-input"
-            />
-          </label>
-          <label>
-            <span>Confirm New Password</span>
-            <Password
-              v-model="passwordForm.confirmPassword"
-              toggle-mask
-              :feedback="false"
-              input-class="login-details-page__password-input"
-            />
-          </label>
-        </div>
-
-        <div class="login-details-page__actions">
-          <Button label="Update Password" icon="pi pi-save" class="orbis-primary" type="button" />
-        </div>
-      </section>
-    </div>
-
-    <section class="login-details-card login-details-card--wide">
-      <div class="login-details-card__head">
-        <div>
-          <h2>Multi-Factor Authentication</h2>
-          <p>Use email security codes, an authenticator app, or recovery codes at sign in.</p>
-        </div>
-        <Button
-          icon="pi pi-refresh"
-          label="Refresh"
-          class="p-button-outlined"
+    <div class="login-details-page__card">
+      <nav class="login-details-page__tabs" aria-label="Login details sections">
+        <button
+          v-for="tab in tabs"
+          :key="tab.key"
           type="button"
-          :loading="loading"
-          @click="loadSettings"
-        />
-      </div>
+          class="login-details-page__tab"
+          :class="{ 'login-details-page__tab--active': activeTab === tab.key }"
+          @click="activeTab = tab.key"
+        >
+          <i :class="tab.icon" />
+          <span>{{ tab.label }}</span>
+          <span v-if="tab.badge" class="login-details-page__tab-count">{{ tab.badge }}</span>
+        </button>
+      </nav>
 
-      <div v-if="loading && !settings" class="login-details-page__loading">
-        <i class="pi pi-spin pi-spinner" />
-        Loading MFA settings...
-      </div>
+      <div class="login-details-page__content">
+        <section
+          v-if="activeTab === 'account'"
+          class="login-details-panel login-details-panel--account"
+        >
+          <div class="login-details-account">
+            <section class="login-details-account__card">
+              <div class="login-details-panel__header login-details-panel__header--flat">
+                <div>
+                  <h2>Account Details</h2>
+                  <p>Your current login identity in Orbis.</p>
+                </div>
+              </div>
 
-      <div v-else class="login-details-page__mfa-layout">
-        <section class="login-details-page__method">
-          <div class="login-details-page__method-head">
-            <div>
-              <h3>Email Codes</h3>
-              <p>Receive a 6 digit code at {{ displayEmail }} whenever you sign in.</p>
-            </div>
-            <div class="login-details-page__toggle">
-              <span>{{ settings?.email_enabled ? "Enabled" : "Disabled" }}</span>
-              <InputSwitch :model-value="settings?.email_enabled ?? false" disabled />
-            </div>
+              <div class="login-details-page__details">
+                <label>
+                  <span>Name</span>
+                  <div class="login-details-page__input-shell">
+                    <i class="pi pi-user" />
+                    <InputText :model-value="displayName" readonly />
+                  </div>
+                </label>
+                <label>
+                  <span>Email Address</span>
+                  <div class="login-details-page__input-shell">
+                    <i class="pi pi-envelope" />
+                    <InputText :model-value="displayEmail" readonly />
+                  </div>
+                </label>
+                <label>
+                  <span>Role</span>
+                  <div class="login-details-page__input-shell">
+                    <i class="pi pi-id-card" />
+                    <InputText :model-value="roleLabel" readonly />
+                  </div>
+                </label>
+              </div>
+            </section>
+
+            <aside class="login-details-account__aside">
+              <section class="login-details-account__profile">
+                <div class="login-details-page__avatar login-details-page__avatar--large">
+                  <i class="pi pi-user" />
+                  <strong>{{ initials }}</strong>
+                </div>
+                <div>
+                  <h3>{{ displayName }}</h3>
+                  <p>{{ roleLabel }}</p>
+                </div>
+                <span>{{ displayEmail }}</span>
+              </section>
+
+              <section class="login-details-account__security">
+                <div class="login-details-account__security-head">
+                  <div>
+                    <h3>Sign-in Protection</h3>
+                    <p>Current controls for this user account.</p>
+                  </div>
+                  <i class="pi pi-lock login-details-panel__icon" />
+                </div>
+
+                <div class="login-details-account__rows">
+                  <div class="login-details-account__row">
+                    <div>
+                      <strong>Password</strong>
+                      <span>Stored privately for account access.</span>
+                    </div>
+                    <Button
+                      label="Change"
+                      class="p-button-text"
+                      type="button"
+                      @click="activeTab = 'password'"
+                    />
+                  </div>
+
+                  <div class="login-details-account__row">
+                    <div>
+                      <strong>Multi-Factor Authentication</strong>
+                      <span>{{
+                        twoFactorEnabled
+                          ? "A second step is required at sign in."
+                          : "No second step is required."
+                      }}</span>
+                    </div>
+                    <Button
+                      :label="twoFactorEnabled ? 'Manage' : 'Enable'"
+                      class="p-button-text"
+                      type="button"
+                      @click="activeTab = 'mfa'"
+                    />
+                  </div>
+                </div>
+              </section>
+            </aside>
           </div>
+        </section>
 
-          <div class="login-details-page__method-body">
+        <section v-else-if="activeTab === 'password'" class="login-details-panel">
+          <div class="login-details-password">
+            <aside class="login-details-password__summary">
+              <div class="login-details-page__avatar login-details-page__avatar--hero">
+                <i class="pi pi-lock" />
+              </div>
+              <div>
+                <h2>Password</h2>
+                <p>Update the password used to access your account.</p>
+              </div>
+              <div class="login-details-password__checks">
+                <span><i class="pi pi-check-circle" /> Minimum 8 characters</span>
+                <span><i class="pi pi-check-circle" /> Requires your current password</span>
+                <span><i class="pi pi-check-circle" /> Keeps your MFA settings unchanged</span>
+              </div>
+            </aside>
+
+            <form class="login-details-password__form" @submit.prevent="updatePassword">
+              <div class="login-details-panel__header login-details-panel__header--flat">
+                <div>
+                  <h2>Change Password</h2>
+                  <p>Use a password that is unique to Orbis.</p>
+                </div>
+                <i class="pi pi-key login-details-panel__icon" />
+              </div>
+
+              <div class="login-details-page__details">
+                <label>
+                  <span>Current Password</span>
+                  <div class="login-details-page__input-shell">
+                    <i class="pi pi-lock" />
+                    <Password
+                      v-model="passwordForm.currentPassword"
+                      autocomplete="current-password"
+                      toggle-mask
+                      :feedback="false"
+                      input-class="login-details-page__password-input"
+                      :disabled="passwordUpdating"
+                    />
+                  </div>
+                </label>
+                <label>
+                  <span>New Password</span>
+                  <div class="login-details-page__input-shell">
+                    <i class="pi pi-shield" />
+                    <Password
+                      v-model="passwordForm.newPassword"
+                      autocomplete="new-password"
+                      toggle-mask
+                      input-class="login-details-page__password-input"
+                      :disabled="passwordUpdating"
+                    />
+                  </div>
+                </label>
+                <label>
+                  <span>Confirm New Password</span>
+                  <div class="login-details-page__input-shell">
+                    <i class="pi pi-check-circle" />
+                    <Password
+                      v-model="passwordForm.confirmPassword"
+                      autocomplete="new-password"
+                      toggle-mask
+                      :feedback="false"
+                      input-class="login-details-page__password-input"
+                      :disabled="passwordUpdating"
+                    />
+                  </div>
+                </label>
+              </div>
+
+              <div class="login-details-page__actions">
+                <Button
+                  label="Update Password"
+                  icon="pi pi-save"
+                  class="orbis-primary"
+                  type="submit"
+                  :loading="passwordUpdating"
+                />
+              </div>
+            </form>
+          </div>
+        </section>
+
+        <section v-else class="login-details-panel">
+          <div class="login-details-panel__header login-details-panel__header--mfa">
+            <div>
+              <h2>Multi-Factor Authentication</h2>
+              <p>Require a second verification step when signing in to this account.</p>
+            </div>
             <Button
-              :label="emailCodeSent ? 'Resend Email Code' : 'Send Email Code'"
-              icon="pi pi-envelope"
+              icon="pi pi-refresh"
+              label="Refresh"
               class="p-button-outlined"
               type="button"
-              :loading="emailLoading"
-              @click="sendEmailCode"
+              :loading="loading"
+              @click="loadSettings"
             />
-
-            <label class="login-details-page__field">
-              <span>Email Verification Code</span>
-              <InputText
-                v-model="emailCode"
-                inputmode="numeric"
-                maxlength="6"
-                placeholder="000000"
-                @keyup.enter="verifyEmailCode"
-              />
-            </label>
-
-            <div class="login-details-page__actions login-details-page__actions--left">
-              <Button
-                label="Verify Email MFA"
-                icon="pi pi-check"
-                class="orbis-primary"
-                type="button"
-                :loading="emailVerifying"
-                @click="verifyEmailCode"
-              />
-              <Button
-                v-if="settings?.email_enabled"
-                label="Disable Email"
-                icon="pi pi-times"
-                class="p-button-outlined p-button-danger"
-                type="button"
-                :loading="disablingMethod === 'email'"
-                @click="confirmDisable('email')"
-              />
-            </div>
-          </div>
-        </section>
-
-        <section class="login-details-page__method">
-          <div class="login-details-page__method-head">
-            <div>
-              <h3>Authenticator App</h3>
-              <p>Scan a QR code with Google Authenticator, Microsoft Authenticator, Authy, or 1Password.</p>
-            </div>
-            <div class="login-details-page__toggle">
-              <span>{{ settings?.authenticator_enabled ? "Enabled" : "Disabled" }}</span>
-              <InputSwitch :model-value="settings?.authenticator_enabled ?? false" disabled />
-            </div>
           </div>
 
-          <div class="login-details-page__auth-grid">
-            <div class="login-details-page__qr-panel">
-              <div class="login-details-page__qr" aria-label="Authenticator QR code">
-                <img v-if="qrCodeDataUrl" :src="qrCodeDataUrl" alt="Authenticator QR code" />
-                <div v-else class="login-details-page__qr-empty">
-                  <i class="pi pi-qrcode" />
-                  <span>Start setup to show QR</span>
+          <div v-if="loading && !settings" class="login-details-page__loading">
+            <i class="pi pi-spin pi-spinner" />
+            Loading MFA settings...
+          </div>
+
+          <div v-else class="login-details-mfa">
+            <div class="login-details-mfa__summary">
+              <article class="login-details-mfa__summary-card">
+                <span class="login-details-mfa__summary-label">Overall Status</span>
+                <strong :class="{ 'is-secure': twoFactorEnabled }">
+                  {{ twoFactorEnabled ? "Protected" : "Not protected" }}
+                </strong>
+              </article>
+              <article class="login-details-mfa__summary-card">
+                <span class="login-details-mfa__summary-label">Email Codes</span>
+                <strong :class="{ 'is-secure': settings?.email_enabled }">
+                  {{ settings?.email_enabled ? "Enabled" : "Disabled" }}
+                </strong>
+              </article>
+              <article class="login-details-mfa__summary-card">
+                <span class="login-details-mfa__summary-label">Authenticator App</span>
+                <strong :class="{ 'is-secure': settings?.authenticator_enabled }">
+                  {{ settings?.authenticator_enabled ? "Enabled" : "Disabled" }}
+                </strong>
+              </article>
+              <article class="login-details-mfa__summary-card">
+                <span class="login-details-mfa__summary-label">Recovery Codes</span>
+                <strong>{{ recoveryCodes.length }}</strong>
+              </article>
+            </div>
+
+            <div class="login-details-mfa__grid">
+              <section class="login-details-mfa__method">
+                <div class="login-details-mfa__method-head">
+                  <div class="login-details-mfa__method-title">
+                    <i class="pi pi-envelope" />
+                    <div>
+                      <h3>Email Codes</h3>
+                      <p>Send a 6 digit sign-in code to {{ displayEmail }}.</p>
+                    </div>
+                  </div>
+                  <span
+                    class="login-details-mfa__pill"
+                    :class="{ 'login-details-mfa__pill--enabled': settings?.email_enabled }"
+                  >
+                    {{ settings?.email_enabled ? "Enabled" : "Disabled" }}
+                  </span>
                 </div>
-              </div>
-              <Button
-                :label="settings?.authenticator_enabled ? 'Reconfigure App' : 'Start App Setup'"
-                icon="pi pi-qrcode"
-                class="p-button-outlined"
-                type="button"
-                :loading="authenticatorLoading"
-                @click="beginAuthenticatorSetup"
-              />
-            </div>
 
-            <div class="login-details-page__setup">
-              <ol>
-                <li>Open your authenticator app on your phone.</li>
-                <li>Scan the QR code or enter the setup key manually.</li>
-                <li>Enter the 6 digit code to verify setup.</li>
-              </ol>
-
-              <label class="login-details-page__field">
-                <span>Manual Setup Key</span>
-                <div class="login-details-page__copy-row">
-                  <InputText :model-value="manualSetupKey" readonly placeholder="Setup key appears here" />
+                <div class="login-details-mfa__method-body">
                   <Button
-                    icon="pi pi-copy"
+                    :label="emailCodeSent ? 'Resend Email Code' : 'Send Email Code'"
+                    icon="pi pi-send"
                     class="p-button-outlined"
                     type="button"
-                    aria-label="Copy setup key"
-                    :disabled="!manualSetupKey"
-                    @click="copySetupKey"
+                    :loading="emailLoading"
+                    @click="sendEmailCode"
+                  />
+
+                  <label class="login-details-page__field">
+                    <span>Email Verification Code</span>
+                    <InputText
+                      v-model="emailCode"
+                      inputmode="numeric"
+                      maxlength="6"
+                      placeholder="000000"
+                      @keyup.enter="verifyEmailCode"
+                    />
+                  </label>
+
+                  <div class="login-details-page__actions login-details-page__actions--left">
+                    <Button
+                      label="Verify Email MFA"
+                      icon="pi pi-check"
+                      class="orbis-primary"
+                      type="button"
+                      :loading="emailVerifying"
+                      @click="verifyEmailCode"
+                    />
+                    <Button
+                      v-if="settings?.email_enabled"
+                      icon="pi pi-times"
+                      class="p-button-outlined p-button-danger"
+                      type="button"
+                      aria-label="Disable email MFA"
+                      :loading="disablingMethod === 'email'"
+                      @click="confirmDisable('email')"
+                    />
+                  </div>
+                </div>
+              </section>
+
+              <section class="login-details-mfa__method login-details-mfa__method--authenticator">
+                <div class="login-details-mfa__method-head">
+                  <div class="login-details-mfa__method-title">
+                    <i class="pi pi-mobile" />
+                    <div>
+                      <h3>Authenticator App</h3>
+                      <p>Use Google Authenticator, Microsoft Authenticator, Authy, or 1Password.</p>
+                    </div>
+                  </div>
+                  <span
+                    class="login-details-mfa__pill"
+                    :class="{ 'login-details-mfa__pill--enabled': settings?.authenticator_enabled }"
+                  >
+                    {{ settings?.authenticator_enabled ? "Enabled" : "Disabled" }}
+                  </span>
+                </div>
+
+                <div class="login-details-mfa__auth-body">
+                  <div class="login-details-page__qr-panel">
+                    <div class="login-details-page__qr" aria-label="Authenticator QR code">
+                      <img v-if="qrCodeDataUrl" :src="qrCodeDataUrl" alt="Authenticator QR code" />
+                      <div v-else class="login-details-page__qr-empty">
+                        <i class="pi pi-qrcode" />
+                        <span>Start setup to show QR</span>
+                      </div>
+                    </div>
+                    <Button
+                      :label="
+                        settings?.authenticator_enabled ? 'Reconfigure App' : 'Start App Setup'
+                      "
+                      icon="pi pi-qrcode"
+                      class="p-button-outlined"
+                      type="button"
+                      :loading="authenticatorLoading"
+                      @click="beginAuthenticatorSetup"
+                    />
+                  </div>
+
+                  <div class="login-details-page__setup">
+                    <div class="login-details-mfa__steps">
+                      <span>1. Open authenticator app</span>
+                      <span>2. Scan QR or copy setup key</span>
+                      <span>3. Verify the 6 digit code</span>
+                    </div>
+
+                    <label class="login-details-page__field">
+                      <span>Manual Setup Key</span>
+                      <div class="login-details-page__copy-row">
+                        <InputText
+                          :model-value="manualSetupKey"
+                          readonly
+                          placeholder="Setup key appears here"
+                        />
+                        <Button
+                          icon="pi pi-copy"
+                          class="p-button-outlined"
+                          type="button"
+                          aria-label="Copy setup key"
+                          :disabled="!manualSetupKey"
+                          @click="copySetupKey"
+                        />
+                      </div>
+                    </label>
+
+                    <label class="login-details-page__field">
+                      <span>Authenticator Verification Code</span>
+                      <InputText
+                        v-model="authenticatorCode"
+                        inputmode="numeric"
+                        maxlength="6"
+                        placeholder="000000"
+                        @keyup.enter="verifyAuthenticatorCode"
+                      />
+                    </label>
+
+                    <div class="login-details-page__actions login-details-page__actions--left">
+                      <Button
+                        label="Verify App MFA"
+                        icon="pi pi-shield"
+                        class="orbis-primary"
+                        type="button"
+                        :loading="authenticatorVerifying"
+                        @click="verifyAuthenticatorCode"
+                      />
+                      <Button
+                        v-if="settings?.authenticator_enabled"
+                        icon="pi pi-times"
+                        class="p-button-outlined p-button-danger"
+                        type="button"
+                        aria-label="Disable authenticator MFA"
+                        :loading="disablingMethod === 'authenticator'"
+                        @click="confirmDisable('authenticator')"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <aside class="login-details-mfa__recovery">
+                <div class="login-details-mfa__method-head">
+                  <div class="login-details-mfa__method-title">
+                    <i class="pi pi-list-check" />
+                    <div>
+                      <h3>Recovery Codes</h3>
+                      <p>Use one code if email and authenticator access are unavailable.</p>
+                    </div>
+                  </div>
+                  <Button
+                    icon="pi pi-download"
+                    class="p-button-text"
+                    type="button"
+                    aria-label="Download recovery codes"
+                    :disabled="!recoveryCodes.length"
+                    @click="downloadRecoveryCodes"
                   />
                 </div>
-              </label>
 
-              <label class="login-details-page__field">
-                <span>Authenticator Verification Code</span>
-                <InputText
-                  v-model="authenticatorCode"
-                  inputmode="numeric"
-                  maxlength="6"
-                  placeholder="000000"
-                  @keyup.enter="verifyAuthenticatorCode"
-                />
-              </label>
+                <div v-if="recoveryCodes.length" class="login-details-page__codes">
+                  <code v-for="code in recoveryCodes" :key="code">{{ code }}</code>
+                </div>
+                <p v-else class="login-details-page__empty">
+                  Recovery codes are created after MFA is enabled.
+                </p>
+              </aside>
+            </div>
 
-              <div class="login-details-page__actions login-details-page__actions--left">
-                <Button
-                  label="Verify App MFA"
-                  icon="pi pi-shield"
-                  class="orbis-primary"
-                  type="button"
-                  :loading="authenticatorVerifying"
-                  @click="verifyAuthenticatorCode"
-                />
-                <Button
-                  v-if="settings?.authenticator_enabled"
-                  label="Disable App"
-                  icon="pi pi-times"
-                  class="p-button-outlined p-button-danger"
-                  type="button"
-                  :loading="disablingMethod === 'authenticator'"
-                  @click="confirmDisable('authenticator')"
-                />
+            <div v-if="twoFactorEnabled" class="login-details-mfa__danger-zone">
+              <div>
+                <strong>Disable multi-factor authentication</strong>
+                <p>Turns off all enabled MFA methods for this account.</p>
               </div>
+              <Button
+                label="Disable All MFA"
+                icon="pi pi-lock-open"
+                class="p-button-outlined p-button-danger"
+                type="button"
+                :loading="disablingMethod === 'all'"
+                @click="confirmDisable('all')"
+              />
             </div>
           </div>
         </section>
-
-        <aside class="login-details-page__recovery">
-          <div class="login-details-page__recovery-head">
-            <div>
-              <h3>Recovery Codes</h3>
-              <p>Use one code if email and authenticator access are unavailable.</p>
-            </div>
-            <Button
-              icon="pi pi-download"
-              class="p-button-text"
-              type="button"
-              aria-label="Download recovery codes"
-              :disabled="!recoveryCodes.length"
-              @click="downloadRecoveryCodes"
-            />
-          </div>
-          <div v-if="recoveryCodes.length" class="login-details-page__codes">
-            <code v-for="code in recoveryCodes" :key="code">{{ code }}</code>
-          </div>
-          <p v-else class="login-details-page__empty">Recovery codes are created after MFA is enabled.</p>
-        </aside>
-
-        <div v-if="twoFactorEnabled" class="login-details-page__actions">
-          <Button
-            label="Disable All MFA"
-            icon="pi pi-lock-open"
-            class="p-button-outlined p-button-danger"
-            type="button"
-            :loading="disablingMethod === 'all'"
-            @click="confirmDisable('all')"
-          />
-        </div>
       </div>
-    </section>
+    </div>
   </section>
 </template>
 
@@ -293,7 +472,6 @@ import { computed, onMounted, reactive, ref } from "vue"
 import QRCode from "qrcode"
 import Button from "primevue/button"
 import ConfirmDialog from "primevue/confirmdialog"
-import InputSwitch from "primevue/inputswitch"
 import InputText from "primevue/inputtext"
 import Password from "primevue/password"
 import Toast from "primevue/toast"
@@ -305,17 +483,20 @@ import { useAuthStore } from "@/app/stores/auth"
 import "./LoginDetailsPage.css"
 
 type MfaMethod = "email" | "authenticator" | "all"
+type LoginDetailsTab = "account" | "password" | "mfa"
 
 const auth = useAuthStore()
 const confirm = useConfirm()
 const toast = useToast()
 
+const activeTab = ref<LoginDetailsTab>("account")
 const settings = ref<MfaSettings | null>(null)
 const loading = ref(false)
 const emailLoading = ref(false)
 const emailVerifying = ref(false)
 const authenticatorLoading = ref(false)
 const authenticatorVerifying = ref(false)
+const passwordUpdating = ref(false)
 const disablingMethod = ref<MfaMethod | null>(null)
 
 const emailCode = ref("")
@@ -344,6 +525,16 @@ const initials = computed(
       .map(part => part[0]?.toUpperCase())
       .join("") || "AU",
 )
+const tabs = computed(() => [
+  { key: "account" as const, label: "Account", icon: "pi pi-user" },
+  { key: "password" as const, label: "Password", icon: "pi pi-key" },
+  {
+    key: "mfa" as const,
+    label: "Multi-Factor Authentication",
+    icon: "pi pi-shield",
+    badge: twoFactorEnabled.value ? "On" : "Off",
+  },
+])
 
 onMounted(() => {
   loadSettings()
@@ -458,6 +649,52 @@ async function verifyEmailCode() {
   }
 }
 
+async function updatePassword() {
+  const currentPassword = passwordForm.currentPassword
+  const newPassword = passwordForm.newPassword
+  const confirmPassword = passwordForm.confirmPassword
+
+  if (!currentPassword.trim()) {
+    showWarn("Enter your current password.")
+    return
+  }
+
+  if (newPassword.length < 8) {
+    showWarn("New password must be at least 8 characters.")
+    return
+  }
+
+  if (newPassword !== confirmPassword) {
+    showWarn("New password and confirmation do not match.")
+    return
+  }
+
+  passwordUpdating.value = true
+
+  try {
+    await AuthService.changePassword({
+      current_password: currentPassword,
+      password: newPassword,
+      password_confirmation: confirmPassword,
+    })
+
+    passwordForm.currentPassword = ""
+    passwordForm.newPassword = ""
+    passwordForm.confirmPassword = ""
+
+    toast.add({
+      severity: "success",
+      summary: "Password Updated",
+      detail: "Your password was changed successfully.",
+      life: 3500,
+    })
+  } catch (error: any) {
+    showError("Unable to update password.", error, "Password Error")
+  } finally {
+    passwordUpdating.value = false
+  }
+}
+
 function confirmDisable(method: MfaMethod) {
   const label = method === "all" ? "all MFA methods" : `${method} MFA`
 
@@ -553,10 +790,10 @@ function showWarn(detail: string) {
   })
 }
 
-function showError(fallback: string, error: any) {
+function showError(fallback: string, error: any, summary = "MFA Error") {
   toast.add({
     severity: "error",
-    summary: "MFA Error",
+    summary,
     detail: error?.response?.data?.message ?? firstValidationMessage(error) ?? fallback,
     life: 4500,
   })

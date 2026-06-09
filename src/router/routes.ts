@@ -85,6 +85,10 @@ const SystemSettingsCompanyPage = () =>
   import("@/app/pages/settings/systemSettings/company/SystemSettingsCompanyPage.vue")
 const SystemSettingsBrandingPage = () =>
   import("@/app/pages/settings/systemSettings/branding/SystemSettingsBrandingPage.vue")
+const SystemSettingsEmailNotificationsPage = () =>
+  import(
+    "@/app/pages/settings/systemSettings/emailNotifications/SystemSettingsEmailNotificationsPage.vue"
+  )
 const MasterSettingsPage = () =>
   import("@/app/pages/settings/systemSettings/master/SystemSettingsMasterPage.vue")
 const SystemSettingsAwbManagerPage = () =>
@@ -809,6 +813,12 @@ export const routes: RouteRecordRaw[] = [
             name: "settings.system.branding",
             component: SystemSettingsBrandingPage,
             meta: { title: "System Settings • Branding" },
+          },
+          {
+            path: "email-notifications",
+            name: "settings.system.email_notifications",
+            component: SystemSettingsEmailNotificationsPage,
+            meta: { title: "System Settings - Email & Notifications" },
           },
           {
             path: "master",

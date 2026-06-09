@@ -3,6 +3,7 @@ import customerLogin from "./customerLogin"
 import me from "./me"
 import customerMe from "./customerMe"
 import logout from "./logout"
+import changePassword from "./changePassword"
 import {
   disableMfa,
   getMfaSettings,
@@ -20,6 +21,7 @@ export default {
   me,
   customerMe,
   logout,
+  changePassword,
   disableMfa,
   getMfaSettings,
   resendMfaEmail,
