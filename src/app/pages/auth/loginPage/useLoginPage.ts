@@ -90,7 +90,7 @@ export function useLoginPage() {
       if ("mfa_required" in result && result.mfa_required) {
         mfaMethod.value = result.methods.includes("authenticator")
           ? "authenticator"
-          : result.methods[0] ?? "email"
+          : (result.methods[0] ?? "email")
         mfaCode.value = ""
         step.value = 3
         return

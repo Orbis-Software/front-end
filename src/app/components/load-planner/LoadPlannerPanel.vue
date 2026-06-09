@@ -367,7 +367,9 @@ const jobPackages = computed<LoadUnit[]>(() => {
       const packageLabel = String(
         row.desc ?? row.description ?? row.packageType ?? row.package_type ?? row.type ?? "",
       ).trim()
-      const type = normalizeUnitType(row.type ?? row.packageType ?? row.package_type ?? packageLabel)
+      const type = normalizeUnitType(
+        row.type ?? row.packageType ?? row.package_type ?? packageLabel,
+      )
       const length = normalizeDimensionCm(row.l ?? row.lengthCm ?? row.length_cm ?? row.length ?? 0)
       const width = normalizeDimensionCm(row.w ?? row.widthCm ?? row.width_cm ?? row.width ?? 0)
       const height = normalizeDimensionCm(row.h ?? row.heightCm ?? row.height_cm ?? row.height ?? 0)

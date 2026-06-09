@@ -16,7 +16,9 @@ async function list(): Promise<ListResponse> {
   return response.data
 }
 
-async function create(payload: Required<Pick<CompanyEmailRecipientPayload, "email">> & CompanyEmailRecipientPayload) {
+async function create(
+  payload: Required<Pick<CompanyEmailRecipientPayload, "email">> & CompanyEmailRecipientPayload,
+) {
   const response = await http.post("/company-email-recipients", payload)
 
   return response.data.data as CompanyEmailRecipient

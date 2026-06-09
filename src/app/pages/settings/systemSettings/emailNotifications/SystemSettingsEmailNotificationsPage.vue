@@ -79,7 +79,9 @@ const bulkActionOptions = [
   { label: "Add notification", value: "add_notification" },
   { label: "Remove notification", value: "remove_notification" },
 ]
-const activeRecipients = computed(() => recipients.value.filter(recipient => recipient.is_active).length)
+const activeRecipients = computed(
+  () => recipients.value.filter(recipient => recipient.is_active).length,
+)
 const employeeRecipients = computed(
   () => recipients.value.filter(recipient => recipient.is_managed_user).length,
 )
@@ -327,10 +329,18 @@ async function applyBulkAction() {
         if (bulkAction.value === "activate") next.is_active = true
         if (bulkAction.value === "deactivate") next.is_active = false
         if (bulkAction.value === "add_notification") {
-          next.notification_types = toggleKey(next.notification_types, bulkNotificationType.value, true)
+          next.notification_types = toggleKey(
+            next.notification_types,
+            bulkNotificationType.value,
+            true,
+          )
         }
         if (bulkAction.value === "remove_notification") {
-          next.notification_types = toggleKey(next.notification_types, bulkNotificationType.value, false)
+          next.notification_types = toggleKey(
+            next.notification_types,
+            bulkNotificationType.value,
+            false,
+          )
         }
 
         return companyEmailRecipientsService.update(next.id, {
@@ -395,7 +405,9 @@ async function applyBulkProfile() {
 
 function applyProfileToDraft(profileKey: string) {
   draft.profile = profileKey
-  draft.notification_types = [...(notificationProfiles.value.find(item => item.key === profileKey)?.types ?? [])]
+  draft.notification_types = [
+    ...(notificationProfiles.value.find(item => item.key === profileKey)?.types ?? []),
+  ]
 }
 
 function applyProfileToEdit(profileKey: string) {
@@ -625,11 +637,7 @@ function firstValidationMessage(error: any): string | null {
       <div class="system-settings-email-page__toolbar">
         <div class="system-settings-email-page__search">
           <i class="pi pi-search" />
-          <InputText
-            v-model="search"
-            placeholder="Search name or email"
-            @input="resetPage"
-          />
+          <InputText v-model="search" placeholder="Search name or email" @input="resetPage" />
         </div>
 
         <Dropdown
@@ -721,7 +729,9 @@ function firstValidationMessage(error: any): string | null {
       >
         <template #empty>
           <div class="system-settings-email-page__empty">
-            {{ loading ? "Loading company emails..." : "No company emails match the current filters." }}
+            {{
+              loading ? "Loading company emails..." : "No company emails match the current filters."
+            }}
           </div>
         </template>
 
@@ -783,7 +793,12 @@ function firstValidationMessage(error: any): string | null {
           </template>
         </Column>
 
-        <Column header="Actions" style="width: 140px" bodyClass="actions-col" headerClass="actions-col">
+        <Column
+          header="Actions"
+          style="width: 140px"
+          bodyClass="actions-col"
+          headerClass="actions-col"
+        >
           <template #body="{ data }">
             <Button
               icon="pi pi-pencil"
@@ -888,7 +903,12 @@ function firstValidationMessage(error: any): string | null {
       </div>
 
       <template #footer>
-        <Button label="Cancel" class="p-button-outlined" type="button" @click="editVisible = false" />
+        <Button
+          label="Cancel"
+          class="p-button-outlined"
+          type="button"
+          @click="editVisible = false"
+        />
         <Button
           label="Save Changes"
           icon="pi pi-save"
