@@ -5,6 +5,7 @@ import { useToast } from "primevue/usetoast"
 
 import type { ContactBranch, ContactCollectionAddress } from "@/app/types/contact"
 import { useContactStore } from "@/app/stores/contact"
+import { buildInitialBranchPayload, hasContactAddress } from "@/app/utils/contactBranch"
 
 export type ContactDetailsTab =
   | "overview"
@@ -92,7 +93,18 @@ export function useContactDetailsPage() {
   async function load() {
     try {
       const id = Number(route.params.id)
-      await contactStore.load(id)
+      const loaded = await contactStore.load(id)
+
+      if (loaded && !(loaded.branches ?? []).length && hasContactAddress(loaded)) {
+        await contactStore.createBranch(loaded.id, buildInitialBranchPayload(loaded))
+
+        toast.add({
+          severity: "success",
+          summary: "Branch created",
+          detail: "Main Branch was created from this contact's saved address.",
+          life: 2500,
+        })
+      }
     } catch (e) {
       toast.add({
         severity: "error",

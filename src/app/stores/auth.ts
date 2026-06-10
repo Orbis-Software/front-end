@@ -105,7 +105,9 @@ export const useAuthStore = defineStore("auth", {
       localStorage.setItem(TOKEN_KEY, result.token)
       localStorage.setItem(AUTH_TYPE_KEY, "user")
 
+      this.setUser(await AuthService.me())
       await this.initializeAppData()
+      this.ready = true
 
       return result
     },
@@ -131,7 +133,9 @@ export const useAuthStore = defineStore("auth", {
       localStorage.setItem(TOKEN_KEY, result.token)
       localStorage.setItem(AUTH_TYPE_KEY, "user")
 
+      this.setUser(await AuthService.me())
       await this.initializeAppData()
+      this.ready = true
 
       return result
     },

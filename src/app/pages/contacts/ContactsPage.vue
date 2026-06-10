@@ -26,6 +26,14 @@
           @click="onImportContacts"
         />
 
+        <Button
+          class="btn btn--ghost contacts-page__export-btn"
+          icon="pi pi-download"
+          label="Export Contacts"
+          :loading="exporting"
+          @click="onExportContacts"
+        />
+
         <!-- Existing -->
         <Button
           class="btn btn--primary contacts-page__new-btn"
@@ -175,6 +183,7 @@ import { useContactsPage } from "./ContactsPage"
 const {
   store,
   search,
+  exporting,
   headerTitle,
   filterTabs,
   firstRow,
@@ -186,5 +195,6 @@ const {
   onDelete,
   onOpenCompany,
   onImportContacts,
+  onExportContacts,
 } = useContactsPage()
 </script>
