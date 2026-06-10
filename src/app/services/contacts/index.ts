@@ -3,6 +3,7 @@ import create from "./create"
 import update from "./update"
 import remove from "./remove"
 import show from "./show"
+import exportContacts from "./export"
 
 // branches
 import createBranch from "./branches/create"
@@ -27,6 +28,7 @@ export default {
   update,
   remove,
   show,
+  exportContacts,
 
   // Branches
   createBranch,
