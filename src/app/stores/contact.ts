@@ -227,6 +227,18 @@ export const useContactStore = defineStore("contact", () => {
     }
   }
 
+  async function exportContacts() {
+    const params: any = {
+      q: search.value.trim() || undefined,
+    }
+
+    if (activeTypeId.value !== null) {
+      params.contact_type_id = activeTypeId.value
+    }
+
+    return contacts.exportContacts(params)
+  }
+
   function setPage(nextPage: number) {
     page.value = nextPage
     return fetch()
@@ -266,6 +278,7 @@ export const useContactStore = defineStore("contact", () => {
     lastPage,
 
     fetch,
+    exportContacts,
     setTypeId,
     setSearch,
     setPage,
