@@ -93,6 +93,11 @@
   white-space: nowrap;
 }
 
+.contacts-page__export-btn {
+  height: 44px !important;
+  white-space: nowrap;
+}
+
 .contacts-page__card {
   background: var(--bg-card);
   border: 1px solid var(--border);

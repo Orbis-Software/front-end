@@ -3,6 +3,7 @@ import { useRoute, useRouter } from "vue-router"
 import { useToast } from "primevue/usetoast"
 import { useContactStore } from "@/app/stores/contact"
 import { useCountryStore } from "@/app/stores/country"
+import { buildInitialBranchPayload } from "@/app/utils/contactBranch"
 import type { Country } from "@/app/types/country"
 import type { ContactCreatePayload } from "@/app/types/contact"
 
@@ -341,11 +342,13 @@ export function useContactCreatePage() {
           life: 2200,
         })
       } else {
-        await store.create(payload)
+        const created = await store.create(payload)
+        await store.createBranch(created.id, buildInitialBranchPayload(payload))
+
         toast.add({
           severity: "success",
           summary: "Saved",
-          detail: "Contact saved successfully.",
+          detail: "Contact saved successfully with its first branch.",
           life: 2200,
         })
       }

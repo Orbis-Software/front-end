@@ -10,6 +10,7 @@ import Dialog from "primevue/dialog"
 import InputText from "primevue/inputtext"
 import Toast from "primevue/toast"
 import { useToast } from "primevue/usetoast"
+import LoadPlannerPanel from "@/app/components/load-planner/LoadPlannerPanel.vue"
 import { useTransportQuoteStore } from "@/app/stores/transportQuote"
 import type { TransportQuote } from "@/app/types/transportQuote"
 
@@ -45,6 +46,24 @@ const totalWeight = computed(() => {
 const totalCbm = computed(() => {
   return (quote.value?.dimensions ?? []).reduce((sum, item) => sum + Number(item.cbm || 0), 0)
 })
+
+const loadPlannerPackages = computed(() =>
+  (quote.value?.dimensions ?? []).map((row, index) => ({
+    id: row.id ?? index,
+    type: quote.value?.mode_of_transport === "road" ? "Pallet" : row.container_type || "Package",
+    desc:
+      quote.value?.mode_of_transport === "road" ? `Pallet ${index + 1}` : `Package ${index + 1}`,
+    length: row.length ?? 0,
+    width: row.width ?? 0,
+    height: row.height ?? 0,
+    qty: row.pieces ?? 1,
+    weight: row.weight ?? 0,
+    stackable: row.stackable ?? true,
+    adr: Boolean(quote.value?.is_hazardous),
+  })),
+)
+
+const loadPlannerReference = computed(() => quote.value?.quote_ref || "Quote Load Plan")
 
 function onBack() {
   router.push({ name: "customer.quotes" })
@@ -313,6 +332,14 @@ onMounted(() => {
           Hazardous: {{ quote.hazardous_class || "-" }} / {{ quote.un_number || "-" }} /
           {{ quote.packing_group || "-" }}
         </p>
+      </section>
+
+      <section class="customer-quote-details__card">
+        <LoadPlannerPanel
+          :packages="loadPlannerPackages"
+          :plan-ref="loadPlannerReference"
+          :adr-default="quote.is_hazardous"
+        />
       </section>
 
       <section class="customer-quote-details__card">
