@@ -128,6 +128,7 @@ const addressModalTargetRef = ref<AddressTarget>("origin")
 const addressModalSavingRef = ref(false)
 const initialLoadingRef = ref(false)
 const customerContactsRef = ref<Contact[]>([])
+const destinationContactsRef = ref<Contact[]>([])
 const customerOptionsLoadingRef = ref(false)
 let customerSearchTimer: ReturnType<typeof setTimeout> | null = null
 
@@ -217,15 +218,22 @@ function addressSummary(address: ContactCollectionAddress): string {
     .join(", ")
 }
 
-function addressOption(address: ContactCollectionAddress): AddressSelectOption {
+function addressOption(address: ContactCollectionAddress, ownerName = ""): AddressSelectOption {
   const reference = address.reference_code ? `${address.reference_code} - ` : ""
   const label = address.label || address.city || addressSummary(address) || "Unnamed Address"
+  const owner = ownerName ? `${ownerName} - ` : ""
 
   return {
-    label: `${reference}${label}`,
+    label: `${owner}${reference}${label}`,
     value: Number(address.id),
     address,
   }
+}
+
+function isHazardousCommodity(value: unknown): boolean {
+  return String(value ?? "")
+    .toLowerCase()
+    .includes("hazard")
 }
 
 function cleanReferenceName(value: string): string {
@@ -754,7 +762,8 @@ function normalizeConsolidationDetails(raw: any): JobConsolidationDetails {
 
 function detailPayloadForMode(form: JobDetailsForm): Partial<TransportJobUpdatePayload> {
   if (form.mode_of_transport === "road") {
-    form.road_detail.order_type = form.order_type || null
+    form.order_type = "Full Transport Order"
+    form.road_detail.order_type = "Full Transport Order"
     form.road_detail.local_estimated_mileage_cost = localMileageCost(form)
 
     return { road_detail: form.road_detail }
@@ -872,7 +881,7 @@ export function useJobDetailsPage() {
       showCount: true,
     },
     {
-      label: "Transport",
+      label: "Transport Order",
       name: "tms.jobs.show.transport",
       key: "transport",
     },
@@ -973,13 +982,26 @@ export function useJobDetailsPage() {
   const originAddressOptions = computed<AddressSelectOption[]>(() => {
     return (selectedCustomer.value?.collection_addresses ?? [])
       .filter(address => Boolean(address.is_collection))
-      .map(addressOption)
+      .map(address => addressOption(address))
   })
 
   const destinationAddressOptions = computed<AddressSelectOption[]>(() => {
-    return (selectedCustomer.value?.collection_addresses ?? [])
-      .filter(address => Boolean(address.is_delivery))
-      .map(addressOption)
+    const optionsById = new Map<number, AddressSelectOption>()
+
+    destinationContactsRef.value.forEach(contact => {
+      const ownerName = displayContactName(contact)
+
+      ;(contact.collection_addresses ?? []).forEach(address => {
+        optionsById.set(Number(address.id), addressOption(address, ownerName))
+      })
+    })
+
+    const currentAddress = (job.value as any)?.destination_address
+    if (currentAddress?.id && !optionsById.has(Number(currentAddress.id))) {
+      optionsById.set(Number(currentAddress.id), addressOption(currentAddress))
+    }
+
+    return Array.from(optionsById.values())
   })
 
   const selectedOriginAddress = computed<ContactCollectionAddress | null>(() => {
@@ -1222,7 +1244,7 @@ export function useJobDetailsPage() {
     job.value = data
 
     form.customer_id = data.customer_id ?? extra.customer_contact?.id ?? null
-    form.account_number = data.account_number ?? ""
+    form.account_number = data.account_number ?? data.customer_account_number ?? ""
     form.quote_ref = data.quote_ref ?? ""
     form.job_number = data.job_number ?? ""
     form.job_date = parseDate(data.job_date)
@@ -1333,6 +1355,16 @@ export function useJobDetailsPage() {
     }
   }
 
+  async function loadDestinationContacts() {
+    const res = await contactsService.list({
+      page: 1,
+      per_page: 500,
+      include_addresses: true,
+    })
+
+    destinationContactsRef.value = res.data ?? []
+  }
+
   function onCustomerFilter(event: { value?: string }) {
     if (customerSearchTimer) {
       clearTimeout(customerSearchTimer)
@@ -1380,7 +1412,7 @@ export function useJobDetailsPage() {
         status: form.status || null,
 
         order_type: isRoadMode ? form.order_type || null : undefined,
-        consignment_number: isRoadMode ? form.consignment_number || null : undefined,
+        consignment_number: form.consignment_number || null,
         service_type: form.service_type || null,
         incoterms: form.incoterms || null,
         currency: form.currency || null,
@@ -1389,10 +1421,10 @@ export function useJobDetailsPage() {
         commodity_code: form.commodity_code || null,
         hs_code: isRoadMode ? form.hs_code || null : undefined,
         insurance_level: form.insurance_level || null,
-        is_hazardous: isRoadMode ? form.is_hazardous : undefined,
-        hazardous_class: isRoadMode ? form.hazardous_class || null : undefined,
-        un_number: isRoadMode ? form.un_number || null : undefined,
-        temperature_requirement: isRoadMode ? form.temperature_requirement || null : undefined,
+        is_hazardous: form.is_hazardous,
+        hazardous_class: form.hazardous_class || null,
+        un_number: form.un_number || null,
+        temperature_requirement: form.temperature_requirement || null,
 
         customer_po_number: form.customer_po_number || null,
         customer_booking_ref: form.customer_booking_ref || null,
@@ -1456,6 +1488,7 @@ export function useJobDetailsPage() {
 
     const loaded = await (contactStore as any).find(customerId)
     selectedCustomerRef.value = loaded
+    form.account_number = loaded?.account_number ?? ""
     customerContactsRef.value = [
       loaded,
       ...customerContactsRef.value.filter(contact => Number(contact.id) !== Number(customerId)),
@@ -1480,6 +1513,12 @@ export function useJobDetailsPage() {
         payload,
       )
       selectedCustomerRef.value = updatedContact
+      destinationContactsRef.value = [
+        updatedContact,
+        ...destinationContactsRef.value.filter(contact => {
+          return Number(contact.id) !== Number(updatedContact.id)
+        }),
+      ]
 
       const addresses = updatedContact.collection_addresses ?? []
       const created = addresses[addresses.length - 1]
@@ -1508,11 +1547,19 @@ export function useJobDetailsPage() {
       form.account_number = customer?.account_number ?? ""
 
       form.origin_contact_collection_address_id = null
-      form.destination_contact_collection_address_id = null
 
       await loadSelectedCustomer(id ? Number(id) : null)
     },
     { flush: "sync" },
+  )
+
+  watch(
+    () => form.commodity_code,
+    value => {
+      if (isHazardousCommodity(value)) {
+        form.is_hazardous = true
+      }
+    },
   )
 
   const context: JobDetailsContext = {
@@ -1541,7 +1588,7 @@ export function useJobDetailsPage() {
     initialLoadingRef.value = true
 
     try {
-      await Promise.all([loadCustomers(), loadReferenceData()])
+      await Promise.all([loadCustomers(), loadDestinationContacts(), loadReferenceData()])
       await load()
     } finally {
       initialLoadingRef.value = false

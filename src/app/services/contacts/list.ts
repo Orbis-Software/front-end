@@ -7,6 +7,7 @@ export interface ListContactsParams {
   per_page?: number
   contact_type_id?: number
   status?: string
+  include_addresses?: boolean | number
   q?: string
 }
 

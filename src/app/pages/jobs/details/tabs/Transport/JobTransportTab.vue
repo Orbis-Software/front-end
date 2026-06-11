@@ -27,6 +27,7 @@ const {
 
 const {
   roadServiceTypeOptions: roadServiceOptions,
+  roadLoadTypeOptions: loadTypeOptions,
   vehicleTypeOptions: roadVehicleOptions,
   palletTypeOptions,
   podMethodOptions,
@@ -117,6 +118,11 @@ const courierVehicleOptions = [
 const signatureRequiredOptions = [
   { label: "Yes", value: true },
   { label: "No", value: false },
+]
+
+const yesNoOptions = [
+  { label: "No", value: false },
+  { label: "Yes", value: true },
 ]
 </script>
 
@@ -762,7 +768,7 @@ const signatureRequiredOptions = [
 
     <div v-if="mode === 'road'" class="job-transport-tab__section">
       <header class="job-transport-tab__section-header">
-        <h2>Road Freight Details</h2>
+        <h2>Full Transport Order</h2>
         <span class="job-transport-tab__badge">Road</span>
       </header>
 
@@ -775,6 +781,19 @@ const signatureRequiredOptions = [
             option-label="label"
             option-value="value"
             placeholder="Select service"
+            class="job-transport-tab__prime-select"
+            show-clear
+          />
+        </label>
+
+        <label class="job-transport-tab__field">
+          <span>Load Type</span>
+          <Dropdown
+            v-model="form.road_detail.full_load_type"
+            :options="loadTypeOptions"
+            option-label="label"
+            option-value="value"
+            placeholder="Select load type"
             class="job-transport-tab__prime-select"
             show-clear
           />
@@ -867,13 +886,31 @@ const signatureRequiredOptions = [
         </label>
 
         <label class="job-transport-tab__field">
+          <span>Load Plan Ref</span>
+          <InputText
+            v-model="form.road_detail.full_load_plan_ref"
+            placeholder="Load plan / manifest ref"
+          />
+        </label>
+
+        <label class="job-transport-tab__field">
           <span>Haulier / Carrier</span>
           <InputText v-model="form.road_detail.carrier" placeholder="Carrier name" />
         </label>
 
         <label class="job-transport-tab__field">
+          <span>Vehicle Registration</span>
+          <InputText v-model="form.road_detail.full_vehicle_registration" placeholder="AB12 CDE" />
+        </label>
+
+        <label class="job-transport-tab__field">
           <span>Trailer Number</span>
           <InputText v-model="form.road_detail.trailer_number" placeholder="AB12 CDE" />
+        </label>
+
+        <label class="job-transport-tab__field">
+          <span>Seal Number</span>
+          <InputText v-model="form.road_detail.full_seal_number" placeholder="Seal no." />
         </label>
 
         <label class="job-transport-tab__field">
@@ -905,8 +942,74 @@ const signatureRequiredOptions = [
         </label>
 
         <label class="job-transport-tab__field">
+          <span>Max Stack Height (cm)</span>
+          <InputNumber
+            v-model="form.road_detail.full_max_stack_height_cm"
+            :min="0"
+            placeholder="220"
+          />
+        </label>
+
+        <label class="job-transport-tab__field">
+          <span>Multi-Drop?</span>
+          <Dropdown
+            v-model="form.road_detail.full_multi_drop"
+            :options="yesNoOptions"
+            option-label="label"
+            option-value="value"
+            placeholder="Select"
+            class="job-transport-tab__prime-select"
+            show-clear
+          />
+        </label>
+
+        <label class="job-transport-tab__field">
+          <span>Intermodal Leg?</span>
+          <Dropdown
+            v-model="form.road_detail.full_intermodal_leg"
+            :options="yesNoOptions"
+            option-label="label"
+            option-value="value"
+            placeholder="Select"
+            class="job-transport-tab__prime-select"
+            show-clear
+          />
+        </label>
+
+        <label class="job-transport-tab__field">
+          <span>Customs Required?</span>
+          <Dropdown
+            v-model="form.road_detail.full_customs_required"
+            :options="yesNoOptions"
+            option-label="label"
+            option-value="value"
+            placeholder="Select"
+            class="job-transport-tab__prime-select"
+            show-clear
+          />
+        </label>
+
+        <label class="job-transport-tab__field">
+          <span>Subcontractor Used?</span>
+          <Dropdown
+            v-model="form.road_detail.full_subcontractor_used"
+            :options="yesNoOptions"
+            option-label="label"
+            option-value="value"
+            placeholder="Select"
+            class="job-transport-tab__prime-select"
+            show-clear
+          />
+        </label>
+
+        <label class="job-transport-tab__field">
           <span>CMR Number</span>
           <InputText v-model="form.road_detail.cmr_number" placeholder="CMR ref" />
+        </label>
+
+        <label class="job-transport-tab__field">
+          <span>Route / Via</span>
+          <InputText v-model="form.road_detail.full_route_via" placeholder="e.g. UK > BE > DE" />
         </label>
 
         <label class="job-transport-tab__field">

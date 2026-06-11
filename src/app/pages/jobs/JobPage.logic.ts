@@ -66,15 +66,17 @@ export function useJobCreatePage() {
 
   const form = reactive<{
     customer_id: number | null
+    account_number: string
     customer_quote_ref: string
     job_number: string
     job_date: Date | null
     note: string
   }>({
     customer_id: null,
+    account_number: "",
     customer_quote_ref: "",
     job_number: "",
-    job_date: null,
+    job_date: new Date(),
     note: "",
   })
 
@@ -108,7 +110,7 @@ export function useJobCreatePage() {
   const customerOptionLabel = (c: any) => contactDisplayName(c)
 
   const accountNumberPreview = computed(() => {
-    return (selectedCustomer.value as any)?.account_number ?? ""
+    return form.account_number || (selectedCustomer.value as any)?.account_number || ""
   })
 
   function isJobType(value: string): value is JobType {
@@ -154,7 +156,7 @@ export function useJobCreatePage() {
     jobType.value = null
     mode.value = null
     form.job_number = ""
-    form.job_date = null
+    form.job_date = new Date()
     jobNumberAuto.value = true
   }
 
@@ -238,11 +240,13 @@ export function useJobCreatePage() {
 
     selectedCustomer.value = c
     form.customer_id = c.id
+    form.account_number = c.account_number ?? ""
   }
 
   function onCustomerClear() {
     selectedCustomer.value = null
     form.customer_id = null
+    form.account_number = ""
   }
 
   watch(
@@ -278,6 +282,7 @@ export function useJobCreatePage() {
   function buildCreateJobPayload(): TransportJobCreatePayload {
     const base = {
       customer_id: form.customer_id,
+      account_number: form.account_number || null,
       quote_ref: form.customer_quote_ref,
       job_number: null,
       job_date: form.job_date ? formatDateYYYYMMDD(form.job_date) : null,
@@ -368,9 +373,10 @@ export function useJobCreatePage() {
   function onCancel() {
     form.note = ""
     form.customer_id = null
+    form.account_number = ""
     form.customer_quote_ref = ""
     form.job_number = ""
-    form.job_date = null
+    form.job_date = new Date()
 
     selectedCustomer.value = null
     createError.value = ""
