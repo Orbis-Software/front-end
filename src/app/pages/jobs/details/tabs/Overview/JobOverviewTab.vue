@@ -52,7 +52,6 @@ const {
 } = referenceOptions
 
 const isRoadMode = computed(() => form.mode_of_transport === "road")
-
 const roadOrderTypes = [
   {
     label: "Local Collection",
@@ -67,6 +66,19 @@ const roadOrderTypes = [
     description: "Longer road freight with carrier, load, delivery and optional customs detail.",
   },
 ]
+const shipmentReferenceLabel = computed(() => {
+  if (form.mode_of_transport === "road") return "CMR Ref:"
+  if (form.mode_of_transport === "air") return "AWB Ref:"
+  if (form.mode_of_transport === "sea") return "BL Ref:"
+  if (form.mode_of_transport === "rail") return "SMGS Ref:"
+
+  return "Shipment Ref:"
+})
+const showShipmentReference = computed(() => {
+  return ["road", "air", "sea", "rail"].includes(String(form.mode_of_transport ?? ""))
+})
+const declaredValueMode = computed(() => (form.currency ? "currency" : "decimal"))
+const declaredValueCurrency = computed(() => form.currency || "GBP")
 
 const hazardousOptions = [
   { label: "No", value: false },
@@ -154,17 +166,17 @@ const consolidationTransportRows = computed(() => {
       </header>
 
       <div class="job-overview-tab__grid job-overview-tab__grid--4">
-        <label v-if="isRoadMode" class="job-overview-tab__field">
-          <span>AWB / Consignment No.</span>
+        <label v-if="showShipmentReference" class="job-overview-tab__field">
+          <span>{{ shipmentReferenceLabel }}</span>
 
           <InputText
             v-model="form.consignment_number"
-            placeholder="123-45678901 / consignment ref"
+            placeholder="Shipment reference"
             :disabled="loading"
           />
         </label>
 
-        <label class="job-overview-tab__field">
+        <label v-if="false" class="job-overview-tab__field">
           <span>Service Type</span>
 
           <Dropdown
@@ -193,7 +205,7 @@ const consolidationTransportRows = computed(() => {
         </label>
 
         <label class="job-overview-tab__field">
-          <span>Currency</span>
+          <span>Shipment Currency</span>
 
           <Dropdown
             v-model="form.currency"
@@ -211,7 +223,9 @@ const consolidationTransportRows = computed(() => {
 
           <InputNumber
             v-model="form.declared_value"
-            mode="decimal"
+            :mode="declaredValueMode"
+            :currency="declaredValueCurrency"
+            locale="en-GB"
             :min-fraction-digits="2"
             :max-fraction-digits="2"
             placeholder="0.00"
@@ -266,7 +280,73 @@ const consolidationTransportRows = computed(() => {
       </div>
     </div>
 
-    <div v-if="isRoadMode" class="job-overview-tab__section">
+    <div class="job-overview-tab__section">
+      <header class="job-overview-tab__section-header">
+        <h2>Special Requirements</h2>
+      </header>
+
+      <div class="job-overview-tab__grid job-overview-tab__grid--4">
+        <label class="job-overview-tab__field">
+          <span>Hazardous?</span>
+
+          <Dropdown
+            v-model="form.is_hazardous"
+            :options="hazardousOptions"
+            option-label="label"
+            option-value="value"
+            placeholder="Select"
+            :disabled="loading"
+          />
+        </label>
+
+        <label class="job-overview-tab__field">
+          <span>ADR / Hazmat Class</span>
+
+          <Dropdown
+            v-model="form.hazardous_class"
+            :options="dangerousGoodsOptions"
+            option-label="label"
+            option-value="value"
+            placeholder="Select dangerous goods class"
+            show-clear
+            filter
+            :disabled="loading"
+          />
+        </label>
+
+        <label class="job-overview-tab__field">
+          <span>UN Number</span>
+
+          <InputText v-model="form.un_number" placeholder="UN1234" :disabled="loading" />
+        </label>
+
+        <label class="job-overview-tab__field">
+          <span>Temperature Controlled?</span>
+
+          <Dropdown
+            v-model="form.temperature_requirement"
+            :options="temperatureOptions"
+            option-label="label"
+            option-value="value"
+            placeholder="Select"
+            :disabled="loading"
+          />
+        </label>
+
+        <label class="job-overview-tab__field job-overview-tab__field--span-4">
+          <span>Special Instructions / Notes</span>
+
+          <Textarea
+            v-model="form.note"
+            rows="4"
+            placeholder="Temperature requirements, handling notes, access restrictions..."
+            :disabled="loading"
+          />
+        </label>
+      </div>
+    </div>
+
+    <div v-if="false" class="job-overview-tab__section">
       <header class="job-overview-tab__section-header job-overview-tab__section-header--with-note">
         <div>
           <h2>Order Type</h2>
@@ -824,12 +904,12 @@ const consolidationTransportRows = computed(() => {
               show-clear
               filter
               append-to="body"
-              :disabled="loading || !form.customer_id"
+              :disabled="loading"
             />
 
             <Button
               icon="pi pi-plus"
-              label="New"
+              label="Add New"
               :disabled="loading || !form.customer_id"
               type="button"
               @click="openAddressModal('destination')"
@@ -1123,7 +1203,7 @@ const consolidationTransportRows = computed(() => {
       </div>
     </div>
 
-    <div class="job-overview-tab__section">
+    <div v-if="false" class="job-overview-tab__section">
       <header class="job-overview-tab__section-header">
         <h2>Special Requirements</h2>
       </header>
