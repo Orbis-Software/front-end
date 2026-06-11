@@ -215,6 +215,9 @@ export interface ContactChargeTable {
   charge_type: string
   applies_to: string
   currency_code: string
+  measurement_type: string | null
+  weight_unit: string | null
+  volume_unit: string | null
   valid_from: string | null
   valid_until: string | null
   is_active: boolean
@@ -258,6 +261,9 @@ export interface ContactChargeTablePayload {
   charge_type: string
   applies_to: string
   currency_code: string
+  measurement_type?: string | null
+  weight_unit?: string | null
+  volume_unit?: string | null
   valid_from?: string | null
   valid_until?: string | null
   is_active?: boolean

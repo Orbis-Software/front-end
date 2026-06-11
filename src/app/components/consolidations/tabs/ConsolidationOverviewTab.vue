@@ -231,9 +231,11 @@ const {
             option-label="label"
             option-value="value"
             :placeholder="transportFieldPlaceholder(field.key)"
+            editable
             filter
             show-clear
             filter-by="label,value,subLabel,searchText"
+            append-to="body"
           >
             <template #option="{ option }">
               <div class="consolidation-reference-option">

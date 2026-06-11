@@ -333,7 +333,12 @@ function setAdrPackage(item: { adr: string }, checked: boolean) {
       </label>
       <label class="consolidation-field">
         <span>Mode Type</span>
-        <Dropdown v-model="collectionDraft.vehicle" :options="vehicleOptions" />
+        <Dropdown
+          v-model="collectionDraft.vehicle"
+          :options="vehicleOptions"
+          placeholder="Select mode type"
+          show-clear
+        />
       </label>
       <label class="consolidation-field">
         <span>Collection Address</span>

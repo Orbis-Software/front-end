@@ -263,7 +263,7 @@ export interface JobConsolidationCollectionOrder {
   supplier: string
   pickupDate: string
   pickupTime: string
-  vehicle: string
+  vehicle: string | null
   collectionAddress: string
   deliveryAddress: string
   deliveryDate: string

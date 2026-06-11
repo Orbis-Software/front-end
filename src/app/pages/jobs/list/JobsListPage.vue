@@ -90,9 +90,9 @@
             <Column header="Job" style="width: 280px">
               <template #body="{ data }">
                 <div class="jobs-list-page__job-cell">
-                  <button class="jobs-list-page__cell-link" type="button" @click="onEdit(data.id)">
+                  <RouterLink class="jobs-list-page__cell-link" :to="`/jobs/${data.id}`">
                     {{ data.job_number || "—" }}
-                  </button>
+                  </RouterLink>
                 </div>
               </template>
             </Column>

@@ -1,4 +1,4 @@
-import { computed, onMounted, provide, reactive, ref, watch } from "vue"
+import { computed, onMounted, onUnmounted, provide, reactive, ref, watch } from "vue"
 import { useRoute, useRouter } from "vue-router"
 import { useToast } from "primevue/usetoast"
 
@@ -6,6 +6,7 @@ import { useTransportJobStore } from "@/app/stores/transport-job"
 import { useContactStore } from "@/app/stores/contact"
 import { useReferenceDataStore } from "@/app/stores/reference-data"
 import type { Contact, ContactCollectionAddress } from "@/app/types/contact"
+import contactsService from "@/app/services/contacts"
 
 import {
   TRANSPORT_MODES,
@@ -126,6 +127,9 @@ const addressModalVisibleRef = ref(false)
 const addressModalTargetRef = ref<AddressTarget>("origin")
 const addressModalSavingRef = ref(false)
 const initialLoadingRef = ref(false)
+const customerContactsRef = ref<Contact[]>([])
+const customerOptionsLoadingRef = ref(false)
+let customerSearchTimer: ReturnType<typeof setTimeout> | null = null
 
 export type JobDetailsContext = {
   job: typeof jobRef
@@ -535,7 +539,7 @@ function normalizeConsolidationCollectionOrder(row: any): JobConsolidationCollec
     supplier: stringValue(row?.supplier, "DHL"),
     pickupDate: stringValue(row?.pickupDate ?? row?.pickup_date),
     pickupTime: stringValue(row?.pickupTime ?? row?.pickup_time),
-    vehicle: stringValue(row?.vehicle, "7.5t"),
+    vehicle: stringValue(row?.vehicle) || null,
     collectionAddress: stringValue(row?.collectionAddress ?? row?.collection_address),
     deliveryAddress: stringValue(row?.deliveryAddress ?? row?.delivery_address),
     deliveryDate: stringValue(row?.deliveryDate ?? row?.delivery_date),
@@ -927,7 +931,22 @@ export function useJobDetailsPage() {
   }
 
   const customerOptions = computed<CustomerOption[]>(() => {
-    return ((contactStore as any).items ?? []).map((contact: any) => ({
+    const contactsById = new Map<number, Contact>()
+
+    customerContactsRef.value.forEach(contact => {
+      contactsById.set(Number(contact.id), contact)
+    })
+
+    if (selectedCustomerRef.value?.id) {
+      contactsById.set(Number(selectedCustomerRef.value.id), selectedCustomerRef.value)
+    }
+
+    const jobCustomer = (job.value as any)?.customer_contact
+    if (jobCustomer?.id) {
+      contactsById.set(Number(jobCustomer.id), jobCustomer as Contact)
+    }
+
+    return Array.from(contactsById.values()).map((contact: any) => ({
       label: displayContactName(contact),
       value: Number(contact.id),
       account_number: contact.account_number ?? "",
@@ -945,7 +964,7 @@ export function useJobDetailsPage() {
     if (jobCustomer?.id === Number(form.customer_id)) return jobCustomer as Contact
 
     return (
-      (((contactStore as any).items ?? []) as Contact[]).find(contact => {
+      customerContactsRef.value.find(contact => {
         return Number(contact.id) === Number(form.customer_id)
       }) ?? null
     )
@@ -1202,7 +1221,7 @@ export function useJobDetailsPage() {
 
     job.value = data
 
-    form.customer_id = data.customer_id ?? null
+    form.customer_id = data.customer_id ?? extra.customer_contact?.id ?? null
     form.account_number = data.account_number ?? ""
     form.quote_ref = data.quote_ref ?? ""
     form.job_number = data.job_number ?? ""
@@ -1268,7 +1287,7 @@ export function useJobDetailsPage() {
     form.collection_instructions = extra.collection_instructions ?? ""
     form.delivery_instructions = extra.delivery_instructions ?? ""
 
-    if (extra.customer_contact?.id === data.customer_id) {
+    if (extra.customer_contact?.id === form.customer_id) {
       selectedCustomerRef.value = extra.customer_contact
     }
 
@@ -1298,15 +1317,30 @@ export function useJobDetailsPage() {
     )
   }
 
-  async function loadCustomers() {
-    if (typeof (contactStore as any).fetch === "function") {
-      await (contactStore as any).fetch()
-      return
+  async function loadCustomers(query = "") {
+    customerOptionsLoadingRef.value = true
+
+    try {
+      const res = await contactsService.list({
+        page: 1,
+        per_page: 100,
+        q: query.trim() || undefined,
+      })
+
+      customerContactsRef.value = res.data ?? []
+    } finally {
+      customerOptionsLoadingRef.value = false
+    }
+  }
+
+  function onCustomerFilter(event: { value?: string }) {
+    if (customerSearchTimer) {
+      clearTimeout(customerSearchTimer)
     }
 
-    if (typeof (contactStore as any).fetchAll === "function") {
-      await (contactStore as any).fetchAll()
-    }
+    customerSearchTimer = setTimeout(() => {
+      loadCustomers(event.value ?? "")
+    }, 250)
   }
 
   async function loadReferenceData() {
@@ -1422,6 +1456,10 @@ export function useJobDetailsPage() {
 
     const loaded = await (contactStore as any).find(customerId)
     selectedCustomerRef.value = loaded
+    customerContactsRef.value = [
+      loaded,
+      ...customerContactsRef.value.filter(contact => Number(contact.id) !== Number(customerId)),
+    ]
 
     return loaded
   }
@@ -1510,6 +1548,12 @@ export function useJobDetailsPage() {
     }
   })
 
+  onUnmounted(() => {
+    if (!customerSearchTimer) return
+    clearTimeout(customerSearchTimer)
+    customerSearchTimer = null
+  })
+
   return {
     tabs,
     isActive,
@@ -1521,6 +1565,7 @@ export function useJobDetailsPage() {
     job,
     form,
     customerOptions,
+    customerOptionsLoading: customerOptionsLoadingRef,
     originAddressOptions,
     destinationAddressOptions,
     modeOptions,
@@ -1540,5 +1585,6 @@ export function useJobDetailsPage() {
     load,
     openAddressModal,
     createAndSelectAddress,
+    onCustomerFilter,
   }
 }

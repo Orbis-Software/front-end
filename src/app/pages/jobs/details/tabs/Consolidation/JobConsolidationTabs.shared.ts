@@ -169,7 +169,7 @@ export function createCollectionOrder(): JobConsolidationCollectionOrder {
     supplier: "DHL",
     pickupDate: "",
     pickupTime: "",
-    vehicle: "7.5t",
+    vehicle: null,
     collectionAddress: "",
     deliveryAddress: "",
     deliveryDate: "",
