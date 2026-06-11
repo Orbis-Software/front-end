@@ -25,12 +25,14 @@ const {
   job,
   form,
   customerOptions,
+  customerOptionsLoading,
   modeOptions,
   statusOptions,
   loading,
   initialLoading,
   saving,
   save,
+  onCustomerFilter,
 } = useJobDetailsPage()
 
 const toast = useToast()
@@ -333,9 +335,12 @@ function onBookJob() {
               option-value="value"
               placeholder="— Select Customer —"
               filter
+              filter-placeholder="Search customers..."
               show-clear
               class="job-header-form__prime"
+              :loading="customerOptionsLoading"
               :disabled="loading"
+              @filter="onCustomerFilter"
             />
           </label>
 

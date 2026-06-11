@@ -32,7 +32,9 @@ const { collectionOrders, openCollectionOrderModal } = context
       <Column field="coRef" header="CO Ref" />
       <Column field="supplier" header="Carrier" />
       <Column field="pickupDate" header="Pickup" />
-      <Column field="vehicle" header="Vehicle" />
+      <Column field="vehicle" header="Vehicle">
+        <template #body="{ data }">{{ data.vehicle || "No data" }}</template>
+      </Column>
       <Column field="pcs" header="Pieces" />
       <Column field="weightKg" header="Weight kg" />
       <Column field="status" header="Status" />

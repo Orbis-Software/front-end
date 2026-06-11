@@ -103,7 +103,15 @@ type InvoiceChargeLine = {
   sourceId?: number | string
 }
 
-export function useConsolidationPage() {
+type ConsolidationPageOptions = {
+  initialDetails?: JobConsolidationDetails | null
+  onDetailsChange?: (details: JobConsolidationDetails) => void
+  jobNumber?: string | null
+  jobDate?: string | Date | null
+  mode?: TransportMode | string | null
+}
+
+export function useConsolidationPage(options: ConsolidationPageOptions = {}) {
   const router = useRouter()
   const toast = useToast()
   const companyStore = useCompanyStore()
@@ -560,7 +568,7 @@ export function useConsolidationPage() {
     collectionRef: "",
     pickupDate: "",
     pickupTime: "",
-    vehicle: "",
+    vehicle: null as string | null,
     collectionAddress: "",
     deliveryAddress: "PC Cargo UK Depot",
     deliveryDate: "",
@@ -659,6 +667,86 @@ export function useConsolidationPage() {
       "This quotation is valid for 30 days from the date of issue. Rates are subject to fuel surcharge adjustments. Subject to carrier availability and standard terms of trading.",
   })
 
+  function cloneSupplierInvoices(rows: JobConsolidationDetails["supplierInvoices"] = []) {
+    return rows.map(invoice => ({
+      ...invoice,
+      items: (invoice.items ?? []).map(item => ({ ...item })),
+    })) as SupplierInvoice[]
+  }
+
+  function cloneCollectionOrders(rows: JobConsolidationDetails["collectionOrders"] = []) {
+    return rows.map(order => ({
+      ...order,
+      vehicle: order.vehicle || null,
+      lines: (order.lines ?? []).map(line => ({ ...line })),
+    }))
+  }
+
+  function maxNumericId(rows: Array<{ id?: number | string | null }>) {
+    return rows.reduce((max, row) => {
+      const id = Number(row.id || 0)
+      return Number.isFinite(id) && id > max ? id : max
+    }, 0)
+  }
+
+  function hydrateFromInitialDetails() {
+    const details = options.initialDetails
+
+    if (options.jobNumber) overview.jobNo = options.jobNumber
+    if (options.jobDate) {
+      overview.jobDate =
+        options.jobDate instanceof Date
+          ? options.jobDate.toISOString().slice(0, 10)
+          : normalizedDate(options.jobDate) || String(options.jobDate)
+    }
+    if (options.mode) overview.mode = String(options.mode)
+
+    if (!details) return
+
+    Object.assign(overview, details.overview ?? {})
+    Object.assign(transport, details.transport ?? {})
+
+    if (options.jobNumber) overview.jobNo = options.jobNumber
+    if (options.jobDate) {
+      overview.jobDate =
+        options.jobDate instanceof Date
+          ? options.jobDate.toISOString().slice(0, 10)
+          : normalizedDate(options.jobDate) || String(options.jobDate)
+    }
+    if (options.mode) overview.mode = String(options.mode)
+
+    supplierInvoices.value = cloneSupplierInvoices(details.supplierInvoices)
+    Object.keys(supplierExaNumbers).forEach(key => delete supplierExaNumbers[key])
+    Object.assign(supplierExaNumbers, details.supplierExaNumbers ?? {})
+    collectionOrders.value = cloneCollectionOrders(details.collectionOrders)
+    goodsInRows.value = (details.goodsRows ?? []).map(row => ({ ...row }))
+    consolidatedLines.value = (details.consolidatedLines ?? []).map(line => ({ ...line }))
+    domesticChargeRows.value = (details.domesticChargeRows ?? []).map(line => ({ ...line }))
+    exportChargeRows.value = (details.exportChargeRows ?? []).map(line => ({ ...line }))
+    quoteLines.value = (details.quoteLines ?? []).map(line => ({ ...line }))
+    Object.assign(domesticInvoice, details.domesticInvoice ?? {})
+    Object.assign(exportInvoice, details.exportInvoice ?? {})
+    Object.assign(quote, details.quote ?? {})
+    selectedInvoiceCurrency.value = invoiceCurrencies.includes(
+      details.selectedInvoiceCurrency as Currency,
+    )
+      ? (details.selectedInvoiceCurrency as Currency)
+      : selectedInvoiceCurrency.value
+    consolidatedFreightCharge.value = Number(details.consolidatedFreightCharge || 0)
+    taxRate.value = Number(details.taxRate || 20)
+    showQuotePanel.value = Boolean(details.showQuotePanel)
+
+    supplierInvoiceId.value = maxNumericId(supplierInvoices.value) + 1
+    collectionOrderId.value = maxNumericId(collectionOrders.value) + 1
+    goodsRowId.value = maxNumericId(goodsInRows.value) + 1
+    consolidatedLineId.value = maxNumericId(consolidatedLines.value) + 1
+    domesticChargeId.value = maxNumericId(domesticChargeRows.value) + 1
+    exportChargeId.value = maxNumericId(exportChargeRows.value) + 1
+    quoteLineId.value = maxNumericId(quoteLines.value) + 1
+  }
+
+  hydrateFromInitialDetails()
+
   const collectionRefOptions = computed(() => collectionOrders.value.map(order => order.coRef))
   const loadPlannerPackages = computed(() =>
     collectionOrders.value.flatMap((order, orderIndex) =>
@@ -681,9 +769,25 @@ export function useConsolidationPage() {
       }),
     ),
   )
-  const nextCollectionRef = computed(
-    () => `CO-${String(collectionOrders.value.length + 1).padStart(3, "0")}`,
-  )
+  const collectionOrderSequence = computed<CompanyReferenceSequence | null>(() => {
+    const seqs = companyStore.item?.reference_sequences ?? []
+    if (!Array.isArray(seqs) || seqs.length === 0) return null
+
+    return seqs.find(seq => seq.type === "collection_order") ?? null
+  })
+  const nextCollectionRef = computed(() => {
+    const fallback = `CO-${String(collectionOrders.value.length + 1).padStart(3, "0")}`
+    const sequence = collectionOrderSequence.value
+
+    if (!sequence?.use_system) return fallback
+
+    return (
+      buildReferenceNumber(sequence, parseJobDate(overview.jobDate), {
+        separator: "-",
+        offset: collectionOrders.value.length,
+      }) || fallback
+    )
+  })
   const nextGrnRef = computed(() => `GRN-${String(goodsInRows.value.length + 1).padStart(4, "0")}`)
 
   const collectionDraftTotals = computed(() => summarizePackageLines(collectionDraft.lines))
@@ -1190,12 +1294,12 @@ export function useConsolidationPage() {
 
   function resetCollectionDraft() {
     Object.assign(collectionDraft, {
-      coRef: "CO-NEW",
+      coRef: nextCollectionRef.value,
       customerRef: "",
       collectionRef: "",
       pickupDate: "",
       pickupTime: "",
-      vehicle: "",
+      vehicle: null,
       collectionAddress: "",
       deliveryAddress: "PC Cargo UK Depot",
       deliveryDate: "",
@@ -1239,7 +1343,7 @@ export function useConsolidationPage() {
       supplier: collectionDraft.supplier,
       pickupDate: collectionDraft.pickupDate,
       pickupTime: collectionDraft.pickupTime,
-      vehicle: collectionDraft.vehicle,
+      vehicle: collectionDraft.vehicle || null,
       collectionAddress: collectionDraft.collectionAddress,
       deliveryAddress: collectionDraft.deliveryAddress,
       deliveryDate: collectionDraft.deliveryDate,
@@ -1478,6 +1582,17 @@ export function useConsolidationPage() {
     orders: JobConsolidationCollectionOrder[],
     goodsRows: JobConsolidationGoodsRow[],
   ): JobConsolidationDetails {
+    const fallbackFinalDelivery = {
+      deliveryRef: transport.bookingRef || "",
+      plannedDate: normalizedDate(transport.eta) ?? normalizedDate(overview.shipDate) ?? "",
+      plannedTime: "",
+      carrier: transport.carrier || "",
+      address:
+        overview.deliveryAddress || transport.finalDestination || transport.destinationPort || "",
+      instructions: overview.instructions || "",
+    }
+    const initialFinalDelivery = options.initialDetails?.finalDelivery
+
     return {
       overview: { ...overview },
       transport: { ...transport },
@@ -1492,13 +1607,12 @@ export function useConsolidationPage() {
       domesticInvoice: { ...domesticInvoice },
       exportInvoice: { ...exportInvoice },
       finalDelivery: {
-        deliveryRef: transport.bookingRef || "",
-        plannedDate: normalizedDate(transport.eta) ?? normalizedDate(overview.shipDate) ?? "",
-        plannedTime: "",
-        carrier: transport.carrier || "",
-        address:
-          overview.deliveryAddress || transport.finalDestination || transport.destinationPort || "",
-        instructions: overview.instructions || "",
+        deliveryRef: initialFinalDelivery?.deliveryRef || fallbackFinalDelivery.deliveryRef,
+        plannedDate: initialFinalDelivery?.plannedDate || fallbackFinalDelivery.plannedDate,
+        plannedTime: initialFinalDelivery?.plannedTime || fallbackFinalDelivery.plannedTime,
+        carrier: initialFinalDelivery?.carrier || fallbackFinalDelivery.carrier,
+        address: initialFinalDelivery?.address || fallbackFinalDelivery.address,
+        instructions: initialFinalDelivery?.instructions || fallbackFinalDelivery.instructions,
       },
       quote: { ...quote },
       selectedInvoiceCurrency: selectedInvoiceCurrency.value,
@@ -1769,7 +1883,7 @@ export function useConsolidationPage() {
       `Delivery To: ${collectionDraft.deliveryAddress}`,
       `Pickup: ${collectionDraft.pickupDate} ${collectionDraft.pickupTime}`,
       `Required Delivery: ${collectionDraft.deliveryDate}`,
-      `Mode: ${overview.mode} - ${collectionDraft.vehicle}`,
+      `Mode: ${overview.mode}${collectionDraft.vehicle ? ` - ${collectionDraft.vehicle}` : " - No data"}`,
       `Cargo: ${collectionDraft.goodsDescription}`,
       `Pieces: ${totals.pieces}`,
       `Gross Weight: ${totals.weight.toFixed(1)} kg`,
@@ -1818,6 +1932,47 @@ export function useConsolidationPage() {
       maximumFractionDigits: 2,
     }).format(Number(value || 0))
   }
+
+  function emitDetailsChange() {
+    if (!options.onDetailsChange) return
+
+    const invoices = supplierInvoices.value.map(invoice => ({
+      ...invoice,
+      items: invoice.items.map(item => ({ ...item })),
+    }))
+    const orders = collectionOrders.value.map(order => ({
+      ...order,
+      vehicle: order.vehicle || null,
+      lines: order.lines.map(line => ({ ...line })),
+    }))
+    const rows = goodsInRows.value.map(row => ({ ...row }))
+
+    options.onDetailsChange(buildConsolidationDetails(invoices, orders, rows))
+  }
+
+  watch(
+    [
+      overview,
+      transport,
+      supplierInvoices,
+      collectionOrders,
+      goodsInRows,
+      consolidatedLines,
+      domesticChargeRows,
+      exportChargeRows,
+      quoteLines,
+      supplierExaNumbers,
+      domesticInvoice,
+      exportInvoice,
+      quote,
+      selectedInvoiceCurrency,
+      consolidatedFreightCharge,
+      taxRate,
+      showQuotePanel,
+    ],
+    emitDetailsChange,
+    { deep: true },
+  )
 
   return {
     activeSupplierName,

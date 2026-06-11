@@ -797,6 +797,7 @@ const consolidationTransportRows = computed(() => {
               placeholder="Select collection address"
               show-clear
               filter
+              append-to="body"
               :disabled="loading || !form.customer_id"
             />
 
@@ -822,6 +823,7 @@ const consolidationTransportRows = computed(() => {
               placeholder="Select delivery address"
               show-clear
               filter
+              append-to="body"
               :disabled="loading || !form.customer_id"
             />
 

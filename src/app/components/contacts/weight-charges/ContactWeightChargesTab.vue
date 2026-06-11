@@ -26,19 +26,43 @@ type SelectOption = {
 type WeightBreak = {
   id: number
   label: string
-  min: number
-  max: number
+  min: number | string
+  max: number | string
+  unit?: string
 }
 
 type ChargeRow = {
   id: number
   description: string
-  values: number[]
+  values: Array<number | string>
+}
+
+type ChargeRowMigrationResult = {
+  rows: ChargeRow[]
+  changed: boolean
+  messages: string[]
 }
 
 type ChargeTableListItem = {
   id: number
   name: string
+}
+
+type AutosaveSnapshot = {
+  activeTableId: number | null
+  tableTitle: string
+  currency: string
+  valid_until: string | null
+  measurementType: MeasurementType
+  weightUnit: string
+  volumeUnit: string
+  weightBreaks: WeightBreak[]
+  charges: ChargeRow[]
+}
+
+type AutosaveChange = {
+  key: string
+  message: string
 }
 
 const route = useRoute()
@@ -52,6 +76,17 @@ const fallbackCurrencyOptions: SelectOption[] = [
   { label: "USD", value: "USD" },
   { label: "EUR", value: "EUR" },
 ]
+const fallbackWeightUnitOptions: SelectOption[] = [
+  { label: "kg", value: "kg" },
+  { label: "lb", value: "lb" },
+  { label: "tonne", value: "tonne" },
+]
+const fallbackVolumeUnitOptions: SelectOption[] = [
+  { label: "CBM", value: "CBM" },
+  { label: "m3", value: "m3" },
+  { label: "ft3", value: "ft3" },
+]
+type MeasurementType = "weight" | "volume"
 
 const contactId = computed<number | null>(() => {
   const id = Number(route.params.id)
@@ -80,7 +115,10 @@ const loadError = ref<string | null>(null)
 
 const validityDate = ref<Date | null>(null)
 const currency = ref("GBP")
-const tableTitle = ref("Main Collection Charges")
+const tableTitle = ref("Collection Charges")
+const measurementType = ref<MeasurementType>("weight")
+const weightUnit = ref("kg")
+const volumeUnit = ref("CBM")
 
 const nextBreakId = ref(-1)
 const nextChargeId = ref(-1)
@@ -89,6 +127,8 @@ const weightBreaks = ref<WeightBreak[]>([])
 const charges = ref<ChargeRow[]>([])
 
 let autosaveTimer: ReturnType<typeof setTimeout> | null = null
+const pendingAutosaveChanges = new Map<string, string>()
+let suppressCurrentTableHydrate = false
 
 function cleanReferenceName(value: string): string {
   return String(value ?? "")
@@ -119,6 +159,30 @@ const currencyOptions = computed<SelectOption[]>(() => {
   return [{ label: currency.value, value: currency.value }, ...nextOptions]
 })
 
+function referenceOptions(categoryKeys: string[], fallback: SelectOption[], selectedValue: string) {
+  const options = categoryKeys.flatMap(key => {
+    const category = referenceDataStore.getByKey(key)
+    return (category?.options ?? []).map(optionFromReference).filter(option => option.value)
+  })
+  const deduped = Array.from(new Map(options.map(option => [option.value, option])).values())
+  const nextOptions = deduped.length ? deduped : fallback
+  const hasSelected = nextOptions.some(option => option.value === selectedValue)
+
+  if (!selectedValue || hasSelected) return nextOptions
+
+  return [{ label: selectedValue, value: selectedValue }, ...nextOptions]
+}
+
+const weightUnitOptions = computed<SelectOption[]>(() =>
+  referenceOptions(["weight_units", "weight_unit"], fallbackWeightUnitOptions, weightUnit.value),
+)
+const volumeUnitOptions = computed<SelectOption[]>(() =>
+  referenceOptions(["volume_units", "volume_unit"], fallbackVolumeUnitOptions, volumeUnit.value),
+)
+const activeMeasurementUnit = computed(() =>
+  measurementType.value === "volume" ? volumeUnit.value : weightUnit.value,
+)
+
 const autosaveStatus = computed(() => {
   if (saving.value) return "Saving..."
   if (loadingCurrentTable.value) return "Loading..."
@@ -128,28 +192,170 @@ const autosaveStatus = computed(() => {
 
 function defaultWeightBreaks(): WeightBreak[] {
   return [
-    { id: 1, label: "Minimum", min: 0, max: 49 },
-    { id: 2, label: "+50 kgs", min: 50, max: 100 },
-    { id: 3, label: "+100 kgs", min: 100, max: 250 },
-    { id: 4, label: "+250 kgs", min: 250, max: 500 },
-    { id: 5, label: "+500 kgs", min: 500, max: 1000 },
+    { id: 1, label: "Minimum", min: 0, max: 49, unit: activeMeasurementUnit.value },
+    { id: 2, label: "+50", min: 50, max: 100, unit: activeMeasurementUnit.value },
+    { id: 3, label: "+100", min: 100, max: 250, unit: activeMeasurementUnit.value },
+    { id: 4, label: "+250", min: 250, max: 500, unit: activeMeasurementUnit.value },
+    { id: 5, label: "+500", min: 500, max: 1000, unit: activeMeasurementUnit.value },
   ]
 }
 
 function defaultCharges(): ChargeRow[] {
   return [
-    { id: 1, description: "Collection Charges", values: [45.0, 1.1, 0.9, 0.8, 0.7] },
-    { id: 2, description: "Additional Handling", values: [0.0, 0.01, 0.01, 0.01, 0.01] },
-    { id: 3, description: "Weekend Surcharge", values: [0.0, 0.02, 0.02, 0.01, 0.01] },
+    { id: 1, description: "Non ADR Collection Charges", values: [45.0, 1.1, 0.9, 0.8, 0.7] },
+    { id: 2, description: "ADR Collection Charges", values: [55.0, 1.25, 1.05, 0.95, 0.85] },
+    { id: 3, description: "Additional Handling", values: [0.0, 0.01, 0.01, 0.01, 0.01] },
+    { id: 4, description: "Weekend Surcharge", values: [0.0, 0.02, 0.02, 0.01, 0.01] },
   ]
 }
 
 function resetLocalState() {
-  tableTitle.value = "Main Collection Charges"
+  tableTitle.value = "Collection Charges"
   currency.value = "GBP"
+  measurementType.value = "weight"
+  weightUnit.value = "kg"
+  volumeUnit.value = "CBM"
   validityDate.value = null
   weightBreaks.value = defaultWeightBreaks()
   charges.value = defaultCharges()
+}
+
+function parseTableNotes(notes?: string | null) {
+  if (!notes) return null
+
+  try {
+    const parsed = JSON.parse(notes)
+    return parsed && typeof parsed === "object" ? parsed : null
+  } catch {
+    return null
+  }
+}
+
+function buildTableNotes() {
+  return JSON.stringify({
+    measurement_type: measurementType.value,
+    weight_unit: weightUnit.value,
+    volume_unit: volumeUnit.value,
+  })
+}
+
+function normalizeMeasurementType(value: unknown): MeasurementType {
+  return String(value ?? "").toLowerCase() === "volume" ? "volume" : "weight"
+}
+
+function normalizeChargeDescription(value: string) {
+  return String(value ?? "")
+    .toLowerCase()
+    .replace(/&/g, " and ")
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+}
+
+function chargeDescriptionTokens(value: string) {
+  return normalizeChargeDescription(value).split(" ").filter(Boolean)
+}
+
+function isCollectionChargeDescription(value: string) {
+  const tokens = chargeDescriptionTokens(value)
+  const compact = tokens.join("")
+
+  return (
+    tokens.includes("collection") &&
+    (tokens.some(token => token === "charge" || token === "charges") ||
+      compact.includes("collectioncharge"))
+  )
+}
+
+function isNonAdrCollectionCharge(value: string) {
+  const tokens = chargeDescriptionTokens(value)
+  const compact = tokens.join("")
+
+  return (
+    isCollectionChargeDescription(value) &&
+    (tokens.includes("nonadr") ||
+      compact.includes("nonadr") ||
+      (tokens.includes("non") && tokens.includes("adr")))
+  )
+}
+
+function isAdrCollectionCharge(value: string) {
+  const tokens = chargeDescriptionTokens(value)
+
+  return (
+    isCollectionChargeDescription(value) &&
+    !isNonAdrCollectionCharge(value) &&
+    tokens.includes("adr")
+  )
+}
+
+function isMainCollectionCharge(value: string) {
+  const tokens = chargeDescriptionTokens(value)
+
+  return isCollectionChargeDescription(value) && tokens.includes("main")
+}
+
+function isLegacyCollectionCharge(value: string) {
+  const tokens = chargeDescriptionTokens(value)
+
+  return (
+    isCollectionChargeDescription(value) &&
+    !isMainCollectionCharge(value) &&
+    !isNonAdrCollectionCharge(value) &&
+    !isAdrCollectionCharge(value)
+  )
+}
+
+function ensureCollectionChargeRows(rows: ChargeRow[]): ChargeRowMigrationResult {
+  const nextRows = rows.map(row => ({ ...row, values: [...row.values] }))
+  const nonAdrCollection = nextRows.find(row => isNonAdrCollectionCharge(row.description))
+  const adrCollection = nextRows.find(row => isAdrCollectionCharge(row.description))
+  const legacyCollection = nextRows.find(row => isLegacyCollectionCharge(row.description))
+  const messages: string[] = []
+  const fallbackValues =
+    nonAdrCollection?.values ??
+    adrCollection?.values ??
+    legacyCollection?.values ??
+    nextRows[0]?.values ??
+    weightBreaks.value.map(() => 0)
+
+  if (nonAdrCollection) {
+    if (nonAdrCollection.description !== "Non ADR Collection Charges") {
+      nonAdrCollection.description = "Non ADR Collection Charges"
+      messages.push("Non ADR Collection Charges row label was standardized.")
+    }
+  } else if (legacyCollection) {
+    legacyCollection.description = "Non ADR Collection Charges"
+    messages.push("Collection Charges row was migrated to Non ADR Collection Charges.")
+  } else {
+    nextRows.unshift({
+      id: nextChargeId.value--,
+      description: "Non ADR Collection Charges",
+      values: [...fallbackValues],
+    })
+    messages.push("Non ADR Collection Charges row was added.")
+  }
+
+  if (adrCollection) {
+    if (adrCollection.description !== "ADR Collection Charges") {
+      adrCollection.description = "ADR Collection Charges"
+      messages.push("ADR Collection Charges row label was standardized.")
+    }
+  } else {
+    const insertIndex = Math.min(1, nextRows.length)
+    nextRows.splice(insertIndex, 0, {
+      id: nextChargeId.value--,
+      description: "ADR Collection Charges",
+      values: [...fallbackValues],
+    })
+    messages.push("ADR Collection Charges row was added.")
+  }
+
+  return {
+    rows: nextRows,
+    changed: messages.length > 0,
+    messages,
+  }
 }
 
 function parseDate(value?: string | null): Date | null {
@@ -182,6 +388,233 @@ function currentCurrencySymbol() {
   }
 }
 
+function sanitizeNumericInput(value: string, allowDecimal = false) {
+  if (!allowDecimal) {
+    return value.replace(/\D/g, "")
+  }
+
+  let sanitized = value.replace(/[^\d.]/g, "")
+  const firstDecimal = sanitized.indexOf(".")
+
+  if (firstDecimal !== -1) {
+    sanitized =
+      sanitized.slice(0, firstDecimal + 1) + sanitized.slice(firstDecimal + 1).replace(/\./g, "")
+  }
+
+  return sanitized.startsWith(".") ? `0${sanitized}` : sanitized
+}
+
+function updateWeightBreakValue(weightBreak: WeightBreak, field: "min" | "max", event: Event) {
+  const input = event.target as HTMLInputElement
+  const sanitized = sanitizeNumericInput(input.value)
+
+  input.value = sanitized
+  weightBreak[field] = sanitized
+}
+
+function updateChargeValue(charge: ChargeRow, index: number, event: Event) {
+  const input = event.target as HTMLInputElement
+  const sanitized = sanitizeNumericInput(input.value, true)
+
+  input.value = sanitized
+  charge.values[index] = sanitized
+}
+
+function parseAutosaveSnapshot(snapshot?: string): AutosaveSnapshot | null {
+  if (!snapshot) return null
+
+  try {
+    return JSON.parse(snapshot) as AutosaveSnapshot
+  } catch {
+    return null
+  }
+}
+
+function valueText(value: unknown) {
+  const text = String(value ?? "").trim()
+  return text || "blank"
+}
+
+function quotedValue(value: unknown) {
+  return `"${valueText(value)}"`
+}
+
+function formatDateChangeValue(value: string | null) {
+  return value || "no date"
+}
+
+function formatMoneyValue(value: unknown) {
+  return `${currentCurrencySymbol()}${valueText(value)}`
+}
+
+function valuesMatch(left: unknown, right: unknown) {
+  return String(left ?? "") === String(right ?? "")
+}
+
+function breakLabel(snapshot: AutosaveSnapshot, breakId: number) {
+  return snapshot.weightBreaks.find(item => item.id === breakId)?.label || "weight break"
+}
+
+function snapshotUnit(snapshot: AutosaveSnapshot) {
+  return snapshot.measurementType === "volume" ? snapshot.volumeUnit : snapshot.weightUnit
+}
+
+function summarizeAutosaveChanges(
+  nextSnapshot: AutosaveSnapshot,
+  previousSnapshot: AutosaveSnapshot,
+) {
+  const changes: AutosaveChange[] = []
+
+  if (!valuesMatch(nextSnapshot.tableTitle, previousSnapshot.tableTitle)) {
+    changes.push({
+      key: "tableTitle",
+      message: `Table title changed from ${quotedValue(previousSnapshot.tableTitle)} to ${quotedValue(nextSnapshot.tableTitle)}.`,
+    })
+  }
+
+  if (!valuesMatch(nextSnapshot.currency, previousSnapshot.currency)) {
+    changes.push({
+      key: "currency",
+      message: `Currency changed from ${quotedValue(previousSnapshot.currency)} to ${quotedValue(nextSnapshot.currency)}.`,
+    })
+  }
+
+  if (!valuesMatch(nextSnapshot.valid_until, previousSnapshot.valid_until)) {
+    changes.push({
+      key: "valid_until",
+      message: `Validity date changed from ${formatDateChangeValue(previousSnapshot.valid_until)} to ${formatDateChangeValue(nextSnapshot.valid_until)}.`,
+    })
+  }
+
+  if (!valuesMatch(nextSnapshot.measurementType, previousSnapshot.measurementType)) {
+    changes.push({
+      key: "measurementType",
+      message: `Measurement type changed from ${quotedValue(previousSnapshot.measurementType)} to ${quotedValue(nextSnapshot.measurementType)}.`,
+    })
+  }
+
+  if (!valuesMatch(nextSnapshot.weightUnit, previousSnapshot.weightUnit)) {
+    changes.push({
+      key: "weightUnit",
+      message: `Weight unit changed from ${quotedValue(previousSnapshot.weightUnit)} to ${quotedValue(nextSnapshot.weightUnit)}.`,
+    })
+  }
+
+  if (!valuesMatch(nextSnapshot.volumeUnit, previousSnapshot.volumeUnit)) {
+    changes.push({
+      key: "volumeUnit",
+      message: `Volume unit changed from ${quotedValue(previousSnapshot.volumeUnit)} to ${quotedValue(nextSnapshot.volumeUnit)}.`,
+    })
+  }
+
+  const previousBreaksById = new Map(previousSnapshot.weightBreaks.map(item => [item.id, item]))
+  const nextBreaksById = new Map(nextSnapshot.weightBreaks.map(item => [item.id, item]))
+
+  nextSnapshot.weightBreaks.forEach(weightBreak => {
+    const previousBreak = previousBreaksById.get(weightBreak.id)
+
+    if (!previousBreak) {
+      changes.push({
+        key: `break:${weightBreak.id}:added`,
+        message: `Added weight break ${quotedValue(weightBreak.label)}.`,
+      })
+      return
+    }
+
+    if (!valuesMatch(weightBreak.min, previousBreak.min)) {
+      changes.push({
+        key: `break:${weightBreak.id}:min`,
+        message: `${weightBreak.label} minimum ${snapshotUnit(nextSnapshot)} changed from ${valueText(previousBreak.min)} to ${valueText(weightBreak.min)}.`,
+      })
+    }
+
+    if (!valuesMatch(weightBreak.max, previousBreak.max)) {
+      changes.push({
+        key: `break:${weightBreak.id}:max`,
+        message: `${weightBreak.label} maximum ${snapshotUnit(nextSnapshot)} changed from ${valueText(previousBreak.max)} to ${valueText(weightBreak.max)}.`,
+      })
+    }
+  })
+
+  previousSnapshot.weightBreaks.forEach(weightBreak => {
+    if (nextBreaksById.has(weightBreak.id)) return
+
+    changes.push({
+      key: `break:${weightBreak.id}:removed`,
+      message: `Removed weight break ${quotedValue(weightBreak.label)}.`,
+    })
+  })
+
+  const previousBreakIndexById = new Map(
+    previousSnapshot.weightBreaks.map((item, index) => [item.id, index]),
+  )
+  const nextBreakIndexById = new Map(
+    nextSnapshot.weightBreaks.map((item, index) => [item.id, index]),
+  )
+  const previousChargesById = new Map(previousSnapshot.charges.map(item => [item.id, item]))
+  const nextChargesById = new Map(nextSnapshot.charges.map(item => [item.id, item]))
+
+  nextSnapshot.charges.forEach(charge => {
+    const previousCharge = previousChargesById.get(charge.id)
+
+    if (!previousCharge) {
+      changes.push({
+        key: `charge:${charge.id}:added`,
+        message: `Added charge ${quotedValue(charge.description)}.`,
+      })
+      return
+    }
+
+    if (!valuesMatch(charge.description, previousCharge.description)) {
+      changes.push({
+        key: `charge:${charge.id}:description`,
+        message: `Charge description changed from ${quotedValue(previousCharge.description)} to ${quotedValue(charge.description)}.`,
+      })
+    }
+
+    nextSnapshot.weightBreaks.forEach(weightBreak => {
+      const previousBreakIndex = previousBreakIndexById.get(weightBreak.id)
+      const nextBreakIndex = nextBreakIndexById.get(weightBreak.id)
+
+      if (previousBreakIndex === undefined || nextBreakIndex === undefined) return
+
+      const previousValue = previousCharge.values[previousBreakIndex]
+      const nextValue = charge.values[nextBreakIndex]
+
+      if (valuesMatch(nextValue, previousValue)) return
+
+      changes.push({
+        key: `charge:${charge.id}:value:${weightBreak.id}`,
+        message: `${charge.description || "Charge"} for ${breakLabel(nextSnapshot, weightBreak.id)} changed from ${formatMoneyValue(previousValue)} to ${formatMoneyValue(nextValue)}.`,
+      })
+    })
+  })
+
+  previousSnapshot.charges.forEach(charge => {
+    if (nextChargesById.has(charge.id)) return
+
+    changes.push({
+      key: `charge:${charge.id}:removed`,
+      message: `Removed charge ${quotedValue(charge.description)}.`,
+    })
+  })
+
+  return changes
+}
+
+function rememberAutosaveChanges(changes: AutosaveChange[]) {
+  changes.forEach(change => {
+    pendingAutosaveChanges.set(change.key, change.message)
+  })
+}
+
+function flushAutosaveChangeDetail() {
+  const detail = Array.from(pendingAutosaveChanges.values()).join(" ")
+  pendingAutosaveChanges.clear()
+
+  return detail || "Weight charge table changes saved."
+}
+
 function showError(summary: string, error: any, fallback: string) {
   toast.add({
     severity: "error",
@@ -201,9 +634,35 @@ async function hydrateFromTable(table: ContactChargeTable | null) {
     return
   }
 
-  tableTitle.value = table.name || "Main Collection Charges"
+  if (contactId.value && table.contact_id && Number(table.contact_id) !== contactId.value) {
+    isHydrating.value = false
+    return
+  }
+
+  if (!activeTableId.value) {
+    activeTableId.value = table.id
+  }
+
+  tableTitle.value = table.name || "Collection Charges"
   currency.value = table.currency_code || "GBP"
   validityDate.value = parseDate(table.valid_until)
+  const notes = parseTableNotes(table.notes)
+  const firstBreakUnit = table.breaks?.find(item => item.unit)?.unit
+  measurementType.value = normalizeMeasurementType(
+    table.measurement_type ?? notes?.measurement_type,
+  )
+  weightUnit.value = String(
+    table.weight_unit ||
+      notes?.weight_unit ||
+      (measurementType.value === "weight" ? firstBreakUnit : "") ||
+      "kg",
+  )
+  volumeUnit.value = String(
+    table.volume_unit ||
+      notes?.volume_unit ||
+      (measurementType.value === "volume" ? firstBreakUnit : "") ||
+      "CBM",
+  )
 
   const sortedBreaks = [...(table.breaks ?? [])].sort((a, b) => a.sort_order - b.sort_order)
   const sortedRows = [...(table.rows ?? [])].sort((a, b) => a.sort_order - b.sort_order)
@@ -215,10 +674,11 @@ async function hydrateFromTable(table: ContactChargeTable | null) {
           label: item.label,
           min: Number(item.min_value ?? 0),
           max: Number(item.max_value ?? 0),
+          unit: item.unit || activeMeasurementUnit.value,
         }))
       : defaultWeightBreaks()
 
-  charges.value =
+  const hydratedCharges =
     sortedRows.length > 0
       ? sortedRows.map(row => ({
           id: row.id,
@@ -231,19 +691,32 @@ async function hydrateFromTable(table: ContactChargeTable | null) {
           ),
         }))
       : defaultCharges()
+  const migratedCharges = ensureCollectionChargeRows(hydratedCharges)
+  charges.value = migratedCharges.rows
 
   await nextTick()
   isHydrating.value = false
+
+  if (migratedCharges.changed && contactId.value && activeTableId.value) {
+    rememberAutosaveChanges([
+      {
+        key: "collectionChargeRows",
+        message: migratedCharges.messages.join(" "),
+      },
+    ])
+    await saveCurrentTableSilently(table.id)
+  }
 }
 
 function buildPayload(nameOverride?: string): ContactChargeTablePayload {
-  const finalName = (nameOverride ?? tableTitle.value).trim() || "Main Collection Charges"
+  const finalName = (nameOverride ?? tableTitle.value).trim() || "Collection Charges"
+  const unit = activeMeasurementUnit.value
 
   const breaks: ContactChargeBreakPayload[] = weightBreaks.value.map((item, index) => ({
     label: item.label?.trim() || `Break ${index + 1}`,
     min_value: Number(item.min ?? 0),
     max_value: Number(item.max ?? 0),
-    unit: "kg",
+    unit,
     sort_order: index + 1,
   }))
 
@@ -264,11 +737,14 @@ function buildPayload(nameOverride?: string): ContactChargeTablePayload {
     charge_type: "weight_break",
     applies_to: "collection",
     currency_code: currency.value,
+    measurement_type: measurementType.value,
+    weight_unit: weightUnit.value,
+    volume_unit: volumeUnit.value,
     valid_until: formatDateForApi(validityDate.value),
     is_active: true,
     is_default: tables.value.length === 0,
     sort_order: 1,
-    notes: null,
+    notes: buildTableNotes(),
     breaks,
     rows,
   }
@@ -298,7 +774,7 @@ async function ensureAtLeastOneTable() {
   resetLocalState()
 
   const created = await contactStore.createChargeTable(contactId.value, {
-    ...buildPayload("Main Collection Charges"),
+    ...buildPayload("Collection Charges"),
     is_default: true,
   })
 
@@ -401,30 +877,36 @@ function deleteCurrentTable() {
   })
 }
 
-async function saveCurrentTableSilently() {
-  if (!contactId.value || !activeTableId.value || isHydrating.value) return
+async function saveCurrentTableSilently(tableId = activeTableId.value) {
+  if (!contactId.value || !tableId || isHydrating.value) return
 
   saving.value = true
 
   try {
     const payload = buildPayload()
 
-    const updated = await contactStore.updateChargeTable(
-      contactId.value,
-      activeTableId.value,
-      payload,
-    )
+    suppressCurrentTableHydrate = true
+    const updated = await contactStore.updateChargeTable(contactId.value, tableId, payload)
 
-    if (updated?.name) {
+    if (updated?.name && tableId === activeTableId.value) {
       tableTitle.value = updated.name
     }
 
     await fetchTables()
+
+    toast.add({
+      severity: "success",
+      summary: "Saved changes",
+      detail: flushAutosaveChangeDetail(),
+      life: 3000,
+    })
   } catch (error: any) {
     console.error("AUTOSAVE FAILED", error)
 
     showError("Auto-save failed", error, "Something went wrong.")
   } finally {
+    await nextTick()
+    suppressCurrentTableHydrate = false
     saving.value = false
   }
 }
@@ -443,14 +925,15 @@ function queueAutosave() {
 
 function addWeightBreak() {
   const last = weightBreaks.value[weightBreaks.value.length - 1]
-  const start = last ? last.max : 0
+  const start = last ? Number(last.max || 0) : 0
   const end = start + 100
 
   weightBreaks.value.push({
     id: nextBreakId.value--,
-    label: `+${start} kgs`,
+    label: `+${start}`,
     min: start,
     max: end,
+    unit: activeMeasurementUnit.value,
   })
 
   charges.value.forEach(row => {
@@ -496,6 +979,8 @@ function confirmDeleteCharge(chargeId: number) {
 watch(
   () => contactStore.currentChargeTable,
   async table => {
+    if (suppressCurrentTableHydrate) return
+
     if (table?.charge_type === "weight_break") {
       await hydrateFromTable(table)
     }
@@ -542,12 +1027,24 @@ const autosaveSnapshot = computed(() =>
     tableTitle: tableTitle.value,
     currency: currency.value,
     valid_until: formatDateForApi(validityDate.value),
+    measurementType: measurementType.value,
+    weightUnit: weightUnit.value,
+    volumeUnit: volumeUnit.value,
     weightBreaks: weightBreaks.value,
     charges: charges.value,
   }),
 )
 
-watch(autosaveSnapshot, () => {
+watch(autosaveSnapshot, (nextSnapshot, previousSnapshot) => {
+  if (isHydrating.value || !activeTableId.value || !previousSnapshot) return
+
+  const nextState = parseAutosaveSnapshot(nextSnapshot)
+  const previousState = parseAutosaveSnapshot(previousSnapshot)
+
+  if (nextState && previousState && nextState.activeTableId === previousState.activeTableId) {
+    rememberAutosaveChanges(summarizeAutosaveChanges(nextState, previousState))
+  }
+
   queueAutosave()
 })
 
@@ -646,6 +1143,84 @@ onUnmounted(() => {
           </div>
         </section>
 
+        <section class="wcCard wcCard--tight">
+          <div class="wcMetaRow">
+            <div class="wcMetaRow__field wcMetaRow__field--grow">
+              <label class="wcMetaLabel">Table Title</label>
+              <input v-model="tableTitle" type="text" class="wcInput" />
+            </div>
+
+            <div class="wcMetaRow__field wcMetaRow__field--currency">
+              <label class="wcMetaLabel">Select Currency</label>
+
+              <div class="wcCurrencyWrap">
+                <select
+                  v-model="currency"
+                  class="wcSelect"
+                  :disabled="referenceDataStore.loading && !currencyOptions.length"
+                >
+                  <option
+                    v-for="option in currencyOptions"
+                    :key="option.value"
+                    :value="option.value"
+                  >
+                    {{ option.label }}
+                  </option>
+                </select>
+
+                <div class="wcCurrencySymbol">
+                  {{ currentCurrencySymbol() }}
+                </div>
+              </div>
+            </div>
+
+            <div class="wcMetaRow__field">
+              <label class="wcMetaLabel">Basis</label>
+
+              <select v-model="measurementType" class="wcSelect">
+                <option value="weight">Weight Units</option>
+                <option value="volume">Volume Units</option>
+              </select>
+            </div>
+
+            <div v-if="measurementType === 'weight'" class="wcMetaRow__field">
+              <label class="wcMetaLabel">Weight Unit</label>
+
+              <select
+                v-model="weightUnit"
+                class="wcSelect"
+                :disabled="referenceDataStore.loading && !weightUnitOptions.length"
+              >
+                <option
+                  v-for="option in weightUnitOptions"
+                  :key="option.value"
+                  :value="option.value"
+                >
+                  {{ option.label }}
+                </option>
+              </select>
+            </div>
+
+            <div v-else class="wcMetaRow__field">
+              <label class="wcMetaLabel">Volume Unit</label>
+
+              <select
+                v-model="volumeUnit"
+                class="wcSelect"
+                :disabled="referenceDataStore.loading && !volumeUnitOptions.length"
+              >
+                <option
+                  v-for="option in volumeUnitOptions"
+                  :key="option.value"
+                  :value="option.value"
+                >
+                  {{ option.label }}
+                </option>
+              </select>
+            </div>
+          </div>
+        </section>
+
         <section class="wcCard">
           <div class="wcValidity__head">
             <div class="wcValidity__title">Validity Date</div>
@@ -689,8 +1264,8 @@ onUnmounted(() => {
           </div>
 
           <p class="wcHelpText">
-            Define custom weight ranges for your collection charges. Each break will create a column
-            in the charges table.
+            Define custom weight or volume ranges for your collection charges. Each break will
+            create a column in the charges table.
           </p>
 
           <div class="wcBreaks">
@@ -705,51 +1280,31 @@ onUnmounted(() => {
 
               <div class="wcBreakCard__fields">
                 <div class="wcMiniField">
-                  <label>Min (kg)</label>
-                  <input v-model.number="weightBreak.min" type="number" />
+                  <label>Min ({{ activeMeasurementUnit }})</label>
+                  <input
+                    :value="weightBreak.min"
+                    type="text"
+                    inputmode="numeric"
+                    pattern="[0-9]*"
+                    @input="updateWeightBreakValue(weightBreak, 'min', $event)"
+                  />
                 </div>
 
                 <div class="wcMiniField">
-                  <label>Max (kg)</label>
-                  <input v-model.number="weightBreak.max" type="number" />
+                  <label>Max ({{ activeMeasurementUnit }})</label>
+                  <input
+                    :value="weightBreak.max"
+                    type="text"
+                    inputmode="numeric"
+                    pattern="[0-9]*"
+                    @input="updateWeightBreakValue(weightBreak, 'max', $event)"
+                  />
                 </div>
               </div>
 
               <div class="wcBreakCard__foot">
-                {{ weightBreak.min }} kg - {{ weightBreak.max }} kg
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section class="wcCard wcCard--tight">
-          <div class="wcMetaRow">
-            <div class="wcMetaRow__field wcMetaRow__field--grow">
-              <label class="wcMetaLabel">Table Title</label>
-              <input v-model="tableTitle" type="text" class="wcInput" />
-            </div>
-
-            <div class="wcMetaRow__field wcMetaRow__field--currency">
-              <label class="wcMetaLabel">Select Currency</label>
-
-              <div class="wcCurrencyWrap">
-                <select
-                  v-model="currency"
-                  class="wcSelect"
-                  :disabled="referenceDataStore.loading && !currencyOptions.length"
-                >
-                  <option
-                    v-for="option in currencyOptions"
-                    :key="option.value"
-                    :value="option.value"
-                  >
-                    {{ option.label }}
-                  </option>
-                </select>
-
-                <div class="wcCurrencySymbol">
-                  {{ currentCurrencySymbol() }}
-                </div>
+                {{ weightBreak.min }} {{ activeMeasurementUnit }} - {{ weightBreak.max }}
+                {{ activeMeasurementUnit }}
               </div>
             </div>
           </div>
@@ -759,7 +1314,9 @@ onUnmounted(() => {
           <div class="wcNotice">
             Current Currency:
             {{ currency }}
-            - All charges are displayed in this currency.
+            - All charges are displayed in this currency and calculated by
+            {{ measurementType === "volume" ? "volume" : "weight" }} using
+            {{ activeMeasurementUnit }}.
           </div>
         </section>
 
@@ -789,13 +1346,15 @@ onUnmounted(() => {
                   <th rowspan="2" class="is-description">Description</th>
                   <th rowspan="2" class="is-actions">Actions</th>
                   <th :colspan="weightBreaks.length" class="is-group">
-                    {{ tableTitle || "Main Collection Charges" }}
+                    {{ tableTitle || "Collection Charges" }}
                   </th>
                 </tr>
                 <tr>
                   <th v-for="weightBreak in weightBreaks" :key="weightBreak.id">
                     <div class="wcThMain">{{ weightBreak.label }}</div>
-                    <div class="wcThSub">{{ weightBreak.min }} - {{ weightBreak.max }} kg</div>
+                    <div class="wcThSub">
+                      {{ weightBreak.min }} - {{ weightBreak.max }} {{ activeMeasurementUnit }}
+                    </div>
                   </th>
                 </tr>
               </thead>
@@ -822,7 +1381,13 @@ onUnmounted(() => {
                   <td v-for="(_, index) in weightBreaks" :key="index">
                     <div class="wcMoneyInput">
                       <span>{{ currentCurrencySymbol() }}</span>
-                      <input v-model.number="charge.values[index]" type="number" step="0.01" />
+                      <input
+                        :value="charge.values[index]"
+                        type="text"
+                        inputmode="decimal"
+                        pattern="[0-9]*[.]?[0-9]*"
+                        @input="updateChargeValue(charge, index, $event)"
+                      />
                     </div>
                   </td>
                 </tr>
