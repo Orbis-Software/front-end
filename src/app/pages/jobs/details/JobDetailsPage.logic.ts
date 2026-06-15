@@ -23,6 +23,7 @@ import {
   type JobConsolidationSupplierItem,
   type JobConsolidationTransportSnapshot,
   type JobAirDetail,
+  type JobCharge,
   type JobCourierDetail,
   type JobRailDetail,
   type JobRoadDetail,
@@ -219,12 +220,11 @@ function addressSummary(address: ContactCollectionAddress): string {
 }
 
 function addressOption(address: ContactCollectionAddress, ownerName = ""): AddressSelectOption {
-  const reference = address.reference_code ? `${address.reference_code} - ` : ""
   const label = address.label || address.city || addressSummary(address) || "Unnamed Address"
-  const owner = ownerName ? `${ownerName} - ` : ""
+  const owner = ownerName || ""
 
   return {
-    label: `${owner}${reference}${label}`,
+    label: label || owner || "Unnamed Address",
     value: Number(address.id),
     address,
   }
@@ -302,6 +302,29 @@ function serializePackageRow(row: any) {
     volume_weight_kg: row.volumeWeightKg ?? 0,
 
     description: row.description ?? null,
+  }
+}
+
+function serializeChargeRow(row: any): JobCharge {
+  const type: "buy" | "sell" = row.type === "buy" ? "buy" : "sell"
+  const quantity = Number(row.quantity ?? 0)
+  const unitAmount = Number(type === "buy" ? row.unitCost : row.unitPrice)
+  const amount =
+    Number.isFinite(quantity) && Number.isFinite(unitAmount)
+      ? quantity * unitAmount
+      : Number(row.amount ?? 0)
+  const id = Number(row.id)
+  const chargeCodeId = Number(row.chargeCodeId ?? row.charge_code_id)
+  const supplierId = Number(row.supplierId ?? row.supplier_id)
+
+  return {
+    ...(Number.isFinite(id) && id > 0 ? { id } : {}),
+    type,
+    description: row.description || null,
+    currency: row.currency || null,
+    amount: Number.isFinite(amount) ? Number(amount.toFixed(2)) : 0,
+    ...(Number.isFinite(chargeCodeId) && chargeCodeId > 0 ? { charge_code_id: chargeCodeId } : {}),
+    ...(Number.isFinite(supplierId) && supplierId > 0 ? { supplier_id: supplierId } : {}),
   }
 }
 
@@ -1453,7 +1476,7 @@ export function useJobDetailsPage() {
         ...detailPayloadForMode(form),
 
         packages: form.packages.map(serializePackageRow),
-        charges: [...form.buy_costs, ...form.sell_costs],
+        charges: [...form.buy_costs, ...form.sell_costs].map(serializeChargeRow),
         transport_legs: serializeTransportLegs(form.multi_modal_legs, existingTransportLegIds),
         consolidation_details: form.consolidation_details,
       }
@@ -1556,9 +1579,7 @@ export function useJobDetailsPage() {
   watch(
     () => form.commodity_code,
     value => {
-      if (isHazardousCommodity(value)) {
-        form.is_hazardous = true
-      }
+      form.is_hazardous = isHazardousCommodity(value)
     },
   )
 

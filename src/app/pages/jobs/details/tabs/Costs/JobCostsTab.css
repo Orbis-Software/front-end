@@ -51,13 +51,100 @@
 }
 
 .job-costs-tab__table-wrap {
-  overflow-x: auto;
+  min-width: 0;
+  overflow-x: hidden;
 }
 
 .job-costs-tab__table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed;
   font-size: 12px;
+}
+
+.job-costs-tab__table--buy th:nth-child(1),
+.job-costs-tab__table--buy td:nth-child(1) {
+  width: 3%;
+}
+
+.job-costs-tab__table--buy th:nth-child(2),
+.job-costs-tab__table--buy td:nth-child(2) {
+  width: 29%;
+}
+
+.job-costs-tab__table--buy th:nth-child(3),
+.job-costs-tab__table--buy td:nth-child(3) {
+  width: 24%;
+}
+
+.job-costs-tab__table--buy th:nth-child(4),
+.job-costs-tab__table--buy td:nth-child(4) {
+  width: 7%;
+}
+
+.job-costs-tab__table--buy th:nth-child(5),
+.job-costs-tab__table--buy td:nth-child(5) {
+  width: 11%;
+}
+
+.job-costs-tab__table--buy th:nth-child(6),
+.job-costs-tab__table--buy td:nth-child(6) {
+  width: 10%;
+}
+
+.job-costs-tab__table--buy th:nth-child(7),
+.job-costs-tab__table--buy td:nth-child(7) {
+  width: 12%;
+}
+
+.job-costs-tab__table--buy th:nth-child(8),
+.job-costs-tab__table--buy td:nth-child(8) {
+  width: 4%;
+}
+
+.job-costs-tab__table--sell th:nth-child(1),
+.job-costs-tab__table--sell td:nth-child(1) {
+  width: 3%;
+}
+
+.job-costs-tab__table--sell th:nth-child(2),
+.job-costs-tab__table--sell td:nth-child(2) {
+  width: 26%;
+}
+
+.job-costs-tab__table--sell th:nth-child(3),
+.job-costs-tab__table--sell td:nth-child(3) {
+  width: 12%;
+}
+
+.job-costs-tab__table--sell th:nth-child(4),
+.job-costs-tab__table--sell td:nth-child(4) {
+  width: 7%;
+}
+
+.job-costs-tab__table--sell th:nth-child(5),
+.job-costs-tab__table--sell td:nth-child(5) {
+  width: 12%;
+}
+
+.job-costs-tab__table--sell th:nth-child(6),
+.job-costs-tab__table--sell td:nth-child(6) {
+  width: 10%;
+}
+
+.job-costs-tab__table--sell th:nth-child(7),
+.job-costs-tab__table--sell td:nth-child(7) {
+  width: 9%;
+}
+
+.job-costs-tab__table--sell th:nth-child(8),
+.job-costs-tab__table--sell td:nth-child(8) {
+  width: 17%;
+}
+
+.job-costs-tab__table--sell th:nth-child(9),
+.job-costs-tab__table--sell td:nth-child(9) {
+  width: 4%;
 }
 
 .job-costs-tab__table th {
@@ -76,18 +163,24 @@
 .job-costs-tab__table td {
   padding: 6px;
   border-bottom: 1px solid #f0f0f0;
+  min-width: 0;
   vertical-align: middle;
 }
 
 .job-costs-tab__table .p-inputnumber {
   width: 100%;
+  min-width: 0;
 }
 
 .job-costs-tab__table .p-inputtext,
 .job-costs-tab__table .p-dropdown,
+.job-costs-tab__table .p-select,
 .job-costs-tab__table .p-inputnumber-input {
   width: 100%;
-  height: 32px;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  height: 34px;
   border: 1px solid transparent;
   border-radius: 7px;
   background: transparent;
@@ -98,18 +191,25 @@
 
 .job-costs-tab__table .p-inputtext:hover,
 .job-costs-tab__table .p-dropdown:hover,
+.job-costs-tab__table .p-select:hover,
 .job-costs-tab__table .p-inputnumber:hover .p-inputnumber-input,
 .job-costs-tab__table .p-inputtext:focus,
 .job-costs-tab__table .p-dropdown:not(.p-disabled).p-focus,
+.job-costs-tab__table .p-select:not(.p-disabled).p-focus,
 .job-costs-tab__table .p-inputnumber-input:focus {
   border-color: #d9d9d9;
   background: #fff;
 }
 
-.job-costs-tab__table .p-dropdown-label {
+.job-costs-tab__table .p-dropdown-label,
+.job-costs-tab__table .p-select-label {
   align-items: center;
   display: flex;
+  min-width: 0;
+  overflow: hidden;
   padding: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .job-costs-tab__number {
@@ -122,6 +222,7 @@
 .job-costs-tab__computed {
   font-weight: 800;
   color: #1a1a18;
+  font-size: 12px;
   text-align: right;
   white-space: nowrap;
 }
@@ -178,6 +279,42 @@
 .job-costs-tab__summary-row--total strong {
   color: #ec691a;
   font-size: 18px;
+}
+
+.job-costs-tab__dialog {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: #1a1a18;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.job-costs-tab__dialog p {
+  margin: 0;
+}
+
+.job-costs-tab__dialog-muted {
+  color: #737373;
+}
+
+.job-costs-tab__dialog-primary,
+.job-costs-tab__dialog-danger,
+.job-costs-tab__dialog-secondary {
+  height: 34px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.job-costs-tab__dialog-primary {
+  background: #ec691a;
+  border-color: #ec691a;
+}
+
+.job-costs-tab__dialog-primary:hover {
+  background: #d85d14;
+  border-color: #d85d14;
 }
 
 @media (max-width: 560px) {

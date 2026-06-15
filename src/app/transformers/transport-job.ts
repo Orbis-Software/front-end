@@ -247,6 +247,8 @@ function fetchCharge(raw: any): JobCharge {
     id: nullableNumber(raw.id) ?? undefined,
     job_id: nullableNumber(raw.job_id) ?? undefined,
     type: raw.type,
+    supplier_id: nullableNumber(raw.supplier_id),
+    charge_code_id: nullableNumber(raw.charge_code_id),
     description: nullableString(raw.description),
     currency: nullableString(raw.currency),
     amount: nullableNumber(raw.amount),

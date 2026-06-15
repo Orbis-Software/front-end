@@ -30,6 +30,27 @@
   gap: 12px;
 }
 
+.job-overview-tab__section-header--with-control {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.job-overview-tab__header-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.job-overview-tab__header-switch span {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #737373;
+}
+
 .job-overview-tab__section-header--with-note p {
   margin: 4px 0 0;
   font-size: 11px;
@@ -40,6 +61,7 @@
   display: grid;
   gap: 12px;
   padding: 14px;
+  background: #fbfbfa;
 }
 
 .job-overview-tab__grid--2 {
@@ -105,6 +127,7 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
   padding: 14px;
+  background: #fbfbfa;
 }
 
 .job-overview-tab__order-button {
@@ -231,6 +254,7 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
   padding: 0 14px 14px;
+  background: #fbfbfa;
 }
 
 .job-overview-tab__route-details--top {
@@ -290,6 +314,7 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 18px;
   padding: 14px;
+  background: #fbfbfa;
 }
 
 .job-overview-tab__split .job-overview-tab__grid {

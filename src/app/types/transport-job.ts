@@ -207,6 +207,8 @@ export interface JobCharge {
   id?: number
   job_id?: number
   type: "buy" | "sell"
+  supplier_id?: number | null
+  charge_code_id?: number | null
   description?: string | null
   currency?: string | null
   amount?: number | null
