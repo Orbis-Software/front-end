@@ -8,6 +8,7 @@ import InputNumber from "primevue/inputnumber"
 import Textarea from "primevue/textarea"
 import Button from "primevue/button"
 import Calendar from "primevue/calendar"
+import InputSwitch from "primevue/inputswitch"
 
 import type { JobDetailsContext } from "../../JobDetailsPage.logic"
 import JobTransportAddressModal from "@/app/components/jobs/details/JobTransportTab/JobTransportAddressModal.vue"
@@ -79,6 +80,17 @@ const showShipmentReference = computed(() => {
 })
 const declaredValueMode = computed(() => (form.currency ? "currency" : "decimal"))
 const declaredValueCurrency = computed(() => form.currency || "GBP")
+const hazardousEnabled = computed({
+  get: () => Boolean(form.is_hazardous),
+  set: value => {
+    form.is_hazardous = value
+
+    if (!value) {
+      form.hazardous_class = ""
+      form.un_number = ""
+    }
+  },
+})
 
 const hazardousOptions = [
   { label: "No", value: false },
@@ -280,25 +292,99 @@ const consolidationTransportRows = computed(() => {
       </div>
     </div>
 
-    <div class="job-overview-tab__section">
+    <div v-if="isRoadMode" class="job-overview-tab__section">
       <header class="job-overview-tab__section-header">
-        <h2>Special Requirements</h2>
+        <h2>Customer & References</h2>
       </header>
 
       <div class="job-overview-tab__grid job-overview-tab__grid--4">
         <label class="job-overview-tab__field">
-          <span>Hazardous?</span>
+          <span>Customer PO Number</span>
 
-          <Dropdown
-            v-model="form.is_hazardous"
-            :options="hazardousOptions"
-            option-label="label"
-            option-value="value"
-            placeholder="Select"
+          <InputText
+            v-model="form.customer_po_number"
+            placeholder="Purchase order ref"
             :disabled="loading"
           />
         </label>
 
+        <label class="job-overview-tab__field">
+          <span>Customer Booking Ref</span>
+
+          <InputText
+            v-model="form.customer_booking_ref"
+            placeholder="Booking reference"
+            :disabled="loading"
+          />
+        </label>
+
+        <label class="job-overview-tab__field">
+          <span>Our Reference</span>
+
+          <InputText v-model="form.our_reference" placeholder="Internal ref" :disabled="loading" />
+        </label>
+
+        <label class="job-overview-tab__field">
+          <span>Supplier Ref</span>
+
+          <InputText
+            v-model="form.supplier_ref"
+            placeholder="Haulier / carrier ref"
+            :disabled="loading"
+          />
+        </label>
+
+        <label class="job-overview-tab__field">
+          <span>Consignee Name</span>
+
+          <InputText
+            v-model="form.consignee_name"
+            placeholder="Recipient company"
+            :disabled="loading"
+          />
+        </label>
+
+        <label class="job-overview-tab__field">
+          <span>Consignee Contact</span>
+
+          <InputText
+            v-model="form.consignee_contact"
+            placeholder="Contact name"
+            :disabled="loading"
+          />
+        </label>
+
+        <label class="job-overview-tab__field">
+          <span>Consignee Phone</span>
+
+          <InputText v-model="form.consignee_phone" placeholder="+44 ..." :disabled="loading" />
+        </label>
+
+        <label class="job-overview-tab__field">
+          <span>Consignee Email</span>
+
+          <InputText
+            v-model="form.consignee_email"
+            placeholder="email@example.com"
+            :disabled="loading"
+          />
+        </label>
+      </div>
+    </div>
+
+    <div class="job-overview-tab__section">
+      <header
+        class="job-overview-tab__section-header job-overview-tab__section-header--with-control"
+      >
+        <h2>Special Requirements</h2>
+
+        <label class="job-overview-tab__header-switch">
+          <span>Hazardous</span>
+          <InputSwitch v-model="hazardousEnabled" :disabled="loading" />
+        </label>
+      </header>
+
+      <div v-if="hazardousEnabled" class="job-overview-tab__grid job-overview-tab__grid--4">
         <label class="job-overview-tab__field">
           <span>ADR / Hazmat Class</span>
 
@@ -929,11 +1015,6 @@ const consolidationTransportRows = computed(() => {
             </div>
 
             <div>
-              <dt>Warehouse / Depot Name</dt>
-              <dd>{{ displayValue(selectedOriginAddress?.reference_code) }}</dd>
-            </div>
-
-            <div>
               <dt>Address</dt>
               <dd>{{ addressLines(selectedOriginAddress) }}</dd>
             </div>
@@ -1030,11 +1111,6 @@ const consolidationTransportRows = computed(() => {
             </div>
 
             <div>
-              <dt>Warehouse / Depot Name</dt>
-              <dd>{{ displayValue(selectedDestinationAddress?.reference_code) }}</dd>
-            </div>
-
-            <div>
               <dt>Address</dt>
               <dd>{{ addressLines(selectedDestinationAddress) }}</dd>
             </div>
@@ -1120,86 +1196,6 @@ const consolidationTransportRows = computed(() => {
             </label>
           </div>
         </div>
-      </div>
-    </div>
-
-    <div v-if="isRoadMode" class="job-overview-tab__section">
-      <header class="job-overview-tab__section-header">
-        <h2>Customer & References</h2>
-      </header>
-
-      <div class="job-overview-tab__grid job-overview-tab__grid--4">
-        <label class="job-overview-tab__field">
-          <span>Customer PO Number</span>
-
-          <InputText
-            v-model="form.customer_po_number"
-            placeholder="Purchase order ref"
-            :disabled="loading"
-          />
-        </label>
-
-        <label class="job-overview-tab__field">
-          <span>Customer Booking Ref</span>
-
-          <InputText
-            v-model="form.customer_booking_ref"
-            placeholder="Booking reference"
-            :disabled="loading"
-          />
-        </label>
-
-        <label class="job-overview-tab__field">
-          <span>Our Reference</span>
-
-          <InputText v-model="form.our_reference" placeholder="Internal ref" :disabled="loading" />
-        </label>
-
-        <label class="job-overview-tab__field">
-          <span>Supplier Ref</span>
-
-          <InputText
-            v-model="form.supplier_ref"
-            placeholder="Haulier / carrier ref"
-            :disabled="loading"
-          />
-        </label>
-
-        <label class="job-overview-tab__field">
-          <span>Consignee Name</span>
-
-          <InputText
-            v-model="form.consignee_name"
-            placeholder="Recipient company"
-            :disabled="loading"
-          />
-        </label>
-
-        <label class="job-overview-tab__field">
-          <span>Consignee Contact</span>
-
-          <InputText
-            v-model="form.consignee_contact"
-            placeholder="Contact name"
-            :disabled="loading"
-          />
-        </label>
-
-        <label class="job-overview-tab__field">
-          <span>Consignee Phone</span>
-
-          <InputText v-model="form.consignee_phone" placeholder="+44 ..." :disabled="loading" />
-        </label>
-
-        <label class="job-overview-tab__field">
-          <span>Consignee Email</span>
-
-          <InputText
-            v-model="form.consignee_email"
-            placeholder="email@example.com"
-            :disabled="loading"
-          />
-        </label>
       </div>
     </div>
 
