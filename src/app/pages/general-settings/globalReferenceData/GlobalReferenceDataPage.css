@@ -95,7 +95,8 @@
   display: grid;
   grid-template-columns:
     minmax(260px, 1fr)
-    repeat(3, minmax(120px, 140px))
+    minmax(190px, 230px)
+    repeat(4, minmax(130px, 160px))
     auto
     auto
     auto;
@@ -199,26 +200,18 @@
 .global-reference-page__table-wrap {
   padding: 20px 22px 24px;
   background: #fff;
-  overflow-x: auto;
-}
-
-.global-reference-page__table-wrap::-webkit-scrollbar {
-  height: 8px;
-}
-
-.global-reference-page__table-wrap::-webkit-scrollbar-thumb {
-  background: #d1d1d1;
-  border-radius: 999px;
+  overflow-x: hidden;
 }
 
 .global-reference-page__table {
   width: 100%;
+  table-layout: fixed;
   border-collapse: separate;
   border-spacing: 0;
   background: #fff;
-  font-size: 14px;
+  font-size: 12px;
   border: 1px solid #dfe5ec;
-  border-radius: 18px;
+  border-radius: 12px;
   overflow: hidden;
 }
 
@@ -228,9 +221,9 @@
 }
 
 .global-reference-page__table th {
-  padding: 18px;
+  padding: 10px 8px;
   text-align: left;
-  font-size: 14px;
+  font-size: 11px;
   font-weight: 800;
   text-transform: none;
   letter-spacing: 0;
@@ -241,11 +234,11 @@
 }
 
 .global-reference-page__table th:first-child {
-  border-top-left-radius: 18px;
+  border-top-left-radius: 12px;
 }
 
 .global-reference-page__table th:last-child {
-  border-top-right-radius: 18px;
+  border-top-right-radius: 12px;
 }
 
 .global-reference-page__table th:hover {
@@ -254,10 +247,13 @@
 }
 
 .global-reference-page__table td {
-  padding: 14px 18px;
+  padding: 9px 8px;
   border-bottom: 1px solid #e9edf3;
   color: #22324a;
   vertical-align: middle;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+  word-break: normal;
 }
 
 .global-reference-page__table tbody tr:last-child td {
@@ -268,18 +264,34 @@
   background: #fff7ed;
 }
 
-.global-reference-page__table td:nth-child(4),
-.global-reference-page__table th:nth-child(4) {
-  max-width: 320px;
+.global-reference-page__table th:nth-child(1),
+.global-reference-page__table td:nth-child(1) {
+  width: 84px;
 }
 
+.global-reference-page__table th:nth-child(2),
+.global-reference-page__table td:nth-child(2) {
+  width: 104px;
+}
+
+.global-reference-page__table th:nth-child(3),
+.global-reference-page__table td:nth-child(3) {
+  width: 120px;
+}
+
+.global-reference-page__table th:nth-child(4),
 .global-reference-page__table td:nth-child(4) {
-  white-space: normal;
-  line-height: 1.35;
+  width: 20%;
 }
 
-.global-reference-page__table td:not(:nth-child(4)) {
-  white-space: nowrap;
+.global-reference-page__table th:nth-child(7),
+.global-reference-page__table td:nth-child(7) {
+  width: 88px;
+}
+
+.global-reference-page__table th:nth-child(9),
+.global-reference-page__table td:nth-child(9) {
+  width: 150px;
 }
 
 /* ========================================
@@ -287,16 +299,37 @@
 ======================================== */
 
 .global-reference-page__badge,
-.global-reference-page__status {
+.global-reference-page__status,
+.global-reference-page__category {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 28px;
-  padding: 5px 12px;
+  min-height: 24px;
+  padding: 4px 8px;
   border-radius: 999px;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   white-space: nowrap;
+}
+
+.global-reference-page__category {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.global-reference-page__category--terminals {
+  background: #e8f1ff;
+  color: #1d4ed8;
+}
+
+.global-reference-page__category--airlines {
+  background: #ecfeff;
+  color: #0e7490;
+}
+
+.global-reference-page__category--cities {
+  background: #f0fdf4;
+  color: #15803d;
 }
 
 .global-reference-page__badge--airport {
@@ -312,6 +345,11 @@
 .global-reference-page__badge--rail {
   background: #fff4d8;
   color: #a16207;
+}
+
+.global-reference-page__badge--air {
+  background: #ecfeff;
+  color: #0e7490;
 }
 
 .global-reference-page__badge--road {
@@ -343,6 +381,7 @@
   font-family: "Courier New", monospace;
   font-weight: 800;
   color: var(--primary);
+  font-size: 11px;
 }
 
 .global-reference-page__coords {
@@ -398,7 +437,7 @@
   }
 
   .global-reference-page__table {
-    min-width: 980px;
+    min-width: 0;
   }
 }
 

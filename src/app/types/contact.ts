@@ -101,6 +101,7 @@ export interface ContactCreatePayload {
 
 export interface ContactBranch {
   id: number
+  contact_id?: number | null
   name: string | null
 
   contact_person: string | null
@@ -128,6 +129,7 @@ export interface ContactBranch {
 
 export interface ContactCollectionAddress {
   id: number
+  contact_id?: number | null
   label: string | null
 
   address_line_1: string | null

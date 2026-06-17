@@ -1,7 +1,9 @@
-import { computed, inject, onMounted } from "vue"
+import { computed, inject, onMounted, ref, watch } from "vue"
 import { storeToRefs } from "pinia"
 import { useGlobalReferenceDataStore } from "@/app/stores/global-reference-data"
+import contactsService from "@/app/services/contacts"
 import type { GlobalReferenceDataRow } from "@/app/types/globalReferenceData"
+import type { Contact } from "@/app/types/contact"
 import type { useJobDetailsPage } from "../../JobDetailsPage.logic"
 
 export type TransportMode = "" | "road" | "rail" | "sea" | "air" | "courier" | "multi_modal"
@@ -54,6 +56,23 @@ type ReferenceOption = {
   searchText: string
 }
 
+type ContactOption = {
+  label: string
+  value: number
+  subLabel?: string
+  contact: Contact
+}
+
+type MultiDropStop = {
+  id: number
+  company_location: string
+  city_postcode: string
+  date: string
+  stop_type: string
+}
+
+const GLOBAL_REFERENCE_OPTION_LIMIT = 150
+
 function createLeg(): MultiModalLeg {
   return {
     id: -legId++,
@@ -88,10 +107,33 @@ function createLeg(): MultiModalLeg {
   }
 }
 
+function displayContactName(contact: Contact): string {
+  return (
+    contact.company_name ||
+    (contact as any)?.name ||
+    [(contact as any)?.first_name, (contact as any)?.last_name].filter(Boolean).join(" ") ||
+    contact.email ||
+    `Contact ${contact.id}`
+  )
+}
+
+function createMultiDropStop(): MultiDropStop {
+  return {
+    id: -Date.now() - Math.floor(Math.random() * 10000),
+    company_location: "",
+    city_postcode: "",
+    date: "",
+    stop_type: "Delivery",
+  }
+}
+
 export function useJobTransportTab() {
   const jobDetails = inject<ReturnType<typeof useJobDetailsPage>>("jobDetails")
   const globalReferenceDataStore = useGlobalReferenceDataStore()
   const { data: globalReferenceData } = storeToRefs(globalReferenceDataStore)
+  const contactOptionsLoading = ref(false)
+  const contactOptions = ref<ContactOption[]>([])
+  const globalReferenceSearchTerm = ref("")
 
   if (!jobDetails) {
     throw new Error("Job details context is missing")
@@ -99,70 +141,177 @@ export function useJobTransportTab() {
 
   const { form, referenceOptions } = jobDetails
 
+  const globalReferenceRows = computed(() => {
+    return [
+      ...globalReferenceData.value.terminals.map(row => ({ row, category: "Terminal" })),
+      ...globalReferenceData.value.airlines.map(row => ({ row, category: "Airline" })),
+      ...globalReferenceData.value.cities.map(row => ({ row, category: "City" })),
+    ]
+  })
+
+  const selectedReferenceValues = computed(() => {
+    return new Set(
+      [
+        ...multiModalLegs.value.flatMap(leg => [
+          leg.origin,
+          leg.destination,
+          leg.extra_data?.final_destination,
+          leg.extra_data?.transhipment_port,
+          leg.extra_data?.via_transhipment,
+        ]),
+        ...multiDropStops.value.map(stop => stop.city_postcode),
+        form.road_detail.origin_city,
+        form.road_detail.destination_city,
+        form.road_detail.final_destination,
+        form.rail_detail.loading_terminal,
+        form.rail_detail.discharge_terminal,
+        form.rail_detail.final_destination,
+        form.sea_detail.port_of_loading,
+        form.sea_detail.port_of_discharge,
+        form.sea_detail.transhipment_port,
+        form.sea_detail.final_destination,
+        form.air_detail.airport_of_departure,
+        form.air_detail.airport_of_arrival,
+        form.air_detail.via_transhipment,
+        form.air_detail.final_destination,
+        form.courier_detail.final_destination,
+      ]
+        .filter((value): value is string => typeof value === "string" && Boolean(value.trim()))
+        .map(value => value.trim()),
+    )
+  })
+
+  const visibleGlobalReferenceOptions = computed(() => {
+    const query = normalizeSearch(globalReferenceSearchTerm.value)
+    const options: ReferenceOption[] = []
+    const usedValues = new Set<string>()
+
+    selectedReferenceValues.value.forEach(value => {
+      const option = findReferenceOptionByValue(value)
+
+      if (option && !usedValues.has(option.value)) {
+        usedValues.add(option.value)
+        options.push(option)
+      }
+    })
+
+    for (const entry of globalReferenceRows.value) {
+      if (options.length >= GLOBAL_REFERENCE_OPTION_LIMIT) break
+      if (query && !rowMatchesSearch(entry.row, entry.category, query)) continue
+
+      const option = referenceOption(entry.row, entry.category)
+
+      if (!option.value || usedValues.has(option.value)) continue
+
+      usedValues.add(option.value)
+      options.push(option)
+    }
+
+    return options
+  })
+
   const airportOptions = computed(() => {
-    return terminalOptions(row => row.type === "Airport")
+    return visibleGlobalReferenceOptions.value
   })
 
   const seaportOptions = computed(() => {
-    return terminalOptions(row => row.type === "Seaport")
+    return visibleGlobalReferenceOptions.value
   })
 
   const railTerminalOptions = computed(() => {
-    return terminalOptions(row => row.type === "Rail Freight")
+    return visibleGlobalReferenceOptions.value
   })
 
   const roadTerminalOptions = computed(() => {
-    return terminalOptions(row => row.type === "Road Freight")
+    return visibleGlobalReferenceOptions.value
   })
 
   const cityOptions = computed(() => {
-    return globalReferenceData.value.cities
-      .map(row => {
-        const city = firstValue(row, ["fullName", "full_name", "city", "location", "name"])
-        const code = firstValue(row, ["code", "iata", "iataCode", "iata_code", "unlocode"])
-        const country = firstValue(row, ["country", "countryName", "country_name"])
-        const value = city || code
-        const label = labelWithCode(city, code)
-        const subLabel = [country, code].filter(Boolean).join(" | ")
-
-        return {
-          label,
-          value,
-          subLabel,
-          searchText: searchText(row, [label, value, subLabel]),
-        }
-      })
-      .filter(option => option.value)
+    return visibleGlobalReferenceOptions.value
   })
 
-  function terminalOptions(filter: (row: GlobalReferenceDataRow) => boolean): ReferenceOption[] {
-    return globalReferenceData.value.terminals
-      .filter(filter)
-      .map(row => {
-        const terminalName = firstValue(row, [
-          "terminalName",
-          "terminal_name",
-          "airportName",
-          "airport_name",
-          "portName",
-          "port_name",
-          "name",
-        ])
-        const code = firstValue(row, ["code", "iata", "iataCode", "iata_code", "unlocode"])
-        const city = firstValue(row, ["city", "location", "municipality"])
-        const country = firstValue(row, ["country", "countryName", "country_name"])
-        const value = terminalName || city || code
-        const label = labelWithCode(terminalName || city, code)
-        const subLabel = [city, country, code].filter(Boolean).join(" | ")
+  function referenceOption(row: GlobalReferenceDataRow, category: string): ReferenceOption {
+    const name = firstValue(row, [
+      "terminalName",
+      "terminal_name",
+      "airportName",
+      "airport_name",
+      "portName",
+      "port_name",
+      "fullName",
+      "full_name",
+      "city",
+      "location",
+      "name",
+    ])
+    const code = firstValue(row, [
+      "code",
+      "iata",
+      "iataCode",
+      "iata_code",
+      "icao",
+      "awb",
+      "unlocode",
+    ])
+    const type = firstValue(row, ["type", "function"])
+    const place = firstValue(row, ["location", "city", "state", "fleet"])
+    const country = firstValue(row, ["country", "countryName", "country_name"])
+    const region = firstValue(row, ["region"])
+    const value = name || code
+    const label = labelWithCode(name, code)
+    const subLabel = [category, type, place, country, region].filter(Boolean).join(" | ")
 
-        return {
-          label,
-          value,
-          subLabel,
-          searchText: searchText(row, [label, value, subLabel]),
-        }
-      })
-      .filter(option => option.value)
+    return {
+      label,
+      value,
+      subLabel,
+      searchText: searchText(row, [category, label, value, subLabel]),
+    }
+  }
+
+  function findReferenceOptionByValue(value: string): ReferenceOption | null {
+    for (const entry of globalReferenceRows.value) {
+      if (referenceValue(entry.row) === value) {
+        return referenceOption(entry.row, entry.category)
+      }
+    }
+
+    return null
+  }
+
+  function referenceValue(row: GlobalReferenceDataRow): string {
+    const name = firstValue(row, [
+      "terminalName",
+      "terminal_name",
+      "airportName",
+      "airport_name",
+      "portName",
+      "port_name",
+      "fullName",
+      "full_name",
+      "city",
+      "location",
+      "name",
+    ])
+    const code = firstValue(row, [
+      "code",
+      "iata",
+      "iataCode",
+      "iata_code",
+      "icao",
+      "awb",
+      "unlocode",
+    ])
+
+    return name || code
+  }
+
+  function rowMatchesSearch(row: GlobalReferenceDataRow, category: string, query: string): boolean {
+    return normalizeSearch(searchText(row, [category])).includes(query)
+  }
+
+  function normalizeSearch(value: string): string {
+    return value.trim().toLowerCase()
   }
 
   function firstValue(row: GlobalReferenceDataRow, keys: string[]): string {
@@ -187,11 +336,13 @@ export function useJobTransportTab() {
   }
 
   function getLocationOptions(locationMode: MultiModalLegMode): ReferenceOption[] {
-    if (locationMode === "air") return airportOptions.value
-    if (locationMode === "sea") return seaportOptions.value
-    if (locationMode === "rail") return railTerminalOptions.value
+    void locationMode
 
-    return roadTerminalOptions.value
+    return visibleGlobalReferenceOptions.value
+  }
+
+  function onGlobalReferenceFilter(event: { value?: string }) {
+    globalReferenceSearchTerm.value = event.value ?? ""
   }
 
   function getOriginLabel(locationMode: MultiModalLegMode): string {
@@ -267,6 +418,21 @@ export function useJobTransportTab() {
     },
   })
 
+  const multiDropStops = computed<MultiDropStop[]>({
+    get() {
+      const roadDetail = form.road_detail as any
+
+      if (!Array.isArray(roadDetail.full_multi_drop_stops)) {
+        roadDetail.full_multi_drop_stops = []
+      }
+
+      return roadDetail.full_multi_drop_stops
+    },
+    set(value) {
+      ;(form.road_detail as any).full_multi_drop_stops = value
+    },
+  })
+
   function addLeg() {
     multiModalLegs.value = [...multiModalLegs.value, createLeg()]
   }
@@ -274,6 +440,75 @@ export function useJobTransportTab() {
   function removeLeg(id: number) {
     multiModalLegs.value = multiModalLegs.value.filter(leg => leg.id !== id)
   }
+
+  function addMultiDropStop() {
+    multiDropStops.value = [...multiDropStops.value, createMultiDropStop()]
+  }
+
+  function removeMultiDropStop(id: number) {
+    multiDropStops.value = multiDropStops.value.filter(stop => stop.id !== id)
+  }
+
+  function setBooleanDetail(key: string, value: boolean) {
+    ;(form.road_detail as any)[key] = value
+  }
+
+  function syncSubcontractorContact(contactId: number | null) {
+    const selected = contactOptions.value.find(option => option.value === Number(contactId))
+
+    ;(form.road_detail as any).subcontractor_name = selected?.label ?? ""
+  }
+
+  async function loadContactOptions() {
+    contactOptionsLoading.value = true
+
+    try {
+      const response = await contactsService.list({
+        page: 1,
+        per_page: 500,
+        include_addresses: true,
+      })
+
+      contactOptions.value = (response.data ?? [])
+        .filter(contact => Number(contact.id) !== Number(form.customer_id))
+        .map(contact => {
+          const label = displayContactName(contact)
+          const subLabel = [contact.account_number, contact.email, contact.phone]
+            .filter(Boolean)
+            .join(" | ")
+
+          return {
+            label,
+            value: Number(contact.id),
+            subLabel,
+            contact,
+          }
+        })
+    } finally {
+      contactOptionsLoading.value = false
+    }
+  }
+
+  watch(
+    () => (form.road_detail as any).subcontractor_contact_id,
+    id => {
+      syncSubcontractorContact(id ? Number(id) : null)
+    },
+  )
+
+  watch(
+    () => form.customer_id,
+    customerId => {
+      contactOptions.value = contactOptions.value.filter(
+        option => option.value !== Number(customerId),
+      )
+
+      if (Number((form.road_detail as any).subcontractor_contact_id) === Number(customerId)) {
+        ;(form.road_detail as any).subcontractor_contact_id = null
+        ;(form.road_detail as any).subcontractor_name = ""
+      }
+    },
+  )
 
   onMounted(async () => {
     const hasReferenceData =
@@ -284,6 +519,8 @@ export function useJobTransportTab() {
     if (!hasReferenceData) {
       await globalReferenceDataStore.fetchAll()
     }
+
+    await loadContactOptions()
   })
 
   return {
@@ -291,16 +528,23 @@ export function useJobTransportTab() {
     mode,
     modeLabel,
     multiModalLegs,
+    multiDropStops,
     airportOptions,
     seaportOptions,
     railTerminalOptions,
     roadTerminalOptions,
     cityOptions,
     referenceOptions,
+    contactOptions,
+    contactOptionsLoading,
     getLocationOptions,
     getOriginLabel,
     getDestinationLabel,
+    onGlobalReferenceFilter,
     addLeg,
     removeLeg,
+    addMultiDropStop,
+    removeMultiDropStop,
+    setBooleanDetail,
   }
 }

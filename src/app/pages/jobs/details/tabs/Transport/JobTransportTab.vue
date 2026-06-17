@@ -3,6 +3,7 @@ import "./JobTransportTab.css"
 import Button from "primevue/button"
 import Dropdown from "primevue/dropdown"
 import InputNumber from "primevue/inputnumber"
+import InputSwitch from "primevue/inputswitch"
 import InputText from "primevue/inputtext"
 import Textarea from "primevue/textarea"
 import { useJobTransportTab } from "./JobTransportTab.logic"
@@ -12,17 +13,24 @@ const {
   mode,
   modeLabel,
   multiModalLegs,
+  multiDropStops,
   airportOptions,
   seaportOptions,
   railTerminalOptions,
   roadTerminalOptions,
   cityOptions,
   referenceOptions,
+  contactOptions,
+  contactOptionsLoading,
   getLocationOptions,
   getOriginLabel,
   getDestinationLabel,
+  onGlobalReferenceFilter,
   addLeg,
   removeLeg,
+  addMultiDropStop,
+  removeMultiDropStop,
+  setBooleanDetail,
 } = useJobTransportTab()
 
 const {
@@ -124,6 +132,63 @@ const yesNoOptions = [
   { label: "No", value: false },
   { label: "Yes", value: true },
 ]
+
+const multiDropStopTypeOptions = ["Collection", "Delivery", "Customs", "Fuel / Rest", "Other"]
+
+const customsDirectionOptions = [
+  { label: "Export", value: "export" },
+  { label: "Import", value: "import" },
+  { label: "Both", value: "both" },
+]
+
+const customsDocumentTypeOptions = [
+  "CMR (Road Waybill)",
+  "T1 - External Transit",
+  "T2 - Internal Transit",
+  "EUR.1 Movement Cert.",
+  "ATA Carnet",
+  "C88 / SAD (Export Entry)",
+  "E2 (Import Entry)",
+  "Other",
+]
+
+const customsStatusOptions = [
+  "Pending",
+  "Pre-Lodged",
+  "Presented at Border",
+  "Cleared",
+  "Held for Inspection",
+  "Released",
+]
+
+const portBorderOptions = [
+  "Dover / Calais",
+  "Folkestone / Coquelles (Eurotunnel)",
+  "Holyhead / Dublin",
+  "Harwich / Hook of Holland",
+  "Hull / Zeebrugge",
+  "Newcastle / Amsterdam (DFDS)",
+  "Portsmouth / Le Havre",
+  "Portsmouth / Caen",
+  "Rosslare / Cherbourg",
+  "Cairnryan / Larne",
+  "Other",
+]
+
+const subcontractorCurrencyOptions = ["GBP", "EUR", "USD"]
+
+const subcontractorStatusOptions = [
+  "Pending Confirmation",
+  "Confirmed",
+  "In Transit",
+  "Delivered",
+  "Invoice Received",
+]
+
+const globalReferenceVirtualScrollerOptions = {
+  itemSize: 44,
+  showLoader: false,
+}
 </script>
 
 <template>
@@ -204,7 +269,9 @@ const yesNoOptions = [
                 option-value="value"
                 placeholder="Select origin"
                 filter
+                @filter="onGlobalReferenceFilter"
                 filter-by="label,value,subLabel,searchText"
+                :virtual-scroller-options="globalReferenceVirtualScrollerOptions"
                 class="job-transport-tab__prime-select"
               >
                 <template #option="{ option }">
@@ -225,7 +292,9 @@ const yesNoOptions = [
                 option-value="value"
                 placeholder="Select destination"
                 filter
+                @filter="onGlobalReferenceFilter"
                 filter-by="label,value,subLabel,searchText"
+                :virtual-scroller-options="globalReferenceVirtualScrollerOptions"
                 class="job-transport-tab__prime-select"
               >
                 <template #option="{ option }">
@@ -246,7 +315,9 @@ const yesNoOptions = [
                 option-value="value"
                 placeholder="Select final destination"
                 filter
+                @filter="onGlobalReferenceFilter"
                 filter-by="label,value,subLabel,searchText"
+                :virtual-scroller-options="globalReferenceVirtualScrollerOptions"
                 class="job-transport-tab__prime-select"
               >
                 <template #option="{ option }">
@@ -477,7 +548,9 @@ const yesNoOptions = [
                 option-value="value"
                 placeholder="Select transhipment port"
                 filter
+                @filter="onGlobalReferenceFilter"
                 filter-by="label,value,subLabel,searchText"
+                :virtual-scroller-options="globalReferenceVirtualScrollerOptions"
                 class="job-transport-tab__prime-select"
               >
                 <template #option="{ option }">
@@ -578,7 +651,9 @@ const yesNoOptions = [
                 option-value="value"
                 placeholder="Select transit airport"
                 filter
+                @filter="onGlobalReferenceFilter"
                 filter-by="label,value,subLabel,searchText"
+                :virtual-scroller-options="globalReferenceVirtualScrollerOptions"
                 class="job-transport-tab__prime-select"
               >
                 <template #option="{ option }">
@@ -821,7 +896,9 @@ const yesNoOptions = [
             option-value="value"
             placeholder="Select origin road terminal"
             filter
+            @filter="onGlobalReferenceFilter"
             filter-by="label,value,subLabel,searchText"
+            :virtual-scroller-options="globalReferenceVirtualScrollerOptions"
             class="job-transport-tab__prime-select"
           >
             <template #option="{ option }">
@@ -842,7 +919,9 @@ const yesNoOptions = [
             option-value="value"
             placeholder="Select destination road terminal"
             filter
+            @filter="onGlobalReferenceFilter"
             filter-by="label,value,subLabel,searchText"
+            :virtual-scroller-options="globalReferenceVirtualScrollerOptions"
             class="job-transport-tab__prime-select"
           >
             <template #option="{ option }">
@@ -863,7 +942,9 @@ const yesNoOptions = [
             option-value="value"
             placeholder="Select final destination"
             filter
+            @filter="onGlobalReferenceFilter"
             filter-by="label,value,subLabel,searchText"
+            :virtual-scroller-options="globalReferenceVirtualScrollerOptions"
             class="job-transport-tab__prime-select"
           >
             <template #option="{ option }">
@@ -951,58 +1032,6 @@ const yesNoOptions = [
         </label>
 
         <label class="job-transport-tab__field">
-          <span>Multi-Drop?</span>
-          <Dropdown
-            v-model="form.road_detail.full_multi_drop"
-            :options="yesNoOptions"
-            option-label="label"
-            option-value="value"
-            placeholder="Select"
-            class="job-transport-tab__prime-select"
-            show-clear
-          />
-        </label>
-
-        <label class="job-transport-tab__field">
-          <span>Intermodal Leg?</span>
-          <Dropdown
-            v-model="form.road_detail.full_intermodal_leg"
-            :options="yesNoOptions"
-            option-label="label"
-            option-value="value"
-            placeholder="Select"
-            class="job-transport-tab__prime-select"
-            show-clear
-          />
-        </label>
-
-        <label class="job-transport-tab__field">
-          <span>Customs Required?</span>
-          <Dropdown
-            v-model="form.road_detail.full_customs_required"
-            :options="yesNoOptions"
-            option-label="label"
-            option-value="value"
-            placeholder="Select"
-            class="job-transport-tab__prime-select"
-            show-clear
-          />
-        </label>
-
-        <label class="job-transport-tab__field">
-          <span>Subcontractor Used?</span>
-          <Dropdown
-            v-model="form.road_detail.full_subcontractor_used"
-            :options="yesNoOptions"
-            option-label="label"
-            option-value="value"
-            placeholder="Select"
-            class="job-transport-tab__prime-select"
-            show-clear
-          />
-        </label>
-
-        <label class="job-transport-tab__field">
           <span>CMR Number</span>
           <InputText v-model="form.road_detail.cmr_number" placeholder="CMR ref" />
         </label>
@@ -1032,6 +1061,392 @@ const yesNoOptions = [
             placeholder="Loading instructions, access codes, special requirements..."
           />
         </label>
+
+        <div class="job-transport-tab__switch-group">
+          <label class="job-transport-tab__field job-transport-tab__switch-field">
+            <span>Multi-Drop?</span>
+            <div class="job-transport-tab__switch-row">
+              <strong>{{ form.road_detail.full_multi_drop ? "Yes" : "No" }}</strong>
+              <InputSwitch
+                :model-value="Boolean(form.road_detail.full_multi_drop)"
+                @update:model-value="(value: boolean) => setBooleanDetail('full_multi_drop', value)"
+              />
+            </div>
+          </label>
+
+          <label class="job-transport-tab__field job-transport-tab__switch-field">
+            <span>Customs Required?</span>
+            <div class="job-transport-tab__switch-row">
+              <strong>{{ form.road_detail.full_customs_required ? "Yes" : "No" }}</strong>
+              <InputSwitch
+                :model-value="Boolean(form.road_detail.full_customs_required)"
+                @update:model-value="
+                  (value: boolean) => setBooleanDetail('full_customs_required', value)
+                "
+              />
+            </div>
+          </label>
+
+          <label class="job-transport-tab__field job-transport-tab__switch-field">
+            <span>Subcontractor Used?</span>
+            <div class="job-transport-tab__switch-row">
+              <strong>{{ form.road_detail.full_subcontractor_used ? "Yes" : "No" }}</strong>
+              <InputSwitch
+                :model-value="Boolean(form.road_detail.full_subcontractor_used)"
+                @update:model-value="
+                  (value: boolean) => setBooleanDetail('full_subcontractor_used', value)
+                "
+              />
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <div v-if="form.road_detail.full_multi_drop" class="job-transport-tab__conditional-card">
+        <header class="job-transport-tab__conditional-header">
+          <div>
+            <h3>Intermediate Stops / Multi-Drop</h3>
+            <p>Add every collection, delivery, or customs stop between origin and destination.</p>
+          </div>
+
+          <Button
+            class="job-transport-tab__add-leg-btn"
+            icon="pi pi-plus"
+            label="Add Stop"
+            type="button"
+            @click="addMultiDropStop"
+          />
+        </header>
+
+        <div v-if="!multiDropStops.length" class="job-transport-tab__conditional-empty">
+          No intermediate stops added yet.
+        </div>
+
+        <div v-else class="job-transport-tab__stop-list">
+          <div
+            v-for="(stop, index) in multiDropStops"
+            :key="stop.id"
+            class="job-transport-tab__stop-row"
+          >
+            <div class="job-transport-tab__stop-title">
+              <strong>Stop {{ index + 1 }}</strong>
+              <Button
+                class="remove-btn"
+                label="Remove"
+                type="button"
+                text
+                @click="removeMultiDropStop(stop.id)"
+              />
+            </div>
+
+            <div class="job-transport-tab__grid job-transport-tab__grid--nested">
+              <label class="job-transport-tab__field">
+                <span>Company / Location</span>
+                <InputText v-model="stop.company_location" placeholder="Company or site" />
+              </label>
+
+              <label class="job-transport-tab__field">
+                <span>City & Postcode</span>
+                <Dropdown
+                  v-model="stop.city_postcode"
+                  :options="cityOptions"
+                  option-label="label"
+                  option-value="value"
+                  placeholder="Search city, terminal, airport"
+                  filter
+                  @filter="onGlobalReferenceFilter"
+                  filter-by="label,value,subLabel,searchText"
+                  :virtual-scroller-options="globalReferenceVirtualScrollerOptions"
+                  class="job-transport-tab__prime-select"
+                  show-clear
+                >
+                  <template #option="{ option }">
+                    <div class="job-transport-tab__reference-option">
+                      <strong>{{ option.label }}</strong>
+                      <small v-if="option.subLabel">{{ option.subLabel }}</small>
+                    </div>
+                  </template>
+                </Dropdown>
+              </label>
+
+              <label class="job-transport-tab__field">
+                <span>Date</span>
+                <InputText v-model="stop.date" type="date" />
+              </label>
+
+              <label class="job-transport-tab__field">
+                <span>Stop Type</span>
+                <Dropdown
+                  v-model="stop.stop_type"
+                  :options="multiDropStopTypeOptions"
+                  placeholder="Select stop type"
+                  class="job-transport-tab__prime-select"
+                  show-clear
+                />
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div
+        v-if="form.road_detail.full_customs_required"
+        class="job-transport-tab__conditional-card"
+      >
+        <header class="job-transport-tab__conditional-header">
+          <div>
+            <h3>Customs & Border Details</h3>
+            <p>Core customs references and border instructions for the road movement.</p>
+          </div>
+        </header>
+
+        <div class="job-transport-tab__grid">
+          <label class="job-transport-tab__field">
+            <span>Direction</span>
+            <Dropdown
+              v-model="form.road_detail.customs_direction"
+              :options="customsDirectionOptions"
+              option-label="label"
+              option-value="value"
+              placeholder="Select direction"
+              class="job-transport-tab__prime-select"
+              show-clear
+            />
+          </label>
+
+          <label class="job-transport-tab__field">
+            <span>Customs Document Type</span>
+            <Dropdown
+              v-model="form.road_detail.customs_document_type"
+              :options="customsDocumentTypeOptions"
+              placeholder="Select document"
+              class="job-transport-tab__prime-select"
+              show-clear
+            />
+          </label>
+
+          <label class="job-transport-tab__field">
+            <span>MRN / Declaration Ref</span>
+            <InputText v-model="form.road_detail.customs_mrn_declaration_ref" placeholder="MRN" />
+          </label>
+
+          <label class="job-transport-tab__field">
+            <span>Export Entry Ref (C88)</span>
+            <InputText v-model="form.road_detail.customs_export_entry_ref" placeholder="C88 ref" />
+          </label>
+
+          <label class="job-transport-tab__field">
+            <span>Customs Status</span>
+            <Dropdown
+              v-model="form.road_detail.customs_status"
+              :options="customsStatusOptions"
+              placeholder="Select status"
+              class="job-transport-tab__prime-select"
+              show-clear
+            />
+          </label>
+
+          <label class="job-transport-tab__field">
+            <span>Port / Border Crossing</span>
+            <Dropdown
+              v-model="form.road_detail.customs_port_border"
+              :options="portBorderOptions"
+              placeholder="Select border"
+              class="job-transport-tab__prime-select"
+              show-clear
+            />
+          </label>
+
+          <label class="job-transport-tab__field">
+            <span>Ferry / Tunnel Booking Ref</span>
+            <InputText
+              v-model="form.road_detail.customs_ferry_booking_ref"
+              placeholder="Booking ref"
+            />
+          </label>
+
+          <label class="job-transport-tab__field">
+            <span>Broker Reference</span>
+            <InputText
+              v-model="form.road_detail.customs_broker_reference"
+              placeholder="Broker ref"
+            />
+          </label>
+
+          <label class="job-transport-tab__field">
+            <span>Exporter EORI</span>
+            <InputText v-model="form.road_detail.customs_exporter_eori" placeholder="GB..." />
+          </label>
+
+          <label class="job-transport-tab__field">
+            <span>Importer EORI</span>
+            <InputText v-model="form.road_detail.customs_importer_eori" placeholder="GB..." />
+          </label>
+
+          <label class="job-transport-tab__field job-transport-tab__field--span-2">
+            <span>Customs Broker / Agent</span>
+            <InputText v-model="form.road_detail.customs_broker_agent" placeholder="Agent name" />
+          </label>
+
+          <label class="job-transport-tab__field">
+            <span>Deferment Account No.</span>
+            <InputText
+              v-model="form.road_detail.customs_deferment_account"
+              placeholder="Account no."
+            />
+          </label>
+
+          <label class="job-transport-tab__field">
+            <span>Duty Rate (%)</span>
+            <InputNumber
+              v-model="form.road_detail.customs_duty_rate_percent"
+              :min="0"
+              :max-fraction-digits="2"
+              placeholder="0.00"
+            />
+          </label>
+
+          <label class="job-transport-tab__field">
+            <span>Country of Origin</span>
+            <InputText v-model="form.road_detail.customs_country_of_origin" placeholder="Country" />
+          </label>
+
+          <label class="job-transport-tab__field">
+            <span>Country of Destination</span>
+            <InputText
+              v-model="form.road_detail.customs_country_of_destination"
+              placeholder="Country"
+            />
+          </label>
+
+          <label class="job-transport-tab__field">
+            <span>Goods Procedure Code</span>
+            <InputText
+              v-model="form.road_detail.customs_goods_procedure_code"
+              placeholder="Procedure code"
+            />
+          </label>
+
+          <label class="job-transport-tab__field">
+            <span>Export Licence No.</span>
+            <InputText
+              v-model="form.road_detail.customs_export_licence_no"
+              placeholder="Licence no."
+            />
+          </label>
+
+          <label class="job-transport-tab__field job-transport-tab__field--span-4">
+            <span>General Customs Notes</span>
+            <Textarea
+              v-model="form.road_detail.customs_notes"
+              placeholder="Customs instructions, clearance timing, documents required..."
+            />
+          </label>
+        </div>
+      </div>
+
+      <div
+        v-if="form.road_detail.full_subcontractor_used"
+        class="job-transport-tab__conditional-card"
+      >
+        <header class="job-transport-tab__conditional-header">
+          <div>
+            <h3>Subcontractor Details</h3>
+            <p>Carrier instructions, buy rate, and confirmation status.</p>
+          </div>
+        </header>
+
+        <div class="job-transport-tab__grid">
+          <label class="job-transport-tab__field job-transport-tab__field--span-2">
+            <span>Subcontractor Name</span>
+            <Dropdown
+              v-model="form.road_detail.subcontractor_contact_id"
+              :options="contactOptions"
+              option-label="label"
+              option-value="value"
+              placeholder="Search contacts"
+              filter
+              filter-by="label,subLabel"
+              :loading="contactOptionsLoading"
+              class="job-transport-tab__prime-select"
+              show-clear
+            >
+              <template #option="{ option }">
+                <div class="job-transport-tab__reference-option">
+                  <strong>{{ option.label }}</strong>
+                  <small v-if="option.subLabel">{{ option.subLabel }}</small>
+                </div>
+              </template>
+            </Dropdown>
+          </label>
+
+          <label class="job-transport-tab__field">
+            <span>Subcontractor Ref</span>
+            <InputText v-model="form.road_detail.subcontractor_ref" placeholder="Reference" />
+          </label>
+
+          <label class="job-transport-tab__field">
+            <span>Contact Name</span>
+            <InputText v-model="form.road_detail.subcontractor_contact_name" placeholder="Name" />
+          </label>
+
+          <label class="job-transport-tab__field">
+            <span>Contact Phone</span>
+            <InputText
+              v-model="form.road_detail.subcontractor_contact_phone"
+              type="tel"
+              placeholder="+44 ..."
+            />
+          </label>
+
+          <label class="job-transport-tab__field">
+            <span>Buy Rate</span>
+            <InputNumber
+              v-model="form.road_detail.subcontractor_buy_rate"
+              :min="0"
+              :max-fraction-digits="2"
+              placeholder="0.00"
+            />
+          </label>
+
+          <label class="job-transport-tab__field">
+            <span>Buy Currency</span>
+            <Dropdown
+              v-model="form.road_detail.subcontractor_buy_currency"
+              :options="subcontractorCurrencyOptions"
+              placeholder="Currency"
+              class="job-transport-tab__prime-select"
+              show-clear
+            />
+          </label>
+
+          <label class="job-transport-tab__field">
+            <span>Subcon PO / Instruction Ref</span>
+            <InputText
+              v-model="form.road_detail.subcontractor_po_instruction_ref"
+              placeholder="PO / instruction ref"
+            />
+          </label>
+
+          <label class="job-transport-tab__field">
+            <span>Subcon Status</span>
+            <Dropdown
+              v-model="form.road_detail.subcontractor_status"
+              :options="subcontractorStatusOptions"
+              placeholder="Select status"
+              class="job-transport-tab__prime-select"
+              show-clear
+            />
+          </label>
+
+          <label class="job-transport-tab__field job-transport-tab__field--span-4">
+            <span>Subcontractor Notes</span>
+            <Textarea
+              v-model="form.road_detail.subcontractor_notes"
+              placeholder="Special instructions, agreed terms, invoice notes..."
+            />
+          </label>
+        </div>
       </div>
     </div>
 
@@ -1085,7 +1500,9 @@ const yesNoOptions = [
             option-value="value"
             placeholder="Select loading terminal"
             filter
+            @filter="onGlobalReferenceFilter"
             filter-by="label,value,subLabel,searchText"
+            :virtual-scroller-options="globalReferenceVirtualScrollerOptions"
             class="job-transport-tab__prime-select"
           >
             <template #option="{ option }">
@@ -1106,7 +1523,9 @@ const yesNoOptions = [
             option-value="value"
             placeholder="Select discharge terminal"
             filter
+            @filter="onGlobalReferenceFilter"
             filter-by="label,value,subLabel,searchText"
+            :virtual-scroller-options="globalReferenceVirtualScrollerOptions"
             class="job-transport-tab__prime-select"
           >
             <template #option="{ option }">
@@ -1127,7 +1546,9 @@ const yesNoOptions = [
             option-value="value"
             placeholder="Select final destination"
             filter
+            @filter="onGlobalReferenceFilter"
             filter-by="label,value,subLabel,searchText"
+            :virtual-scroller-options="globalReferenceVirtualScrollerOptions"
             class="job-transport-tab__prime-select"
           >
             <template #option="{ option }">
@@ -1277,7 +1698,9 @@ const yesNoOptions = [
             option-value="value"
             placeholder="Select port of loading"
             filter
+            @filter="onGlobalReferenceFilter"
             filter-by="label,value,subLabel,searchText"
+            :virtual-scroller-options="globalReferenceVirtualScrollerOptions"
             class="job-transport-tab__prime-select"
           >
             <template #option="{ option }">
@@ -1298,7 +1721,9 @@ const yesNoOptions = [
             option-value="value"
             placeholder="Select port of discharge"
             filter
+            @filter="onGlobalReferenceFilter"
             filter-by="label,value,subLabel,searchText"
+            :virtual-scroller-options="globalReferenceVirtualScrollerOptions"
             class="job-transport-tab__prime-select"
           >
             <template #option="{ option }">
@@ -1319,7 +1744,9 @@ const yesNoOptions = [
             option-value="value"
             placeholder="Select transhipment port"
             filter
+            @filter="onGlobalReferenceFilter"
             filter-by="label,value,subLabel,searchText"
+            :virtual-scroller-options="globalReferenceVirtualScrollerOptions"
             class="job-transport-tab__prime-select"
           >
             <template #option="{ option }">
@@ -1340,7 +1767,9 @@ const yesNoOptions = [
             option-value="value"
             placeholder="Select final destination"
             filter
+            @filter="onGlobalReferenceFilter"
             filter-by="label,value,subLabel,searchText"
+            :virtual-scroller-options="globalReferenceVirtualScrollerOptions"
             class="job-transport-tab__prime-select"
           >
             <template #option="{ option }">
@@ -1441,7 +1870,9 @@ const yesNoOptions = [
             option-value="value"
             placeholder="Select departure airport"
             filter
+            @filter="onGlobalReferenceFilter"
             filter-by="label,value,subLabel,searchText"
+            :virtual-scroller-options="globalReferenceVirtualScrollerOptions"
             class="job-transport-tab__prime-select"
           >
             <template #option="{ option }">
@@ -1462,7 +1893,9 @@ const yesNoOptions = [
             option-value="value"
             placeholder="Select arrival airport"
             filter
+            @filter="onGlobalReferenceFilter"
             filter-by="label,value,subLabel,searchText"
+            :virtual-scroller-options="globalReferenceVirtualScrollerOptions"
             class="job-transport-tab__prime-select"
           >
             <template #option="{ option }">
@@ -1483,7 +1916,9 @@ const yesNoOptions = [
             option-value="value"
             placeholder="Select transit airport"
             filter
+            @filter="onGlobalReferenceFilter"
             filter-by="label,value,subLabel,searchText"
+            :virtual-scroller-options="globalReferenceVirtualScrollerOptions"
             class="job-transport-tab__prime-select"
           >
             <template #option="{ option }">
@@ -1504,7 +1939,9 @@ const yesNoOptions = [
             option-value="value"
             placeholder="Select final destination"
             filter
+            @filter="onGlobalReferenceFilter"
             filter-by="label,value,subLabel,searchText"
+            :virtual-scroller-options="globalReferenceVirtualScrollerOptions"
             class="job-transport-tab__prime-select"
           >
             <template #option="{ option }">
@@ -1638,7 +2075,9 @@ const yesNoOptions = [
             option-value="value"
             placeholder="Select final destination"
             filter
+            @filter="onGlobalReferenceFilter"
             filter-by="label,value,subLabel,searchText"
+            :virtual-scroller-options="globalReferenceVirtualScrollerOptions"
             class="job-transport-tab__prime-select"
           >
             <template #option="{ option }">

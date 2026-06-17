@@ -268,6 +268,33 @@ export function useContactDetailsPage() {
     }
   }
 
+  async function duplicateCollectionAddress(id: number) {
+    if (!contact.value) return
+    if (!id || id <= 0) return
+
+    busy.value = true
+
+    try {
+      await contactStore.duplicateCollectionAddress(contact.value.id, id)
+
+      toast.add({
+        severity: "success",
+        summary: "Duplicated",
+        detail: "Supplier address duplicated successfully.",
+        life: 2500,
+      })
+    } catch (e) {
+      toast.add({
+        severity: "error",
+        summary: "Failed to duplicate",
+        detail: errMsg(e),
+        life: 4000,
+      })
+    } finally {
+      busy.value = false
+    }
+  }
+
   function removeCollectionAddressById(id: number) {
     if (!contact.value) return
     if (!id || id <= 0) return
@@ -321,6 +348,7 @@ export function useContactDetailsPage() {
 
     addCollectionAddress,
     saveCollectionAddress,
+    duplicateCollectionAddress,
     removeCollectionAddressById,
 
     load,

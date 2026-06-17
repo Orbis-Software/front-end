@@ -32,6 +32,9 @@ const {
   initialLoading,
   saving,
   save,
+  onAutosaveFocusIn,
+  onAutosaveFocusOut,
+  onAutosaveChange,
   onCustomerFilter,
 } = useJobDetailsPage()
 
@@ -242,7 +245,12 @@ function onBookJob() {
 </script>
 
 <template>
-  <section class="job-details-page">
+  <section
+    class="job-details-page"
+    @focusin.capture="onAutosaveFocusIn"
+    @focusout.capture="onAutosaveFocusOut"
+    @change.capture="onAutosaveChange"
+  >
     <ConfirmDialog />
 
     <div class="job-header-card">
@@ -310,7 +318,7 @@ function onBookJob() {
             :label="saving ? 'Saving...' : 'Save'"
             :loading="saving"
             :disabled="loading"
-            @click="save"
+            @click="() => save()"
           />
 
           <Button

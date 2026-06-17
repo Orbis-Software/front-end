@@ -215,6 +215,113 @@
   grid-column: span 4;
 }
 
+.job-transport-tab__field--span-2 {
+  grid-column: span 2;
+}
+
+.job-transport-tab__switch-field {
+  justify-content: space-between;
+  min-height: 59px;
+  padding: 9px 10px;
+  border: 1px solid #e1e1df;
+  border-radius: 8px;
+  background: #fbfbfa;
+}
+
+.job-transport-tab__switch-group {
+  grid-column: span 4;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.job-transport-tab__switch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.job-transport-tab__switch-row strong {
+  color: #1a1a18;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.job-transport-tab__conditional-card {
+  margin: 0 14px 14px;
+  border: 1px solid #e2e2e2;
+  border-radius: 12px;
+  background: #fff;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.035);
+}
+
+.job-transport-tab__conditional-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 12px 14px;
+  border-bottom: 1px solid #e8e8e6;
+  background: #fbfbfa;
+}
+
+.job-transport-tab__conditional-header h3 {
+  margin: 0;
+  color: #1a1a18;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.job-transport-tab__conditional-header p {
+  margin: 3px 0 0;
+  color: #888780;
+  font-size: 12px;
+}
+
+.job-transport-tab__conditional-empty {
+  padding: 18px 14px;
+  color: #888780;
+  font-size: 12px;
+  text-align: center;
+}
+
+.job-transport-tab__stop-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+  background: #fcfcfb;
+}
+
+.job-transport-tab__stop-row {
+  border: 1px solid #e6e6e6;
+  border-radius: 10px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.job-transport-tab__stop-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 10px 12px;
+  border-bottom: 1px solid #ededeb;
+  background: #fff;
+}
+
+.job-transport-tab__stop-title strong {
+  color: #1a1a18;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.job-transport-tab__grid--nested {
+  padding: 12px;
+}
+
 /* ================================
    EMPTY STATE
 ================================ */
@@ -336,6 +443,14 @@
   .job-transport-tab__field--span-4 {
     grid-column: span 2;
   }
+
+  .job-transport-tab__field--span-2 {
+    grid-column: span 2;
+  }
+
+  .job-transport-tab__switch-group {
+    grid-column: span 2;
+  }
 }
 
 @media (max-width: 640px) {
@@ -355,6 +470,20 @@
 
   .job-transport-tab__field--span-4 {
     grid-column: span 1;
+  }
+
+  .job-transport-tab__field--span-2 {
+    grid-column: span 1;
+  }
+
+  .job-transport-tab__switch-group {
+    grid-column: span 1;
+    grid-template-columns: 1fr;
+  }
+
+  .job-transport-tab__conditional-header {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .job-transport-tab__add-leg-btn {
