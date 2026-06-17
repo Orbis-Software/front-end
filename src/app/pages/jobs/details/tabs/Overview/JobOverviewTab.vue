@@ -12,6 +12,7 @@ import InputSwitch from "primevue/inputswitch"
 
 import type { JobDetailsContext } from "../../JobDetailsPage.logic"
 import JobTransportAddressModal from "@/app/components/jobs/details/JobTransportTab/JobTransportAddressModal.vue"
+import JobAddressPickerModal from "../../components/JobAddressPickerModal.vue"
 import type { ContactCollectionAddress } from "@/app/types/contact"
 
 const context = inject<JobDetailsContext>("jobDetails")
@@ -25,15 +26,23 @@ const {
   referenceOptions,
   loading,
   originAddressOptions,
-  destinationAddressOptions,
+  addressContactOptions,
+  addressContactsLoading,
   addressModalVisible,
   addressModalTarget,
   addressModalSaving,
+  addressPickerVisible,
+  addressPickerTarget,
+  addressPickerContact,
+  selectedDestinationContactId,
   isConsolidationJob,
   selectedOriginAddress,
   selectedDestinationAddress,
   openAddressModal,
   createAndSelectAddress,
+  onAddressContactFilter,
+  selectAddressContact,
+  chooseAddressSource,
 } = context
 
 const {
@@ -91,6 +100,19 @@ const hazardousEnabled = computed({
     }
   },
 })
+const commodityTypeText = computed(() => String(form.commodity_code ?? "").toLowerCase())
+const fragileCommodity = computed(() => commodityTypeText.value.includes("fragile"))
+const temperatureControlledCommodity = computed(() =>
+  commodityTypeText.value.includes("temperature"),
+)
+const perishableCommodity = computed(() => commodityTypeText.value.includes("perishable"))
+const specialRequirementsVisible = computed(
+  () =>
+    hazardousEnabled.value ||
+    fragileCommodity.value ||
+    temperatureControlledCommodity.value ||
+    perishableCommodity.value,
+)
 
 const hazardousOptions = [
   { label: "No", value: false },
@@ -384,8 +406,11 @@ const consolidationTransportRows = computed(() => {
         </label>
       </header>
 
-      <div v-if="hazardousEnabled" class="job-overview-tab__grid job-overview-tab__grid--4">
-        <label class="job-overview-tab__field">
+      <div
+        v-if="specialRequirementsVisible"
+        class="job-overview-tab__grid job-overview-tab__grid--4"
+      >
+        <label v-if="hazardousEnabled" class="job-overview-tab__field">
           <span>ADR / Hazmat Class</span>
 
           <Dropdown
@@ -400,13 +425,16 @@ const consolidationTransportRows = computed(() => {
           />
         </label>
 
-        <label class="job-overview-tab__field">
+        <label v-if="hazardousEnabled" class="job-overview-tab__field">
           <span>UN Number</span>
 
           <InputText v-model="form.un_number" placeholder="UN1234" :disabled="loading" />
         </label>
 
-        <label class="job-overview-tab__field">
+        <label
+          v-if="hazardousEnabled || temperatureControlledCommodity"
+          class="job-overview-tab__field"
+        >
           <span>Temperature Controlled?</span>
 
           <Dropdown
@@ -768,19 +796,6 @@ const consolidationTransportRows = computed(() => {
           </label>
 
           <label class="job-overview-tab__field">
-            <span>Intermodal Leg?</span>
-            <Dropdown
-              v-model="form.road_detail.full_intermodal_leg"
-              :options="yesNoOptions"
-              option-label="label"
-              option-value="value"
-              placeholder="Select"
-              show-clear
-              :disabled="loading"
-            />
-          </label>
-
-          <label class="job-overview-tab__field">
             <span>Customs Required?</span>
             <Dropdown
               v-model="form.road_detail.full_customs_required"
@@ -960,11 +975,10 @@ const consolidationTransportRows = computed(() => {
               :options="originAddressOptions"
               option-label="label"
               option-value="value"
-              placeholder="Select collection address"
+              placeholder="Select origin"
               show-clear
-              filter
               append-to="body"
-              :disabled="loading || !form.customer_id"
+              :disabled="loading"
             />
 
             <Button
@@ -982,15 +996,20 @@ const consolidationTransportRows = computed(() => {
 
           <div class="job-overview-tab__address-select">
             <Dropdown
-              v-model="form.destination_contact_collection_address_id"
-              :options="destinationAddressOptions"
+              v-model="selectedDestinationContactId"
+              :options="addressContactOptions"
               option-label="label"
               option-value="value"
-              placeholder="Select delivery address"
+              placeholder="Search contact"
               show-clear
               filter
               append-to="body"
+              :loading="addressContactsLoading"
               :disabled="loading"
+              @filter="onAddressContactFilter"
+              @update:model-value="
+                (value: number | null) => selectAddressContact('destination', value)
+              "
             />
 
             <Button
@@ -1270,6 +1289,13 @@ const consolidationTransportRows = computed(() => {
       :target="addressModalTarget === 'origin' ? 'collection' : 'delivery'"
       :saving="addressModalSaving"
       @save="createAndSelectAddress"
+    />
+
+    <JobAddressPickerModal
+      v-model:visible="addressPickerVisible"
+      :target="addressPickerTarget"
+      :contact="addressPickerContact"
+      @select="chooseAddressSource"
     />
   </section>
 </template>

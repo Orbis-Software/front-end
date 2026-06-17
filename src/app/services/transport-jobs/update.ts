@@ -108,6 +108,8 @@ function toFormData(payload: TransportJobUpdatePayload): FormData {
     "destination_contact_collection_address_id",
     payload.destination_contact_collection_address_id,
   )
+  appendValue(fd, "destination_address_source_type", payload.destination_address_source_type)
+  appendValue(fd, "destination_address_source_id", payload.destination_address_source_id)
   appendValue(fd, "collection_date", payload.collection_date)
   appendValue(fd, "collection_time", payload.collection_time)
   appendValue(fd, "latest_collection_time", payload.latest_collection_time)

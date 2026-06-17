@@ -14,6 +14,7 @@ function toNumberOrNull(v: any): number | null {
 function normalizeBranch(raw: any): ContactBranch {
   return {
     id: Number(raw.id),
+    contact_id: toNumberOrNull(raw.contact_id),
 
     name: raw.name ?? null,
 
@@ -44,6 +45,7 @@ function normalizeBranch(raw: any): ContactBranch {
 function normalizeCollectionAddress(raw: any): ContactCollectionAddress {
   return {
     id: Number(raw.id),
+    contact_id: toNumberOrNull(raw.contact_id),
 
     label: raw.label ?? null,
 

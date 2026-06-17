@@ -52,9 +52,44 @@ export interface JobRoadDetail {
   full_load_plan_ref?: string | null
   full_max_stack_height_cm?: number | null
   full_multi_drop?: boolean | null
+  full_multi_drop_stops?: Array<{
+    id?: number | string | null
+    company_location?: string | null
+    city_postcode?: string | null
+    date?: string | null
+    stop_type?: string | null
+  }> | null
   full_intermodal_leg?: boolean | null
   full_customs_required?: boolean | null
   full_subcontractor_used?: boolean | null
+  customs_direction?: string | null
+  customs_document_type?: string | null
+  customs_mrn_declaration_ref?: string | null
+  customs_export_entry_ref?: string | null
+  customs_status?: string | null
+  customs_port_border?: string | null
+  customs_ferry_booking_ref?: string | null
+  customs_exporter_eori?: string | null
+  customs_importer_eori?: string | null
+  customs_broker_agent?: string | null
+  customs_broker_reference?: string | null
+  customs_deferment_account?: string | null
+  customs_duty_rate_percent?: number | null
+  customs_country_of_origin?: string | null
+  customs_country_of_destination?: string | null
+  customs_goods_procedure_code?: string | null
+  customs_export_licence_no?: string | null
+  customs_notes?: string | null
+  subcontractor_contact_id?: number | null
+  subcontractor_name?: string | null
+  subcontractor_ref?: string | null
+  subcontractor_contact_name?: string | null
+  subcontractor_contact_phone?: string | null
+  subcontractor_buy_rate?: number | null
+  subcontractor_buy_currency?: string | null
+  subcontractor_po_instruction_ref?: string | null
+  subcontractor_status?: string | null
+  subcontractor_notes?: string | null
   full_vehicle_registration?: string | null
   full_seal_number?: string | null
   full_route_via?: string | null
@@ -448,6 +483,8 @@ export interface TransportJob {
   customer_contact?: Contact | null
   origin_contact_collection_address_id?: number | null
   destination_contact_collection_address_id?: number | null
+  destination_address_source_type?: "collection_address" | "branch" | null
+  destination_address_source_id?: number | null
   origin_address?: ContactCollectionAddress | null
   destination_address?: ContactCollectionAddress | null
   collection_date?: string | null
@@ -515,6 +552,8 @@ export interface BaseTransportJobCreatePayload {
   note?: string | null
   origin_contact_collection_address_id?: number | null
   destination_contact_collection_address_id?: number | null
+  destination_address_source_type?: "collection_address" | "branch" | null
+  destination_address_source_id?: number | null
   collection_date?: string | null
   collection_time?: string | null
   latest_collection_time?: string | null

@@ -7,6 +7,7 @@ export default async function createOption(
   payload: {
     name: string
     is_default?: boolean
+    metadata?: Record<string, unknown> | null
   },
 ): Promise<ReferenceDataOption> {
   const response = await http.post(`/reference-data/${categoryKey}/options`, payload)

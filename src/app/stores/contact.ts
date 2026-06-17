@@ -161,6 +161,12 @@ export const useContactStore = defineStore("contact", () => {
     return updatedContact
   }
 
+  async function duplicateCollectionAddress(contactId: number, addressId: number) {
+    const updatedContact = await contacts.duplicateCollectionAddress(contactId, addressId)
+    if (current.value?.id === contactId) current.value = updatedContact
+    return updatedContact
+  }
+
   async function removeCollectionAddress(contactId: number, addressId: number) {
     const updatedContact = await contacts.removeCollectionAddress(contactId, addressId)
     if (current.value?.id === contactId) current.value = updatedContact
@@ -295,6 +301,7 @@ export const useContactStore = defineStore("contact", () => {
 
     createCollectionAddress,
     updateCollectionAddress,
+    duplicateCollectionAddress,
     removeCollectionAddress,
 
     fetchChargeTables,

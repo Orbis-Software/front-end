@@ -2,6 +2,7 @@ export interface ReferenceDataOption {
   id: number
   reference_data_category_id?: number
   name: string
+  metadata?: Record<string, unknown> | null
   is_default: boolean
   sort_order: number
   is_active: boolean

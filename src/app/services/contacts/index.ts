@@ -14,6 +14,7 @@ import removeBranch from "./branches/remove"
 import createCollectionAddress from "./collection-addresses/create"
 import updateCollectionAddress from "./collection-addresses/update"
 import removeCollectionAddress from "./collection-addresses/remove"
+import duplicateCollectionAddress from "./collection-addresses/duplicate"
 
 // charge tables
 import listChargeTables from "./charge-tables/list"
@@ -39,6 +40,7 @@ export default {
   createCollectionAddress,
   updateCollectionAddress,
   removeCollectionAddress,
+  duplicateCollectionAddress,
 
   // Charge tables
   listChargeTables,

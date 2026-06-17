@@ -25,7 +25,9 @@ const {
 
   addCollectionAddress,
   saveCollectionAddress,
+  duplicateCollectionAddress,
   removeCollectionAddressById,
+  busy,
 
   load,
 } = useContactDetailsPage()
@@ -93,8 +95,10 @@ const {
           <CollectionAddressesTab
             v-else-if="activeTab === 'collections'"
             :items="contact.collection_addresses ?? []"
+            :busy="busy"
             @add="addCollectionAddress"
             @remove="removeCollectionAddressById"
+            @duplicate="duplicateCollectionAddress"
             @save="saveCollectionAddress"
             @cancel="load"
           />

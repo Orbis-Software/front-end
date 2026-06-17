@@ -6,6 +6,7 @@ export default {
       id: data.id,
       reference_data_category_id: data.reference_data_category_id,
       name: data.name,
+      metadata: data.metadata ?? null,
       is_default: !!data.is_default,
       sort_order: Number(data.sort_order ?? 0),
       is_active: !!data.is_active,

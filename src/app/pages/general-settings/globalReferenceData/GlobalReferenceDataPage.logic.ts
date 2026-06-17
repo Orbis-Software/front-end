@@ -7,8 +7,7 @@ import type {
   GlobalReferenceDataTabValue,
 } from "@/app/types/globalReferenceData"
 
-type TabValue = GlobalReferenceDataTabValue
-
+type CategoryValue = GlobalReferenceDataTabValue | ""
 type ReferenceRow = GlobalReferenceDataRow
 
 type Column = {
@@ -16,55 +15,29 @@ type Column = {
   key: string
 }
 
-type ReferenceTab = {
+type CategoryOption = {
   label: string
-  value: TabValue
-  icon: string
+  value: CategoryValue
   count: number
 }
 
-const terminalColumns: Column[] = [
+const columns: Column[] = [
+  { label: "Category", key: "categoryLabel" },
   { label: "Type", key: "type" },
   { label: "Country", key: "country" },
-  { label: "Location", key: "location" },
-  { label: "Terminal Name", key: "terminalName" },
+  { label: "Name", key: "primaryName" },
+  { label: "Location", key: "place" },
   { label: "Region", key: "region" },
   { label: "Status", key: "status" },
   { label: "Function", key: "function" },
-  { label: "Est. Year", key: "year" },
-  { label: "Code", key: "code" },
-  { label: "Coordinates", key: "coordinates" },
-]
-
-const airlineColumns: Column[] = [
-  { label: "Airline Name", key: "name" },
-  { label: "IATA", key: "iata" },
-  { label: "ICAO", key: "icao" },
-  { label: "AWB Prefix", key: "awb" },
-  { label: "Country", key: "country" },
-  { label: "Region", key: "region" },
-  { label: "Fleet Type", key: "fleet" },
-  { label: "Status", key: "status" },
-]
-
-const cityColumns: Column[] = [
-  { label: "Type", key: "type" },
-  { label: "Country", key: "country" },
-  { label: "City / Town", key: "city" },
-  { label: "Full Name", key: "fullName" },
-  { label: "Region", key: "region" },
-  { label: "Status", key: "status" },
-  { label: "Function", key: "function" },
-  { label: "State / County", key: "state" },
-  { label: "Code", key: "code" },
-  { label: "Coordinates", key: "coordinates" },
+  { label: "Codes", key: "codes" },
 ]
 
 export function useGlobalReferenceDataPage() {
   const store = useGlobalReferenceDataStore()
   const { data, loading, error } = storeToRefs(store)
 
-  const activeTab = ref<TabValue>("terminals")
+  const selectedCategory = ref<CategoryValue>("")
   const search = ref("")
   const selectedType = ref("")
   const selectedRegion = ref("")
@@ -76,60 +49,53 @@ export function useGlobalReferenceDataPage() {
   const first = ref(0)
   const perPage = ref(25)
 
-  const tabs = computed<ReferenceTab[]>(() => [
+  const unifiedRows = computed<ReferenceRow[]>(() => {
+    return [
+      ...data.value.terminals.map(row => normalizeRow(row, "terminals")),
+      ...data.value.airlines.map(row => normalizeRow(row, "airlines")),
+      ...data.value.cities.map(row => normalizeRow(row, "cities")),
+    ]
+  })
+
+  const categoryOptions = computed<CategoryOption[]>(() => [
+    {
+      label: "All Reference Data",
+      value: "",
+      count: unifiedRows.value.length,
+    },
     {
       label: "Transport Terminals",
       value: "terminals",
-      icon: "🏭",
       count: data.value.terminals.length,
     },
     {
       label: "Air Cargo Airlines",
       value: "airlines",
-      icon: "✈️",
       count: data.value.airlines.length,
     },
     {
       label: "Road Delivery Cities",
       value: "cities",
-      icon: "🚚",
       count: data.value.cities.length,
     },
   ])
 
-  const sourceRows = computed<ReferenceRow[]>(() => {
-    if (activeTab.value === "airlines") return data.value.airlines
-    if (activeTab.value === "cities") return data.value.cities
-
-    return data.value.terminals
-  })
-
-  const columns = computed<Column[]>(() => {
-    if (activeTab.value === "airlines") return airlineColumns
-    if (activeTab.value === "cities") return cityColumns
-
-    return terminalColumns
+  const rowsInCategory = computed(() => {
+    return unifiedRows.value.filter(row => {
+      return !selectedCategory.value || row.category === selectedCategory.value
+    })
   })
 
   const filteredRows = computed<ReferenceRow[]>(() => {
     const query = search.value.trim().toLowerCase()
 
-    const filtered = sourceRows.value.filter(row => {
+    const filtered = rowsInCategory.value.filter(row => {
       const matchesSearch =
         !query || Object.values(row).some(value => String(value).toLowerCase().includes(query))
-
-      const matchesType =
-        activeTab.value !== "terminals" || !selectedType.value || row.type === selectedType.value
-
-      const matchesCountry =
-        activeTab.value !== "cities" ||
-        !selectedCountry.value ||
-        row.country === selectedCountry.value
-
+      const matchesType = !selectedType.value || row.type === selectedType.value
+      const matchesCountry = !selectedCountry.value || row.country === selectedCountry.value
       const matchesRegion = !selectedRegion.value || row.region === selectedRegion.value
-
-      const matchesStatus =
-        activeTab.value === "cities" || !selectedStatus.value || row.status === selectedStatus.value
+      const matchesStatus = !selectedStatus.value || row.status === selectedStatus.value
 
       return matchesSearch && matchesType && matchesCountry && matchesRegion && matchesStatus
     })
@@ -160,21 +126,12 @@ export function useGlobalReferenceDataPage() {
     return Math.min(first.value + perPage.value, totalRecords.value)
   })
 
-  const typeOptions = computed(() => {
-    return unique(data.value.terminals.map(item => item.type ?? ""))
-  })
-
-  const regionOptions = computed(() => {
-    return unique(sourceRows.value.map(item => item.region ?? ""))
-  })
-
-  const statusOptions = computed(() => {
-    return unique(sourceRows.value.map(item => item.status ?? ""))
-  })
-
-  const countryOptions = computed(() => {
-    return unique(data.value.cities.map(item => item.country ?? ""))
-  })
+  const typeOptions = computed(() => unique(rowsInCategory.value.map(item => item.type ?? "")))
+  const regionOptions = computed(() => unique(rowsInCategory.value.map(item => item.region ?? "")))
+  const statusOptions = computed(() => unique(rowsInCategory.value.map(item => item.status ?? "")))
+  const countryOptions = computed(() =>
+    unique(rowsInCategory.value.map(item => item.country ?? "")),
+  )
 
   async function fetchRows() {
     try {
@@ -184,12 +141,8 @@ export function useGlobalReferenceDataPage() {
     }
   }
 
-  function setTab(tab: TabValue) {
-    activeTab.value = tab
-    clearFilters()
-  }
-
   function clearFilters() {
+    selectedCategory.value = ""
     search.value = ""
     selectedType.value = ""
     selectedRegion.value = ""
@@ -218,10 +171,8 @@ export function useGlobalReferenceDataPage() {
   }
 
   function exportCsv() {
-    const headerRow = columns.value.map(column => column.label)
-    const dataRows = filteredRows.value.map(row =>
-      columns.value.map(column => row[column.key] ?? ""),
-    )
+    const headerRow = columns.map(column => column.label)
+    const dataRows = filteredRows.value.map(row => columns.map(column => row[column.key] ?? ""))
 
     const csv = [headerRow, ...dataRows]
       .map(row => row.map(value => `"${escapeCsvValue(value)}"`).join(","))
@@ -232,7 +183,7 @@ export function useGlobalReferenceDataPage() {
     const link = document.createElement("a")
 
     link.href = url
-    link.download = `TMS_${activeTab.value}_reference_data.csv`
+    link.download = "TMS_global_reference_data.csv"
     link.click()
 
     URL.revokeObjectURL(url)
@@ -242,6 +193,7 @@ export function useGlobalReferenceDataPage() {
     if (type === "Airport") return "global-reference-page__badge--airport"
     if (type === "Seaport") return "global-reference-page__badge--seaport"
     if (type === "Rail Freight") return "global-reference-page__badge--rail"
+    if (type === "Air Cargo") return "global-reference-page__badge--air"
 
     return "global-reference-page__badge--road"
   }
@@ -256,8 +208,18 @@ export function useGlobalReferenceDataPage() {
     return "global-reference-page__status--planned"
   }
 
-  watch([search, selectedType, selectedRegion, selectedStatus, selectedCountry], () => {
-    first.value = 0
+  watch(
+    [selectedCategory, search, selectedType, selectedRegion, selectedStatus, selectedCountry],
+    () => {
+      first.value = 0
+    },
+  )
+
+  watch(selectedCategory, () => {
+    selectedType.value = ""
+    selectedRegion.value = ""
+    selectedStatus.value = ""
+    selectedCountry.value = ""
   })
 
   watch(totalRecords, total => {
@@ -269,8 +231,8 @@ export function useGlobalReferenceDataPage() {
   onMounted(fetchRows)
 
   return {
-    tabs,
-    activeTab,
+    categoryOptions,
+    selectedCategory,
     search,
     selectedType,
     selectedRegion,
@@ -289,7 +251,6 @@ export function useGlobalReferenceDataPage() {
     totalRecords,
     paginationStart,
     paginationEnd,
-    setTab,
     clearFilters,
     exportCsv,
     sortBy,
@@ -297,6 +258,81 @@ export function useGlobalReferenceDataPage() {
     getTypeClass,
     getStatusClass,
   }
+}
+
+function normalizeRow(row: ReferenceRow, category: GlobalReferenceDataTabValue): ReferenceRow {
+  if (category === "terminals") {
+    return {
+      ...blankRow(),
+      ...row,
+      category,
+      categoryLabel: "Terminal",
+      primaryName: row.terminalName || row.name || "",
+      place: row.location || "",
+      code: row.code || row.iata || "",
+      codes: compactCodes([
+        ["Code", row.code],
+        ["IATA", row.iata],
+        ["ICAO", row.icao],
+      ]),
+    }
+  }
+
+  if (category === "airlines") {
+    return {
+      ...blankRow(),
+      ...row,
+      category,
+      categoryLabel: "Airline",
+      type: row.type || "Air Cargo",
+      primaryName: row.name || "",
+      place: row.fleet || "",
+      function: row.function || "Air Cargo",
+      code: row.code || row.iata || row.icao || "",
+      codes: compactCodes([
+        ["IATA", row.iata],
+        ["ICAO", row.icao],
+        ["AWB", row.awb],
+      ]),
+    }
+  }
+
+  return {
+    ...blankRow(),
+    ...row,
+    category,
+    categoryLabel: "City",
+    primaryName: row.fullName || row.city || "",
+    place: row.state || "",
+    codes: compactCodes([["Code", row.code]]),
+  }
+}
+
+function blankRow(): ReferenceRow {
+  return {
+    category: "",
+    categoryLabel: "",
+    type: "",
+    country: "",
+    primaryName: "",
+    place: "",
+    region: "",
+    status: "",
+    function: "",
+    code: "",
+    iata: "",
+    icao: "",
+    awb: "",
+    codes: "",
+    coordinates: "",
+  }
+}
+
+function compactCodes(entries: Array<[string, string | undefined]>) {
+  return entries
+    .filter(([, value]) => Boolean(value))
+    .map(([label, value]) => `${label}: ${value}`)
+    .join(" / ")
 }
 
 function unique(values: string[]) {

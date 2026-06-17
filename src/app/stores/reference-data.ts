@@ -78,6 +78,7 @@ export const useReferenceDataStore = defineStore("reference-data", {
       payload: {
         name: string
         is_default?: boolean
+        metadata?: Record<string, unknown> | null
       },
     ) {
       this.saving = true

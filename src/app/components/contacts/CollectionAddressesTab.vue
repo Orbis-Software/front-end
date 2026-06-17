@@ -11,11 +11,20 @@ import type { ContactCollectionAddress } from "@/app/types/contact"
 
 type CollectionUI = ContactCollectionAddress
 
-const props = defineProps<{ items: ContactCollectionAddress[] }>()
+const props = withDefaults(
+  defineProps<{
+    items: ContactCollectionAddress[]
+    busy?: boolean
+  }>(),
+  {
+    busy: false,
+  },
+)
 
 const emit = defineEmits<{
   (e: "add"): void
   (e: "remove", id: number): void
+  (e: "duplicate", id: number): void
   (e: "save", id: number, payload: Partial<ContactCollectionAddress>): void
   (e: "cancel"): void
 }>()
@@ -23,11 +32,15 @@ const emit = defineEmits<{
 /* =========================
    LIST/SELECTION
 ========================= */
-
-const rows = computed(() => (props.items ?? []) as CollectionUI[])
+const localRows = ref<CollectionUI[]>(cloneAddressArray(props.items ?? []))
+const rows = computed(() => localRows.value)
 
 const selectedIndex = ref(0)
 const lastLength = ref(rows.value.length)
+const selected = computed(() => rows.value[selectedIndex.value])
+const lastSavedSnapshot = ref("")
+const autosaveTimer = ref<ReturnType<typeof setTimeout> | null>(null)
+const autosaveState = ref<"idle" | "pending" | "saving" | "saved">("idle")
 
 watch(
   () => rows.value.length,
@@ -50,12 +63,8 @@ watch(
   { immediate: true },
 )
 
-const selected = computed(() => rows.value[selectedIndex.value])
-const lastSavedSnapshot = ref("")
-const autosaveTimer = ref<ReturnType<typeof setTimeout> | null>(null)
-const autosaveState = ref<"idle" | "pending" | "saving" | "saved">("idle")
-
 function select(i: number) {
+  flushAutosave()
   selectedIndex.value = i
 }
 
@@ -64,13 +73,22 @@ function onAdd() {
 }
 
 function onDeleteSelected() {
+  flushAutosave()
   if (!selected.value) return
   if (!selected.value.id || selected.value.id <= 0) return
   emit("remove", selected.value.id)
 }
 
+function onDuplicateSelected() {
+  flushAutosave()
+  if (!selected.value) return
+  if (!selected.value.id || selected.value.id <= 0) return
+  emit("duplicate", selected.value.id)
+}
+
 function onCancel() {
   clearAutosaveTimer()
+  syncLocalRows(props.items ?? [], true)
   emit("cancel")
 }
 
@@ -242,20 +260,54 @@ watch(
    SAVE
 ========================= */
 
+function cloneAddressArray(items: ContactCollectionAddress[]): CollectionUI[] {
+  return (items ?? []).map(cloneAddress)
+}
+
+function cloneAddress(row: ContactCollectionAddress): CollectionUI {
+  return {
+    id: Number(row.id),
+    contact_id: row.contact_id ?? null,
+    label: row.label ?? null,
+    address_line_1: row.address_line_1 ?? null,
+    address_line_2: row.address_line_2 ?? null,
+    address_line_3: row.address_line_3 ?? null,
+    city: row.city ?? null,
+    county_state: row.county_state ?? null,
+    postal_code: row.postal_code ?? null,
+    country_id: row.country_id ?? null,
+    country_name: row.country_name ?? null,
+    sequence_no: row.sequence_no ?? null,
+    reference_code: row.reference_code ?? null,
+    is_collection: Boolean(row.is_collection),
+    is_delivery: Boolean(row.is_delivery),
+    hours_of_operation: row.hours_of_operation ?? null,
+    contact_person: row.contact_person ?? null,
+    email: row.email ?? null,
+    phone: row.phone ?? null,
+    special_instructions: row.special_instructions ?? null,
+  }
+}
+
+function cleanText(value: string | null | undefined): string | null {
+  const trimmed = String(value ?? "").trim()
+  return trimmed === "" ? null : trimmed
+}
+
 function onSave() {
   if (!selected.value) return
   if (!selected.value.id || selected.value.id <= 0) return
 
   const payload: Partial<ContactCollectionAddress> = {
-    label: selected.value.label ?? null,
+    label: cleanText(selected.value.label),
 
-    address_line_1: selected.value.address_line_1 ?? null,
-    address_line_2: selected.value.address_line_2 ?? null,
-    address_line_3: selected.value.address_line_3 ?? null,
+    address_line_1: cleanText(selected.value.address_line_1),
+    address_line_2: cleanText(selected.value.address_line_2),
+    address_line_3: cleanText(selected.value.address_line_3),
 
-    city: selected.value.city ?? null,
-    county_state: selected.value.county_state ?? null,
-    postal_code: selected.value.postal_code ?? null,
+    city: cleanText(selected.value.city),
+    county_state: cleanText(selected.value.county_state),
+    postal_code: cleanText(selected.value.postal_code),
 
     country_id: selected.value.country_id ?? null,
 
@@ -264,11 +316,11 @@ function onSave() {
     is_delivery: Boolean(selected.value.is_delivery),
 
     // ✅ persisted UI fields
-    hours_of_operation: selected.value.hours_of_operation ?? null,
-    contact_person: selected.value.contact_person ?? null,
-    email: selected.value.email ?? null,
-    phone: selected.value.phone ?? null,
-    special_instructions: selected.value.special_instructions ?? null,
+    hours_of_operation: cleanText(selected.value.hours_of_operation),
+    contact_person: cleanText(selected.value.contact_person),
+    email: cleanText(selected.value.email),
+    phone: cleanText(selected.value.phone),
+    special_instructions: cleanText(selected.value.special_instructions),
   }
 
   emit("save", selected.value.id, payload)
@@ -278,21 +330,21 @@ function onSave() {
 
 function buildSavePayload(row: ContactCollectionAddress): Partial<ContactCollectionAddress> {
   return {
-    label: row.label ?? null,
-    address_line_1: row.address_line_1 ?? null,
-    address_line_2: row.address_line_2 ?? null,
-    address_line_3: row.address_line_3 ?? null,
-    city: row.city ?? null,
-    county_state: row.county_state ?? null,
-    postal_code: row.postal_code ?? null,
+    label: cleanText(row.label),
+    address_line_1: cleanText(row.address_line_1),
+    address_line_2: cleanText(row.address_line_2),
+    address_line_3: cleanText(row.address_line_3),
+    city: cleanText(row.city),
+    county_state: cleanText(row.county_state),
+    postal_code: cleanText(row.postal_code),
     country_id: row.country_id ?? null,
     is_collection: Boolean(row.is_collection),
     is_delivery: Boolean(row.is_delivery),
-    hours_of_operation: row.hours_of_operation ?? null,
-    contact_person: row.contact_person ?? null,
-    email: row.email ?? null,
-    phone: row.phone ?? null,
-    special_instructions: row.special_instructions ?? null,
+    hours_of_operation: cleanText(row.hours_of_operation),
+    contact_person: cleanText(row.contact_person),
+    email: cleanText(row.email),
+    phone: cleanText(row.phone),
+    special_instructions: cleanText(row.special_instructions),
   }
 }
 
@@ -320,6 +372,68 @@ const selectedSaveSnapshot = computed(() => {
   if (!selected.value?.id) return ""
   return JSON.stringify(buildSavePayload(selected.value))
 })
+
+function selectedIsDirty() {
+  return Boolean(
+    selectedSaveSnapshot.value && selectedSaveSnapshot.value !== lastSavedSnapshot.value,
+  )
+}
+
+function syncLocalRows(items: ContactCollectionAddress[], force = false) {
+  const selectedId = selected.value?.id ?? null
+  const keepSelectedDraft = !force && selectedId !== null && selectedIsDirty()
+  const currentById = new Map(localRows.value.map(row => [row.id, row]))
+
+  localRows.value = cloneAddressArray(items ?? []).map(serverRow => {
+    const currentRow = currentById.get(serverRow.id)
+    if (!keepSelectedDraft || serverRow.id !== selectedId || !currentRow) {
+      return serverRow
+    }
+
+    return {
+      ...serverRow,
+      ...currentRow,
+      sequence_no: serverRow.sequence_no,
+      reference_code: serverRow.reference_code,
+      country_name: serverRow.country_name,
+    }
+  })
+
+  if (selectedIndex.value > localRows.value.length - 1) {
+    selectedIndex.value = Math.max(0, localRows.value.length - 1)
+  }
+
+  if (!keepSelectedDraft) {
+    lastSavedSnapshot.value = selectedSaveSnapshot.value
+    autosaveState.value = selected.value?.id ? "saved" : "idle"
+  }
+}
+
+watch(
+  () => props.items,
+  items => syncLocalRows(items ?? []),
+  { deep: true },
+)
+
+function flushAutosave() {
+  if (!selected.value?.id) return
+  if (!selectedIsDirty()) return
+
+  clearAutosaveTimer()
+  autosaveState.value = "saving"
+  onSave()
+}
+
+function onEditorFocusOut(event: FocusEvent) {
+  const currentTarget = event.currentTarget as HTMLElement | null
+  const nextTarget = event.relatedTarget as Node | null
+
+  if (currentTarget && nextTarget && currentTarget.contains(nextTarget)) {
+    return
+  }
+
+  flushAutosave()
+}
 
 watch(
   () => selected.value?.id,
@@ -388,6 +502,7 @@ function displayType(c: CollectionUI) {
       class="btn btn--primary"
       icon="pi pi-plus"
       label="Add address"
+      :disabled="props.busy"
       @click="onAdd"
     />
   </div>
@@ -464,7 +579,7 @@ function displayType(c: CollectionUI) {
 
       <div v-if="!selected" class="emptyEditor">Select an address on the left.</div>
 
-      <div v-else class="editorBody">
+      <div v-else class="editorBody" @focusout="onEditorFocusOut">
         <div class="formGrid">
           <div class="row2">
             <div class="field">
@@ -623,15 +738,30 @@ function displayType(c: CollectionUI) {
         </div>
 
         <div class="editorActions">
-          <Button type="button" class="btn btn--ghost" label="Reset" @click="onCancel" />
+          <Button
+            type="button"
+            class="btn btn--ghost"
+            label="Reset"
+            :disabled="props.busy"
+            @click="onCancel"
+          />
 
           <div class="editorActions__right">
+            <Button
+              type="button"
+              class="btn btn--ghost"
+              icon="pi pi-copy"
+              label="Duplicate"
+              :disabled="props.busy || !selected?.id"
+              @click="onDuplicateSelected"
+            />
+
             <Button
               type="button"
               class="btn btn--danger"
               icon="pi pi-trash"
               label="Delete"
-              :disabled="!selected?.id"
+              :disabled="props.busy || !selected?.id"
               @click="onDeleteSelected"
             />
 
@@ -640,7 +770,7 @@ function displayType(c: CollectionUI) {
               class="btn btn--primary"
               icon="pi pi-check"
               label="Save"
-              :disabled="!selected?.id"
+              :disabled="props.busy || !selected?.id"
               @click="onSave"
             />
           </div>
