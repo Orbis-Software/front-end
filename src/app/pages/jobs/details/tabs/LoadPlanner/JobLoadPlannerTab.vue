@@ -42,6 +42,7 @@ const {
 <template>
   <section class="job-load-planner-tab">
     <Dialog
+      v-if="vehicleTypeRequired"
       :visible="vehicleTypeRequired"
       modal
       :closable="false"
