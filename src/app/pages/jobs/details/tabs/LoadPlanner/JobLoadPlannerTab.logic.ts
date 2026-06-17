@@ -82,6 +82,7 @@ export function useJobLoadPlannerTab() {
   const referenceDataStore = useReferenceDataStore()
   const route = useRoute()
   const router = useRouter()
+  const vehicleTypeRedirecting = ref(false)
 
   const COLORS = [
     "#2563eb",
@@ -310,23 +311,37 @@ export function useJobLoadPlannerTab() {
 
   const transportOrderVehicleType = computed(() => {
     const roadDetail = form.road_detail as any
-    const fullTransportVehicle = String(roadDetail?.vehicle_type ?? "").trim()
-    const localCollectionVehicle = String(roadDetail?.local_vehicle_required ?? "").trim()
-
-    return fullTransportVehicle || localCollectionVehicle
+    return String(roadDetail?.vehicle_type ?? "").trim()
   })
 
+  const isActiveLoadPlannerRoute = computed(() => route.name === "tms.jobs.show.load-planner")
+
   const vehicleTypeRequired = computed(() => {
-    return currentMode.value === "road" && !transportOrderVehicleType.value
+    return (
+      isActiveLoadPlannerRoute.value &&
+      currentMode.value === "road" &&
+      !transportOrderVehicleType.value &&
+      !vehicleTypeRedirecting.value
+    )
   })
 
   function goToTransportOrder() {
+    vehicleTypeRedirecting.value = true
     router.push({
       name: "tms.jobs.show.transport",
       params: route.params,
       query: route.query,
     })
   }
+
+  watch(
+    () => route.name,
+    name => {
+      if (name === "tms.jobs.show.load-planner") {
+        vehicleTypeRedirecting.value = false
+      }
+    },
+  )
 
   const vehicleLabel = computed(() => {
     if (currentMode.value === "road" && transportOrderVehicleType.value) {
