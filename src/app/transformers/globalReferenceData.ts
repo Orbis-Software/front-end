@@ -21,7 +21,30 @@ function collection(rows: unknown): GlobalReferenceDataRow[] {
 }
 
 export default {
+  collection,
+
   dataset(data: any): GlobalReferenceDataSet {
+    if (Array.isArray(data?.rows)) {
+      return collection(data.rows).reduce<GlobalReferenceDataSet>(
+        (result, item) => {
+          if (
+            item.category === "terminals" ||
+            item.category === "airlines" ||
+            item.category === "cities"
+          ) {
+            result[item.category].push(item)
+          }
+
+          return result
+        },
+        {
+          terminals: [],
+          airlines: [],
+          cities: [],
+        },
+      )
+    }
+
     return {
       terminals: collection(data?.terminals),
       airlines: collection(data?.airlines),
