@@ -1,8 +1,8 @@
 import { computed, onMounted, ref, watch } from "vue"
 import type { PageState } from "primevue/paginator"
-import { storeToRefs } from "pinia"
-import { useGlobalReferenceDataStore } from "@/app/stores/global-reference-data"
+import globalReferenceDataService from "@/app/services/global-reference-data"
 import type {
+  GlobalReferenceDataListResponse,
   GlobalReferenceDataRow,
   GlobalReferenceDataTabValue,
 } from "@/app/types/globalReferenceData"
@@ -34,9 +34,6 @@ const columns: Column[] = [
 ]
 
 export function useGlobalReferenceDataPage() {
-  const store = useGlobalReferenceDataStore()
-  const { data, loading, error } = storeToRefs(store)
-
   const selectedCategory = ref<CategoryValue>("")
   const search = ref("")
   const selectedType = ref("")
@@ -48,73 +45,44 @@ export function useGlobalReferenceDataPage() {
 
   const first = ref(0)
   const perPage = ref(25)
-
-  const unifiedRows = computed<ReferenceRow[]>(() => {
-    return [
-      ...data.value.terminals.map(row => normalizeRow(row, "terminals")),
-      ...data.value.airlines.map(row => normalizeRow(row, "airlines")),
-      ...data.value.cities.map(row => normalizeRow(row, "cities")),
-    ]
+  const loading = ref(false)
+  const error = ref<string | null>(null)
+  const serverRows = ref<ReferenceRow[]>([])
+  const totalRecords = ref(0)
+  const counts = ref<Record<string, number>>({})
+  const serverFilters = ref<GlobalReferenceDataListResponse["filters"]>({
+    types: [],
+    countries: [],
+    regions: [],
+    statuses: [],
   })
+  let fetchTimer: number | null = null
+  let fetchToken = 0
 
   const categoryOptions = computed<CategoryOption[]>(() => [
     {
       label: "All Reference Data",
       value: "",
-      count: unifiedRows.value.length,
+      count: counts.value.all ?? totalRecords.value,
     },
     {
       label: "Transport Terminals",
       value: "terminals",
-      count: data.value.terminals.length,
+      count: counts.value.terminals ?? 0,
     },
     {
       label: "Air Cargo Airlines",
       value: "airlines",
-      count: data.value.airlines.length,
+      count: counts.value.airlines ?? 0,
     },
     {
       label: "Road Delivery Cities",
       value: "cities",
-      count: data.value.cities.length,
+      count: counts.value.cities ?? 0,
     },
   ])
 
-  const rowsInCategory = computed(() => {
-    return unifiedRows.value.filter(row => {
-      return !selectedCategory.value || row.category === selectedCategory.value
-    })
-  })
-
-  const filteredRows = computed<ReferenceRow[]>(() => {
-    const query = search.value.trim().toLowerCase()
-
-    const filtered = rowsInCategory.value.filter(row => {
-      const matchesSearch =
-        !query || Object.values(row).some(value => String(value).toLowerCase().includes(query))
-      const matchesType = !selectedType.value || row.type === selectedType.value
-      const matchesCountry = !selectedCountry.value || row.country === selectedCountry.value
-      const matchesRegion = !selectedRegion.value || row.region === selectedRegion.value
-      const matchesStatus = !selectedStatus.value || row.status === selectedStatus.value
-
-      return matchesSearch && matchesType && matchesCountry && matchesRegion && matchesStatus
-    })
-
-    if (!sortKey.value) return filtered
-
-    return [...filtered].sort((a, b) => {
-      return (
-        String(a[sortKey.value] ?? "").localeCompare(String(b[sortKey.value] ?? "")) *
-        sortDirection.value
-      )
-    })
-  })
-
-  const totalRecords = computed(() => filteredRows.value.length)
-
-  const rows = computed<ReferenceRow[]>(() => {
-    return filteredRows.value.slice(first.value, first.value + perPage.value)
-  })
+  const rows = computed<ReferenceRow[]>(() => serverRows.value)
 
   const paginationStart = computed(() => {
     if (!totalRecords.value) return 0
@@ -126,18 +94,54 @@ export function useGlobalReferenceDataPage() {
     return Math.min(first.value + perPage.value, totalRecords.value)
   })
 
-  const typeOptions = computed(() => unique(rowsInCategory.value.map(item => item.type ?? "")))
-  const regionOptions = computed(() => unique(rowsInCategory.value.map(item => item.region ?? "")))
-  const statusOptions = computed(() => unique(rowsInCategory.value.map(item => item.status ?? "")))
-  const countryOptions = computed(() =>
-    unique(rowsInCategory.value.map(item => item.country ?? "")),
-  )
+  const typeOptions = computed(() => serverFilters.value.types)
+  const regionOptions = computed(() => serverFilters.value.regions)
+  const statusOptions = computed(() => serverFilters.value.statuses)
+  const countryOptions = computed(() => serverFilters.value.countries)
 
-  async function fetchRows() {
+  async function fetchRows(delay = 0) {
+    if (fetchTimer) {
+      window.clearTimeout(fetchTimer)
+      fetchTimer = null
+    }
+
+    if (delay > 0) {
+      fetchTimer = window.setTimeout(() => fetchRows(), delay)
+      return
+    }
+
+    const token = ++fetchToken
+    loading.value = true
+    error.value = null
+
     try {
-      await store.fetchAll()
-    } catch (err) {
+      const result = await globalReferenceDataService.list({
+        category: selectedCategory.value || undefined,
+        type: selectedType.value || undefined,
+        country: selectedCountry.value || undefined,
+        region: selectedRegion.value || undefined,
+        status: selectedStatus.value || undefined,
+        search: search.value.trim() || undefined,
+        sort: sortKey.value || undefined,
+        direction: sortDirection.value === -1 ? "desc" : "asc",
+        page: Math.floor(first.value / perPage.value) + 1,
+        per_page: perPage.value,
+      })
+
+      if (token !== fetchToken) return
+
+      serverRows.value = result.rows.map(row => normalizeRow(row, normalizeCategory(row.category)))
+      totalRecords.value = result.meta.total
+      counts.value = result.counts
+      serverFilters.value = result.filters
+    } catch (err: any) {
       console.error("Unable to load global reference data", err)
+      error.value =
+        err?.response?.data?.message || err?.message || "Failed to load global reference data."
+    } finally {
+      if (token === fetchToken) {
+        loading.value = false
+      }
     }
   }
 
@@ -157,22 +161,25 @@ export function useGlobalReferenceDataPage() {
     if (sortKey.value === key) {
       sortDirection.value = sortDirection.value === 1 ? -1 : 1
       first.value = 0
+      fetchRows()
       return
     }
 
     sortKey.value = key
     sortDirection.value = 1
     first.value = 0
+    fetchRows()
   }
 
   function onPageChange(event: PageState) {
     first.value = event.first
     perPage.value = event.rows
+    fetchRows()
   }
 
   function exportCsv() {
     const headerRow = columns.map(column => column.label)
-    const dataRows = filteredRows.value.map(row => columns.map(column => row[column.key] ?? ""))
+    const dataRows = rows.value.map(row => columns.map(column => row[column.key] ?? ""))
 
     const csv = [headerRow, ...dataRows]
       .map(row => row.map(value => `"${escapeCsvValue(value)}"`).join(","))
@@ -210,8 +217,9 @@ export function useGlobalReferenceDataPage() {
 
   watch(
     [selectedCategory, search, selectedType, selectedRegion, selectedStatus, selectedCountry],
-    () => {
+    ([, newSearch], [, oldSearch]) => {
       first.value = 0
+      fetchRows(newSearch !== oldSearch ? 300 : 0)
     },
   )
 
@@ -308,6 +316,12 @@ function normalizeRow(row: ReferenceRow, category: GlobalReferenceDataTabValue):
   }
 }
 
+function normalizeCategory(value: string | undefined): GlobalReferenceDataTabValue {
+  if (value === "airlines" || value === "cities") return value
+
+  return "terminals"
+}
+
 function blankRow(): ReferenceRow {
   return {
     category: "",
@@ -333,10 +347,6 @@ function compactCodes(entries: Array<[string, string | undefined]>) {
     .filter(([, value]) => Boolean(value))
     .map(([label, value]) => `${label}: ${value}`)
     .join(" / ")
-}
-
-function unique(values: string[]) {
-  return [...new Set(values.filter(Boolean))].sort((a, b) => a.localeCompare(b))
 }
 
 function escapeCsvValue(value: string) {
