@@ -2,6 +2,7 @@ import { computed, inject, onMounted, ref, watch } from "vue"
 import { storeToRefs } from "pinia"
 import { useGlobalReferenceDataStore } from "@/app/stores/global-reference-data"
 import contactsService from "@/app/services/contacts"
+import globalReferenceDataService from "@/app/services/global-reference-data"
 import type { GlobalReferenceDataRow } from "@/app/types/globalReferenceData"
 import type { Contact } from "@/app/types/contact"
 import type { useJobDetailsPage } from "../../JobDetailsPage.logic"
@@ -134,6 +135,11 @@ export function useJobTransportTab() {
   const contactOptionsLoading = ref(false)
   const contactOptions = ref<ContactOption[]>([])
   const globalReferenceSearchTerm = ref("")
+  const remoteGlobalReferenceRows = ref<Array<{ row: GlobalReferenceDataRow; category: string }>>(
+    [],
+  )
+  let globalReferenceFetchTimer: number | null = null
+  let globalReferenceFetchToken = 0
 
   if (!jobDetails) {
     throw new Error("Job details context is missing")
@@ -142,11 +148,14 @@ export function useJobTransportTab() {
   const { form, referenceOptions } = jobDetails
 
   const globalReferenceRows = computed(() => {
-    return [
+    const rows = [
+      ...remoteGlobalReferenceRows.value,
       ...globalReferenceData.value.terminals.map(row => ({ row, category: "Terminal" })),
       ...globalReferenceData.value.airlines.map(row => ({ row, category: "Airline" })),
       ...globalReferenceData.value.cities.map(row => ({ row, category: "City" })),
     ]
+
+    return uniqueReferenceRows(rows)
   })
 
   const selectedReferenceValues = computed(() => {
@@ -192,6 +201,17 @@ export function useJobTransportTab() {
       if (option && !usedValues.has(option.value)) {
         usedValues.add(option.value)
         options.push(option)
+        return
+      }
+
+      if (!usedValues.has(value)) {
+        usedValues.add(value)
+        options.push({
+          label: value,
+          value,
+          subLabel: "Selected value",
+          searchText: value,
+        })
       }
     })
 
@@ -343,6 +363,38 @@ export function useJobTransportTab() {
 
   function onGlobalReferenceFilter(event: { value?: string }) {
     globalReferenceSearchTerm.value = event.value ?? ""
+    fetchGlobalReferenceOptions(250)
+  }
+
+  async function fetchGlobalReferenceOptions(delay = 0) {
+    if (globalReferenceFetchTimer) {
+      window.clearTimeout(globalReferenceFetchTimer)
+      globalReferenceFetchTimer = null
+    }
+
+    if (delay > 0) {
+      globalReferenceFetchTimer = window.setTimeout(() => fetchGlobalReferenceOptions(), delay)
+      return
+    }
+
+    const token = ++globalReferenceFetchToken
+
+    try {
+      const response = await globalReferenceDataService.list({
+        search: globalReferenceSearchTerm.value.trim() || undefined,
+        per_page: GLOBAL_REFERENCE_OPTION_LIMIT,
+        page: 1,
+      })
+
+      if (token !== globalReferenceFetchToken) return
+
+      remoteGlobalReferenceRows.value = response.rows.map(row => ({
+        row,
+        category: referenceCategoryLabel(row.category),
+      }))
+    } catch (error) {
+      console.error("Unable to load global reference dropdown options", error)
+    }
   }
 
   function getOriginLabel(locationMode: MultiModalLegMode): string {
@@ -520,6 +572,7 @@ export function useJobTransportTab() {
       await globalReferenceDataStore.fetchAll()
     }
 
+    await fetchGlobalReferenceOptions()
     await loadContactOptions()
   })
 
@@ -547,4 +600,42 @@ export function useJobTransportTab() {
     removeMultiDropStop,
     setBooleanDetail,
   }
+}
+
+function uniqueReferenceRows(
+  rows: Array<{ row: GlobalReferenceDataRow; category: string }>,
+): Array<{ row: GlobalReferenceDataRow; category: string }> {
+  const uniqueRows: Array<{ row: GlobalReferenceDataRow; category: string }> = []
+  const seen = new Set<string>()
+
+  for (const entry of rows) {
+    const key = [
+      entry.category,
+      entry.row.code,
+      entry.row.iata,
+      entry.row.icao,
+      entry.row.awb,
+      entry.row.fullName,
+      entry.row.terminalName,
+      entry.row.name,
+      entry.row.city,
+      entry.row.location,
+    ]
+      .filter(Boolean)
+      .join("|")
+
+    if (!key || seen.has(key)) continue
+
+    seen.add(key)
+    uniqueRows.push(entry)
+  }
+
+  return uniqueRows
+}
+
+function referenceCategoryLabel(category: string | undefined): string {
+  if (category === "airlines") return "Airline"
+  if (category === "cities") return "City"
+
+  return "Terminal"
 }
