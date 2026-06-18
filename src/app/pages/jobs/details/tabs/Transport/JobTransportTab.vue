@@ -6,6 +6,7 @@ import InputNumber from "primevue/inputnumber"
 import InputSwitch from "primevue/inputswitch"
 import InputText from "primevue/inputtext"
 import Textarea from "primevue/textarea"
+import { computed } from "vue"
 import { useJobTransportTab } from "./JobTransportTab.logic"
 
 const {
@@ -20,6 +21,7 @@ const {
   roadTerminalOptions,
   cityOptions,
   referenceOptions,
+  haulierChargeDescriptionOptions,
   contactOptions,
   contactOptionsLoading,
   getLocationOptions,
@@ -40,6 +42,10 @@ const {
   palletTypeOptions,
   podMethodOptions,
 } = referenceOptions
+
+const isCustomVehicle = computed(() => {
+  return form.road_detail.vehicle_type === "Custom / Specialised Vehicle"
+})
 
 const legModeOptions = [
   { label: "Road", value: "road" },
@@ -887,6 +893,64 @@ const globalReferenceVirtualScrollerOptions = {
           />
         </label>
 
+        <div
+          v-if="isCustomVehicle"
+          class="job-transport-tab__field job-transport-tab__field--span-4"
+        >
+          <span>Custom Vehicle Load Space</span>
+          <div class="job-transport-tab__grid job-transport-tab__grid--nested">
+            <label class="job-transport-tab__field">
+              <span>Length (cm)</span>
+              <InputNumber
+                v-model="form.road_detail.vehicle_length_cm"
+                :min="1"
+                :max-fraction-digits="2"
+                placeholder="1360"
+              />
+            </label>
+
+            <label class="job-transport-tab__field">
+              <span>Width (cm)</span>
+              <InputNumber
+                v-model="form.road_detail.vehicle_width_cm"
+                :min="1"
+                :max-fraction-digits="2"
+                placeholder="248"
+              />
+            </label>
+
+            <label class="job-transport-tab__field">
+              <span>Height (cm)</span>
+              <InputNumber
+                v-model="form.road_detail.vehicle_height_cm"
+                :min="1"
+                :max-fraction-digits="2"
+                placeholder="270"
+              />
+            </label>
+
+            <label class="job-transport-tab__field">
+              <span>Max Load (kg)</span>
+              <InputNumber
+                v-model="form.road_detail.vehicle_max_weight_kg"
+                :min="1"
+                :max-fraction-digits="2"
+                placeholder="26000"
+              />
+            </label>
+
+            <label class="job-transport-tab__field">
+              <span>Pallet Base Height (cm)</span>
+              <InputNumber
+                v-model="form.road_detail.vehicle_pallet_base_cm"
+                :min="0"
+                :max-fraction-digits="2"
+                placeholder="15"
+              />
+            </label>
+          </div>
+        </div>
+
         <label class="job-transport-tab__field">
           <span>Origin Road Terminal</span>
           <Dropdown
@@ -1088,7 +1152,7 @@ const globalReferenceVirtualScrollerOptions = {
           </label>
 
           <label class="job-transport-tab__field job-transport-tab__switch-field">
-            <span>Subcontractor Used?</span>
+            <span>Haulier Used?</span>
             <div class="job-transport-tab__switch-row">
               <strong>{{ form.road_detail.full_subcontractor_used ? "Yes" : "No" }}</strong>
               <InputSwitch
@@ -1351,14 +1415,14 @@ const globalReferenceVirtualScrollerOptions = {
       >
         <header class="job-transport-tab__conditional-header">
           <div>
-            <h3>Subcontractor Details</h3>
-            <p>Carrier instructions, buy rate, and confirmation status.</p>
+            <h3>Haulier Details</h3>
+            <p>Haulier instructions, buy rate, charge description, and confirmation status.</p>
           </div>
         </header>
 
         <div class="job-transport-tab__grid">
           <label class="job-transport-tab__field job-transport-tab__field--span-2">
-            <span>Subcontractor Name</span>
+            <span>Haulier Name</span>
             <Dropdown
               v-model="form.road_detail.subcontractor_contact_id"
               :options="contactOptions"
@@ -1381,7 +1445,7 @@ const globalReferenceVirtualScrollerOptions = {
           </label>
 
           <label class="job-transport-tab__field">
-            <span>Subcontractor Ref</span>
+            <span>Haulier Ref</span>
             <InputText v-model="form.road_detail.subcontractor_ref" placeholder="Reference" />
           </label>
 
@@ -1420,8 +1484,24 @@ const globalReferenceVirtualScrollerOptions = {
             />
           </label>
 
+          <label class="job-transport-tab__field job-transport-tab__field--span-2">
+            <span>Charge Description</span>
+            <Dropdown
+              v-model="form.road_detail.subcontractor_charge_description"
+              :options="haulierChargeDescriptionOptions"
+              option-label="label"
+              option-value="value"
+              placeholder="Select or type charge description"
+              filter
+              auto-filter-focus
+              editable
+              show-clear
+              class="job-transport-tab__prime-select"
+            />
+          </label>
+
           <label class="job-transport-tab__field">
-            <span>Subcon PO / Instruction Ref</span>
+            <span>Haulier PO / Instruction Ref</span>
             <InputText
               v-model="form.road_detail.subcontractor_po_instruction_ref"
               placeholder="PO / instruction ref"
@@ -1429,7 +1509,7 @@ const globalReferenceVirtualScrollerOptions = {
           </label>
 
           <label class="job-transport-tab__field">
-            <span>Subcon Status</span>
+            <span>Haulier Status</span>
             <Dropdown
               v-model="form.road_detail.subcontractor_status"
               :options="subcontractorStatusOptions"
@@ -1440,7 +1520,7 @@ const globalReferenceVirtualScrollerOptions = {
           </label>
 
           <label class="job-transport-tab__field job-transport-tab__field--span-4">
-            <span>Subcontractor Notes</span>
+            <span>Haulier Notes</span>
             <Textarea
               v-model="form.road_detail.subcontractor_notes"
               placeholder="Special instructions, agreed terms, invoice notes..."

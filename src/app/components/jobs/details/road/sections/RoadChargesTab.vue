@@ -73,7 +73,7 @@ defineProps<{
             <tbody>
               <tr>
                 <td>1</td>
-                <td>Subcontractor</td>
+                <td>Haulier</td>
                 <td>Carrier charge</td>
                 <td>1</td>
                 <td>Flat</td>

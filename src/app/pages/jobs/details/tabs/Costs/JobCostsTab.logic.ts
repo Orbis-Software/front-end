@@ -3,7 +3,6 @@ import { useToast } from "primevue/usetoast"
 
 import contactsService from "@/app/services/contacts"
 import { useChargeCodeStore } from "@/app/stores/charge-codes"
-import { useContactTypeStore } from "@/app/stores/contact-type"
 import type { ChargeCode } from "@/app/types/charge-code"
 import type { Contact } from "@/app/types/contact"
 import type { JobDetailsContext } from "../../JobDetailsPage.logic"
@@ -30,7 +29,7 @@ function displayContactName(contact: Contact): string {
     contact.company_name ||
     (contact as any)?.name ||
     [(contact as any)?.first_name, (contact as any)?.last_name].filter(Boolean).join(" ") ||
-    "Unnamed Supplier"
+    "Unnamed Contact"
   )
 }
 
@@ -48,28 +47,11 @@ function labelValue(value: unknown): string {
     .replace(/\b\w/g, character => character.toUpperCase())
 }
 
-function normalizeClassification(value: unknown): string {
-  return String(value ?? "")
-    .replace(/[_/-]/g, " ")
-    .trim()
-    .replace(/\s+/g, " ")
-    .toLowerCase()
-}
-
 function normalizeDescription(value: unknown): string {
   return String(value ?? "")
     .trim()
     .replace(/\s+/g, " ")
     .toLowerCase()
-}
-
-function isChargeCodeForJob(charge: ChargeCode, validClassifications: Set<string>): boolean {
-  const classification = normalizeClassification(charge.classification)
-
-  if (!classification) return true
-  if (!validClassifications.size) return true
-
-  return validClassifications.has(classification)
 }
 
 function createBuyRow(): BuyCostRow {
@@ -136,7 +118,6 @@ export function useJobCostsTab() {
   const context = injectedContext
   const toast = useToast()
   const chargeCodeStore = useChargeCodeStore()
-  const contactTypeStore = useContactTypeStore()
   const supplierContacts = ref<Contact[]>([])
   const suppliersLoading = ref(false)
   const addChargeCodeDialogVisible = ref(false)
@@ -157,18 +138,6 @@ export function useJobCostsTab() {
     return options.length ? options : fallbackCurrencyOptions
   })
 
-  const jobChargeClassifications = computed<Set<string>>(() => {
-    const mode = labelValue(context.form.mode_of_transport)
-    const type = labelValue(context.form.job_type)
-    const classifications = [mode, type]
-
-    if (mode && type && mode !== type) {
-      classifications.push(`${mode} ${type}`, `${type} ${mode}`)
-    }
-
-    return new Set(classifications.map(normalizeClassification).filter(Boolean))
-  })
-
   const primaryJobChargeClassification = computed(() => {
     const mode = labelValue(context.form.mode_of_transport)
     const type = labelValue(context.form.job_type)
@@ -178,11 +147,7 @@ export function useJobCostsTab() {
     return mode || type || ""
   })
 
-  const eligibleChargeCodes = computed<ChargeCode[]>(() =>
-    chargeCodeStore.chargeCodes.filter(charge => {
-      return isChargeCodeForJob(charge, jobChargeClassifications.value)
-    }),
-  )
+  const eligibleChargeCodes = computed<ChargeCode[]>(() => chargeCodeStore.chargeCodes)
 
   const chargeDescriptionOptions = computed<SelectOption[]>(() =>
     eligibleChargeCodes.value.map(charge => ({
@@ -416,41 +381,23 @@ export function useJobCostsTab() {
     suppliersLoading.value = true
 
     try {
-      if (!contactTypeStore.items.length) {
-        await contactTypeStore.fetch()
-      }
-
-      const supplierType = contactTypeStore.findByCode("supplier")
-      const response = await contactsService.list({
+      const firstResponse = await contactsService.list({
         page: 1,
         per_page: 500,
-        contact_type_id: supplierType?.id,
       })
-      let contacts = response.data ?? []
-      let usedUnfilteredFallback = false
+      const contacts = [...(firstResponse.data ?? [])]
+      const lastPage = Number(firstResponse.meta?.last_page ?? 1)
 
-      if (!contacts.length && supplierType?.id) {
-        const fallbackResponse = await contactsService.list({
-          page: 1,
+      for (let page = 2; page <= lastPage; page += 1) {
+        const response = await contactsService.list({
+          page,
           per_page: 500,
         })
 
-        contacts = fallbackResponse.data ?? []
-        usedUnfilteredFallback = true
+        contacts.push(...(response.data ?? []))
       }
 
-      supplierContacts.value = contacts.filter(contact => {
-        if (!contact.contact_types?.length) {
-          return Boolean(supplierType?.id) && !usedUnfilteredFallback
-        }
-
-        return contact.contact_types.some(type => {
-          const code = String(type.code ?? "").toLowerCase()
-          const name = String(type.name ?? "").toLowerCase()
-
-          return code === "supplier" || name === "supplier" || type.id === supplierType?.id
-        })
-      })
+      supplierContacts.value = contacts
     } finally {
       suppliersLoading.value = false
     }
@@ -472,7 +419,7 @@ export function useJobCostsTab() {
 
   onMounted(async () => {
     await Promise.all([
-      chargeCodeStore.fetch({ sort: "description", direction: "asc", perPage: 1000 }),
+      chargeCodeStore.fetchAll({ sort: "description", direction: "asc", perPage: 1000 }),
       loadSuppliers(),
     ])
   })

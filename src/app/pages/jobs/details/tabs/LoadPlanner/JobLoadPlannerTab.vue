@@ -16,6 +16,7 @@ const {
   jobRefLocal,
   vehicleLabel,
   vehicleTypeRequired,
+  loadSpaceRequiredMessage,
   goToTransportOrder,
   modeLabel,
   localPackages,
@@ -48,12 +49,11 @@ const {
       :closable="false"
       :draggable="false"
       class="job-load-planner-tab__vehicle-dialog"
-      header="Choose a vehicle type first"
+      header="Load space required"
     >
       <div class="job-load-planner-tab__vehicle-dialog-body">
         <p>
-          Load Space now comes from the Road Transport Order, so a vehicle type is required before
-          planning or printing the load.
+          {{ loadSpaceRequiredMessage }}
         </p>
 
         <button
