@@ -4,22 +4,7 @@ import { useReferenceDataStore } from "@/app/stores/reference-data"
 import { getPackageStackOption, setPackageStackOption } from "@/app/utils/packageStacking"
 
 import type { JobDetailsContext } from "../../JobDetailsPage.logic"
-
-export type PackageRow = {
-  id: number | string
-  package_type: string | null
-  description: string | null
-  stackable: boolean
-  atTheTop: boolean
-  adr: boolean
-  quantity: number
-  lengthCm: number
-  widthCm: number
-  heightCm: number
-  grossWeightKg: number
-  volumeWeightKg: number
-  cbm: number
-}
+import type { PackageRow } from "@/app/types/job-details"
 
 function createRow(defaultPackageType: string | null = "Pallet"): PackageRow {
   return {

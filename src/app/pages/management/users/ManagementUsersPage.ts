@@ -1,12 +1,6 @@
 import { computed } from "vue"
 import { useRoute } from "vue-router"
-
-type ManagementUsersTabName = "mgmt.users.employees" | "mgmt.users.system-access"
-
-type ManagementUsersTab = {
-  label: string
-  name: ManagementUsersTabName
-}
+import type { ManagementUsersTab } from "@/app/types/page-tabs"
 
 export function useManagementUsersPage() {
   const route = useRoute()

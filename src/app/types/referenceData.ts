@@ -24,3 +24,8 @@ export interface ReferenceDataCategory {
   created_at?: string
   updated_at?: string
 }
+
+export type CreateReferenceDataOptionPayload = {
+  name?: string
+  is_default?: boolean
+}

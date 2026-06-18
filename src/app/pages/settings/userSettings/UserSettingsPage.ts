@@ -1,12 +1,6 @@
 import { computed } from "vue"
 import { useRoute } from "vue-router"
-
-type UserSettingsTabName = "settings.user.signature" | "settings.user.shortcuts"
-
-type UserSettingsTab = {
-  label: string
-  name: UserSettingsTabName
-}
+import type { UserSettingsTab } from "@/app/types/page-tabs"
 
 export function useUserSettingsPage() {
   const route = useRoute()

@@ -1,5 +1,5 @@
 import { computed, nextTick, onMounted, onUnmounted, provide, reactive, ref, watch } from "vue"
-import { useRoute, useRouter } from "vue-router"
+import { onBeforeRouteLeave, onBeforeRouteUpdate, useRoute, useRouter } from "vue-router"
 import { useToast } from "primevue/usetoast"
 
 import { useTransportJobStore } from "@/app/stores/transport-job"
@@ -7,6 +7,15 @@ import { useContactStore } from "@/app/stores/contact"
 import { useReferenceDataStore } from "@/app/stores/reference-data"
 import type { Contact, ContactBranch, ContactCollectionAddress } from "@/app/types/contact"
 import contactsService from "@/app/services/contacts"
+import type {
+  AddressChoice,
+  AddressSelectOption,
+  AddressSourceType,
+  AddressTarget,
+  JobDetailsForm,
+  JobDetailsTab,
+  SelectOption,
+} from "@/app/types/job-details"
 
 import {
   TRANSPORT_MODES,
@@ -28,123 +37,11 @@ import {
   type JobRailDetail,
   type JobRoadDetail,
   type JobSeaDetail,
-  type JobType,
   type TransportJob,
   type TransportJobUpdatePayload,
   type TransportMode,
 } from "@/app/types/transport-job"
 import type { JobTransportAddressPayload } from "@/app/components/jobs/details/JobTransportTab/JobTransportAddressModal.vue"
-
-export type JobDetailsTab = {
-  label: string
-  name: string
-  key: string
-  showCount?: boolean
-}
-
-export type SelectOption = {
-  label: string
-  value: string
-}
-
-export type AddressTarget = "origin" | "destination"
-
-export type AddressSelectOption = {
-  label: string
-  value: number
-  address: ContactCollectionAddress
-}
-
-export type AddressSourceType = "collection_address" | "branch"
-
-export type AddressChoice = {
-  id: number
-  sourceType: AddressSourceType
-  label: string
-  ownerName: string
-  address_line_1: string | null
-  address_line_2: string | null
-  address_line_3: string | null
-  city: string | null
-  county_state: string | null
-  postal_code: string | null
-  country_id: number | null
-  country_name: string | null
-  contact_person: string | null
-  phone: string | null
-  email: string | null
-  is_collection: boolean
-  is_delivery: boolean
-  special_instructions: string | null
-}
-
-export type JobDetailsForm = {
-  customer_id: number | null
-  account_number: string
-  quote_ref: string
-  job_number: string
-  job_date: Date | null
-  job_type: JobType | ""
-  mode_of_transport: TransportMode | null
-  status: string
-  note: string
-
-  order_type: string
-  consignment_number: string
-  service_type: string
-  incoterms: string
-  currency: string
-  declared_value: number | null
-  description_of_goods: string
-  commodity_code: string
-  hs_code: string
-  insurance_level: string
-  is_hazardous: boolean | null
-  hazardous_class: string
-  un_number: string
-  temperature_requirement: string
-
-  customer_po_number: string
-  customer_booking_ref: string
-  our_reference: string
-  supplier_ref: string
-
-  consignee_name: string
-  consignee_contact: string
-  consignee_phone: string
-  consignee_email: string
-
-  origin_contact_collection_address_id: number | null
-  destination_contact_collection_address_id: number | null
-  destination_address_source_type: AddressSourceType | null
-  destination_address_source_id: number | null
-  collection_date: Date | null
-  collection_time: string
-  latest_collection_time: string
-  delivery_date: Date | null
-  delivery_from_time: string
-  delivery_by_time: string
-  loading_reference: string
-  delivery_booking_ref: string
-  collection_instructions: string
-  delivery_instructions: string
-
-  packages: any[]
-  charges: any[]
-  buy_costs: any[]
-  sell_costs: any[]
-  files: any[]
-
-  road_detail: JobRoadDetail
-  sea_detail: JobSeaDetail
-  air_detail: JobAirDetail
-  rail_detail: JobRailDetail
-  courier_detail: JobCourierDetail
-
-  transport_legs: any[]
-  multi_modal_legs: any[]
-  consolidation_details: JobConsolidationDetails
-}
 
 const jobRef = ref<TransportJob | null>(null)
 const savingRef = ref(false)
@@ -163,6 +60,9 @@ const customerOptionsLoadingRef = ref(false)
 const addressContactsLoadingRef = ref(false)
 let customerSearchTimer: ReturnType<typeof setTimeout> | null = null
 let addressContactSearchTimer: ReturnType<typeof setTimeout> | null = null
+
+const AUTOSAVE_IDLE_DELAY_MS = 30000
+const AUTOSAVE_ACTIVE_FIELD_RETRY_MS = 5000
 
 export type JobDetailsContext = {
   job: typeof jobRef
@@ -1069,7 +969,6 @@ export function useJobDetailsPage() {
   const loading = computed(() => initialLoadingRef.value)
   const saving = savingRef
   const lastSavedPayloadSnapshot = ref("")
-  const focusedPayloadSnapshot = ref<string | null>(null)
   const autosaveWatchSnapshot = ref("")
   const autosaveTimers = new Set<number>()
   let autosaveWatchTimer: number | null = null
@@ -1926,14 +1825,26 @@ export function useJobDetailsPage() {
     return true
   }
 
-  function onAutosaveFocusIn(event: FocusEvent) {
-    if (initialLoadingRef.value || saving.value || !jobId.value) return
-    if (!isAutosaveTarget(event.target)) return
+  function hasEditableFocus() {
+    if (typeof document === "undefined") return false
 
-    focusedPayloadSnapshot.value = currentPayloadSnapshot()
+    return isAutosaveTarget(document.activeElement)
   }
 
-  async function runAutosave(beforeSnapshot: string) {
+  function clearAutosaveTimers() {
+    autosaveTimers.forEach(timer => window.clearTimeout(timer))
+    autosaveTimers.clear()
+
+    if (autosaveWatchTimer !== null) {
+      window.clearTimeout(autosaveWatchTimer)
+      autosaveWatchTimer = null
+    }
+  }
+
+  async function runAutosave(
+    beforeSnapshot: string,
+    options: { requireBlurredField?: boolean; silent?: boolean } = {},
+  ) {
     await nextTick()
 
     const afterSnapshot = currentPayloadSnapshot()
@@ -1941,8 +1852,13 @@ export function useJobDetailsPage() {
     if (!beforeSnapshot || beforeSnapshot === afterSnapshot) return
     if (lastSavedPayloadSnapshot.value === afterSnapshot) return
 
+    if (options.requireBlurredField && hasEditableFocus()) {
+      scheduleAutosave(beforeSnapshot, AUTOSAVE_ACTIVE_FIELD_RETRY_MS, options)
+      return
+    }
+
     if (saving.value) {
-      scheduleAutosave(lastSavedPayloadSnapshot.value, 250)
+      scheduleAutosave(lastSavedPayloadSnapshot.value, AUTOSAVE_ACTIVE_FIELD_RETRY_MS, options)
       return
     }
 
@@ -1951,44 +1867,39 @@ export function useJobDetailsPage() {
         successSummary: "Autosaved",
         successDetail: autosaveSuccessDetail(beforeSnapshot, afterSnapshot),
         successLife: 1900,
+        silent: options.silent,
       })
     } catch {
       // save() already surfaces the exact error toast.
     }
   }
 
-  function scheduleAutosave(beforeSnapshot: string, delay = 80) {
+  function scheduleAutosave(
+    beforeSnapshot: string,
+    delay = AUTOSAVE_IDLE_DELAY_MS,
+    options: { requireBlurredField?: boolean; silent?: boolean } = {},
+  ) {
     const timer = window.setTimeout(() => {
       autosaveTimers.delete(timer)
-      runAutosave(beforeSnapshot)
+      runAutosave(beforeSnapshot, options)
     }, delay)
 
     autosaveTimers.add(timer)
   }
 
-  function onAutosaveFocusOut(event: FocusEvent) {
-    if (!isAutosaveTarget(event.target)) return
-
-    const beforeSnapshot = focusedPayloadSnapshot.value
-    focusedPayloadSnapshot.value = null
-
-    if (!beforeSnapshot) return
-
-    scheduleAutosave(beforeSnapshot)
-  }
-
-  function onAutosaveChange() {
+  async function flushAutosave(options: { silent?: boolean } = {}) {
     if (initialLoadingRef.value || saving.value || !jobId.value) return
 
-    const beforeSnapshot = focusedPayloadSnapshot.value || lastSavedPayloadSnapshot.value
+    const beforeSnapshot = lastSavedPayloadSnapshot.value
     if (!beforeSnapshot) return
 
-    scheduleAutosave(beforeSnapshot)
+    clearAutosaveTimers()
+    await runAutosave(beforeSnapshot, { silent: options.silent })
   }
 
-  function scheduleAutosaveFromCurrentState(delay = 80) {
+  function scheduleAutosaveFromCurrentState(delay = AUTOSAVE_IDLE_DELAY_MS) {
     if (initialLoadingRef.value || saving.value || !jobId.value) return
-    scheduleAutosave(lastSavedPayloadSnapshot.value, delay)
+    scheduleAutosave(lastSavedPayloadSnapshot.value, delay, { requireBlurredField: true })
   }
 
   function scheduleAutosaveFromWatcher() {
@@ -2014,8 +1925,8 @@ export function useJobDetailsPage() {
 
     autosaveWatchTimer = window.setTimeout(() => {
       autosaveWatchTimer = null
-      scheduleAutosave(lastSavedPayloadSnapshot.value, 80)
-    }, 250)
+      scheduleAutosave(lastSavedPayloadSnapshot.value, 0, { requireBlurredField: true })
+    }, AUTOSAVE_IDLE_DELAY_MS)
   }
 
   async function loadSelectedCustomer(customerId: number | null) {
@@ -2167,7 +2078,29 @@ export function useJobDetailsPage() {
 
   provide("jobDetails", context)
 
+  onBeforeRouteUpdate(async () => {
+    await flushAutosave()
+  })
+
+  onBeforeRouteLeave(async () => {
+    await flushAutosave()
+  })
+
+  function flushAutosaveSilently() {
+    void flushAutosave({ silent: true })
+  }
+
+  function flushAutosaveWhenHidden() {
+    if (document.visibilityState === "hidden") {
+      flushAutosaveSilently()
+    }
+  }
+
   onMounted(async () => {
+    document.addEventListener("visibilitychange", flushAutosaveWhenHidden)
+    window.addEventListener("pagehide", flushAutosaveSilently)
+    window.addEventListener("beforeunload", flushAutosaveSilently)
+
     initialLoadingRef.value = true
 
     try {
@@ -2179,6 +2112,11 @@ export function useJobDetailsPage() {
   })
 
   onUnmounted(() => {
+    flushAutosaveSilently()
+    document.removeEventListener("visibilitychange", flushAutosaveWhenHidden)
+    window.removeEventListener("pagehide", flushAutosaveSilently)
+    window.removeEventListener("beforeunload", flushAutosaveSilently)
+
     if (customerSearchTimer) {
       clearTimeout(customerSearchTimer)
       customerSearchTimer = null
@@ -2189,13 +2127,7 @@ export function useJobDetailsPage() {
       addressContactSearchTimer = null
     }
 
-    autosaveTimers.forEach(timer => window.clearTimeout(timer))
-    autosaveTimers.clear()
-
-    if (autosaveWatchTimer !== null) {
-      window.clearTimeout(autosaveWatchTimer)
-      autosaveWatchTimer = null
-    }
+    clearAutosaveTimers()
   })
 
   return {
@@ -2233,9 +2165,6 @@ export function useJobDetailsPage() {
 
     save,
     load,
-    onAutosaveFocusIn,
-    onAutosaveFocusOut,
-    onAutosaveChange,
     openAddressModal,
     createAndSelectAddress,
     onCustomerFilter,

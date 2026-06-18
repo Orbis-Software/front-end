@@ -7,31 +7,7 @@ import { useContactTypeStore } from "@/app/stores/contact-type"
 import type { ChargeCode } from "@/app/types/charge-code"
 import type { Contact } from "@/app/types/contact"
 import type { JobDetailsContext } from "../../JobDetailsPage.logic"
-
-export type BuyCostRow = {
-  id: number | string
-  type: "buy"
-  description: string
-  supplier_id: number | null
-  chargeCodeId: number | null
-  quantity: number
-  unitCost: number
-  currency: string
-  amount?: number | null
-}
-
-export type SellChargeRow = {
-  id: number | string
-  type: "sell"
-  description: string
-  chargeCodeId: number | null
-  chargeCode: string
-  quantity: number
-  unitPrice: number
-  currency: string
-  vatRate: number
-  amount?: number | null
-}
+import type { BuyCostRow, SellChargeRow } from "@/app/types/job-details"
 
 type SelectOption = {
   label: string
