@@ -67,6 +67,47 @@ export const useChargeCodeStore = defineStore("charge-codes", {
       }
     },
 
+    async fetchAll(params: ChargeCodeFilters = {}) {
+      this.loading = true
+      this.error = null
+
+      try {
+        const perPage = params.perPage ?? 1000
+        const firstResult = await chargeCodeService.list({
+          ...params,
+          page: 1,
+          perPage,
+        })
+        const chargeCodes = [...firstResult.chargeCodes]
+
+        for (let page = 2; page <= firstResult.meta.lastPage; page += 1) {
+          const result = await chargeCodeService.list({
+            ...params,
+            page,
+            perPage,
+          })
+
+          chargeCodes.push(...result.chargeCodes)
+        }
+
+        this.chargeCodes = chargeCodes
+        this.filters = firstResult.meta.filters
+        this.total = firstResult.meta.total
+        this.filtered = firstResult.meta.filtered
+        this.currentPage = 1
+        this.lastPage = firstResult.meta.lastPage
+        this.perPage = perPage
+        this.from = chargeCodes.length ? 1 : null
+        this.to = chargeCodes.length || null
+      } catch (error: any) {
+        this.error =
+          error?.response?.data?.message || error?.message || "Failed to load charge codes."
+        throw error
+      } finally {
+        this.loading = false
+      }
+    },
+
     async create(payload: ChargeCodePayload) {
       this.saving = true
       this.error = null

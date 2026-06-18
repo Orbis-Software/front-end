@@ -26,6 +26,7 @@ export function useGeneralSettingsTab(group: string) {
     await referenceDataStore.createOption(categoryKey, {
       name,
       is_default: payload?.is_default,
+      metadata: payload?.metadata,
     })
 
     newItemValues[categoryId] = ""

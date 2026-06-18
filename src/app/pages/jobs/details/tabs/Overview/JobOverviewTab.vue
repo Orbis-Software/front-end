@@ -809,7 +809,7 @@ const consolidationTransportRows = computed(() => {
           </label>
 
           <label class="job-overview-tab__field">
-            <span>Subcontractor Used?</span>
+            <span>Haulier Used?</span>
             <Dropdown
               v-model="form.road_detail.full_subcontractor_used"
               :options="yesNoOptions"

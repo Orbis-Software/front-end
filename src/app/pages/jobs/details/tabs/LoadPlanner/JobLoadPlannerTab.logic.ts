@@ -101,174 +101,117 @@ export function useJobLoadPlannerTab() {
   const DEFAULT_COLOR = "#ec691a"
 
   const SPACE_PRESETS: Record<string, SpacePreset> = {
-    road_standard: {
-      l: 1360,
-      w: 240,
-      h: 270,
-      maxWt: 26000,
-      mode: "road",
-      label: "Standard Curtainsider / Box (13.6 m)",
-    },
-    road_mega: {
-      l: 1360,
-      w: 240,
-      h: 300,
-      maxWt: 26000,
-      mode: "road",
-      label: "Mega Trailer (13.6 m)",
-    },
-    road_flatbed: {
-      l: 1360,
-      w: 240,
-      h: 400,
-      maxWt: 26000,
-      mode: "road",
-      label: "Flatbed (13.6 m)",
-    },
-    road_lowloader: { l: 1200, w: 300, h: 180, maxWt: 40000, mode: "road", label: "Low Loader" },
-    road_rigid18: { l: 900, w: 240, h: 250, maxWt: 11000, mode: "road", label: "Rigid 18t" },
-    road_rigid75: { l: 640, w: 230, h: 220, maxWt: 3500, mode: "road", label: "Rigid 7.5t" },
-    road_luton: { l: 380, w: 200, h: 185, maxWt: 900, mode: "road", label: "Luton / Box Van" },
-    road_sprinter: {
-      l: 290,
-      w: 165,
-      h: 165,
-      maxWt: 900,
-      mode: "road",
-      label: "Sprinter / Transit Van",
-    },
-    rail_fea: {
-      l: 1980,
-      w: 246,
-      h: 290,
-      maxWt: 68500,
-      mode: "rail",
-      label: "FEA Spine Wagon (UK)",
-    },
-    rail_ika: { l: 2092, w: 278, h: 290, maxWt: 70000, mode: "rail", label: "IKA Bogie Flat (UK)" },
-    rail_covered_eu: {
-      l: 2100,
-      w: 278,
-      h: 270,
-      maxWt: 58000,
-      mode: "rail",
-      label: "Covered Wagon Habiss (EU)",
-    },
-    rail_open_eu: {
-      l: 1400,
-      w: 280,
-      h: 180,
-      maxWt: 55000,
-      mode: "rail",
-      label: "Open Wagon Eaos (EU)",
-    },
-    rail_flat_eu: { l: 1980, w: 280, h: 400, maxWt: 60000, mode: "rail", label: "Flat Wagon (EU)" },
-    sea_20std: {
-      l: 589,
-      w: 235,
-      h: 239,
-      maxWt: 21700,
-      mode: "sea",
-      label: "20ft Standard Container",
-    },
-    sea_40std: {
-      l: 1203,
-      w: 235,
-      h: 239,
-      maxWt: 26580,
-      mode: "sea",
-      label: "40ft Standard Container",
-    },
-    sea_40hc: {
-      l: 1203,
-      w: 235,
-      h: 269,
-      maxWt: 26330,
-      mode: "sea",
-      label: "40ft High Cube Container",
-    },
-    sea_45hc: {
-      l: 1352,
-      w: 235,
-      h: 269,
-      maxWt: 27700,
-      mode: "sea",
-      label: "45ft High Cube Container",
-    },
-    sea_20reefer: {
-      l: 550,
-      w: 225,
-      h: 220,
-      maxWt: 20000,
-      mode: "sea",
-      label: "20ft Reefer Container",
-    },
-    sea_40reefer: {
-      l: 1167,
-      w: 225,
-      h: 220,
-      maxWt: 22000,
-      mode: "sea",
-      label: "40ft Reefer Container",
-    },
-    sea_20ot: {
-      l: 589,
-      w: 235,
-      h: 234,
-      maxWt: 21500,
-      mode: "sea",
-      label: "20ft Open Top Container",
-    },
-    sea_40ot: {
-      l: 1203,
-      w: 235,
-      h: 233,
-      maxWt: 26000,
-      mode: "sea",
-      label: "40ft Open Top Container",
-    },
-    sea_20fr: { l: 562, w: 222, h: 213, maxWt: 27000, mode: "sea", label: "20ft Flat Rack" },
-    sea_40fr: { l: 1203, w: 201, h: 213, maxWt: 39000, mode: "sea", label: "40ft Flat Rack" },
+    road_small_van: { l: 180, w: 150, h: 120, maxWt: 700, mode: "road", label: "Small Van (Transit Connect)" },
+    road_swb_van: { l: 240, w: 170, h: 140, maxWt: 900, mode: "road", label: "SWB Van" },
+    road_mwb_van: { l: 300, w: 170, h: 180, maxWt: 1000, mode: "road", label: "MWB Van" },
+    road_lwb_van: { l: 420, w: 175, h: 190, maxWt: 1200, mode: "road", label: "LWB Van" },
+    road_xlwb_van: { l: 470, w: 175, h: 200, maxWt: 1400, mode: "road", label: "Extra LWB Van" },
+    road_luton: { l: 400, w: 200, h: 210, maxWt: 900, mode: "road", label: "Luton Van" },
+    road_75t: { l: 600, w: 245, h: 240, maxWt: 3500, mode: "road", label: "7.5T Box Truck" },
+    road_12t: { l: 720, w: 245, h: 250, maxWt: 8000, mode: "road", label: "12T Box Truck" },
+    road_18t: { l: 850, w: 245, h: 260, maxWt: 11000, mode: "road", label: "18T Box Truck" },
+    road_curtainsider: { l: 1360, w: 248, h: 270, maxWt: 26000, mode: "road", label: "Curtainsider / Tautliner" },
+    road_box_trailer: { l: 1360, w: 248, h: 265, maxWt: 26000, mode: "road", label: "Box Trailer" },
+    road_mega: { l: 1362, w: 248, h: 294, maxWt: 26000, mode: "road", label: "Mega Trailer" },
+    road_doubledeck: { l: 1360, w: 248, h: 270, maxWt: 26000, mode: "road", label: "Double Deck Trailer" },
+    road_reefer: { l: 1360, w: 248, h: 260, maxWt: 24000, mode: "road", label: "Reefer Trailer" },
+    road_joloda: { l: 1360, w: 248, h: 270, maxWt: 26000, mode: "road", label: "Joloda Trailer" },
+    road_coil: { l: 1360, w: 248, h: 270, maxWt: 26000, mode: "road", label: "Coil Carrier" },
+    road_flatbed: { l: 1360, w: 248, h: 999, maxWt: 26000, mode: "road", label: "Flatbed Trailer (open)" },
+    road_stepframe: { l: 1360, w: 248, h: 999, maxWt: 30000, mode: "road", label: "Step Frame Trailer (open)" },
+    road_lowloader: { l: 1200, w: 300, h: 999, maxWt: 40000, mode: "road", label: "Low Loader (open)" },
+    road_extendable: { l: 1360, w: 248, h: 999, maxWt: 26000, mode: "road", label: "Extendable Trailer (open)" },
+    sea_10dry: { l: 283, w: 235, h: 239, maxWt: 10000, mode: "sea", label: "10' Dry" },
+    sea_20dry: { l: 590, w: 235, h: 239, maxWt: 21700, mode: "sea", label: "20' Dry" },
+    sea_20hc: { l: 590, w: 235, h: 269, maxWt: 21700, mode: "sea", label: "20' High Cube" },
+    sea_40dry: { l: 1203, w: 235, h: 239, maxWt: 26580, mode: "sea", label: "40' Dry" },
+    sea_40hc: { l: 1203, w: 235, h: 269, maxWt: 26330, mode: "sea", label: "40' High Cube" },
+    sea_45hc: { l: 1356, w: 235, h: 269, maxWt: 27700, mode: "sea", label: "45' High Cube" },
+    sea_20ot: { l: 589, w: 235, h: 235, maxWt: 21500, mode: "sea", label: "20' Open Top" },
+    sea_40ot: { l: 1203, w: 235, h: 235, maxWt: 26000, mode: "sea", label: "40' Open Top" },
+    sea_20fr: { l: 594, w: 235, h: 999, maxWt: 27000, mode: "sea", label: "20' Flat Rack (open)" },
+    sea_40fr: { l: 1213, w: 240, h: 999, maxWt: 39000, mode: "sea", label: "40' Flat Rack (open)" },
+    sea_20reefer: { l: 545, w: 229, h: 225, maxWt: 20000, mode: "sea", label: "20' Reefer" },
+    sea_40reefer_hc: { l: 1158, w: 229, h: 255, maxWt: 22000, mode: "sea", label: "40' Reefer HC" },
+    sea_iso_tank: { l: 590, w: 235, h: 235, maxWt: 20000, mode: "sea", label: "ISO Tank Container" },
+    rail_box_wagon: { l: 1449, w: 272, h: 210, maxWt: 58000, mode: "rail", label: "Box Wagon" },
+    rail_sliding_wall: { l: 1500, w: 275, h: 270, maxWt: 58000, mode: "rail", label: "Sliding Wall Wagon" },
+    rail_covered: { l: 1400, w: 270, h: 250, maxWt: 58000, mode: "rail", label: "Covered Wagon" },
+    rail_open_wagon: { l: 1200, w: 280, h: 999, maxWt: 55000, mode: "rail", label: "Open Wagon (open)" },
+    rail_highside: { l: 1200, w: 280, h: 200, maxWt: 55000, mode: "rail", label: "High-Side Wagon" },
+    rail_coil_wagon: { l: 1200, w: 280, h: 200, maxWt: 55000, mode: "rail", label: "Coil Wagon" },
+    rail_flat_wagon: { l: 1800, w: 280, h: 999, maxWt: 60000, mode: "rail", label: "Flat Wagon (open)" },
+    rail_container_60ft: { l: 1890, w: 240, h: 999, maxWt: 68500, mode: "rail", label: "Container Wagon (60ft, open)" },
+    rail_container_80ft: { l: 2400, w: 240, h: 999, maxWt: 70000, mode: "rail", label: "Container Wagon (80ft, open)" },
+    rail_pocket: { l: 1800, w: 240, h: 999, maxWt: 60000, mode: "rail", label: "Pocket Wagon (open)" },
+    rail_car_carrier: { l: 2600, w: 280, h: 300, maxWt: 60000, mode: "rail", label: "Car Carrier Wagon" },
   }
 
   const presetGroups = [
     {
       label: "Road Freight",
       keys: [
-        "road_standard",
-        "road_mega",
-        "road_flatbed",
-        "road_lowloader",
-        "road_rigid18",
-        "road_rigid75",
+        "road_small_van",
+        "road_swb_van",
+        "road_mwb_van",
+        "road_lwb_van",
+        "road_xlwb_van",
         "road_luton",
-        "road_sprinter",
+        "road_75t",
+        "road_12t",
+        "road_18t",
+        "road_curtainsider",
+        "road_box_trailer",
+        "road_mega",
+        "road_doubledeck",
+        "road_reefer",
+        "road_joloda",
+        "road_coil",
+        "road_flatbed",
+        "road_stepframe",
+        "road_lowloader",
+        "road_extendable",
       ],
     },
     {
       label: "Rail Freight",
-      keys: ["rail_fea", "rail_ika", "rail_covered_eu", "rail_open_eu", "rail_flat_eu"],
+      keys: [
+        "rail_box_wagon",
+        "rail_sliding_wall",
+        "rail_covered",
+        "rail_open_wagon",
+        "rail_highside",
+        "rail_coil_wagon",
+        "rail_flat_wagon",
+        "rail_container_60ft",
+        "rail_container_80ft",
+        "rail_pocket",
+        "rail_car_carrier",
+      ],
     },
     {
       label: "Sea Freight",
       keys: [
-        "sea_20std",
-        "sea_40std",
+        "sea_10dry",
+        "sea_20dry",
+        "sea_20hc",
+        "sea_40dry",
         "sea_40hc",
         "sea_45hc",
-        "sea_20reefer",
-        "sea_40reefer",
         "sea_20ot",
         "sea_40ot",
         "sea_20fr",
         "sea_40fr",
+        "sea_20reefer",
+        "sea_40reefer_hc",
+        "sea_iso_tank",
       ],
     },
   ]
 
   const activeView = ref<"2d" | "3d">("2d")
   const isPreparingPrint = ref(false)
-  const spacePresetKey = ref("road_standard")
+  const spacePresetKey = ref("road_curtainsider")
   const layout = ref<PlannerLayout | null>(null)
   const showPalBases = ref(true)
   const wireframe3d = ref(false)
@@ -314,15 +257,29 @@ export function useJobLoadPlannerTab() {
     return String(roadDetail?.vehicle_type ?? "").trim()
   })
 
+  const customVehicleDimensionsReady = computed(() => {
+    if (transportOrderVehicleType.value !== "Custom / Specialised Vehicle") return true
+
+    return Boolean(loadSpaceFromCustomRoadDetail())
+  })
+
   const isActiveLoadPlannerRoute = computed(() => route.name === "tms.jobs.show.load-planner")
 
   const vehicleTypeRequired = computed(() => {
     return (
       isActiveLoadPlannerRoute.value &&
       currentMode.value === "road" &&
-      !transportOrderVehicleType.value &&
+      (!transportOrderVehicleType.value || !customVehicleDimensionsReady.value) &&
       !vehicleTypeRedirecting.value
     )
+  })
+
+  const loadSpaceRequiredMessage = computed(() => {
+    if (transportOrderVehicleType.value === "Custom / Specialised Vehicle") {
+      return "Custom vehicle dimensions are required before planning or printing the load."
+    }
+
+    return "Load Space now comes from the Road Transport Order, so a vehicle type is required before planning or printing the load."
   })
 
   function goToTransportOrder() {
@@ -345,6 +302,12 @@ export function useJobLoadPlannerTab() {
 
   const vehicleLabel = computed(() => {
     if (currentMode.value === "road" && transportOrderVehicleType.value) {
+      const customLoadSpace = loadSpaceFromCustomRoadDetail()
+
+      if (customLoadSpace) {
+        return `${transportOrderVehicleType.value} (${customLoadSpace.l} x ${customLoadSpace.w} x ${customLoadSpace.h} cm)`
+      }
+
       return transportOrderVehicleType.value
     }
 
@@ -626,10 +589,29 @@ export function useJobLoadPlannerTab() {
     return loadSpaceFromMetadata((option as any)?.metadata)
   }
 
+  function loadSpaceFromCustomRoadDetail(): LoadSpaceDefinition | null {
+    const roadDetail = form.road_detail as any
+    const l = Number(roadDetail.vehicle_length_cm ?? 0)
+    const w = Number(roadDetail.vehicle_width_cm ?? 0)
+    const h = Number(roadDetail.vehicle_height_cm ?? 0)
+    const maxWt = Number(roadDetail.vehicle_max_weight_kg ?? 0)
+    const palH = Number(roadDetail.vehicle_pallet_base_cm ?? 15)
+
+    if (![l, w, h, maxWt].every(value => Number.isFinite(value) && value > 0)) return null
+
+    return {
+      l,
+      w,
+      h,
+      maxWt,
+      palH: Number.isFinite(palH) && palH >= 0 ? palH : 15,
+    }
+  }
+
   function loadSpaceFallbackForVehicle(vehicleType: string): LoadSpaceDefinition | null {
     const name = normalizeVehicleName(vehicleType)
     const fromPreset = (presetKey: string, palH = 15): LoadSpaceDefinition => {
-      const preset = SPACE_PRESETS[presetKey] ?? SPACE_PRESETS.road_standard!
+      const preset = SPACE_PRESETS[presetKey] ?? SPACE_PRESETS.road_curtainsider!
 
       return {
         l: preset.l,
@@ -644,37 +626,40 @@ export function useJobLoadPlannerTab() {
     if (name.includes("mega")) return fromPreset("road_mega")
     if (name.includes("flatbed")) return fromPreset("road_flatbed")
     if (name.includes("low loader")) return fromPreset("road_lowloader")
-    if (name.includes("rigid 18")) return fromPreset("road_rigid18")
+    if (name.includes("rigid 18") || name.includes("18t")) return fromPreset("road_18t")
     if (name.includes("rigid 26") || name === "rigid vehicle") {
       return { l: 920, w: 245, h: 260, maxWt: 15000, palH: 15 }
     }
-    if (name.includes("7 5") || name.includes("7 5t")) return fromPreset("road_rigid75")
+    if (name.includes("7 5") || name.includes("7 5t")) return fromPreset("road_75t")
     if (name.includes("luton") || name.includes("box van")) return fromPreset("road_luton")
-    if (name.includes("transit")) return { l: 340, w: 170, h: 180, maxWt: 1200, palH: 15 }
-    if (name.includes("small van")) return { l: 220, w: 140, h: 120, maxWt: 700, palH: 15 }
-    if (name.includes("sprinter")) return fromPreset("road_sprinter")
+    if (name.includes("extra lwb")) return fromPreset("road_xlwb_van")
+    if (name.includes("lwb")) return fromPreset("road_lwb_van")
+    if (name.includes("mwb")) return fromPreset("road_mwb_van")
+    if (name.includes("swb")) return fromPreset("road_swb_van")
+    if (name.includes("small van") || name.includes("transit connect")) return fromPreset("road_small_van")
+    if (name.includes("sprinter") || name.includes("transit")) return fromPreset("road_lwb_van")
     if (name.includes("car estate")) return { l: 180, w: 100, h: 80, maxWt: 400, palH: 0 }
     if (name.includes("motorbike")) return { l: 60, w: 40, h: 40, maxWt: 20, palH: 0 }
-    if (name.includes("40ft hc") || name.includes("40ft high cube")) return fromPreset("sea_40hc")
-    if (name.includes("40ft")) return fromPreset("sea_40std")
-    if (name.includes("20ft")) return fromPreset("sea_20std")
+    if (name.includes("40ft hc") || name.includes("40 high cube")) return fromPreset("sea_40hc")
+    if (name.includes("40ft") || name.includes("40 dry")) return fromPreset("sea_40dry")
+    if (name.includes("20ft") || name.includes("20 dry")) return fromPreset("sea_20dry")
     if (
       name.includes("artic") ||
       name.includes("13 6") ||
       name.includes("curtainsider") ||
       name.includes("refrigerated")
     ) {
-      return fromPreset("road_standard")
+      return fromPreset("road_curtainsider")
     }
 
     return null
   }
 
   function defaultPresetKeyForMode() {
-    if (currentMode.value === "sea") return "sea_40std"
-    if (currentMode.value === "rail") return "rail_fea"
+    if (currentMode.value === "sea") return "sea_40dry"
+    if (currentMode.value === "rail") return "rail_box_wagon"
 
-    return "road_standard"
+    return "road_curtainsider"
   }
 
   function applyLoadSpaceDefinition(definition: LoadSpaceDefinition) {
@@ -691,6 +676,7 @@ export function useJobLoadPlannerTab() {
   function applyLoadSpaceFromTransportOrder() {
     if (currentMode.value === "road" && transportOrderVehicleType.value) {
       const definition =
+        loadSpaceFromCustomRoadDetail() ??
         loadSpaceFromReferenceData(transportOrderVehicleType.value) ??
         loadSpaceFallbackForVehicle(transportOrderVehicleType.value)
 
@@ -1625,6 +1611,7 @@ export function useJobLoadPlannerTab() {
     jobRefLocal,
     vehicleLabel,
     vehicleTypeRequired,
+    loadSpaceRequiredMessage,
     goToTransportOrder,
     modeLabel,
     presetGroups,

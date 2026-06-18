@@ -28,4 +28,5 @@ export interface ReferenceDataCategory {
 export type CreateReferenceDataOptionPayload = {
   name?: string
   is_default?: boolean
+  metadata?: Record<string, unknown> | null
 }

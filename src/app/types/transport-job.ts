@@ -87,6 +87,7 @@ export interface JobRoadDetail {
   subcontractor_contact_phone?: string | null
   subcontractor_buy_rate?: number | null
   subcontractor_buy_currency?: string | null
+  subcontractor_charge_description?: string | null
   subcontractor_po_instruction_ref?: string | null
   subcontractor_status?: string | null
   subcontractor_notes?: string | null
@@ -95,6 +96,11 @@ export interface JobRoadDetail {
   full_route_via?: string | null
   service_type?: string | null
   vehicle_type?: string | null
+  vehicle_length_cm?: number | null
+  vehicle_width_cm?: number | null
+  vehicle_height_cm?: number | null
+  vehicle_max_weight_kg?: number | null
+  vehicle_pallet_base_cm?: number | null
   origin_city?: string | null
   destination_city?: string | null
   final_destination?: string | null

@@ -1,12 +1,15 @@
 import { computed, inject, onMounted, ref, watch } from "vue"
 import { storeToRefs } from "pinia"
 import { useGlobalReferenceDataStore } from "@/app/stores/global-reference-data"
+import { useChargeCodeStore } from "@/app/stores/charge-codes"
 import contactsService from "@/app/services/contacts"
 import globalReferenceDataService from "@/app/services/global-reference-data"
 import type { GlobalReferenceDataRow } from "@/app/types/globalReferenceData"
 import type { Contact } from "@/app/types/contact"
+import type { ChargeCode } from "@/app/types/charge-code"
 import type { useJobDetailsPage } from "../../JobDetailsPage.logic"
 import type {
+  BuyCostRow,
   JobTransportTabMode as TransportMode,
   MultiModalLeg,
   MultiModalLegMode,
@@ -37,6 +40,9 @@ type MultiDropStop = {
 }
 
 const GLOBAL_REFERENCE_OPTION_LIMIT = 150
+const HAULIER_COST_ROW_ID = "haulier-buy-rate"
+const HAULIER_COST_SOURCE = "road-haulier"
+const DEFAULT_HAULIER_CHARGE_DESCRIPTION = "Haulier Charge"
 
 function createLeg(): MultiModalLeg {
   return {
@@ -82,6 +88,19 @@ function displayContactName(contact: Contact): string {
   )
 }
 
+function normalizeDescription(value: unknown): string {
+  return String(value ?? "")
+    .trim()
+    .replace(/\s+/g, " ")
+    .toLowerCase()
+}
+
+function numberValue(value: unknown, fallback = 0): number {
+  const numeric = Number(value)
+
+  return Number.isFinite(numeric) ? numeric : fallback
+}
+
 function createMultiDropStop(): MultiDropStop {
   return {
     id: -Date.now() - Math.floor(Math.random() * 10000),
@@ -95,6 +114,7 @@ function createMultiDropStop(): MultiDropStop {
 export function useJobTransportTab() {
   const jobDetails = inject<ReturnType<typeof useJobDetailsPage>>("jobDetails")
   const globalReferenceDataStore = useGlobalReferenceDataStore()
+  const chargeCodeStore = useChargeCodeStore()
   const { data: globalReferenceData } = storeToRefs(globalReferenceDataStore)
   const contactOptionsLoading = ref(false)
   const contactOptions = ref<ContactOption[]>([])
@@ -104,12 +124,21 @@ export function useJobTransportTab() {
   )
   let globalReferenceFetchTimer: number | null = null
   let globalReferenceFetchToken = 0
+  const haulierBuyCostRowId = ref<number | string | null>(null)
+  const lastHaulierChargeDescription = ref("")
 
   if (!jobDetails) {
     throw new Error("Job details context is missing")
   }
 
   const { form, referenceOptions } = jobDetails
+
+  const haulierChargeDescriptionOptions = computed(() =>
+    chargeCodeStore.chargeCodes.map(charge => ({
+      label: charge.description,
+      value: charge.description,
+    })),
+  )
 
   const globalReferenceRows = computed(() => {
     const rows = [
@@ -475,6 +504,115 @@ export function useJobTransportTab() {
     ;(form.road_detail as any).subcontractor_name = selected?.label ?? ""
   }
 
+  function haulierChargeDescription() {
+    return (
+      String((form.road_detail as any).subcontractor_charge_description ?? "").trim() ||
+      DEFAULT_HAULIER_CHARGE_DESCRIPTION
+    )
+  }
+
+  function findChargeCodeByDescription(description: string): ChargeCode | null {
+    return (
+      chargeCodeStore.chargeCodes.find(charge => {
+        return normalizeDescription(charge.description) === normalizeDescription(description)
+      }) ?? null
+    )
+  }
+
+  function generatedHaulierDescriptions(description: string) {
+    return new Set(
+      [description, lastHaulierChargeDescription.value, DEFAULT_HAULIER_CHARGE_DESCRIPTION]
+        .map(normalizeDescription)
+        .filter(Boolean),
+    )
+  }
+
+  function rowUnitCost(row: BuyCostRow) {
+    return numberValue((row as any).unitCost ?? (row as any).unit_cost ?? row.amount)
+  }
+
+  function findHaulierBuyCostRow(description: string, supplierId: number | null, rate: number) {
+    const byRuntimeId = form.buy_costs.find(row => {
+      return row.id === haulierBuyCostRowId.value || row.id === HAULIER_COST_ROW_ID
+    })
+
+    if (byRuntimeId) return byRuntimeId
+
+    const descriptions = generatedHaulierDescriptions(description)
+
+    return (
+      form.buy_costs.find(row => {
+        const descriptionMatches = descriptions.has(normalizeDescription(row.description))
+        const supplierMatches =
+          !supplierId || !row.supplier_id || Number(row.supplier_id) === Number(supplierId)
+        const rateMatches = !rate || Math.abs(rowUnitCost(row) - rate) < 0.01
+
+        return (
+          (row as any).autoSource === HAULIER_COST_SOURCE ||
+          (descriptionMatches && supplierMatches && rateMatches)
+        )
+      }) ?? null
+    )
+  }
+
+  function removeHaulierBuyCostRow(row: BuyCostRow | null) {
+    if (!row) return
+
+    form.buy_costs = form.buy_costs.filter(cost => cost.id !== row.id)
+    haulierBuyCostRowId.value = null
+  }
+
+  function syncHaulierBuyCost() {
+    const roadDetail = form.road_detail as any
+    const description = haulierChargeDescription()
+    const rate = numberValue(roadDetail.subcontractor_buy_rate)
+    const supplierId = roadDetail.subcontractor_contact_id
+      ? Number(roadDetail.subcontractor_contact_id)
+      : null
+    const existingRow = findHaulierBuyCostRow(description, supplierId, rate)
+
+    if (!roadDetail.full_subcontractor_used || rate <= 0) {
+      removeHaulierBuyCostRow(existingRow)
+      lastHaulierChargeDescription.value = description
+      return
+    }
+
+    if (!roadDetail.subcontractor_charge_description) {
+      roadDetail.subcontractor_charge_description = description
+    }
+
+    const charge = findChargeCodeByDescription(description)
+    const row =
+      existingRow ??
+      ({
+        id: HAULIER_COST_ROW_ID,
+        type: "buy",
+        description,
+        supplier_id: supplierId,
+        chargeCodeId: null,
+        quantity: 1,
+        unitCost: 0,
+        currency: "GBP",
+        amount: 0,
+      } as BuyCostRow)
+
+    ;(row as any).autoSource = HAULIER_COST_SOURCE
+    row.description = description
+    row.supplier_id = supplierId
+    row.chargeCodeId = charge?.id ?? null
+    row.quantity = 1
+    row.unitCost = rate
+    row.currency = roadDetail.subcontractor_buy_currency || "GBP"
+    row.amount = rate
+
+    if (!existingRow) {
+      form.buy_costs.push(row)
+    }
+
+    haulierBuyCostRowId.value = row.id
+    lastHaulierChargeDescription.value = description
+  }
+
   async function loadContactOptions() {
     contactOptionsLoading.value = true
 
@@ -513,6 +651,19 @@ export function useJobTransportTab() {
   )
 
   watch(
+    () => [
+      (form.road_detail as any).full_subcontractor_used,
+      (form.road_detail as any).subcontractor_contact_id,
+      (form.road_detail as any).subcontractor_charge_description,
+      (form.road_detail as any).subcontractor_buy_rate,
+      (form.road_detail as any).subcontractor_buy_currency,
+      chargeCodeStore.chargeCodes.length,
+    ],
+    syncHaulierBuyCost,
+    { immediate: true },
+  )
+
+  watch(
     () => form.customer_id,
     customerId => {
       contactOptions.value = contactOptions.value.filter(
@@ -537,6 +688,9 @@ export function useJobTransportTab() {
     }
 
     await fetchGlobalReferenceOptions()
+    if (!chargeCodeStore.chargeCodes.length) {
+      await chargeCodeStore.fetchAll({ sort: "description", direction: "asc", perPage: 1000 })
+    }
     await loadContactOptions()
   })
 
@@ -552,6 +706,7 @@ export function useJobTransportTab() {
     roadTerminalOptions,
     cityOptions,
     referenceOptions,
+    haulierChargeDescriptionOptions,
     contactOptions,
     contactOptionsLoading,
     getLocationOptions,

@@ -515,6 +515,7 @@ function emptyRoadDetail(): JobRoadDetail {
     subcontractor_contact_phone: null,
     subcontractor_buy_rate: null,
     subcontractor_buy_currency: null,
+    subcontractor_charge_description: null,
     subcontractor_po_instruction_ref: null,
     subcontractor_status: null,
     subcontractor_notes: null,
@@ -523,6 +524,11 @@ function emptyRoadDetail(): JobRoadDetail {
     full_route_via: null,
     service_type: null,
     vehicle_type: null,
+    vehicle_length_cm: null,
+    vehicle_width_cm: null,
+    vehicle_height_cm: null,
+    vehicle_max_weight_kg: null,
+    vehicle_pallet_base_cm: null,
     origin_city: null,
     destination_city: null,
     final_destination: null,
@@ -1363,17 +1369,37 @@ export function useJobDetailsPage() {
     }),
 
     vehicleTypeOptions: computed<SelectOption[]>(() => {
-      return referenceOptionsFor("vehicle_types", [
-        { label: "Standard Trailer (13.6m)", value: "Standard Trailer (13.6m)" },
-        { label: "Curtainsider", value: "Curtainsider" },
-        { label: "Flatbed Trailer", value: "Flatbed Trailer" },
-        { label: "Refrigerated Trailer", value: "Refrigerated Trailer" },
+      const customOption = {
+        label: "Custom / Specialised Vehicle",
+        value: "Custom / Specialised Vehicle",
+      }
+      const options = referenceOptionsFor("vehicle_types", [
+        { label: "Curtainsider / Tautliner", value: "Curtainsider / Tautliner" },
+        { label: "Small Van (Transit Connect)", value: "Small Van (Transit Connect)" },
+        { label: "SWB Van", value: "SWB Van" },
+        { label: "MWB Van", value: "MWB Van" },
+        { label: "LWB Van", value: "LWB Van" },
+        { label: "Extra LWB Van", value: "Extra LWB Van" },
+        { label: "Luton Van", value: "Luton Van" },
+        { label: "7.5T Box Truck", value: "7.5T Box Truck" },
+        { label: "12T Box Truck", value: "12T Box Truck" },
+        { label: "18T Box Truck", value: "18T Box Truck" },
+        { label: "Box Trailer", value: "Box Trailer" },
         { label: "Mega Trailer", value: "Mega Trailer" },
-        { label: "Low Loader", value: "Low Loader" },
-        { label: "Rigid Vehicle", value: "Rigid Vehicle" },
-        { label: "Sprinter Van", value: "Sprinter Van" },
-        { label: "Luton Box Van", value: "Luton Box Van" },
+        { label: "Double Deck Trailer", value: "Double Deck Trailer" },
+        { label: "Reefer Trailer", value: "Reefer Trailer" },
+        { label: "Joloda Trailer", value: "Joloda Trailer" },
+        { label: "Coil Carrier", value: "Coil Carrier" },
+        { label: "Flatbed Trailer (open)", value: "Flatbed Trailer (open)" },
+        { label: "Step Frame Trailer (open)", value: "Step Frame Trailer (open)" },
+        { label: "Low Loader (open)", value: "Low Loader (open)" },
+        { label: "Extendable Trailer (open)", value: "Extendable Trailer (open)" },
+        customOption,
       ])
+
+      return options.some(option => option.value === customOption.value)
+        ? options
+        : [...options, customOption]
     }),
 
     palletTypeOptions: computed<SelectOption[]>(() => {

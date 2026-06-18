@@ -189,7 +189,7 @@ defineProps<{
           </div>
 
           <div class="road-field">
-            <label class="road-label">Subcontractor Used?</label>
+            <label class="road-label">Haulier Used?</label>
             <div class="road-yn">
               <button
                 type="button"
@@ -428,13 +428,13 @@ defineProps<{
 
     <div v-if="form.subcontractor_used === 'yes'" class="road-card road-card--transport">
       <div class="road-card__head">
-        <div class="road-card__title road-card__title--purple">Subcontractor Details</div>
+        <div class="road-card__title road-card__title--purple">Haulier Details</div>
       </div>
 
       <div class="road-card__body">
         <div class="road-grid road-grid--4">
           <div class="road-field">
-            <label class="road-label">Subcontractor Name</label>
+            <label class="road-label">Haulier Name</label>
             <input
               v-model="form.subcontractor_name"
               class="road-input"
@@ -444,7 +444,7 @@ defineProps<{
           </div>
 
           <div class="road-field">
-            <label class="road-label">Subcontractor Ref</label>
+            <label class="road-label">Haulier Ref</label>
             <input
               v-model="form.subcontractor_ref"
               class="road-input"
@@ -497,7 +497,7 @@ defineProps<{
           </div>
 
           <div class="road-field">
-            <label class="road-label">Subcon PO / Instruction Ref</label>
+            <label class="road-label">Haulier PO / Instruction Ref</label>
             <input
               v-model="form.subcon_po_instruction_ref"
               class="road-input"
@@ -507,7 +507,7 @@ defineProps<{
           </div>
 
           <div class="road-field">
-            <label class="road-label">Subcon Status</label>
+            <label class="road-label">Haulier Status</label>
             <select v-model="form.subcon_status" class="road-select" :disabled="disabled">
               <option value="">— Select —</option>
               <option>Pending Confirmation</option>
@@ -519,7 +519,7 @@ defineProps<{
           </div>
 
           <div class="road-field road-span-4">
-            <label class="road-label">Subcontractor Notes</label>
+            <label class="road-label">Haulier Notes</label>
             <textarea
               v-model="form.subcontractor_notes"
               class="road-textarea"
