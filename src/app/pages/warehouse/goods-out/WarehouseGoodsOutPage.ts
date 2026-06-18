@@ -1,10 +1,6 @@
 import { computed } from "vue"
 import { useRoute } from "vue-router"
-
-export type WarehouseGoodsOutTab = {
-  label: string
-  name: string
-}
+import type { WarehouseGoodsOutTab } from "@/app/types/page-tabs"
 
 export function useWarehouseGoodsOutPage() {
   const route = useRoute()

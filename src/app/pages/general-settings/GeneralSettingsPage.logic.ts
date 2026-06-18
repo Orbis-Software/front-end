@@ -1,13 +1,7 @@
 import { computed, onMounted } from "vue"
 import { useRoute } from "vue-router"
 import { useReferenceDataStore } from "@/app/stores/reference-data"
-
-export type GeneralSettingsTab = {
-  label: string
-  name: string
-  group?: string
-  count?: number
-}
+import type { GeneralSettingsTab } from "@/app/types/page-tabs"
 
 export function useGeneralSettingsPage() {
   const route = useRoute()

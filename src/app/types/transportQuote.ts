@@ -1,5 +1,11 @@
 export type QuoteStatus = "draft" | "sent" | "accepted" | "rejected" | "converted" | string
 
+export interface QuoteTypeSelectorItem {
+  key: string
+  title: string
+  subtitle: string
+}
+
 export interface TransportQuoteTotals {
   subtotal_sell: number | string | null
   subtotal_cost: number | string | null

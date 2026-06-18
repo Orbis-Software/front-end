@@ -12,7 +12,7 @@ import InputSwitch from "primevue/inputswitch"
 
 import type { JobDetailsContext } from "../../JobDetailsPage.logic"
 import JobTransportAddressModal from "@/app/components/jobs/details/JobTransportTab/JobTransportAddressModal.vue"
-import JobAddressPickerModal from "../../components/JobAddressPickerModal.vue"
+import JobAddressPickerModal from "@/app/components/jobs/details/JobAddressPickerModal.vue"
 import type { ContactCollectionAddress } from "@/app/types/contact"
 
 const context = inject<JobDetailsContext>("jobDetails")

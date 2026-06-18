@@ -2,7 +2,8 @@
 import "@/app/pages/wms/shared/WmsListTable.css"
 import { computed, reactive, ref } from "vue"
 import Button from "primevue/button"
-import { wmsAdminLists, type WmsRow } from "@/app/pages/wms/shared/wmsData"
+import { wmsAdminLists } from "@/app/pages/wms/shared/wmsData"
+import type { WmsRow } from "@/app/types/wms"
 
 const props = defineProps<{
   listKey: string

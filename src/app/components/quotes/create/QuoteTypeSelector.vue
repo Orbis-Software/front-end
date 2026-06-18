@@ -19,14 +19,10 @@
 </template>
 
 <script setup lang="ts">
-type CardItem = {
-  key: string
-  title: string
-  subtitle: string
-}
+import type { QuoteTypeSelectorItem } from "@/app/types/transportQuote"
 
 defineProps<{
-  items: CardItem[]
+  items: QuoteTypeSelectorItem[]
   selected: string | null
 }>()
 

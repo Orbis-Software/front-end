@@ -1,18 +1,7 @@
 import { computed } from "vue"
 import { useRoute } from "vue-router"
 import { useSystemSettingsStore } from "@/app/stores/system-settings"
-
-type SystemSettingsTabName =
-  | "settings.system.company"
-  | "settings.system.branding"
-  | "settings.system.email_notifications"
-  | "settings.system.master"
-  | "settings.system.awb_manager"
-
-type SystemSettingsTab = {
-  label: string
-  name: SystemSettingsTabName
-}
+import type { SystemSettingsTab } from "@/app/types/page-tabs"
 
 export function useSystemSettingsPage() {
   const route = useRoute()

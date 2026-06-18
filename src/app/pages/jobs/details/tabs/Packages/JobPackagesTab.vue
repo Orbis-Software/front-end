@@ -6,7 +6,8 @@ import Checkbox from "primevue/checkbox"
 import Dialog from "primevue/dialog"
 import Dropdown from "primevue/dropdown"
 import InputNumber from "primevue/inputnumber"
-import { useJobPackagesTab, type PackageRow } from "./JobPackagesTab.logic"
+import { useJobPackagesTab } from "./JobPackagesTab.logic"
+import type { PackageRow } from "@/app/types/job-details"
 
 const {
   rows,

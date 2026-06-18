@@ -32,9 +32,6 @@ const {
   initialLoading,
   saving,
   save,
-  onAutosaveFocusIn,
-  onAutosaveFocusOut,
-  onAutosaveChange,
   onCustomerFilter,
 } = useJobDetailsPage()
 
@@ -245,12 +242,7 @@ function onBookJob() {
 </script>
 
 <template>
-  <section
-    class="job-details-page"
-    @focusin.capture="onAutosaveFocusIn"
-    @focusout.capture="onAutosaveFocusOut"
-    @change.capture="onAutosaveChange"
-  >
+  <section class="job-details-page">
     <ConfirmDialog />
 
     <div class="job-header-card">

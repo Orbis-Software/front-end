@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import GeneralSettingsListTab from "./GeneralSettingsListTab.vue"
+import GeneralSettingsListTab from "@/app/components/general-settings/GeneralSettingsListTab.vue"
 </script>
 
 <template>

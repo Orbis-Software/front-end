@@ -1,10 +1,6 @@
 import { computed } from "vue"
 import { useRoute } from "vue-router"
-
-export type WmsAdminTab = {
-  label: string
-  name: string
-}
+import type { WmsAdminTab } from "@/app/types/page-tabs"
 
 export function useWmsAdminPage() {
   const route = useRoute()

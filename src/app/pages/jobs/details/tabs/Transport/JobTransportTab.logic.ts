@@ -6,47 +6,11 @@ import globalReferenceDataService from "@/app/services/global-reference-data"
 import type { GlobalReferenceDataRow } from "@/app/types/globalReferenceData"
 import type { Contact } from "@/app/types/contact"
 import type { useJobDetailsPage } from "../../JobDetailsPage.logic"
-
-export type TransportMode = "" | "road" | "rail" | "sea" | "air" | "courier" | "multi_modal"
-
-export type MultiModalLegMode = "road" | "rail" | "sea" | "air" | "courier"
-
-export type MultiModalLeg = {
-  id: number
-  mode: MultiModalLegMode
-
-  carrier: string
-  reference: string
-  origin: string
-  destination: string
-  etd: string
-  eta: string
-  notes: string
-
-  // Road
-  vehicle_type: string
-  driver_name: string
-  driver_mobile: string
-
-  // Sea
-  vessel: string
-  voyage: string
-  container: string
-
-  // Air
-  airline: string
-  flight: string
-  awb: string
-
-  // Rail
-  train: string
-  wagon: string
-
-  // Courier
-  tracking: string
-  service: string
-  extra_data: Record<string, any>
-}
+import type {
+  JobTransportTabMode as TransportMode,
+  MultiModalLeg,
+  MultiModalLegMode,
+} from "@/app/types/job-details"
 
 let legId = 1
 

@@ -749,8 +749,8 @@ import Checkbox from "primevue/checkbox"
 
 import ModeSelector from "@/app/components/jobs/ModeSelector.vue"
 import LoadPlannerPanel from "@/app/components/load-planner/LoadPlannerPanel.vue"
-import QuoteStepHeader from "./QuoteStepHeader.vue"
-import QuoteTypeSelector from "./QuoteTypeSelector.vue"
+import QuoteStepHeader from "@/app/components/quotes/create/QuoteStepHeader.vue"
+import QuoteTypeSelector from "@/app/components/quotes/create/QuoteTypeSelector.vue"
 import { useQuoteCreatePage } from "./QuoteCreatePage"
 
 const {
