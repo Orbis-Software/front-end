@@ -95,7 +95,7 @@ export function useAccountsChargeCodesSection() {
   }
 
   async function fetchChargeCodes() {
-    await chargeCodeStore.fetch(requestParams())
+    await chargeCodeStore.fetchAll(requestParams())
   }
 
   async function applyFilters() {
