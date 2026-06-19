@@ -1,6 +1,6 @@
 import http from "@/api/http"
 
-export type JobPdfDocument = "job_details" | "collection_order" | "transport_order"
+export type JobPdfDocument = "job_details" | "collection_order" | "transport_order" | "invoice"
 
 export default async function jobPdf(
   id: number,

@@ -203,7 +203,8 @@ function onArchive() {
   const label = form.job_number || job.value?.job_number || "this job"
 
   confirm.require({
-    message: `Archive ${label}?`,
+    group: "archive-job",
+    message: `Archive ${label}? It will be removed from active jobs and no longer treated as a live operational file. Job details, costs, documents and generated PDFs will stay saved. Use this only when the job is complete, cancelled or no longer active.`,
     header: "Archive Job",
     icon: "pi pi-exclamation-triangle",
     acceptLabel: "Archive",
@@ -243,7 +244,7 @@ function onBookJob() {
 
 <template>
   <section class="job-details-page">
-    <ConfirmDialog />
+    <ConfirmDialog group="archive-job" class="job-details-page__archive-dialog" />
 
     <div class="job-header-card">
       <div class="job-header-main">
