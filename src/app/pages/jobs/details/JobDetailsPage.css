@@ -400,6 +400,68 @@
 }
 
 /* =========================================
+   ARCHIVE CONFIRMATION
+========================================= */
+.job-details-page__archive-dialog.p-confirmdialog {
+  width: min(520px, calc(100vw - 32px));
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.job-details-page__archive-dialog .p-dialog-header {
+  padding: 18px 20px 8px;
+  border-bottom: none;
+}
+
+.job-details-page__archive-dialog .p-dialog-title {
+  color: #26364a;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.job-details-page__archive-dialog .p-dialog-header-close {
+  width: 32px;
+  height: 32px;
+}
+
+.job-details-page__archive-dialog .p-dialog-content {
+  align-items: flex-start;
+  gap: 14px;
+  padding: 10px 20px 18px;
+}
+
+.job-details-page__archive-dialog .p-confirmdialog-icon {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  color: #e86a1c;
+  font-size: 24px;
+}
+
+.job-details-page__archive-dialog .p-confirmdialog-message {
+  margin: 0;
+  color: #334155;
+  font-size: 14px;
+  line-height: 1.5;
+  max-width: 100%;
+}
+
+.job-details-page__archive-dialog .p-dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 0 20px 20px;
+  border-top: none;
+}
+
+.job-details-page__archive-dialog .p-dialog-footer .p-button {
+  min-width: 96px;
+  height: 38px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+/* =========================================
    RESPONSIVE
 ========================================= */
 @media (max-width: 1200px) {
@@ -457,5 +519,14 @@
 
   .job-content-shell {
     padding: 0.75rem;
+  }
+
+  .job-details-page__archive-dialog .p-dialog-content {
+    gap: 10px;
+    padding-inline: 16px;
+  }
+
+  .job-details-page__archive-dialog .p-dialog-footer {
+    padding-inline: 16px;
   }
 }

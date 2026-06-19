@@ -36,6 +36,16 @@ export const useExchangeRateStore = defineStore("exchange-rates", {
   }),
 
   actions: {
+    upsertCached(exchangeRate: ExchangeRate) {
+      const index = this.exchangeRates.findIndex(item => item.id === exchangeRate.id)
+
+      if (index >= 0) {
+        this.exchangeRates[index] = exchangeRate
+      } else {
+        this.exchangeRates.unshift(exchangeRate)
+      }
+    },
+
     async fetch(params: ExchangeRateFilters = {}) {
       this.loading = true
       this.error = null
@@ -64,7 +74,12 @@ export const useExchangeRateStore = defineStore("exchange-rates", {
       this.error = null
 
       try {
-        return await exchangeRateService.create(payload)
+        const exchangeRate = await exchangeRateService.create(payload)
+        this.upsertCached(exchangeRate)
+        this.total += 1
+        this.filtered += 1
+
+        return exchangeRate
       } catch (error: any) {
         this.error =
           error?.response?.data?.message || error?.message || "Failed to create exchange rate."
@@ -79,7 +94,10 @@ export const useExchangeRateStore = defineStore("exchange-rates", {
       this.error = null
 
       try {
-        return await exchangeRateService.update(id, payload)
+        const exchangeRate = await exchangeRateService.update(id, payload)
+        this.upsertCached(exchangeRate)
+
+        return exchangeRate
       } catch (error: any) {
         this.error =
           error?.response?.data?.message || error?.message || "Failed to update exchange rate."
@@ -95,6 +113,13 @@ export const useExchangeRateStore = defineStore("exchange-rates", {
 
       try {
         await exchangeRateService.remove(id)
+        const before = this.exchangeRates.length
+        this.exchangeRates = this.exchangeRates.filter(item => item.id !== id)
+
+        if (this.exchangeRates.length !== before) {
+          this.total = Math.max(0, this.total - 1)
+          this.filtered = Math.max(0, this.filtered - 1)
+        }
       } catch (error: any) {
         this.error =
           error?.response?.data?.message || error?.message || "Failed to delete exchange rate."

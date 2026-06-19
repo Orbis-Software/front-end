@@ -5,6 +5,7 @@ import contactsService from "@/app/services/contacts"
 import { useChargeCodeStore } from "@/app/stores/charge-codes"
 import { useExchangeRateStore } from "@/app/stores/exchange-rates"
 import { useTaxCodeStore } from "@/app/stores/tax-codes"
+import { useTransportJobStore } from "@/app/stores/transport-job"
 import type { ChargeCode } from "@/app/types/charge-code"
 import type { Contact } from "@/app/types/contact"
 import type { JobDetailsContext } from "../../JobDetailsPage.logic"
@@ -52,6 +53,14 @@ function numberValue(value: unknown, fallback = 0): number {
   const numeric = Number(value)
 
   return Number.isFinite(numeric) ? numeric : fallback
+}
+
+function currencyCode(value: unknown): string {
+  return (
+    String(value || "GBP")
+      .trim()
+      .toUpperCase() || "GBP"
+  )
 }
 
 function labelValue(value: unknown): string {
@@ -141,8 +150,10 @@ export function useJobCostsTab() {
   const chargeCodeStore = useChargeCodeStore()
   const exchangeRateStore = useExchangeRateStore()
   const taxCodeStore = useTaxCodeStore()
+  const transportJobStore = useTransportJobStore()
   const supplierContacts = ref<Contact[]>([])
   const suppliersLoading = ref(false)
+  const invoiceLoading = ref(false)
   const addChargeCodeDialogVisible = ref(false)
   const addChargeCodeSaving = ref(false)
   const pendingChargeCodeDescription = ref("")
@@ -154,6 +165,7 @@ export function useJobCostsTab() {
 
   const buyRows = computed<BuyCostRow[]>(() => context.form.buy_costs.map(hydrateBuyRow))
   const sellRows = computed<SellChargeRow[]>(() => context.form.sell_costs.map(hydrateSellRow))
+  const jobCurrency = computed(() => currencyCode(context.form.currency || "GBP"))
 
   const currencyOptions = computed<SelectOption[]>(() => {
     const options = [
@@ -399,26 +411,24 @@ export function useJobCostsTab() {
     scheduleMissingChargeDescriptionCheck()
   }
 
-  function rowChargeCode(row: SellChargeRow): string {
-    const charge = eligibleChargeCodes.value.find(item => {
-      return item.id === row.chargeCodeId || item.description === row.description
-    })
+  function exchangeRateTooltip(row: CostRow): string {
+    const from = currencyCode(row.currency)
+    const to = jobCurrency.value
 
-    return charge?.salesNominal || row.chargeCode || ""
+    if (from === to) return `No exchange rate is needed because this line is already in ${to}.`
+
+    if (missingExchangeRate(row)) {
+      return `Missing ${from} to ${to} exchange rate. Add or update this in Accounts > Exchange Rates.`
+    }
+
+    return `Exchange rate is managed in Accounts > Exchange Rates. Change it there to update Costs & Charges.`
   }
 
-  function buyTotal(row: BuyCostRow): number {
-    return numberValue(row.quantity) * numberValue(row.unitCost)
-  }
+  function exchangeRateForCurrency(currency: string | null | undefined): number | null {
+    const code = currencyCode(currency)
+    const target = jobCurrency.value
 
-  function sellTotal(row: SellChargeRow): number {
-    return numberValue(row.quantity) * numberValue(row.unitPrice)
-  }
-
-  function exchangeRateForCurrency(currency: string | null | undefined): number {
-    const code = String(currency || "GBP").toUpperCase()
-
-    if (!code || code === "GBP") return 1
+    if (!code || code === target) return 1
 
     const rates = exchangeRateStore.exchangeRates
       .filter(rate => rate.isActive !== false)
@@ -430,53 +440,81 @@ export function useJobCostsTab() {
         return rightDate - leftDate || Number(right.id ?? 0) - Number(left.id ?? 0)
       })
     const direct = rates.find(rate => {
-      return rate.base?.toUpperCase() === code && rate.quote?.toUpperCase() === "GBP"
+      return rate.base?.toUpperCase() === code && rate.quote?.toUpperCase() === target
     })
 
-    if (direct) return numberValue(direct.rate, 1) || 1
+    if (direct) {
+      const directRate = numberValue(direct.rate, 0)
+
+      return directRate > 0 ? directRate : null
+    }
 
     const inverse = rates.find(rate => {
-      return rate.base?.toUpperCase() === "GBP" && rate.quote?.toUpperCase() === code
+      return rate.base?.toUpperCase() === target && rate.quote?.toUpperCase() === code
     })
     const inverseRate = numberValue(inverse?.rate, 0)
 
-    return inverseRate > 0 ? 1 / inverseRate : 1
-  }
-
-  function shouldSyncExchangeRate(row: CostRow): boolean {
-    const currency = String(row.currency || "GBP").toUpperCase()
-    const stored = numberValue((row as any).exchangeRate ?? (row as any).exchange_rate, 0)
-
-    if (!currency || currency === "GBP") {
-      return stored !== 1
-    }
-
-    return stored <= 0 || stored === 1
+    return inverseRate > 0 ? 1 / inverseRate : null
   }
 
   function effectiveExchangeRate(row: CostRow): number {
     const stored = numberValue((row as any).exchangeRate ?? (row as any).exchange_rate, 0)
 
-    return stored > 0 ? stored : exchangeRateForCurrency(row.currency)
+    return stored > 0 ? stored : (exchangeRateForCurrency(row.currency) ?? 0)
+  }
+
+  function missingExchangeRate(row: CostRow): boolean {
+    return exchangeRateForCurrency(row.currency) === null
+  }
+
+  function formatExchangeRate(row: CostRow): string {
+    if (missingExchangeRate(row)) return "Missing"
+
+    return effectiveExchangeRate(row).toFixed(4)
+  }
+
+  function lineNet(row: CostRow): number {
+    const unit = row.type === "buy" ? numberValue(row.unitCost) : numberValue(row.unitPrice)
+
+    return numberValue(row.quantity) * unit
   }
 
   function lineNetGbp(row: CostRow): number {
-    const unit = row.type === "buy" ? numberValue(row.unitCost) : numberValue(row.unitPrice)
-
-    return numberValue(row.quantity) * unit * effectiveExchangeRate(row)
+    return lineNet(row) * effectiveExchangeRate(row)
   }
 
   function sellVat(row: SellChargeRow): number {
     const vatRate = numberValue(row.vatRate)
 
+    return vatRate > 0 ? lineNet(row) * (vatRate / 100) : 0
+  }
+
+  function sellVatGbp(row: SellChargeRow): number {
+    const vatRate = numberValue(row.vatRate)
+
     return vatRate > 0 ? lineNetGbp(row) * (vatRate / 100) : 0
   }
 
-  function formatMoney(value: number): string {
-    return new Intl.NumberFormat("en-GB", {
-      style: "currency",
-      currency: "GBP",
-    }).format(Number.isFinite(value) ? value : 0)
+  function formatMoney(value: number, currency = "GBP"): string {
+    const safeValue = Number.isFinite(value) ? value : 0
+    const code = currencyCode(currency)
+
+    try {
+      return new Intl.NumberFormat("en-GB", {
+        style: "currency",
+        currency: code,
+        currencyDisplay: "narrowSymbol",
+      }).format(safeValue)
+    } catch {
+      return `${code} ${new Intl.NumberFormat("en-GB", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }).format(safeValue)}`
+    }
+  }
+
+  function formatRowMoney(row: CostRow, value: number): string {
+    return formatMoney(value, row.currency)
   }
 
   function applyTaxCode(row: SellChargeRow, taxCode: string | number | null) {
@@ -496,8 +534,94 @@ export function useJobCostsTab() {
     row.taxCode = selected ? String(selected.value ?? "") : ""
   }
 
-  function syncLineExchangeRate(row: CostRow) {
-    row.exchangeRate = exchangeRateForCurrency(row.currency)
+  function syncLineExchangeRate(row: CostRow, notify = true) {
+    const rate = exchangeRateForCurrency(row.currency)
+
+    row.exchangeRate = rate ?? 0
+
+    if (rate === null && notify) {
+      toast.add({
+        severity: "warn",
+        summary: "Missing exchange rate",
+        detail: `Add ${currencyCode(row.currency)} to ${jobCurrency.value} in Accounts > Exchange Rates before using this line in totals.`,
+        life: 4500,
+      })
+    }
+  }
+
+  async function extractPdfError(error: any) {
+    const data = error?.response?.data
+
+    if (data instanceof Blob) {
+      const text = await data.text()
+
+      try {
+        const parsed = JSON.parse(text)
+        return parsed?.message ?? text
+      } catch {
+        return text || "Unable to generate the invoice PDF."
+      }
+    }
+
+    return error?.response?.data?.message ?? error?.message ?? "Unable to generate the invoice PDF."
+  }
+
+  function openInvoiceBlob(blob: Blob) {
+    const url = URL.createObjectURL(blob)
+    window.open(url, "_blank", "noopener,noreferrer")
+    window.setTimeout(() => URL.revokeObjectURL(url), 60000)
+  }
+
+  async function generateInvoice() {
+    const id = Number(context.job.value?.id)
+
+    if (!Number.isFinite(id) || id <= 0) {
+      toast.add({
+        severity: "warn",
+        summary: "Save job first",
+        detail: "The job must be saved before an invoice can be generated.",
+        life: 3500,
+      })
+      return
+    }
+
+    if (!sellRows.value.length) {
+      toast.add({
+        severity: "warn",
+        summary: "No sell charges",
+        detail: "Add at least one sell charge before generating the invoice.",
+        life: 3500,
+      })
+      return
+    }
+
+    invoiceLoading.value = true
+
+    try {
+      await context.save({
+        successSummary: "Invoice ready",
+        successDetail: "Costs & Charges saved before generating the invoice.",
+        successLife: 1800,
+      })
+
+      const blob = await transportJobStore.jobPdf(id, "invoice")
+
+      if (!(blob instanceof Blob) || blob.type !== "application/pdf") {
+        const text = blob instanceof Blob ? await blob.text() : ""
+        throw new Error(text || "The server did not return a PDF.")
+      }
+
+      openInvoiceBlob(blob)
+    } catch (error: any) {
+      toast.add({
+        severity: "error",
+        summary: "Invoice failed",
+        detail: await extractPdfError(error),
+        life: 4500,
+      })
+    } finally {
+      invoiceLoading.value = false
+    }
   }
 
   function requestRemoveRow(row: CostRow) {
@@ -553,8 +677,9 @@ export function useJobCostsTab() {
   const totals = computed(() => {
     const totalBuy = buyRows.value.reduce((sum, row) => sum + lineNetGbp(row), 0)
     const totalSell = sellRows.value.reduce((sum, row) => sum + lineNetGbp(row), 0)
-    const totalVat = sellRows.value.reduce((sum, row) => sum + sellVat(row), 0)
+    const totalVat = sellRows.value.reduce((sum, row) => sum + sellVatGbp(row), 0)
     const margin = totalSell - totalBuy
+    const missingExchangeRates = [...buyRows.value, ...sellRows.value].filter(missingExchangeRate)
 
     return {
       totalBuy,
@@ -564,6 +689,7 @@ export function useJobCostsTab() {
       totalVat,
       grandTotal: totalSell + totalVat,
       hasVat: totalVat > 0 || sellRows.value.some(row => numberValue(row.vatRate) > 0),
+      missingExchangeRates: missingExchangeRates.length,
     }
   })
 
@@ -573,14 +699,14 @@ export function useJobCostsTab() {
   watch(
     () => exchangeRateStore.exchangeRates,
     () => {
-      ;[...buyRows.value, ...sellRows.value].forEach(row => {
-        if (shouldSyncExchangeRate(row)) {
-          syncLineExchangeRate(row)
-        }
-      })
+      ;[...buyRows.value, ...sellRows.value].forEach(row => syncLineExchangeRate(row, false))
     },
     { deep: true },
   )
+
+  watch(jobCurrency, () => {
+    ;[...buyRows.value, ...sellRows.value].forEach(row => syncLineExchangeRate(row, false))
+  })
 
   onMounted(async () => {
     await Promise.all([
@@ -600,6 +726,7 @@ export function useJobCostsTab() {
     buyRows,
     sellRows,
     totals,
+    jobCurrency,
     currencyOptions,
     taxCodeOptions,
     vatRateOptions,
@@ -609,6 +736,7 @@ export function useJobCostsTab() {
     suppliersLoading,
     addChargeCodeDialogVisible,
     addChargeCodeSaving,
+    invoiceLoading,
     pendingChargeCodeDescription,
     primaryJobChargeClassification,
     deleteDialogVisible,
@@ -627,14 +755,17 @@ export function useJobCostsTab() {
     requestRemoveRow,
     cancelRemoveRow,
     confirmRemoveRow,
-    rowChargeCode,
-    buyTotal,
-    sellTotal,
+    lineNet,
     lineNetGbp,
     sellVat,
     formatMoney,
+    formatRowMoney,
+    formatExchangeRate,
+    exchangeRateTooltip,
+    missingExchangeRate,
     applyTaxCode,
     applyVatRate,
     syncLineExchangeRate,
+    generateInvoice,
   }
 }

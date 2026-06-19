@@ -4,13 +4,13 @@ import Button from "primevue/button"
 import Dialog from "primevue/dialog"
 import Dropdown from "primevue/dropdown"
 import InputNumber from "primevue/inputnumber"
-import InputText from "primevue/inputtext"
 import { useJobCostsTab } from "./JobCostsTab.logic"
 
 const {
   buyRows,
   sellRows,
   totals,
+  jobCurrency,
   currencyOptions,
   vatRateOptions,
   chargeDescriptionOptions,
@@ -19,6 +19,7 @@ const {
   suppliersLoading,
   addChargeCodeDialogVisible,
   addChargeCodeSaving,
+  invoiceLoading,
   pendingChargeCodeDescription,
   primaryJobChargeClassification,
   deleteDialogVisible,
@@ -35,12 +36,16 @@ const {
   requestRemoveRow,
   cancelRemoveRow,
   confirmRemoveRow,
-  rowChargeCode,
-  lineNetGbp,
+  lineNet,
   sellVat,
   formatMoney,
+  formatRowMoney,
+  formatExchangeRate,
+  exchangeRateTooltip,
+  missingExchangeRate,
   applyVatRate,
   syncLineExchangeRate,
+  generateInvoice,
 } = useJobCostsTab()
 </script>
 
@@ -73,7 +78,7 @@ const {
               <th>Unit Cost</th>
               <th>Currency</th>
               <th>Ex. Rate</th>
-              <th>Net (GBP)</th>
+              <th>Net</th>
               <th />
             </tr>
           </thead>
@@ -137,14 +142,17 @@ const {
                 />
               </td>
               <td>
-                <InputNumber
-                  v-model="row.exchangeRate"
-                  :min="0"
-                  :min-fraction-digits="4"
-                  :max-fraction-digits="6"
-                />
+                <div
+                  class="job-costs-tab__exchange-rate"
+                  :class="{ 'job-costs-tab__exchange-rate--missing': missingExchangeRate(row) }"
+                  :title="exchangeRateTooltip(row)"
+                  tabindex="0"
+                >
+                  <span>{{ formatExchangeRate(row) }}</span>
+                  <i v-if="missingExchangeRate(row)" class="pi pi-exclamation-triangle" />
+                </div>
               </td>
-              <td class="job-costs-tab__computed">{{ formatMoney(lineNetGbp(row)) }}</td>
+              <td class="job-costs-tab__computed">{{ formatRowMoney(row, lineNet(row)) }}</td>
               <td>
                 <Button
                   type="button"
@@ -169,13 +177,25 @@ const {
           <p>Customer charges and revenue lines.</p>
         </div>
 
-        <Button
-          type="button"
-          class="job-costs-tab__add-btn"
-          label="Add Charge Line"
-          icon="pi pi-plus"
-          @click="addSellRow"
-        />
+        <div class="job-costs-tab__section-actions">
+          <Button
+            type="button"
+            class="job-costs-tab__invoice-btn"
+            label="Generate Invoice"
+            icon="pi pi-receipt"
+            :loading="invoiceLoading"
+            :disabled="invoiceLoading"
+            @click="generateInvoice"
+          />
+
+          <Button
+            type="button"
+            class="job-costs-tab__add-btn"
+            label="Add Charge Line"
+            icon="pi pi-plus"
+            @click="addSellRow"
+          />
+        </div>
       </header>
 
       <div class="job-costs-tab__table-wrap">
@@ -184,13 +204,12 @@ const {
             <tr>
               <th>#</th>
               <th>Charge Description</th>
-              <th>Charge Code</th>
               <th>Qty</th>
               <th>Unit Price</th>
               <th>Currency</th>
               <th>Ex. Rate</th>
               <th>VAT %</th>
-              <th>Net (GBP)</th>
+              <th>Net</th>
               <th v-if="totals.hasVat">VAT</th>
               <th v-if="totals.hasVat">Gross</th>
               <th />
@@ -220,7 +239,6 @@ const {
                   @blur="scheduleMissingChargeDescriptionCheck"
                 />
               </td>
-              <td><InputText :model-value="rowChargeCode(row)" placeholder="Code" readonly /></td>
               <td>
                 <InputNumber v-model="row.quantity" :min="0" />
               </td>
@@ -244,12 +262,15 @@ const {
                 />
               </td>
               <td>
-                <InputNumber
-                  v-model="row.exchangeRate"
-                  :min="0"
-                  :min-fraction-digits="4"
-                  :max-fraction-digits="6"
-                />
+                <div
+                  class="job-costs-tab__exchange-rate"
+                  :class="{ 'job-costs-tab__exchange-rate--missing': missingExchangeRate(row) }"
+                  :title="exchangeRateTooltip(row)"
+                  tabindex="0"
+                >
+                  <span>{{ formatExchangeRate(row) }}</span>
+                  <i v-if="missingExchangeRate(row)" class="pi pi-exclamation-triangle" />
+                </div>
               </td>
               <td>
                 <Dropdown
@@ -262,12 +283,12 @@ const {
                   @change="applyVatRate(row, row.vatRate)"
                 />
               </td>
-              <td class="job-costs-tab__computed">{{ formatMoney(lineNetGbp(row)) }}</td>
+              <td class="job-costs-tab__computed">{{ formatRowMoney(row, lineNet(row)) }}</td>
               <td v-if="totals.hasVat" class="job-costs-tab__computed">
-                {{ formatMoney(sellVat(row)) }}
+                {{ formatRowMoney(row, sellVat(row)) }}
               </td>
               <td v-if="totals.hasVat" class="job-costs-tab__computed">
-                {{ formatMoney(lineNetGbp(row) + sellVat(row)) }}
+                {{ formatRowMoney(row, lineNet(row) + sellVat(row)) }}
               </td>
               <td>
                 <Button
@@ -286,20 +307,31 @@ const {
       </div>
     </div>
 
+    <div v-if="totals.missingExchangeRates" class="job-costs-tab__exchange-warning">
+      <i class="pi pi-exclamation-triangle" />
+      <span>
+        {{ totals.missingExchangeRates }} cost line{{
+          totals.missingExchangeRates === 1 ? "" : "s"
+        }}
+        missing exchange rates to {{ jobCurrency }}. Add them in Accounts &gt; Exchange Rates before
+        relying on converted totals.
+      </span>
+    </div>
+
     <div class="job-costs-tab__summary">
       <div class="job-costs-tab__summary-row">
-        <span>Total Revenue (Net)</span>
-        <strong>{{ formatMoney(totals.totalSell) }}</strong>
+        <span>Total Revenue (Net {{ jobCurrency }})</span>
+        <strong>{{ formatMoney(totals.totalSell, jobCurrency) }}</strong>
       </div>
 
       <div class="job-costs-tab__summary-row">
-        <span>Total Cost (Net)</span>
-        <strong>{{ formatMoney(totals.totalBuy) }}</strong>
+        <span>Total Cost (Net {{ jobCurrency }})</span>
+        <strong>{{ formatMoney(totals.totalBuy, jobCurrency) }}</strong>
       </div>
 
       <div class="job-costs-tab__summary-row">
-        <span>Gross Margin (£)</span>
-        <strong>{{ formatMoney(totals.margin) }}</strong>
+        <span>Gross Margin ({{ jobCurrency }})</span>
+        <strong>{{ formatMoney(totals.margin, jobCurrency) }}</strong>
       </div>
 
       <div class="job-costs-tab__summary-row">
@@ -308,16 +340,16 @@ const {
       </div>
 
       <div v-if="totals.hasVat" class="job-costs-tab__summary-row">
-        <span>Total VAT</span>
-        <strong>{{ formatMoney(totals.totalVat) }}</strong>
+        <span>Total VAT ({{ jobCurrency }})</span>
+        <strong>{{ formatMoney(totals.totalVat, jobCurrency) }}</strong>
       </div>
 
       <div
         v-if="totals.hasVat"
         class="job-costs-tab__summary-row job-costs-tab__summary-row--total"
       >
-        <span>Grand Total (inc. VAT)</span>
-        <strong>{{ formatMoney(totals.grandTotal) }}</strong>
+        <span>Grand Total (inc. VAT {{ jobCurrency }})</span>
+        <strong>{{ formatMoney(totals.grandTotal, jobCurrency) }}</strong>
       </div>
     </div>
 
