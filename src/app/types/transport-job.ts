@@ -80,6 +80,36 @@ export interface JobRoadDetail {
   customs_goods_procedure_code?: string | null
   customs_export_licence_no?: string | null
   customs_notes?: string | null
+  customs_paperwork_company?: string | null
+  customs_paperwork_address_line_1?: string | null
+  customs_paperwork_city?: string | null
+  customs_paperwork_postcode?: string | null
+  customs_paperwork_country?: string | null
+  customs_paperwork_contact_name?: string | null
+  customs_paperwork_phone?: string | null
+  customs_paperwork_email?: string | null
+  customs_paperwork_opening_hours?: string | null
+  customs_paperwork_appointment_required?: boolean | null
+  customs_paperwork_appointment_ref?: string | null
+  customs_paperwork_documents?: string | null
+  customs_paperwork_notes?: string | null
+  customs_departure_office?: string | null
+  customs_departure_office_ref?: string | null
+  customs_departure_status?: string | null
+  customs_departure_estimated_at?: string | null
+  customs_departure_notes?: string | null
+  customs_delivery_clearance_company?: string | null
+  customs_delivery_clearance_address_line_1?: string | null
+  customs_delivery_clearance_city?: string | null
+  customs_delivery_clearance_postcode?: string | null
+  customs_delivery_clearance_country?: string | null
+  customs_delivery_clearance_office_code?: string | null
+  customs_delivery_clearance_contact_name?: string | null
+  customs_delivery_clearance_phone?: string | null
+  customs_delivery_clearance_opening_hours?: string | null
+  customs_delivery_clearance_appointment_ref?: string | null
+  customs_delivery_clearance_status?: string | null
+  customs_delivery_clearance_notes?: string | null
   subcontractor_contact_id?: number | null
   subcontractor_name?: string | null
   subcontractor_ref?: string | null
@@ -252,7 +282,12 @@ export interface JobCharge {
   charge_code_id?: number | null
   description?: string | null
   currency?: string | null
+  quantity?: number | null
+  unit_amount?: number | null
+  exchange_rate?: number | null
   amount?: number | null
+  vat_rate?: number | null
+  tax_code?: string | null
 }
 
 export type JobConsolidationCurrency = "GBP" | "USD" | "EUR" | string

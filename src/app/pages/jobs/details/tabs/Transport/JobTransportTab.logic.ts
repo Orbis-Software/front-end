@@ -2,11 +2,13 @@ import { computed, inject, onMounted, ref, watch } from "vue"
 import { storeToRefs } from "pinia"
 import { useGlobalReferenceDataStore } from "@/app/stores/global-reference-data"
 import { useChargeCodeStore } from "@/app/stores/charge-codes"
+import { useCountryStore } from "@/app/stores/country"
 import contactsService from "@/app/services/contacts"
 import globalReferenceDataService from "@/app/services/global-reference-data"
 import type { GlobalReferenceDataRow } from "@/app/types/globalReferenceData"
 import type { Contact } from "@/app/types/contact"
 import type { ChargeCode } from "@/app/types/charge-code"
+import type { Country } from "@/app/types/country"
 import type { useJobDetailsPage } from "../../JobDetailsPage.logic"
 import type {
   BuyCostRow,
@@ -29,6 +31,13 @@ type ContactOption = {
   value: number
   subLabel?: string
   contact: Contact
+}
+
+type CountryOption = {
+  label: string
+  value: string
+  subLabel: string
+  searchText: string
 }
 
 type MultiDropStop = {
@@ -101,6 +110,13 @@ function numberValue(value: unknown, fallback = 0): number {
   return Number.isFinite(numeric) ? numeric : fallback
 }
 
+function filterText(event: { value?: unknown } | unknown): string {
+  const value =
+    event && typeof event === "object" && "value" in event ? (event as any).value : event
+
+  return String(value ?? "")
+}
+
 function createMultiDropStop(): MultiDropStop {
   return {
     id: -Date.now() - Math.floor(Math.random() * 10000),
@@ -115,6 +131,7 @@ export function useJobTransportTab() {
   const jobDetails = inject<ReturnType<typeof useJobDetailsPage>>("jobDetails")
   const globalReferenceDataStore = useGlobalReferenceDataStore()
   const chargeCodeStore = useChargeCodeStore()
+  const countryStore = useCountryStore()
   const { data: globalReferenceData } = storeToRefs(globalReferenceDataStore)
   const contactOptionsLoading = ref(false)
   const contactOptions = ref<ContactOption[]>([])
@@ -165,6 +182,10 @@ export function useJobTransportTab() {
         form.road_detail.origin_city,
         form.road_detail.destination_city,
         form.road_detail.final_destination,
+        form.road_detail.customs_port_border,
+        form.road_detail.customs_paperwork_city,
+        form.road_detail.customs_departure_office,
+        form.road_detail.customs_delivery_clearance_city,
         form.rail_detail.loading_terminal,
         form.rail_detail.discharge_terminal,
         form.rail_detail.final_destination,
@@ -243,6 +264,12 @@ export function useJobTransportTab() {
     return visibleGlobalReferenceOptions.value
   })
 
+  const countryOptions = computed<CountryOption[]>(() =>
+    countryStore.items
+      .map(countryOption)
+      .sort((left, right) => left.label.localeCompare(right.label)),
+  )
+
   function referenceOption(row: GlobalReferenceDataRow, category: string): ReferenceOption {
     const name = firstValue(row, [
       "terminalName",
@@ -279,6 +306,19 @@ export function useJobTransportTab() {
       value,
       subLabel,
       searchText: searchText(row, [category, label, value, subLabel]),
+    }
+  }
+
+  function countryOption(country: Country): CountryOption {
+    const codes = [country.alpha_2, country.alpha_3].filter(Boolean).join(" / ")
+
+    return {
+      label: country.name,
+      value: country.name,
+      subLabel: codes,
+      searchText: [country.name, country.alpha_2, country.alpha_3, country.dial_code]
+        .filter(Boolean)
+        .join(" "),
     }
   }
 
@@ -357,6 +397,21 @@ export function useJobTransportTab() {
   function onGlobalReferenceFilter(event: { value?: string }) {
     globalReferenceSearchTerm.value = event.value ?? ""
     fetchGlobalReferenceOptions(250)
+  }
+
+  function syncSearchableDropdownInput(
+    event: { value?: unknown } | unknown,
+    target: Record<string, any>,
+    key: string,
+    options: { fetchGlobalReference?: boolean } = {},
+  ) {
+    const value = filterText(event)
+
+    target[key] = value
+
+    if (options.fetchGlobalReference) {
+      onGlobalReferenceFilter({ value })
+    }
   }
 
   async function fetchGlobalReferenceOptions(delay = 0) {
@@ -593,6 +648,7 @@ export function useJobTransportTab() {
         quantity: 1,
         unitCost: 0,
         currency: "GBP",
+        exchangeRate: 1,
         amount: 0,
       } as BuyCostRow)
 
@@ -603,6 +659,7 @@ export function useJobTransportTab() {
     row.quantity = 1
     row.unitCost = rate
     row.currency = roadDetail.subcontractor_buy_currency || "GBP"
+    row.exchangeRate = row.currency === "GBP" ? 1 : row.exchangeRate || 1
     row.amount = rate
 
     if (!existingRow) {
@@ -687,6 +744,11 @@ export function useJobTransportTab() {
       await globalReferenceDataStore.fetchAll()
     }
 
+    countryStore.perPage = 300
+    if (!countryStore.items.length) {
+      await countryStore.fetch()
+    }
+
     await fetchGlobalReferenceOptions()
     if (!chargeCodeStore.chargeCodes.length) {
       await chargeCodeStore.fetchAll({ sort: "description", direction: "asc", perPage: 1000 })
@@ -705,6 +767,8 @@ export function useJobTransportTab() {
     railTerminalOptions,
     roadTerminalOptions,
     cityOptions,
+    countryOptions,
+    countriesLoading: countryStore.loading,
     referenceOptions,
     haulierChargeDescriptionOptions,
     contactOptions,
@@ -713,6 +777,7 @@ export function useJobTransportTab() {
     getOriginLabel,
     getDestinationLabel,
     onGlobalReferenceFilter,
+    syncSearchableDropdownInput,
     addLeg,
     removeLeg,
     addMultiDropStop,

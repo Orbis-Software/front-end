@@ -182,6 +182,7 @@ export type BuyCostRow = {
   quantity: number
   unitCost: number
   currency: string
+  exchangeRate: number
   amount?: number | null
 }
 
@@ -194,6 +195,8 @@ export type SellChargeRow = {
   quantity: number
   unitPrice: number
   currency: string
+  exchangeRate: number
   vatRate: number
+  taxCode: string
   amount?: number | null
 }

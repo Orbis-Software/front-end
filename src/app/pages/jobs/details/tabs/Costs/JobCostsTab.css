@@ -52,7 +52,7 @@
 
 .job-costs-tab__table-wrap {
   min-width: 0;
-  overflow-x: hidden;
+  overflow-x: auto;
 }
 
 .job-costs-tab__table {
@@ -69,12 +69,12 @@
 
 .job-costs-tab__table--buy th:nth-child(2),
 .job-costs-tab__table--buy td:nth-child(2) {
-  width: 29%;
+  width: 25%;
 }
 
 .job-costs-tab__table--buy th:nth-child(3),
 .job-costs-tab__table--buy td:nth-child(3) {
-  width: 24%;
+  width: 20%;
 }
 
 .job-costs-tab__table--buy th:nth-child(4),
@@ -94,11 +94,16 @@
 
 .job-costs-tab__table--buy th:nth-child(7),
 .job-costs-tab__table--buy td:nth-child(7) {
-  width: 12%;
+  width: 11%;
 }
 
 .job-costs-tab__table--buy th:nth-child(8),
 .job-costs-tab__table--buy td:nth-child(8) {
+  width: 15%;
+}
+
+.job-costs-tab__table--buy th:nth-child(9),
+.job-costs-tab__table--buy td:nth-child(9) {
   width: 4%;
 }
 
@@ -109,12 +114,12 @@
 
 .job-costs-tab__table--sell th:nth-child(2),
 .job-costs-tab__table--sell td:nth-child(2) {
-  width: 26%;
+  width: 21%;
 }
 
 .job-costs-tab__table--sell th:nth-child(3),
 .job-costs-tab__table--sell td:nth-child(3) {
-  width: 12%;
+  width: 9%;
 }
 
 .job-costs-tab__table--sell th:nth-child(4),
@@ -124,7 +129,7 @@
 
 .job-costs-tab__table--sell th:nth-child(5),
 .job-costs-tab__table--sell td:nth-child(5) {
-  width: 12%;
+  width: 10%;
 }
 
 .job-costs-tab__table--sell th:nth-child(6),
@@ -139,11 +144,26 @@
 
 .job-costs-tab__table--sell th:nth-child(8),
 .job-costs-tab__table--sell td:nth-child(8) {
-  width: 17%;
+  width: 10%;
 }
 
 .job-costs-tab__table--sell th:nth-child(9),
 .job-costs-tab__table--sell td:nth-child(9) {
+  width: 10%;
+}
+
+.job-costs-tab__table--sell th:nth-child(10),
+.job-costs-tab__table--sell td:nth-child(10) {
+  width: 8%;
+}
+
+.job-costs-tab__table--sell th:nth-child(11),
+.job-costs-tab__table--sell td:nth-child(11) {
+  width: 8%;
+}
+
+.job-costs-tab__table--sell th:nth-child(12),
+.job-costs-tab__table--sell td:nth-child(12) {
   width: 4%;
 }
 
