@@ -3,6 +3,8 @@ import { useToast } from "primevue/usetoast"
 
 import contactsService from "@/app/services/contacts"
 import { useChargeCodeStore } from "@/app/stores/charge-codes"
+import { useExchangeRateStore } from "@/app/stores/exchange-rates"
+import { useTaxCodeStore } from "@/app/stores/tax-codes"
 import type { ChargeCode } from "@/app/types/charge-code"
 import type { Contact } from "@/app/types/contact"
 import type { JobDetailsContext } from "../../JobDetailsPage.logic"
@@ -11,6 +13,7 @@ import type { BuyCostRow, SellChargeRow } from "@/app/types/job-details"
 type SelectOption = {
   label: string
   value: string | number | null
+  rate?: number
 }
 
 type CostRow = BuyCostRow | SellChargeRow
@@ -19,6 +22,18 @@ const fallbackCurrencyOptions: SelectOption[] = [
   { label: "GBP", value: "GBP" },
   { label: "EUR", value: "EUR" },
   { label: "USD", value: "USD" },
+]
+
+const fallbackTaxCodeOptions: SelectOption[] = [
+  { label: "UK20", value: "UK20", rate: 20 },
+  { label: "UK5", value: "UK5", rate: 5 },
+  { label: "GBZR", value: "GBZR", rate: 0 },
+]
+
+const vatRateOptions: SelectOption[] = [
+  { label: "20%", value: 20 },
+  { label: "5%", value: 5 },
+  { label: "0%", value: 0 },
 ]
 
 let buyId = 1
@@ -64,6 +79,7 @@ function createBuyRow(): BuyCostRow {
     quantity: 1,
     unitCost: 0,
     currency: "GBP",
+    exchangeRate: 1,
     amount: 0,
   }
 }
@@ -78,7 +94,9 @@ function createSellRow(): SellChargeRow {
     quantity: 1,
     unitPrice: 0,
     currency: "GBP",
-    vatRate: 20,
+    exchangeRate: 1,
+    vatRate: 0,
+    taxCode: "",
     amount: 0,
   }
 }
@@ -89,8 +107,9 @@ function hydrateBuyRow(row: any): BuyCostRow {
   row.supplier_id = row.supplier_id ?? row.supplierId ?? null
   row.chargeCodeId = row.chargeCodeId ?? row.charge_code_id ?? null
   row.quantity = numberValue(row.quantity, 1) || 1
-  row.unitCost = numberValue(row.unitCost ?? row.unit_cost ?? row.amount, 0)
+  row.unitCost = numberValue(row.unitCost ?? row.unit_cost ?? row.unit_amount ?? row.amount, 0)
   row.currency = row.currency || "GBP"
+  row.exchangeRate = numberValue(row.exchangeRate ?? row.exchange_rate, 0)
 
   return row
 }
@@ -101,9 +120,11 @@ function hydrateSellRow(row: any): SellChargeRow {
   row.chargeCodeId = row.chargeCodeId ?? row.charge_code_id ?? null
   row.chargeCode = row.chargeCode ?? row.charge_code ?? ""
   row.quantity = numberValue(row.quantity, 1) || 1
-  row.unitPrice = numberValue(row.unitPrice ?? row.unit_price ?? row.amount, 0)
+  row.unitPrice = numberValue(row.unitPrice ?? row.unit_price ?? row.unit_amount ?? row.amount, 0)
   row.currency = row.currency || "GBP"
-  row.vatRate = numberValue(row.vatRate ?? row.vat_rate, 20)
+  row.exchangeRate = numberValue(row.exchangeRate ?? row.exchange_rate, 0)
+  row.vatRate = numberValue(row.vatRate ?? row.vat_rate, 0)
+  row.taxCode = row.taxCode ?? row.tax_code ?? ""
 
   return row
 }
@@ -118,6 +139,8 @@ export function useJobCostsTab() {
   const context = injectedContext
   const toast = useToast()
   const chargeCodeStore = useChargeCodeStore()
+  const exchangeRateStore = useExchangeRateStore()
+  const taxCodeStore = useTaxCodeStore()
   const supplierContacts = ref<Contact[]>([])
   const suppliersLoading = ref(false)
   const addChargeCodeDialogVisible = ref(false)
@@ -133,9 +156,44 @@ export function useJobCostsTab() {
   const sellRows = computed<SellChargeRow[]>(() => context.form.sell_costs.map(hydrateSellRow))
 
   const currencyOptions = computed<SelectOption[]>(() => {
-    const options = context.referenceOptions.currencyOptions?.value ?? []
+    const options = [
+      ...(context.referenceOptions.currencyOptions?.value ?? []),
+      ...fallbackCurrencyOptions,
+    ]
 
-    return options.length ? options : fallbackCurrencyOptions
+    exchangeRateStore.exchangeRates
+      .filter(rate => rate.isActive !== false)
+      .forEach(rate => {
+        options.push({ label: rate.base, value: rate.base })
+        options.push({ label: rate.quote, value: rate.quote })
+      })
+    ;[...buyRows.value, ...sellRows.value].forEach(row => {
+      if (row.currency) options.push({ label: row.currency, value: row.currency })
+    })
+
+    const unique = new Map<string, SelectOption>()
+
+    options.forEach(option => {
+      const value = String(option.value ?? "").toUpperCase()
+
+      if (value && !unique.has(value)) {
+        unique.set(value, { label: value, value })
+      }
+    })
+
+    return [...unique.values()].sort((left, right) => left.label.localeCompare(right.label))
+  })
+
+  const taxCodeOptions = computed<SelectOption[]>(() => {
+    const options = taxCodeStore.taxCodes
+      .filter(code => code.isActive !== false)
+      .map(code => ({
+        label: code.taxCode || code.code,
+        value: code.taxCode || code.code,
+        rate: numberValue(code.rate),
+      }))
+
+    return options.length ? options : fallbackTaxCodeOptions
   })
 
   const primaryJobChargeClassification = computed(() => {
@@ -191,6 +249,10 @@ export function useJobCostsTab() {
 
     if (row.type === "sell" && charge) {
       row.chargeCode = charge?.salesNominal || row.chargeCode || ""
+      if (charge.defaultTaxCode) {
+        row.taxCode = charge.defaultTaxCode
+        applyTaxCode(row, charge.defaultTaxCode)
+      }
     }
   }
 
@@ -353,6 +415,91 @@ export function useJobCostsTab() {
     return numberValue(row.quantity) * numberValue(row.unitPrice)
   }
 
+  function exchangeRateForCurrency(currency: string | null | undefined): number {
+    const code = String(currency || "GBP").toUpperCase()
+
+    if (!code || code === "GBP") return 1
+
+    const rates = exchangeRateStore.exchangeRates
+      .filter(rate => rate.isActive !== false)
+      .slice()
+      .sort((left, right) => {
+        const rightDate = new Date(right.effectiveDate ?? "").getTime() || 0
+        const leftDate = new Date(left.effectiveDate ?? "").getTime() || 0
+
+        return rightDate - leftDate || Number(right.id ?? 0) - Number(left.id ?? 0)
+      })
+    const direct = rates.find(rate => {
+      return rate.base?.toUpperCase() === code && rate.quote?.toUpperCase() === "GBP"
+    })
+
+    if (direct) return numberValue(direct.rate, 1) || 1
+
+    const inverse = rates.find(rate => {
+      return rate.base?.toUpperCase() === "GBP" && rate.quote?.toUpperCase() === code
+    })
+    const inverseRate = numberValue(inverse?.rate, 0)
+
+    return inverseRate > 0 ? 1 / inverseRate : 1
+  }
+
+  function shouldSyncExchangeRate(row: CostRow): boolean {
+    const currency = String(row.currency || "GBP").toUpperCase()
+    const stored = numberValue((row as any).exchangeRate ?? (row as any).exchange_rate, 0)
+
+    if (!currency || currency === "GBP") {
+      return stored !== 1
+    }
+
+    return stored <= 0 || stored === 1
+  }
+
+  function effectiveExchangeRate(row: CostRow): number {
+    const stored = numberValue((row as any).exchangeRate ?? (row as any).exchange_rate, 0)
+
+    return stored > 0 ? stored : exchangeRateForCurrency(row.currency)
+  }
+
+  function lineNetGbp(row: CostRow): number {
+    const unit = row.type === "buy" ? numberValue(row.unitCost) : numberValue(row.unitPrice)
+
+    return numberValue(row.quantity) * unit * effectiveExchangeRate(row)
+  }
+
+  function sellVat(row: SellChargeRow): number {
+    const vatRate = numberValue(row.vatRate)
+
+    return vatRate > 0 ? lineNetGbp(row) * (vatRate / 100) : 0
+  }
+
+  function formatMoney(value: number): string {
+    return new Intl.NumberFormat("en-GB", {
+      style: "currency",
+      currency: "GBP",
+    }).format(Number.isFinite(value) ? value : 0)
+  }
+
+  function applyTaxCode(row: SellChargeRow, taxCode: string | number | null) {
+    const selected = taxCodeOptions.value.find(option => option.value === taxCode)
+
+    row.taxCode = String(taxCode ?? "")
+
+    if (selected) {
+      row.vatRate = numberValue(selected.rate)
+    }
+  }
+
+  function applyVatRate(row: SellChargeRow, vatRate: string | number | null) {
+    row.vatRate = numberValue(vatRate)
+
+    const selected = taxCodeOptions.value.find(option => numberValue(option.rate) === row.vatRate)
+    row.taxCode = selected ? String(selected.value ?? "") : ""
+  }
+
+  function syncLineExchangeRate(row: CostRow) {
+    row.exchangeRate = exchangeRateForCurrency(row.currency)
+  }
+
   function requestRemoveRow(row: CostRow) {
     pendingDeleteRow.value = row
     deleteDialogVisible.value = true
@@ -404,22 +551,42 @@ export function useJobCostsTab() {
   }
 
   const totals = computed(() => {
-    const totalBuy = buyRows.value.reduce((sum, row) => sum + buyTotal(row), 0)
-    const totalSell = sellRows.value.reduce((sum, row) => sum + sellTotal(row), 0)
+    const totalBuy = buyRows.value.reduce((sum, row) => sum + lineNetGbp(row), 0)
+    const totalSell = sellRows.value.reduce((sum, row) => sum + lineNetGbp(row), 0)
+    const totalVat = sellRows.value.reduce((sum, row) => sum + sellVat(row), 0)
+    const margin = totalSell - totalBuy
 
     return {
       totalBuy,
       totalSell,
-      margin: totalSell - totalBuy,
+      margin,
+      marginPercent: totalSell > 0 ? (margin / totalSell) * 100 : 0,
+      totalVat,
+      grandTotal: totalSell + totalVat,
+      hasVat: totalVat > 0 || sellRows.value.some(row => numberValue(row.vatRate) > 0),
     }
   })
 
   watch(buyRows, rows => rows.forEach(hydrateBuyRow), { immediate: true })
   watch(sellRows, rows => rows.forEach(hydrateSellRow), { immediate: true })
 
+  watch(
+    () => exchangeRateStore.exchangeRates,
+    () => {
+      ;[...buyRows.value, ...sellRows.value].forEach(row => {
+        if (shouldSyncExchangeRate(row)) {
+          syncLineExchangeRate(row)
+        }
+      })
+    },
+    { deep: true },
+  )
+
   onMounted(async () => {
     await Promise.all([
       chargeCodeStore.fetchAll({ sort: "description", direction: "asc", perPage: 1000 }),
+      exchangeRateStore.fetch({ perPage: 1000 }),
+      taxCodeStore.fetch({ perPage: 1000 }),
       loadSuppliers(),
     ])
   })
@@ -434,6 +601,8 @@ export function useJobCostsTab() {
     sellRows,
     totals,
     currencyOptions,
+    taxCodeOptions,
+    vatRateOptions,
     chargeDescriptionOptions,
     supplierOptions,
     chargeCodesLoading: computed(() => chargeCodeStore.loading),
@@ -461,5 +630,11 @@ export function useJobCostsTab() {
     rowChargeCode,
     buyTotal,
     sellTotal,
+    lineNetGbp,
+    sellVat,
+    formatMoney,
+    applyTaxCode,
+    applyVatRate,
+    syncLineExchangeRate,
   }
 }

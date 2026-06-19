@@ -240,6 +240,34 @@
   font-size: var(--job-field-font-size) !important;
 }
 
+.job-details-page .p-dropdown,
+.job-details-page .p-select {
+  width: 100%;
+  min-height: var(--job-field-height);
+  border-radius: var(--job-field-radius);
+  overflow: hidden;
+}
+
+.job-details-page .p-dropdown-label,
+.job-details-page .p-select-label,
+.job-details-page .p-dropdown .p-inputtext,
+.job-details-page .p-select .p-inputtext {
+  min-height: calc(var(--job-field-height) - 2px) !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.job-details-page .p-dropdown-trigger,
+.job-details-page .p-select-dropdown {
+  width: var(--job-field-height);
+  min-width: var(--job-field-height);
+  border-left: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
 .p-dropdown-panel,
 .p-datepicker,
 .p-datepicker table,

@@ -12,6 +12,7 @@ const {
   sellRows,
   totals,
   currencyOptions,
+  vatRateOptions,
   chargeDescriptionOptions,
   supplierOptions,
   chargeCodesLoading,
@@ -35,15 +36,12 @@ const {
   cancelRemoveRow,
   confirmRemoveRow,
   rowChargeCode,
-  buyTotal,
-  sellTotal,
+  lineNetGbp,
+  sellVat,
+  formatMoney,
+  applyVatRate,
+  syncLineExchangeRate,
 } = useJobCostsTab()
-
-const vatRateOptions = [
-  { label: "20%", value: 20 },
-  { label: "5%", value: 5 },
-  { label: "0%", value: 0 },
-]
 </script>
 
 <template>
@@ -74,7 +72,8 @@ const vatRateOptions = [
               <th>Qty</th>
               <th>Unit Cost</th>
               <th>Currency</th>
-              <th>Total</th>
+              <th>Ex. Rate</th>
+              <th>Net (GBP)</th>
               <th />
             </tr>
           </thead>
@@ -134,9 +133,18 @@ const vatRateOptions = [
                   option-value="value"
                   filter
                   auto-filter-focus
+                  @change="syncLineExchangeRate(row)"
                 />
               </td>
-              <td class="job-costs-tab__computed">£{{ buyTotal(row).toFixed(2) }}</td>
+              <td>
+                <InputNumber
+                  v-model="row.exchangeRate"
+                  :min="0"
+                  :min-fraction-digits="4"
+                  :max-fraction-digits="6"
+                />
+              </td>
+              <td class="job-costs-tab__computed">{{ formatMoney(lineNetGbp(row)) }}</td>
               <td>
                 <Button
                   type="button"
@@ -180,8 +188,11 @@ const vatRateOptions = [
               <th>Qty</th>
               <th>Unit Price</th>
               <th>Currency</th>
+              <th>Ex. Rate</th>
               <th>VAT %</th>
-              <th>Net Total</th>
+              <th>Net (GBP)</th>
+              <th v-if="totals.hasVat">VAT</th>
+              <th v-if="totals.hasVat">Gross</th>
               <th />
             </tr>
           </thead>
@@ -229,6 +240,15 @@ const vatRateOptions = [
                   option-value="value"
                   filter
                   auto-filter-focus
+                  @change="syncLineExchangeRate(row)"
+                />
+              </td>
+              <td>
+                <InputNumber
+                  v-model="row.exchangeRate"
+                  :min="0"
+                  :min-fraction-digits="4"
+                  :max-fraction-digits="6"
                 />
               </td>
               <td>
@@ -239,9 +259,16 @@ const vatRateOptions = [
                   option-value="value"
                   filter
                   auto-filter-focus
+                  @change="applyVatRate(row, row.vatRate)"
                 />
               </td>
-              <td class="job-costs-tab__computed">£{{ sellTotal(row).toFixed(2) }}</td>
+              <td class="job-costs-tab__computed">{{ formatMoney(lineNetGbp(row)) }}</td>
+              <td v-if="totals.hasVat" class="job-costs-tab__computed">
+                {{ formatMoney(sellVat(row)) }}
+              </td>
+              <td v-if="totals.hasVat" class="job-costs-tab__computed">
+                {{ formatMoney(lineNetGbp(row) + sellVat(row)) }}
+              </td>
               <td>
                 <Button
                   type="button"
@@ -261,18 +288,36 @@ const vatRateOptions = [
 
     <div class="job-costs-tab__summary">
       <div class="job-costs-tab__summary-row">
-        <span>Total Buy</span>
-        <strong>£{{ totals.totalBuy.toFixed(2) }}</strong>
+        <span>Total Revenue (Net)</span>
+        <strong>{{ formatMoney(totals.totalSell) }}</strong>
       </div>
 
       <div class="job-costs-tab__summary-row">
-        <span>Total Sell</span>
-        <strong>£{{ totals.totalSell.toFixed(2) }}</strong>
+        <span>Total Cost (Net)</span>
+        <strong>{{ formatMoney(totals.totalBuy) }}</strong>
       </div>
 
-      <div class="job-costs-tab__summary-row job-costs-tab__summary-row--total">
-        <span>Margin</span>
-        <strong>£{{ totals.margin.toFixed(2) }}</strong>
+      <div class="job-costs-tab__summary-row">
+        <span>Gross Margin (£)</span>
+        <strong>{{ formatMoney(totals.margin) }}</strong>
+      </div>
+
+      <div class="job-costs-tab__summary-row">
+        <span>Margin %</span>
+        <strong>{{ totals.marginPercent.toFixed(1) }}%</strong>
+      </div>
+
+      <div v-if="totals.hasVat" class="job-costs-tab__summary-row">
+        <span>Total VAT</span>
+        <strong>{{ formatMoney(totals.totalVat) }}</strong>
+      </div>
+
+      <div
+        v-if="totals.hasVat"
+        class="job-costs-tab__summary-row job-costs-tab__summary-row--total"
+      >
+        <span>Grand Total (inc. VAT)</span>
+        <strong>{{ formatMoney(totals.grandTotal) }}</strong>
       </div>
     </div>
 

@@ -20,6 +20,8 @@ const {
   railTerminalOptions,
   roadTerminalOptions,
   cityOptions,
+  countryOptions,
+  countriesLoading,
   referenceOptions,
   haulierChargeDescriptionOptions,
   contactOptions,
@@ -28,6 +30,7 @@ const {
   getOriginLabel,
   getDestinationLabel,
   onGlobalReferenceFilter,
+  syncSearchableDropdownInput,
   addLeg,
   removeLeg,
   addMultiDropStop,
@@ -46,6 +49,21 @@ const {
 const isCustomVehicle = computed(() => {
   return form.road_detail.vehicle_type === "Custom / Specialised Vehicle"
 })
+
+const activeCustomsDirection = computed({
+  get() {
+    return form.road_detail.customs_direction === "import" ? "import" : "export"
+  },
+  set(value: "export" | "import") {
+    form.road_detail.customs_direction = value
+  },
+})
+
+function syncRoadDetailDropdownFilter(event: unknown, key: string, fetchGlobalReference = false) {
+  syncSearchableDropdownInput(event, form.road_detail as Record<string, any>, key, {
+    fetchGlobalReference,
+  })
+}
 
 const legModeOptions = [
   { label: "Road", value: "road" },
@@ -165,20 +183,6 @@ const customsStatusOptions = [
   "Cleared",
   "Held for Inspection",
   "Released",
-]
-
-const portBorderOptions = [
-  "Dover / Calais",
-  "Folkestone / Coquelles (Eurotunnel)",
-  "Holyhead / Dublin",
-  "Harwich / Hook of Holland",
-  "Hull / Zeebrugge",
-  "Newcastle / Amsterdam (DFDS)",
-  "Portsmouth / Le Havre",
-  "Portsmouth / Caen",
-  "Rosslare / Cherbourg",
-  "Cairnryan / Larne",
-  "Other",
 ]
 
 const subcontractorCurrencyOptions = ["GBP", "EUR", "USD"]
@@ -1262,6 +1266,30 @@ const globalReferenceVirtualScrollerOptions = {
             <h3>Customs & Border Details</h3>
             <p>Core customs references and border instructions for the road movement.</p>
           </div>
+
+          <div class="job-transport-tab__customs-tabs" aria-label="Customs direction">
+            <button
+              type="button"
+              class="job-transport-tab__customs-tab job-transport-tab__customs-tab--export"
+              :class="{
+                'job-transport-tab__customs-tab--active': activeCustomsDirection === 'export',
+              }"
+              @click="activeCustomsDirection = 'export'"
+            >
+              Export
+            </button>
+
+            <button
+              type="button"
+              class="job-transport-tab__customs-tab job-transport-tab__customs-tab--import"
+              :class="{
+                'job-transport-tab__customs-tab--active': activeCustomsDirection === 'import',
+              }"
+              @click="activeCustomsDirection = 'import'"
+            >
+              Import
+            </button>
+          </div>
         </header>
 
         <div class="job-transport-tab__grid">
@@ -1314,11 +1342,26 @@ const globalReferenceVirtualScrollerOptions = {
             <span>Port / Border Crossing</span>
             <Dropdown
               v-model="form.road_detail.customs_port_border"
-              :options="portBorderOptions"
+              :options="seaportOptions"
+              option-label="label"
+              option-value="value"
               placeholder="Select border"
+              filter
+              filter-by="label,value,subLabel,searchText"
+              auto-filter-focus
+              :virtual-scroller-options="globalReferenceVirtualScrollerOptions"
+              editable
               class="job-transport-tab__prime-select"
               show-clear
-            />
+              @filter="syncRoadDetailDropdownFilter($event, 'customs_port_border', true)"
+            >
+              <template #option="{ option }">
+                <div class="job-transport-tab__reference-option">
+                  <strong>{{ option.label }}</strong>
+                  <small v-if="option.subLabel">{{ option.subLabel }}</small>
+                </div>
+              </template>
+            </Dropdown>
           </label>
 
           <label class="job-transport-tab__field">
@@ -1372,15 +1415,52 @@ const globalReferenceVirtualScrollerOptions = {
 
           <label class="job-transport-tab__field">
             <span>Country of Origin</span>
-            <InputText v-model="form.road_detail.customs_country_of_origin" placeholder="Country" />
+            <Dropdown
+              v-model="form.road_detail.customs_country_of_origin"
+              :options="countryOptions"
+              option-label="label"
+              option-value="value"
+              placeholder="Search country"
+              filter
+              filter-by="label,subLabel,searchText"
+              :loading="countriesLoading"
+              editable
+              class="job-transport-tab__prime-select"
+              show-clear
+              @filter="syncRoadDetailDropdownFilter($event, 'customs_country_of_origin')"
+            >
+              <template #option="{ option }">
+                <div class="job-transport-tab__reference-option">
+                  <strong>{{ option.label }}</strong>
+                  <small v-if="option.subLabel">{{ option.subLabel }}</small>
+                </div>
+              </template>
+            </Dropdown>
           </label>
 
           <label class="job-transport-tab__field">
             <span>Country of Destination</span>
-            <InputText
+            <Dropdown
               v-model="form.road_detail.customs_country_of_destination"
-              placeholder="Country"
-            />
+              :options="countryOptions"
+              option-label="label"
+              option-value="value"
+              placeholder="Search country"
+              filter
+              filter-by="label,subLabel,searchText"
+              :loading="countriesLoading"
+              editable
+              class="job-transport-tab__prime-select"
+              show-clear
+              @filter="syncRoadDetailDropdownFilter($event, 'customs_country_of_destination')"
+            >
+              <template #option="{ option }">
+                <div class="job-transport-tab__reference-option">
+                  <strong>{{ option.label }}</strong>
+                  <small v-if="option.subLabel">{{ option.subLabel }}</small>
+                </div>
+              </template>
+            </Dropdown>
           </label>
 
           <label class="job-transport-tab__field">
@@ -1406,6 +1486,388 @@ const globalReferenceVirtualScrollerOptions = {
               placeholder="Customs instructions, clearance timing, documents required..."
             />
           </label>
+        </div>
+
+        <div v-if="activeCustomsDirection === 'export'" class="job-transport-tab__customs-panel">
+          <section class="job-transport-tab__customs-subsection">
+            <header class="job-transport-tab__customs-subsection-header">
+              <div>
+                <h4>Paperwork Collection Point</h4>
+                <p>Where the driver must collect customs documents before transit.</p>
+              </div>
+            </header>
+
+            <div class="job-transport-tab__grid">
+              <label class="job-transport-tab__field job-transport-tab__field--span-2">
+                <span>Company / Location Name</span>
+                <InputText
+                  v-model="form.road_detail.customs_paperwork_company"
+                  placeholder="Broker office / freight station"
+                />
+              </label>
+
+              <label class="job-transport-tab__field job-transport-tab__field--span-2">
+                <span>Address Line 1</span>
+                <InputText
+                  v-model="form.road_detail.customs_paperwork_address_line_1"
+                  placeholder="Street address"
+                />
+              </label>
+
+              <label class="job-transport-tab__field">
+                <span>City</span>
+                <Dropdown
+                  v-model="form.road_detail.customs_paperwork_city"
+                  :options="cityOptions"
+                  option-label="label"
+                  option-value="value"
+                  placeholder="Search city"
+                  filter
+                  filter-by="label,value,subLabel,searchText"
+                  auto-filter-focus
+                  :virtual-scroller-options="globalReferenceVirtualScrollerOptions"
+                  editable
+                  class="job-transport-tab__prime-select"
+                  show-clear
+                  @filter="syncRoadDetailDropdownFilter($event, 'customs_paperwork_city', true)"
+                >
+                  <template #option="{ option }">
+                    <div class="job-transport-tab__reference-option">
+                      <strong>{{ option.label }}</strong>
+                      <small v-if="option.subLabel">{{ option.subLabel }}</small>
+                    </div>
+                  </template>
+                </Dropdown>
+              </label>
+
+              <label class="job-transport-tab__field">
+                <span>Postcode</span>
+                <InputText
+                  v-model="form.road_detail.customs_paperwork_postcode"
+                  placeholder="Postcode"
+                />
+              </label>
+
+              <label class="job-transport-tab__field">
+                <span>Country</span>
+                <Dropdown
+                  v-model="form.road_detail.customs_paperwork_country"
+                  :options="countryOptions"
+                  option-label="label"
+                  option-value="value"
+                  placeholder="Search country"
+                  filter
+                  filter-by="label,subLabel,searchText"
+                  :loading="countriesLoading"
+                  editable
+                  class="job-transport-tab__prime-select"
+                  show-clear
+                  @filter="syncRoadDetailDropdownFilter($event, 'customs_paperwork_country')"
+                >
+                  <template #option="{ option }">
+                    <div class="job-transport-tab__reference-option">
+                      <strong>{{ option.label }}</strong>
+                      <small v-if="option.subLabel">{{ option.subLabel }}</small>
+                    </div>
+                  </template>
+                </Dropdown>
+              </label>
+
+              <label class="job-transport-tab__field">
+                <span>Contact Name</span>
+                <InputText
+                  v-model="form.road_detail.customs_paperwork_contact_name"
+                  placeholder="Contact name"
+                />
+              </label>
+
+              <label class="job-transport-tab__field">
+                <span>Phone</span>
+                <InputText
+                  v-model="form.road_detail.customs_paperwork_phone"
+                  placeholder="+44 ..."
+                />
+              </label>
+
+              <label class="job-transport-tab__field">
+                <span>Email</span>
+                <InputText
+                  v-model="form.road_detail.customs_paperwork_email"
+                  placeholder="contact@broker.com"
+                />
+              </label>
+
+              <label class="job-transport-tab__field">
+                <span>Opening Hours</span>
+                <InputText
+                  v-model="form.road_detail.customs_paperwork_opening_hours"
+                  placeholder="Mon-Fri 07:00-18:00"
+                />
+              </label>
+
+              <label class="job-transport-tab__field">
+                <span>Appointment Required?</span>
+                <Dropdown
+                  v-model="form.road_detail.customs_paperwork_appointment_required"
+                  :options="yesNoOptions"
+                  option-label="label"
+                  option-value="value"
+                  placeholder="Select"
+                  class="job-transport-tab__prime-select"
+                  show-clear
+                />
+              </label>
+
+              <label class="job-transport-tab__field">
+                <span>Appointment Ref / Time</span>
+                <InputText
+                  v-model="form.road_detail.customs_paperwork_appointment_ref"
+                  placeholder="Booking reference / slot"
+                />
+              </label>
+
+              <label class="job-transport-tab__field job-transport-tab__field--span-2">
+                <span>Documents to Collect</span>
+                <InputText
+                  v-model="form.road_detail.customs_paperwork_documents"
+                  placeholder="CMR, T1 / T2, EUR.1, invoice..."
+                />
+              </label>
+
+              <label class="job-transport-tab__field job-transport-tab__field--span-4">
+                <span>Driver Collection Instructions</span>
+                <Textarea
+                  v-model="form.road_detail.customs_paperwork_notes"
+                  placeholder="Where to park, who to ask for, document handover instructions..."
+                />
+              </label>
+            </div>
+          </section>
+
+          <section class="job-transport-tab__customs-subsection">
+            <header class="job-transport-tab__customs-subsection-header">
+              <div>
+                <h4>Pre-Departure / UK Export Clearance</h4>
+                <p>
+                  Office of departure and export clearance status before the driver leaves the UK.
+                </p>
+              </div>
+            </header>
+
+            <div class="job-transport-tab__grid">
+              <label class="job-transport-tab__field">
+                <span>Office of Departure</span>
+                <Dropdown
+                  v-model="form.road_detail.customs_departure_office"
+                  :options="seaportOptions"
+                  option-label="label"
+                  option-value="value"
+                  placeholder="Search office / port"
+                  filter
+                  filter-by="label,value,subLabel,searchText"
+                  auto-filter-focus
+                  :virtual-scroller-options="globalReferenceVirtualScrollerOptions"
+                  editable
+                  class="job-transport-tab__prime-select"
+                  show-clear
+                  @filter="syncRoadDetailDropdownFilter($event, 'customs_departure_office', true)"
+                >
+                  <template #option="{ option }">
+                    <div class="job-transport-tab__reference-option">
+                      <strong>{{ option.label }}</strong>
+                      <small v-if="option.subLabel">{{ option.subLabel }}</small>
+                    </div>
+                  </template>
+                </Dropdown>
+              </label>
+
+              <label class="job-transport-tab__field">
+                <span>Departure Office Ref</span>
+                <InputText
+                  v-model="form.road_detail.customs_departure_office_ref"
+                  placeholder="Departure ref"
+                />
+              </label>
+
+              <label class="job-transport-tab__field">
+                <span>Export Clearance Status</span>
+                <Dropdown
+                  v-model="form.road_detail.customs_departure_status"
+                  :options="customsStatusOptions"
+                  placeholder="Select status"
+                  class="job-transport-tab__prime-select"
+                  show-clear
+                />
+              </label>
+
+              <label class="job-transport-tab__field">
+                <span>Est. Departure</span>
+                <InputText
+                  v-model="form.road_detail.customs_departure_estimated_at"
+                  placeholder="Date / time"
+                />
+              </label>
+
+              <label class="job-transport-tab__field job-transport-tab__field--span-4">
+                <span>Driver Instructions at Port</span>
+                <Textarea
+                  v-model="form.road_detail.customs_departure_notes"
+                  placeholder="Presentation instructions, lanes, check-in notes..."
+                />
+              </label>
+            </div>
+          </section>
+        </div>
+
+        <div v-else class="job-transport-tab__customs-panel">
+          <section class="job-transport-tab__customs-subsection">
+            <header class="job-transport-tab__customs-subsection-header">
+              <div>
+                <h4>Pre-Delivery / UK Import Clearance</h4>
+                <p>Where the driver must clear goods before final delivery.</p>
+              </div>
+            </header>
+
+            <div class="job-transport-tab__grid">
+              <label class="job-transport-tab__field job-transport-tab__field--span-2">
+                <span>Customs Office / Warehouse</span>
+                <InputText
+                  v-model="form.road_detail.customs_delivery_clearance_company"
+                  placeholder="Customs office / warehouse"
+                />
+              </label>
+
+              <label class="job-transport-tab__field job-transport-tab__field--span-2">
+                <span>Address Line 1</span>
+                <InputText
+                  v-model="form.road_detail.customs_delivery_clearance_address_line_1"
+                  placeholder="Street address"
+                />
+              </label>
+
+              <label class="job-transport-tab__field">
+                <span>City</span>
+                <Dropdown
+                  v-model="form.road_detail.customs_delivery_clearance_city"
+                  :options="cityOptions"
+                  option-label="label"
+                  option-value="value"
+                  placeholder="Search city"
+                  filter
+                  filter-by="label,value,subLabel,searchText"
+                  auto-filter-focus
+                  :virtual-scroller-options="globalReferenceVirtualScrollerOptions"
+                  editable
+                  class="job-transport-tab__prime-select"
+                  show-clear
+                  @filter="
+                    syncRoadDetailDropdownFilter($event, 'customs_delivery_clearance_city', true)
+                  "
+                >
+                  <template #option="{ option }">
+                    <div class="job-transport-tab__reference-option">
+                      <strong>{{ option.label }}</strong>
+                      <small v-if="option.subLabel">{{ option.subLabel }}</small>
+                    </div>
+                  </template>
+                </Dropdown>
+              </label>
+
+              <label class="job-transport-tab__field">
+                <span>Postcode</span>
+                <InputText
+                  v-model="form.road_detail.customs_delivery_clearance_postcode"
+                  placeholder="Postcode"
+                />
+              </label>
+
+              <label class="job-transport-tab__field">
+                <span>Country</span>
+                <Dropdown
+                  v-model="form.road_detail.customs_delivery_clearance_country"
+                  :options="countryOptions"
+                  option-label="label"
+                  option-value="value"
+                  placeholder="Search country"
+                  filter
+                  filter-by="label,subLabel,searchText"
+                  :loading="countriesLoading"
+                  editable
+                  class="job-transport-tab__prime-select"
+                  show-clear
+                  @filter="
+                    syncRoadDetailDropdownFilter($event, 'customs_delivery_clearance_country')
+                  "
+                >
+                  <template #option="{ option }">
+                    <div class="job-transport-tab__reference-option">
+                      <strong>{{ option.label }}</strong>
+                      <small v-if="option.subLabel">{{ option.subLabel }}</small>
+                    </div>
+                  </template>
+                </Dropdown>
+              </label>
+
+              <label class="job-transport-tab__field">
+                <span>Office of Destination Code</span>
+                <InputText
+                  v-model="form.road_detail.customs_delivery_clearance_office_code"
+                  placeholder="Office code"
+                />
+              </label>
+
+              <label class="job-transport-tab__field">
+                <span>Contact</span>
+                <InputText
+                  v-model="form.road_detail.customs_delivery_clearance_contact_name"
+                  placeholder="Contact name"
+                />
+              </label>
+
+              <label class="job-transport-tab__field">
+                <span>Phone</span>
+                <InputText
+                  v-model="form.road_detail.customs_delivery_clearance_phone"
+                  placeholder="+44 ..."
+                />
+              </label>
+
+              <label class="job-transport-tab__field">
+                <span>Office Hours</span>
+                <InputText
+                  v-model="form.road_detail.customs_delivery_clearance_opening_hours"
+                  placeholder="Mon-Fri 07:00-18:00"
+                />
+              </label>
+
+              <label class="job-transport-tab__field">
+                <span>Appointment Ref</span>
+                <InputText
+                  v-model="form.road_detail.customs_delivery_clearance_appointment_ref"
+                  placeholder="Booking reference / slot"
+                />
+              </label>
+
+              <label class="job-transport-tab__field">
+                <span>Import Clearance Status</span>
+                <Dropdown
+                  v-model="form.road_detail.customs_delivery_clearance_status"
+                  :options="customsStatusOptions"
+                  placeholder="Select status"
+                  class="job-transport-tab__prime-select"
+                  show-clear
+                />
+              </label>
+
+              <label class="job-transport-tab__field job-transport-tab__field--span-4">
+                <span>Driver Clearance Instructions</span>
+                <Textarea
+                  v-model="form.road_detail.customs_delivery_clearance_notes"
+                  placeholder="Where to present, documents required, release notes..."
+                />
+              </label>
+            </div>
+          </section>
         </div>
       </div>
 
@@ -1479,8 +1941,12 @@ const globalReferenceVirtualScrollerOptions = {
               v-model="form.road_detail.subcontractor_buy_currency"
               :options="subcontractorCurrencyOptions"
               placeholder="Currency"
+              filter
+              auto-filter-focus
+              editable
               class="job-transport-tab__prime-select"
               show-clear
+              @filter="syncRoadDetailDropdownFilter($event, 'subcontractor_buy_currency')"
             />
           </label>
 
@@ -1497,6 +1963,7 @@ const globalReferenceVirtualScrollerOptions = {
               editable
               show-clear
               class="job-transport-tab__prime-select"
+              @filter="syncRoadDetailDropdownFilter($event, 'subcontractor_charge_description')"
             />
           </label>
 
