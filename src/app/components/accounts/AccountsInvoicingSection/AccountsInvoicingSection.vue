@@ -1,131 +1,43 @@
 <script setup lang="ts">
 import "./AccountsInvoicingSection.css"
 
-import { computed, ref } from "vue"
 import Button from "primevue/button"
 import Dropdown from "primevue/dropdown"
 import InputText from "primevue/inputtext"
 
-import { downloadCsv, parseCsvFile, useAccountsDemo } from "@/app/composables/useAccountsDemo"
+import { useAccountsInvoicingSection } from "./AccountsInvoicingSection"
 
 const {
+  selectedStatus,
+  selectedAccountingPlatform,
+  selectedTransferMethod,
+  searchText,
+  selectedInvoiceIds,
+  bankImportInput,
+  loading,
+  error,
   state,
+  statusOptions,
+  accountingPlatformOptions,
+  transferMethodOptions,
+  money,
+  statusTone,
+  statusLabel,
   selectedInvoice,
   invoiceSummary,
-  money,
-  statusLabel,
-  statusTone,
-  postInvoices,
-  markInvoicesPaid,
-  saveState,
-} = useAccountsDemo()
-
-const selectedStatus = ref("all")
-const selectedAccountingPlatform = ref("Xero")
-const selectedTransferMethod = ref("Sales Invoice Push")
-const searchText = ref("")
-const selectedInvoiceIds = ref<string[]>([])
-const bankImportInput = ref<HTMLInputElement | null>(null)
-
-const statusOptions = [
-  { label: "All statuses", value: "all" },
-  { label: "Draft", value: "draft" },
-  { label: "Sent", value: "sent" },
-  { label: "Paid", value: "paid" },
-  { label: "Overdue", value: "overdue" },
-  { label: "Posted to finance", value: "posted" },
-]
-
-const accountingPlatformOptions = ["Xero", "QuickBooks", "Sage"].map(value => ({
-  label: value,
-  value,
-}))
-const transferMethodOptions = ["Sales Invoice Push", "Purchase Invoice Push", "Draft Sync"].map(
-  value => ({
-    label: value,
-    value,
-  }),
-)
-
-const filteredInvoices = computed(() => {
-  const query = searchText.value.trim().toLowerCase()
-  return state.invoices.filter(invoice => {
-    const statusMatch =
-      selectedStatus.value === "all" ||
-      invoice.status === selectedStatus.value ||
-      (selectedStatus.value === "posted" && Boolean(invoice.postedPlatform))
-    const text = [invoice.invoice, invoice.job, invoice.customer, invoice.mode, invoice.currency]
-      .join(" ")
-      .toLowerCase()
-    return statusMatch && (!query || text.includes(query))
-  })
-})
-
-const allVisibleSelected = computed(
-  () =>
-    filteredInvoices.value.length > 0 &&
-    filteredInvoices.value.every(invoice => selectedInvoiceIds.value.includes(invoice.id)),
-)
-
-function toggleAllInvoices(event: Event) {
-  const checked = (event.target as HTMLInputElement).checked
-  const visibleIds = filteredInvoices.value.map(invoice => invoice.id)
-  selectedInvoiceIds.value = checked
-    ? Array.from(new Set([...selectedInvoiceIds.value, ...visibleIds]))
-    : selectedInvoiceIds.value.filter(id => !visibleIds.includes(id))
-}
-
-function requireSelection() {
-  if (selectedInvoiceIds.value.length) return selectedInvoiceIds.value
-  return selectedInvoice.value ? [selectedInvoice.value.id] : []
-}
-
-function postSelected() {
-  postInvoices(requireSelection(), selectedAccountingPlatform.value)
-}
-
-function markSelectedPaid() {
-  markInvoicesPaid(requireSelection())
-}
-
-function printInvoice() {
-  window.print()
-}
-
-function exportBankFeed() {
-  downloadCsv("bank_feed_export.csv", [
-    ["Date", "Reference", "Description", "Direction", "Currency", "Amount", "MatchedInvoice"],
-    ...state.bankFeed.map(row => [
-      row.date,
-      row.reference,
-      row.description,
-      row.direction,
-      row.currency,
-      row.amount,
-      row.matchedInvoice,
-    ]),
-  ])
-}
-
-async function importBankCsv(event: Event) {
-  const file = (event.target as HTMLInputElement).files?.[0]
-  if (!file) return
-  const [, ...rows] = await parseCsvFile(file)
-  rows.forEach(row => {
-    state.bankFeed.push({
-      id: `BF-${Date.now()}-${row[1]}`,
-      date: row[0] || "",
-      reference: row[1] || "",
-      description: row[2] || "",
-      direction: row[3] === "OUT" ? "OUT" : "IN",
-      currency: row[4] || "GBP",
-      amount: Number(row[5] || 0),
-      matchedInvoice: row[6] || "",
-    })
-  })
-  ;(event.target as HTMLInputElement).value = ""
-  saveState()
-}
+  filteredInvoices,
+  allVisibleSelected,
+  toggleAllInvoices,
+  postSelected,
+  markSelectedPaid,
+  printInvoice,
+  openInvoicePdf,
+  invoiceHref,
+  onInvoiceLinkClick,
+  jobUrl,
+  exportBankFeed,
+  importBankCsv,
+} = useAccountsInvoicingSection()
 </script>
 
 <template>
@@ -230,44 +142,77 @@ async function importBankCsv(event: Event) {
             </thead>
 
             <tbody>
-              <tr
-                v-for="row in filteredInvoices"
-                :key="row.id"
-                @click="state.selectedInvoiceId = row.id"
-              >
-                <td class="checkbox-col" @click.stop>
-                  <input v-model="selectedInvoiceIds" type="checkbox" :value="row.id" />
-                </td>
-                <td>{{ row.invoice }}</td>
-                <td>{{ row.job }}</td>
-                <td>{{ row.customer }}</td>
-                <td>{{ row.mode }}</td>
-                <td>{{ row.invoiceDate }}</td>
-                <td>{{ row.dueDate }}</td>
-                <td>{{ money(row.amount, row.currency) }}</td>
-                <td>{{ row.paid ? money(row.amount, row.currency) : "-" }}</td>
-                <td>{{ row.paidDate || "-" }}</td>
-                <td>
-                  <span
-                    class="accounts-invoicing__pill"
-                    :class="`accounts-invoicing__pill--${statusTone(row.status)}`"
-                  >
-                    {{ statusLabel(row.status, row.dueDate) }}
-                  </span>
-                </td>
-                <td>
-                  <span
-                    class="accounts-invoicing__pill"
-                    :class="
-                      row.postedPlatform
-                        ? 'accounts-invoicing__pill--success'
-                        : 'accounts-invoicing__pill--neutral'
-                    "
-                  >
-                    {{ row.postedPlatform || "Not Posted" }}
-                  </span>
-                </td>
+              <tr v-if="loading">
+                <td colspan="12">Loading printed invoices...</td>
               </tr>
+              <tr v-else-if="error">
+                <td colspan="12">{{ error }}</td>
+              </tr>
+              <tr v-else-if="!filteredInvoices.length">
+                <td colspan="12">No printed invoices found yet.</td>
+              </tr>
+              <template v-else>
+                <tr
+                  v-for="row in filteredInvoices"
+                  :key="row.id"
+                  @click="state.selectedInvoiceId = row.id"
+                >
+                  <td class="checkbox-col" @click.stop>
+                    <input v-model="selectedInvoiceIds" type="checkbox" :value="row.id" />
+                  </td>
+                  <td>
+                    <a
+                      class="accounts-invoicing__table-link"
+                      :href="invoiceHref(row)"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      @click.stop="onInvoiceLinkClick($event, row)"
+                    >
+                      {{ row.invoice }}
+                    </a>
+                  </td>
+                  <td>
+                    <a
+                      v-if="row.jobId"
+                      class="accounts-invoicing__table-link"
+                      :href="jobUrl(row)"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      @click.stop
+                    >
+                      {{ row.job }}
+                    </a>
+                    <span v-else>{{ row.job || "-" }}</span>
+                  </td>
+                  <td>{{ row.customer }}</td>
+                  <td>{{ row.mode }}</td>
+                  <td>{{ row.invoiceDate }}</td>
+                  <td>{{ row.dueDate }}</td>
+                  <td>{{ money(row.amount, row.currency) }}</td>
+                  <td>{{ row.paid ? money(row.amount, row.currency) : "-" }}</td>
+                  <td>{{ row.paidDate || "-" }}</td>
+                  <td>
+                    <span
+                      class="accounts-invoicing__pill"
+                      :class="`accounts-invoicing__pill--${statusTone(row.status)}`"
+                    >
+                      {{ statusLabel(row.status, row.dueDate) }}
+                    </span>
+                  </td>
+                  <td>
+                    <span
+                      class="accounts-invoicing__pill"
+                      :class="
+                        row.postedPlatform
+                          ? 'accounts-invoicing__pill--success'
+                          : 'accounts-invoicing__pill--neutral'
+                      "
+                    >
+                      {{ row.postedPlatform || "Not Posted" }}
+                    </span>
+                  </td>
+                </tr>
+              </template>
             </tbody>
           </table>
         </div>
@@ -375,7 +320,7 @@ Normalised invoice header, line items, nominal codes, tax codes, currency, excha
             label="Post Current Invoice"
             class="btn btn--primary"
             size="small"
-            @click="postInvoices([state.selectedInvoiceId], selectedAccountingPlatform)"
+            @click="postSelected"
           />
           <Button
             label="Mark Selected as Paid"

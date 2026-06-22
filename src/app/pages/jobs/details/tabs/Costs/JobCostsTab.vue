@@ -19,7 +19,6 @@ const {
   suppliersLoading,
   addChargeCodeDialogVisible,
   addChargeCodeSaving,
-  invoiceLoading,
   pendingChargeCodeDescription,
   primaryJobChargeClassification,
   deleteDialogVisible,
@@ -45,7 +44,6 @@ const {
   missingExchangeRate,
   applyVatRate,
   syncLineExchangeRate,
-  generateInvoice,
 } = useJobCostsTab()
 </script>
 
@@ -178,16 +176,6 @@ const {
         </div>
 
         <div class="job-costs-tab__section-actions">
-          <Button
-            type="button"
-            class="job-costs-tab__invoice-btn"
-            label="Generate Invoice"
-            icon="pi pi-receipt"
-            :loading="invoiceLoading"
-            :disabled="invoiceLoading"
-            @click="generateInvoice"
-          />
-
           <Button
             type="button"
             class="job-costs-tab__add-btn"

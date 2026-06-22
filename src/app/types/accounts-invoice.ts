@@ -1,0 +1,49 @@
+export type AccountsInvoiceStatus = "draft" | "sent" | "paid" | "overdue" | "printed"
+
+export type AccountsInvoiceLine = {
+  description: string
+  amount: number
+  taxCode: string
+}
+
+export type AccountsInvoice = {
+  id: string
+  jobId: number
+  invoice: string
+  job: string
+  customer: string
+  mode: string
+  invoiceDate: string
+  dueDate: string
+  amount: number
+  cost: number
+  currency: string
+  paid: boolean
+  paidDate: string
+  status: AccountsInvoiceStatus
+  postedPlatform: string
+  pdfUrl: string | null
+  pdfGeneratedAt: string | null
+  pdfCacheReady: boolean
+  user: string
+  route: string
+  transportRefs: string[]
+  lines: AccountsInvoiceLine[]
+}
+
+export type AccountsInvoiceFilters = {
+  search?: string
+  status?: string
+  page?: number
+  perPage?: number
+}
+
+export type AccountsInvoiceMeta = {
+  total: number
+  filtered: number
+  currentPage: number
+  lastPage: number
+  perPage: number
+  from: number | null
+  to: number | null
+}

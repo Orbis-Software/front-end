@@ -8,6 +8,11 @@ function fetch(raw: any): ExchangeRate {
     rate: Number(raw?.rate ?? 0),
     effectiveDate: raw?.effectiveDate ?? "",
     isActive: raw?.isActive !== false,
+    requestedDate: raw?.requestedDate,
+    isInverse: Boolean(raw?.isInverse),
+    sourceBase: raw?.sourceBase,
+    sourceQuote: raw?.sourceQuote,
+    sourceRate: raw?.sourceRate === undefined ? undefined : Number(raw.sourceRate),
   }
 }
 

@@ -9,6 +9,8 @@ export function useAccountsChargeCodesSection() {
   const chargeCodeStore = useChargeCodeStore()
   const editingId = ref<number | null>(null)
   const formVisible = ref(false)
+  const deleteDialogVisible = ref(false)
+  const pendingDeleteCharge = ref<ChargeCode | null>(null)
 
   const filterState = reactive({
     search: "",
@@ -125,6 +127,11 @@ export function useAccountsChargeCodesSection() {
     resetForm()
   }
 
+  function closeDeleteDialog() {
+    deleteDialogVisible.value = false
+    pendingDeleteCharge.value = null
+  }
+
   function payload(): ChargeCodePayload {
     return {
       description: form.description.trim(),
@@ -162,9 +169,16 @@ export function useAccountsChargeCodesSection() {
     formVisible.value = true
   }
 
-  async function deleteCharge(row: ChargeCode) {
-    if (!window.confirm(`Delete "${row.description}"?`)) return
-    await chargeCodeStore.remove(row.id)
+  function requestDeleteCharge(row: ChargeCode) {
+    pendingDeleteCharge.value = row
+    deleteDialogVisible.value = true
+  }
+
+  async function confirmDeleteCharge() {
+    if (!pendingDeleteCharge.value) return
+
+    await chargeCodeStore.remove(pendingDeleteCharge.value.id)
+    closeDeleteDialog()
     await fetchChargeCodes()
   }
 
@@ -264,6 +278,8 @@ export function useAccountsChargeCodesSection() {
     chargeCodeStore,
     editingId,
     formVisible,
+    deleteDialogVisible,
+    pendingDeleteCharge,
     filterState,
     form,
     classificationOptions,
@@ -277,10 +293,12 @@ export function useAccountsChargeCodesSection() {
     applyFilters,
     openCreateModal,
     closeForm,
+    closeDeleteDialog,
     resetForm,
     saveCharge,
     editCharge,
-    deleteCharge,
+    requestDeleteCharge,
+    confirmDeleteCharge,
     resetToSeed,
     sortBy,
     sortMarker,

@@ -1,29 +1,20 @@
 <script setup lang="ts">
 import "./AccountsCreditControlSection.css"
 
-import { computed, ref } from "vue"
 import Button from "primevue/button"
 
-import { useAccountsDemo } from "@/app/composables/useAccountsDemo"
+import { useAccountsCreditControlSection } from "./AccountsCreditControlSection"
 
-const { state, creditRows, saveState, money } = useAccountsDemo()
-const selectedCustomerName = ref("Acme Retail UK")
-
-const selectedCustomer = computed(
-  () =>
-    creditRows.value.find(row => row.customer === selectedCustomerName.value) ??
-    creditRows.value[0],
-)
-
-function toggleHold() {
-  if (!selectedCustomer.value) return
-  const customer = state.creditCustomers.find(
-    row => row.customer === selectedCustomer.value?.customer,
-  )
-  if (!customer) return
-  customer.onHold = !customer.onHold
-  saveState()
-}
+const {
+  rows,
+  selectedCustomerId,
+  loading,
+  savingHold,
+  errorMessage,
+  selectedCustomer,
+  money,
+  toggleHold,
+} = useAccountsCreditControlSection()
 </script>
 
 <template>
@@ -55,33 +46,60 @@ function toggleHold() {
             </thead>
 
             <tbody>
-              <tr
-                v-for="row in creditRows"
-                :key="row.customer"
-                @click="selectedCustomerName = row.customer"
-              >
-                <td>{{ row.customer }}</td>
-                <td>{{ row.termsLabel }}</td>
-                <td>{{ row.creditLimitLabel }}</td>
-                <td>{{ row.outstandingLabel }}</td>
-                <td>{{ row.oldestDebtLabel }}</td>
-                <td>
-                  <span
-                    class="accounts-credit-control__pill"
-                    :class="`accounts-credit-control__pill--${row.statusTone}`"
-                  >
-                    {{ row.status }}
-                  </span>
-                </td>
-                <td>
-                  <span
-                    class="accounts-credit-control__pill"
-                    :class="`accounts-credit-control__pill--${row.holdTone}`"
-                  >
-                    {{ row.hold }}
-                  </span>
+              <tr v-if="loading">
+                <td colspan="7" class="accounts-credit-control__empty">
+                  Loading credit control...
                 </td>
               </tr>
+
+              <tr v-else-if="errorMessage">
+                <td
+                  colspan="7"
+                  class="accounts-credit-control__empty accounts-credit-control__empty--error"
+                >
+                  {{ errorMessage }}
+                </td>
+              </tr>
+
+              <tr v-else-if="!rows.length">
+                <td colspan="7" class="accounts-credit-control__empty">
+                  No printed invoices are available for credit control yet.
+                </td>
+              </tr>
+
+              <template v-else>
+                <tr
+                  v-for="row in rows"
+                  :key="row.customerId ?? row.customer"
+                  :class="{
+                    'accounts-credit-control__row--active':
+                      selectedCustomer?.customerId === row.customerId,
+                  }"
+                  @click="selectedCustomerId = row.customerId"
+                >
+                  <td>{{ row.customer }}</td>
+                  <td>{{ row.termsLabel }}</td>
+                  <td>{{ row.creditLimitLabel }}</td>
+                  <td>{{ row.outstandingLabel }}</td>
+                  <td>{{ row.oldestDebtLabel }}</td>
+                  <td>
+                    <span
+                      class="accounts-credit-control__pill"
+                      :class="`accounts-credit-control__pill--${row.statusTone}`"
+                    >
+                      {{ row.status }}
+                    </span>
+                  </td>
+                  <td>
+                    <span
+                      class="accounts-credit-control__pill"
+                      :class="`accounts-credit-control__pill--${row.holdTone}`"
+                    >
+                      {{ row.hold }}
+                    </span>
+                  </td>
+                </tr>
+              </template>
             </tbody>
           </table>
         </div>
@@ -94,15 +112,22 @@ function toggleHold() {
         <div class="accounts-credit-control__detail-head">Selected Customer Status</div>
 
         <div class="accounts-credit-control__detail-stack">
+          <div v-if="errorMessage" class="accounts-credit-control__alert">
+            {{ errorMessage }}
+          </div>
+
           <div class="accounts-credit-control__detail-card">
             <div class="accounts-credit-control__detail-title">{{ selectedCustomer.customer }}</div>
             <div class="accounts-credit-control__detail-text">
-              Terms {{ selectedCustomer.termsLabel }} · Credit Limit
+              Terms {{ selectedCustomer.termsLabel }} - Credit Limit
               {{ selectedCustomer.creditLimitLabel }}
             </div>
           </div>
 
-          <div v-if="selectedCustomer.status === 'Warning'" class="accounts-credit-control__alert">
+          <div
+            v-if="selectedCustomer.statusTone !== 'success'"
+            class="accounts-credit-control__alert"
+          >
             Payment terms or credit limit warning. Oldest outstanding debt is
             {{ selectedCustomer.oldestDebtLabel }}.
           </div>
@@ -123,6 +148,8 @@ function toggleHold() {
               :label="selectedCustomer.onHold ? 'Release Hold' : 'Place On Hold'"
               class="btn btn--ghost"
               size="small"
+              :loading="savingHold"
+              :disabled="savingHold || !selectedCustomer.customerId"
               @click="toggleHold"
             />
           </div>
@@ -134,8 +161,16 @@ function toggleHold() {
               :key="invoice.id"
               class="accounts-credit-control__detail-text"
             >
-              {{ invoice.invoice }} · due {{ invoice.dueDate }} ·
+              {{ invoice.invoice }} - {{ invoice.job || "No job" }} - due
+              {{ invoice.dueDate || "No due date" }} -
               {{ money(invoice.amount, invoice.currency) }}
+              <span v-if="invoice.daysOverdue > 0">({{ invoice.daysOverdue }} days overdue)</span>
+            </div>
+            <div
+              v-if="!selectedCustomer.openInvoices.length"
+              class="accounts-credit-control__detail-text"
+            >
+              No open invoices for this customer.
             </div>
           </div>
         </div>

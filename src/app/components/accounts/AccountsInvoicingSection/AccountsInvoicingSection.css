@@ -125,6 +125,30 @@
   font-weight: 700;
 }
 
+.accounts-invoicing__table-link {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: #b45309;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.accounts-invoicing__table-link:hover,
+.accounts-invoicing__table-link:focus-visible {
+  color: #7c2d12;
+  text-decoration: none;
+}
+
+.accounts-invoicing__table-link:focus-visible {
+  outline: 2px solid #f97316;
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
 .checkbox-col {
   width: 28px;
 }

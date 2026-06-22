@@ -67,6 +67,25 @@
   font-weight: 700;
 }
 
+.accounts-credit-control__table tbody tr {
+  cursor: pointer;
+}
+
+.accounts-credit-control__row--active td {
+  background: #fff7e8;
+}
+
+.accounts-credit-control__empty {
+  text-align: center !important;
+  color: var(--text-muted) !important;
+  padding: 24px 12px !important;
+  cursor: default;
+}
+
+.accounts-credit-control__empty--error {
+  color: #b42318 !important;
+}
+
 .accounts-credit-control__pill {
   display: inline-flex;
   align-items: center;

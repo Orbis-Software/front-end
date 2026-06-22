@@ -12,6 +12,8 @@ const {
   chargeCodeStore,
   editingId,
   formVisible,
+  deleteDialogVisible,
+  pendingDeleteCharge,
   filterState,
   form,
   classificationOptions,
@@ -24,9 +26,11 @@ const {
   applyFilters,
   openCreateModal,
   closeForm,
+  closeDeleteDialog,
   saveCharge,
   editCharge,
-  deleteCharge,
+  requestDeleteCharge,
+  confirmDeleteCharge,
   resetToSeed,
   sortBy,
   sortMarker,
@@ -164,6 +168,32 @@ const {
           </div>
         </template>
       </Dialog>
+
+      <Dialog
+        v-model:visible="deleteDialogVisible"
+        header="Delete Charge Code"
+        modal
+        class="accounts-charge-codes__dialog"
+        :style="{ width: '460px', maxWidth: 'calc(100vw - 32px)' }"
+        @hide="closeDeleteDialog"
+      >
+        <p class="accounts-charge-codes__confirm-message">
+          Delete "{{ pendingDeleteCharge?.description }}"? This cannot be undone.
+        </p>
+
+        <template #footer>
+          <div class="accounts-charge-codes__dialog-actions">
+            <Button label="Cancel" class="btn btn--ghost" @click="closeDeleteDialog" />
+            <Button
+              label="Delete"
+              class="btn btn--primary"
+              :loading="chargeCodeStore.saving"
+              @click="confirmDeleteCharge"
+            />
+          </div>
+        </template>
+      </Dialog>
+
       <div v-if="chargeCodeStore.error" class="accounts-charge-codes__error">
         {{ chargeCodeStore.error }}
       </div>
@@ -225,7 +255,11 @@ const {
                 <td>
                   <div class="accounts-charge-codes__table-actions">
                     <Button label="Edit" class="btn btn--ghost" @click="editCharge(row)" />
-                    <Button label="Delete" class="btn btn--ghost" @click="deleteCharge(row)" />
+                    <Button
+                      label="Delete"
+                      class="btn btn--ghost"
+                      @click="requestDeleteCharge(row)"
+                    />
                   </div>
                 </td>
               </tr>

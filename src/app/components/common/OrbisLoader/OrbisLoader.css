@@ -1,0 +1,765 @@
+:root {
+  --orbis-loader-primary: #ec691a;
+  --orbis-loader-primary-dark: #d85f17;
+  --orbis-loader-page: #d4d4d4;
+  --orbis-loader-card: #ffffff;
+  --orbis-loader-border: #e5e5e5;
+  --orbis-loader-text: #262626;
+  --orbis-loader-muted: #737373;
+}
+
+.orbis-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+
+  display: grid;
+  place-items: center;
+
+  padding: 24px;
+  overflow: hidden;
+  isolation: isolate;
+
+  background:
+    radial-gradient(circle at 50% 36%, rgba(255, 255, 255, 0.75), transparent 34%),
+    var(--orbis-loader-page);
+
+  color: var(--orbis-loader-text);
+
+  font-family:
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Background panels                                                          */
+/* -------------------------------------------------------------------------- */
+
+.orbis-loader__panel {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+
+  width: calc(50% + 2px);
+  z-index: -2;
+
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
+.orbis-loader__panel--left {
+  left: 0;
+
+  transform: translateX(-100%);
+
+  background:
+    radial-gradient(circle at 20% 25%, rgba(255, 255, 255, 0.18), transparent 32%),
+    linear-gradient(135deg, var(--orbis-loader-primary), var(--orbis-loader-primary-dark));
+
+  box-shadow: 18px 0 55px rgba(38, 38, 38, 0.16);
+}
+
+.orbis-loader__panel--right {
+  right: 0;
+
+  transform: translateX(100%);
+
+  background:
+    radial-gradient(circle at 80% 70%, rgba(236, 105, 26, 0.14), transparent 35%),
+    linear-gradient(225deg, #eeeeee, var(--orbis-loader-page));
+
+  box-shadow: -18px 0 55px rgba(38, 38, 38, 0.13);
+}
+
+.orbis-loader.is-entering .orbis-loader__panel--left {
+  animation: orbis-panel-left-close 760ms cubic-bezier(0.76, 0, 0.24, 1) forwards;
+}
+
+.orbis-loader.is-entering .orbis-loader__panel--right {
+  animation: orbis-panel-right-close 760ms cubic-bezier(0.76, 0, 0.24, 1) forwards;
+}
+
+.orbis-loader.is-visible .orbis-loader__panel {
+  transform: translateX(0);
+}
+
+.orbis-loader.is-leaving .orbis-loader__panel--left {
+  animation: orbis-panel-left-open 850ms 180ms cubic-bezier(0.76, 0, 0.24, 1) forwards;
+}
+
+.orbis-loader.is-leaving .orbis-loader__panel--right {
+  animation: orbis-panel-right-open 850ms 180ms cubic-bezier(0.76, 0, 0.24, 1) forwards;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Centre dividing line                                                       */
+/* -------------------------------------------------------------------------- */
+
+.orbis-loader__line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+
+  width: 2px;
+  z-index: 1;
+
+  opacity: 0;
+
+  transform: translateX(-50%) scaleY(0);
+  transform-origin: center;
+
+  background: rgba(255, 255, 255, 0.82);
+
+  box-shadow:
+    0 0 18px rgba(255, 255, 255, 0.9),
+    0 0 44px rgba(236, 105, 26, 0.55);
+
+  pointer-events: none;
+}
+
+.orbis-loader.is-entering .orbis-loader__line {
+  animation: orbis-line-intro 520ms 590ms ease-out forwards;
+}
+
+.orbis-loader.is-visible .orbis-loader__line {
+  opacity: 0.28;
+  transform: translateX(-50%) scaleY(1);
+}
+
+.orbis-loader.is-leaving .orbis-loader__line {
+  animation: orbis-line-outro 360ms ease-in forwards;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Background decorative circles                                              */
+/* -------------------------------------------------------------------------- */
+
+.orbis-loader::before,
+.orbis-loader::after {
+  content: "";
+
+  position: absolute;
+  z-index: -1;
+
+  border-radius: 50%;
+  filter: blur(2px);
+  opacity: 0.35;
+}
+
+.orbis-loader::before {
+  top: -140px;
+  right: -110px;
+
+  width: 360px;
+  height: 360px;
+
+  background: rgba(236, 105, 26, 0.12);
+}
+
+.orbis-loader::after {
+  bottom: -130px;
+  left: -80px;
+
+  width: 300px;
+  height: 300px;
+
+  background: rgba(255, 255, 255, 0.5);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Loader card                                                                */
+/* -------------------------------------------------------------------------- */
+
+.orbis-loader__card {
+  position: relative;
+  z-index: 3;
+
+  width: min(520px, 100%);
+  padding: 42px 38px 34px;
+
+  overflow: hidden;
+
+  background: rgba(255, 255, 255, 0.92);
+
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 24px;
+
+  box-shadow:
+    0 26px 65px rgba(38, 38, 38, 0.12),
+    0 4px 14px rgba(38, 38, 38, 0.06);
+
+  backdrop-filter: blur(14px);
+  text-align: center;
+
+  opacity: 0;
+  transform: translateY(22px) scale(0.965);
+}
+
+.orbis-loader.is-entering .orbis-loader__card {
+  animation: orbis-card-intro 650ms 620ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.orbis-loader.is-visible .orbis-loader__card {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.orbis-loader.is-leaving .orbis-loader__card {
+  animation: orbis-card-outro 360ms cubic-bezier(0.65, 0, 0.35, 1) forwards;
+}
+
+.orbis-loader__card::before {
+  content: "";
+
+  position: absolute;
+  inset: 0 0 auto;
+
+  height: 4px;
+
+  background: linear-gradient(90deg, transparent, var(--orbis-loader-primary), transparent);
+
+  transform: translateX(-100%);
+
+  animation: orbis-card-scan 2.8s ease-in-out infinite;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Content introduction animations                                            */
+/* -------------------------------------------------------------------------- */
+
+.orbis-loader__brand,
+.orbis-loader__focus,
+.orbis-loader__card h2,
+.orbis-loader__card p,
+.orbis-loader__progress,
+.orbis-loader__status {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.orbis-loader.is-entering .orbis-loader__brand,
+.orbis-loader.is-visible .orbis-loader__brand {
+  animation: orbis-content-intro 440ms 760ms ease forwards;
+}
+
+.orbis-loader.is-entering .orbis-loader__focus,
+.orbis-loader.is-visible .orbis-loader__focus {
+  animation: orbis-content-intro 440ms 830ms ease forwards;
+}
+
+.orbis-loader.is-entering .orbis-loader__card h2,
+.orbis-loader.is-visible .orbis-loader__card h2 {
+  animation: orbis-content-intro 440ms 900ms ease forwards;
+}
+
+.orbis-loader.is-entering .orbis-loader__card p,
+.orbis-loader.is-visible .orbis-loader__card p {
+  animation: orbis-content-intro 440ms 960ms ease forwards;
+}
+
+.orbis-loader.is-entering .orbis-loader__progress,
+.orbis-loader.is-visible .orbis-loader__progress {
+  animation: orbis-content-intro 440ms 1020ms ease forwards;
+}
+
+.orbis-loader.is-entering .orbis-loader__status,
+.orbis-loader.is-visible .orbis-loader__status {
+  animation: orbis-content-intro 440ms 1080ms ease forwards;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Orbis branding                                                             */
+/* -------------------------------------------------------------------------- */
+
+.orbis-loader__brand {
+  display: inline-flex;
+  align-items: center;
+
+  gap: 13px;
+  margin-bottom: 30px;
+}
+
+.orbis-loader__brand-mark {
+  width: 46px;
+  height: 46px;
+
+  display: grid;
+  place-items: center;
+
+  overflow: hidden;
+
+  background: #ffffff;
+
+  border: 1px solid var(--orbis-loader-border);
+  border-radius: 14px;
+
+  box-shadow:
+    0 10px 24px rgba(38, 38, 38, 0.1),
+    0 4px 10px rgba(236, 105, 26, 0.1);
+}
+
+.orbis-loader__brand-logo {
+  display: block;
+
+  width: 36px;
+  height: 32px;
+
+  object-fit: contain;
+}
+
+.orbis-loader__brand-copy {
+  text-align: left;
+  line-height: 1;
+}
+
+.orbis-loader__brand strong {
+  display: block;
+
+  font-family: "IBM Plex Sans", Inter, sans-serif;
+
+  font-size: 27px;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.orbis-loader__brand small {
+  display: block;
+
+  margin-top: 7px;
+
+  color: var(--orbis-loader-muted);
+
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Centre operation icon                                                      */
+/* -------------------------------------------------------------------------- */
+
+.orbis-loader__focus {
+  position: relative;
+
+  height: 126px;
+  margin: 0 auto 20px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.orbis-loader__orbit {
+  position: absolute;
+
+  width: 112px;
+  height: 112px;
+
+  border: 2px solid var(--orbis-loader-border);
+  border-radius: 50%;
+}
+
+.orbis-loader__orbit::before {
+  content: "";
+
+  position: absolute;
+  inset: -2px;
+
+  border: 2px solid transparent;
+  border-top-color: var(--orbis-loader-primary);
+  border-right-color: rgba(236, 105, 26, 0.45);
+  border-radius: 50%;
+
+  animation: orbis-spin 1.35s linear infinite;
+}
+
+.orbis-loader__orbit span {
+  position: absolute;
+  top: -5px;
+  left: 50%;
+
+  width: 10px;
+  height: 10px;
+
+  transform: translateX(-50%);
+
+  border-radius: 50%;
+
+  background: var(--orbis-loader-primary);
+
+  box-shadow: 0 0 0 6px rgba(236, 105, 26, 0.12);
+}
+
+.orbis-loader__operation-wrap {
+  position: relative;
+  z-index: 2;
+
+  width: 76px;
+  height: 76px;
+
+  display: grid;
+  place-items: center;
+
+  background: #ffffff;
+
+  border: 1px solid var(--orbis-loader-border);
+  border-radius: 22px;
+
+  box-shadow:
+    0 16px 34px rgba(38, 38, 38, 0.14),
+    0 5px 14px rgba(236, 105, 26, 0.12),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.85);
+}
+
+.orbis-loader__operation-wrap::before {
+  content: "";
+
+  position: absolute;
+  inset: 7px;
+
+  background: linear-gradient(145deg, rgba(236, 105, 26, 0.12), rgba(236, 105, 26, 0.03));
+
+  border-radius: 17px;
+}
+
+.orbis-loader__operation-icon {
+  position: relative;
+  z-index: 2;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  color: var(--orbis-loader-primary);
+
+  font-size: 34px;
+  line-height: 1;
+
+  filter: drop-shadow(0 6px 8px rgba(236, 105, 26, 0.2));
+}
+
+/* -------------------------------------------------------------------------- */
+/* Loader text                                                                */
+/* -------------------------------------------------------------------------- */
+
+.orbis-loader__card h2 {
+  margin: 0;
+
+  font-family: "IBM Plex Sans", Inter, sans-serif;
+
+  font-size: 20px;
+  font-weight: 750;
+  letter-spacing: 0;
+}
+
+.orbis-loader__card p {
+  min-height: 22px;
+  margin: 9px 0 24px;
+
+  color: var(--orbis-loader-muted);
+
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Progress bar                                                               */
+/* -------------------------------------------------------------------------- */
+
+.orbis-loader__progress {
+  width: 100%;
+  height: 7px;
+
+  overflow: hidden;
+
+  background: #f5f5f5;
+
+  border: 1px solid var(--orbis-loader-border);
+  border-radius: 999px;
+}
+
+.orbis-loader__progress span {
+  display: block;
+
+  width: 36%;
+  height: 100%;
+
+  border-radius: inherit;
+
+  background: linear-gradient(
+    90deg,
+    var(--orbis-loader-primary-dark),
+    var(--orbis-loader-primary),
+    #f78a43
+  );
+
+  animation: orbis-progress 2.1s ease-in-out infinite;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Status                                                                     */
+/* -------------------------------------------------------------------------- */
+
+.orbis-loader__status {
+  display: inline-flex;
+  align-items: center;
+
+  gap: 8px;
+  margin-top: 16px;
+
+  color: var(--orbis-loader-muted);
+
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.orbis-loader__status span {
+  width: 7px;
+  height: 7px;
+
+  flex: 0 0 auto;
+
+  border-radius: 50%;
+
+  background: var(--orbis-loader-primary);
+
+  box-shadow: 0 0 0 0 rgba(236, 105, 26, 0.45);
+
+  animation: orbis-pulse 1.6s ease-out infinite;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Footer                                                                     */
+/* -------------------------------------------------------------------------- */
+
+.orbis-loader footer {
+  position: absolute;
+  bottom: 20px;
+
+  color: rgba(38, 38, 38, 0.5);
+
+  font-size: 11px;
+  letter-spacing: 0;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Keyframes                                                                  */
+/* -------------------------------------------------------------------------- */
+
+@keyframes orbis-panel-left-close {
+  from {
+    transform: translateX(-100%);
+  }
+
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes orbis-panel-right-close {
+  from {
+    transform: translateX(100%);
+  }
+
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes orbis-panel-left-open {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-101%);
+  }
+}
+
+@keyframes orbis-panel-right-open {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(101%);
+  }
+}
+
+@keyframes orbis-line-intro {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) scaleY(0);
+  }
+
+  55% {
+    opacity: 1;
+    transform: translateX(-50%) scaleY(1);
+  }
+
+  100% {
+    opacity: 0.28;
+    transform: translateX(-50%) scaleY(1);
+  }
+}
+
+@keyframes orbis-line-outro {
+  from {
+    opacity: 0.28;
+    transform: translateX(-50%) scaleY(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateX(-50%) scaleY(0);
+  }
+}
+
+@keyframes orbis-card-intro {
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes orbis-card-outro {
+  to {
+    opacity: 0;
+    transform: translateY(0) scale(0.9);
+    filter: blur(6px);
+  }
+}
+
+@keyframes orbis-content-intro {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes orbis-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes orbis-progress {
+  0% {
+    width: 36%;
+    transform: translateX(-110%);
+  }
+
+  50% {
+    width: 58%;
+  }
+
+  100% {
+    width: 28%;
+    transform: translateX(285%);
+  }
+}
+
+@keyframes orbis-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(236, 105, 26, 0.45);
+  }
+
+  70% {
+    box-shadow: 0 0 0 8px rgba(236, 105, 26, 0);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 rgba(236, 105, 26, 0);
+  }
+}
+
+@keyframes orbis-card-scan {
+  0%,
+  15% {
+    transform: translateX(-100%);
+  }
+
+  70%,
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/* Mobile                                                                     */
+/* -------------------------------------------------------------------------- */
+
+@media (max-width: 520px) {
+  .orbis-loader {
+    padding: 18px;
+  }
+
+  .orbis-loader__card {
+    padding: 34px 24px 28px;
+    border-radius: 20px;
+  }
+
+  .orbis-loader__brand {
+    margin-bottom: 24px;
+  }
+
+  .orbis-loader__brand strong {
+    font-size: 23px;
+  }
+
+  .orbis-loader__brand-mark {
+    width: 42px;
+    height: 42px;
+  }
+
+  .orbis-loader__brand-logo {
+    width: 33px;
+    height: 29px;
+  }
+
+  .orbis-loader__focus {
+    height: 116px;
+  }
+
+  .orbis-loader__orbit {
+    width: 104px;
+    height: 104px;
+  }
+
+  .orbis-loader__operation-wrap {
+    width: 70px;
+    height: 70px;
+    border-radius: 20px;
+  }
+
+  .orbis-loader__operation-icon {
+    font-size: 31px;
+  }
+
+  .orbis-loader footer {
+    bottom: 12px;
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/* Reduced motion                                                             */
+/* -------------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .orbis-loader *,
+  .orbis-loader *::before,
+  .orbis-loader *::after {
+    animation-duration: 0.001ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+  }
+
+  .orbis-loader__panel {
+    transform: translateX(0);
+  }
+}

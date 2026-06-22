@@ -1,6 +1,7 @@
 import { defineStore } from "pinia"
 import exchangeRateService from "@/app/services/exchange-rates"
 import type {
+  EffectiveExchangeRateParams,
   ExchangeRate,
   ExchangeRateFilters,
   ExchangeRatePayload,
@@ -18,6 +19,7 @@ type State = {
   loading: boolean
   saving: boolean
   error: string | null
+  effectiveRates: Record<string, ExchangeRate | null>
 }
 
 export const useExchangeRateStore = defineStore("exchange-rates", {
@@ -33,9 +35,18 @@ export const useExchangeRateStore = defineStore("exchange-rates", {
     loading: false,
     saving: false,
     error: null,
+    effectiveRates: {},
   }),
 
   actions: {
+    effectiveKey(params: EffectiveExchangeRateParams) {
+      return [
+        String(params.base || "").toUpperCase(),
+        String(params.quote || "").toUpperCase(),
+        params.date,
+      ].join(":")
+    },
+
     upsertCached(exchangeRate: ExchangeRate) {
       const index = this.exchangeRates.findIndex(item => item.id === exchangeRate.id)
 
@@ -43,6 +54,47 @@ export const useExchangeRateStore = defineStore("exchange-rates", {
         this.exchangeRates[index] = exchangeRate
       } else {
         this.exchangeRates.unshift(exchangeRate)
+      }
+    },
+
+    async fetchEffective(params: EffectiveExchangeRateParams) {
+      const normalizedParams = {
+        base: String(params.base || "").toUpperCase(),
+        quote: String(params.quote || "").toUpperCase(),
+        date: params.date,
+      }
+      const key = this.effectiveKey(normalizedParams)
+
+      if (Object.prototype.hasOwnProperty.call(this.effectiveRates, key)) {
+        return this.effectiveRates[key]
+      }
+
+      if (normalizedParams.base === normalizedParams.quote) {
+        const sameCurrencyRate: ExchangeRate = {
+          id: 0,
+          base: normalizedParams.base,
+          quote: normalizedParams.quote,
+          rate: 1,
+          effectiveDate: normalizedParams.date,
+          requestedDate: normalizedParams.date,
+          isActive: true,
+        }
+
+        this.effectiveRates[key] = sameCurrencyRate
+
+        return sameCurrencyRate
+      }
+
+      try {
+        const exchangeRate = await exchangeRateService.effective(normalizedParams)
+        this.effectiveRates[key] = exchangeRate
+
+        return exchangeRate
+      } catch (error: any) {
+        this.effectiveRates[key] = null
+        this.error =
+          error?.response?.data?.message || error?.message || "Failed to load exchange rate."
+        throw error
       }
     },
 
@@ -76,6 +128,7 @@ export const useExchangeRateStore = defineStore("exchange-rates", {
       try {
         const exchangeRate = await exchangeRateService.create(payload)
         this.upsertCached(exchangeRate)
+        this.effectiveRates = {}
         this.total += 1
         this.filtered += 1
 
@@ -96,6 +149,7 @@ export const useExchangeRateStore = defineStore("exchange-rates", {
       try {
         const exchangeRate = await exchangeRateService.update(id, payload)
         this.upsertCached(exchangeRate)
+        this.effectiveRates = {}
 
         return exchangeRate
       } catch (error: any) {
@@ -120,6 +174,7 @@ export const useExchangeRateStore = defineStore("exchange-rates", {
           this.total = Math.max(0, this.total - 1)
           this.filtered = Math.max(0, this.filtered - 1)
         }
+        this.effectiveRates = {}
       } catch (error: any) {
         this.error =
           error?.response?.data?.message || error?.message || "Failed to delete exchange rate."
@@ -135,6 +190,7 @@ export const useExchangeRateStore = defineStore("exchange-rates", {
 
       try {
         this.exchangeRates = await exchangeRateService.reset()
+        this.effectiveRates = {}
       } catch (error: any) {
         this.error =
           error?.response?.data?.message || error?.message || "Failed to reset exchange rates."

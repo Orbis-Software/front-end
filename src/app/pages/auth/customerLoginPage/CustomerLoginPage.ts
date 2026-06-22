@@ -1,9 +1,11 @@
 import { ref } from "vue"
 import { useRouter } from "vue-router"
+import { useAppLoaderStore } from "@/app/stores/app-loader"
 import { useAuthStore } from "@/app/stores/auth"
 
 export function useCustomerLoginPage() {
   const router = useRouter()
+  const appLoader = useAppLoaderStore()
   const authStore = useAuthStore()
 
   const email = ref("")
@@ -40,11 +42,27 @@ export function useCustomerLoginPage() {
     clearErrors()
 
     try {
-      await authStore.customerLogin(email.value, password.value)
+      await appLoader.withLoader(
+        {
+          title: "Signing you in",
+          message: "Checking your customer portal access...",
+          messages: [
+            "Checking your customer portal access...",
+            "Loading shipment and document access...",
+            "Preparing your customer dashboard...",
+            "Almost ready...",
+          ],
+          iconClass: "pi pi-sign-in",
+          footer: "Securely signing in to Orbis Customer Portal",
+        },
+        async () => {
+          await authStore.customerLogin(email.value, password.value)
 
-      router.push({
-        name: "customer.dashboard",
-      })
+          await router.push({
+            name: "customer.dashboard",
+          })
+        },
+      )
     } catch (error: any) {
       const errors = error?.response?.data?.errors
 

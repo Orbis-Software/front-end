@@ -12,6 +12,7 @@ import InputText from "primevue/inputtext"
 import Calendar from "primevue/calendar"
 
 import JobProgressStepper from "@/app/components/jobs/details/JobProgressStepper.vue"
+import { useAppLoaderStore } from "@/app/stores/app-loader"
 import { useTransportJobStore } from "@/app/stores/transport-job"
 import type { JobPdfDocument } from "@/app/services/transport-jobs/job-pdf"
 import { useJobDetailsPage } from "./JobDetailsPage.logic"
@@ -38,6 +39,7 @@ const {
 const toast = useToast()
 const confirm = useConfirm()
 const router = useRouter()
+const appLoader = useAppLoaderStore()
 const transportJobStore = useTransportJobStore()
 const pdfLoading = ref<JobPdfDocument | null>(null)
 const archiveLoading = ref(false)
@@ -103,24 +105,8 @@ const progressSteps = computed(() => [
   },
 ])
 
-function pdfFileName() {
-  const number = form.job_number || job.value?.job_number || `job-${job.value?.id ?? "details"}`
-  return `${number}`.replace(/[^A-Za-z0-9_-]+/g, "-") + ".pdf"
-}
-
-function openBlob(blob: Blob, download = false) {
+function openBlob(blob: Blob) {
   const url = URL.createObjectURL(blob)
-
-  if (download) {
-    const link = document.createElement("a")
-    link.href = url
-    link.download = pdfFileName()
-    document.body.appendChild(link)
-    link.click()
-    link.remove()
-    window.setTimeout(() => URL.revokeObjectURL(url), 1000)
-    return
-  }
 
   window.open(url, "_blank", "noopener,noreferrer")
   window.setTimeout(() => URL.revokeObjectURL(url), 60000)
@@ -143,7 +129,7 @@ async function extractPdfError(error: any) {
   return error?.response?.data?.message ?? error?.message ?? "Unable to generate the job PDF."
 }
 
-async function loadPdf(download = false, document: JobPdfDocument = "job_details") {
+async function loadPdf(document: JobPdfDocument = "job_details") {
   const id = Number(job.value?.id)
 
   if (!Number.isFinite(id) || id <= 0) return
@@ -158,7 +144,7 @@ async function loadPdf(download = false, document: JobPdfDocument = "job_details
       throw new Error(text || "The server did not return a PDF.")
     }
 
-    openBlob(blob, download)
+    openBlob(blob)
   } catch (error: any) {
     toast.add({
       severity: "error",
@@ -171,24 +157,79 @@ async function loadPdf(download = false, document: JobPdfDocument = "job_details
   }
 }
 
-function onPrint() {
-  loadPdf(false, "job_details")
-}
+async function onGenerateInvoice() {
+  const id = Number(job.value?.id)
 
-function onExportPdf() {
-  loadPdf(true, "job_details")
-}
+  if (!Number.isFinite(id) || id <= 0) {
+    toast.add({
+      severity: "warn",
+      summary: "Save job first",
+      detail: "The job must be saved before an invoice can be generated.",
+      life: 3500,
+    })
+    return
+  }
 
-function onCollectionOrder() {
-  if (!isRoadMode.value) return
+  if (!form.sell_costs.length) {
+    toast.add({
+      severity: "warn",
+      summary: "No sell charges",
+      detail: "Add at least one sell charge before generating the invoice.",
+      life: 3500,
+    })
+    return
+  }
 
-  loadPdf(false, "collection_order")
+  pdfLoading.value = "invoice"
+
+  try {
+    const blob = await appLoader.withLoader(
+      {
+        title: "Generating invoice",
+        message: "Wait for your invoice...",
+        messages: [
+          "Wait for your invoice...",
+          "Saving Costs and Charges...",
+          "Checking the cached invoice PDF...",
+          "Preparing the invoice document...",
+          "Opening your invoice...",
+        ],
+        iconClass: "pi pi-file-pdf",
+        footer: "Preparing a presentable invoice document",
+      },
+      async () => {
+        await save({
+          successSummary: "Invoice ready",
+          successDetail: "Costs & Charges saved before generating the invoice.",
+          successLife: 1800,
+        })
+
+        return transportJobStore.jobPdf(id, "invoice")
+      },
+    )
+
+    if (!(blob instanceof Blob) || blob.type !== "application/pdf") {
+      const text = blob instanceof Blob ? await blob.text() : ""
+      throw new Error(text || "The server did not return a PDF.")
+    }
+
+    openBlob(blob)
+  } catch (error: any) {
+    toast.add({
+      severity: "error",
+      summary: "Invoice failed",
+      detail: await extractPdfError(error),
+      life: 4500,
+    })
+  } finally {
+    pdfLoading.value = null
+  }
 }
 
 function onTransportOrder() {
   if (!isRoadMode.value) return
 
-  loadPdf(false, "transport_order")
+  loadPdf("transport_order")
 }
 
 function archiveErrorMessage(error: any) {
@@ -235,11 +276,6 @@ function onArchive() {
     },
   })
 }
-
-function onBookJob() {
-  form.status = "Booked"
-  save()
-}
 </script>
 
 <template>
@@ -260,33 +296,6 @@ function onBookJob() {
 
         <div class="job-actions">
           <Button
-            class="job-action-btn"
-            icon="pi pi-print"
-            :label="pdfLoading === 'job_details' ? 'Opening...' : 'Print'"
-            :loading="pdfLoading === 'job_details'"
-            :disabled="loading || isPdfLoading"
-            @click="onPrint"
-          />
-
-          <Button
-            class="job-action-btn"
-            icon="pi pi-download"
-            label="Export"
-            :disabled="loading || isPdfLoading"
-            @click="onExportPdf"
-          />
-
-          <Button
-            v-if="isRoadMode"
-            class="job-action-btn"
-            icon="pi pi-file"
-            :label="pdfLoading === 'collection_order' ? 'Opening...' : 'Collection Order'"
-            :loading="pdfLoading === 'collection_order'"
-            :disabled="loading || isPdfLoading"
-            @click="onCollectionOrder"
-          />
-
-          <Button
             v-if="isRoadMode"
             class="job-action-btn"
             icon="pi pi-truck"
@@ -294,6 +303,15 @@ function onBookJob() {
             :loading="pdfLoading === 'transport_order'"
             :disabled="loading || isPdfLoading"
             @click="onTransportOrder"
+          />
+
+          <Button
+            class="job-action-btn"
+            icon="pi pi-receipt"
+            :label="pdfLoading === 'invoice' ? 'Opening...' : 'Generate Invoice'"
+            :loading="pdfLoading === 'invoice'"
+            :disabled="loading || saving || isPdfLoading"
+            @click="onGenerateInvoice"
           />
 
           <Button
@@ -312,14 +330,6 @@ function onBookJob() {
             :loading="saving"
             :disabled="loading"
             @click="() => save()"
-          />
-
-          <Button
-            class="job-action-btn job-action-btn--primary"
-            icon="pi pi-check"
-            label="Book Job"
-            :disabled="loading || saving"
-            @click="onBookJob"
           />
         </div>
       </div>

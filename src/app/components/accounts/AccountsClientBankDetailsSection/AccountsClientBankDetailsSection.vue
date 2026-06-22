@@ -46,6 +46,8 @@ const toast = useToast()
 
 const editingId = ref<number | null>(null)
 const formVisible = ref(false)
+const deleteDialogVisible = ref(false)
+const pendingDeleteBankDetail = ref<ClientBankDetail | null>(null)
 const filterState = reactive({
   search: "",
   contactId: null as number | null,
@@ -265,6 +267,11 @@ function closeForm() {
   resetForm()
 }
 
+function closeDeleteDialog() {
+  deleteDialogVisible.value = false
+  pendingDeleteBankDetail.value = null
+}
+
 function payloadFromForm(): ClientBankDetailPayload {
   return {
     contactId: form.contactId,
@@ -341,17 +348,23 @@ function editBankDetail(row: ClientBankDetail) {
   formVisible.value = true
 }
 
-async function deleteBankDetail(row: ClientBankDetail) {
-  if (!window.confirm(`Delete "${row.account}"?`)) return
+function requestDeleteBankDetail(row: ClientBankDetail) {
+  pendingDeleteBankDetail.value = row
+  deleteDialogVisible.value = true
+}
+
+async function confirmDeleteBankDetail() {
+  if (!pendingDeleteBankDetail.value) return
 
   try {
-    await bankDetailStore.remove(row.id)
+    await bankDetailStore.remove(pendingDeleteBankDetail.value.id)
     toast.add({
       severity: "success",
       summary: "Bank detail deleted",
       detail: "The bank detail was deleted successfully.",
       life: 3000,
     })
+    closeDeleteDialog()
     await fetchBankDetails()
   } catch (error) {
     toast.add({
@@ -659,6 +672,31 @@ onMounted(async () => {
         </template>
       </Dialog>
 
+      <Dialog
+        v-model:visible="deleteDialogVisible"
+        header="Delete Bank Detail"
+        modal
+        class="accounts-client-bank-details__dialog"
+        :style="{ width: '460px', maxWidth: 'calc(100vw - 32px)' }"
+        @hide="closeDeleteDialog"
+      >
+        <p class="accounts-client-bank-details__confirm-message">
+          Delete "{{ pendingDeleteBankDetail?.account }}"? This cannot be undone.
+        </p>
+
+        <template #footer>
+          <div class="accounts-client-bank-details__dialog-actions">
+            <Button label="Cancel" class="btn btn--ghost" @click="closeDeleteDialog" />
+            <Button
+              label="Delete"
+              class="btn btn--primary"
+              :loading="bankDetailStore.saving"
+              @click="confirmDeleteBankDetail"
+            />
+          </div>
+        </template>
+      </Dialog>
+
       <div class="accounts-client-bank-details__counts">{{ countsText }}</div>
       <div v-if="bankDetailStore.error" class="accounts-client-bank-details__error">
         {{ bankDetailStore.error }}
@@ -702,7 +740,11 @@ onMounted(async () => {
               <td>
                 <div class="accounts-client-bank-details__table-actions">
                   <Button label="Edit" class="btn btn--ghost" @click="editBankDetail(row)" />
-                  <Button label="Delete" class="btn btn--ghost" @click="deleteBankDetail(row)" />
+                  <Button
+                    label="Delete"
+                    class="btn btn--ghost"
+                    @click="requestDeleteBankDetail(row)"
+                  />
                 </div>
               </td>
             </tr>

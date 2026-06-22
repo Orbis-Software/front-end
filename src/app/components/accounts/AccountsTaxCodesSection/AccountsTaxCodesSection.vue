@@ -4,6 +4,7 @@ import "./AccountsTaxCodesSection.css"
 import { computed, onMounted, reactive, ref } from "vue"
 import Button from "primevue/button"
 import Dialog from "primevue/dialog"
+import Dropdown from "primevue/dropdown"
 import InputText from "primevue/inputtext"
 import Paginator from "primevue/paginator"
 
@@ -13,6 +14,8 @@ import type { TaxCode } from "@/app/types/tax-code"
 const taxCodeStore = useTaxCodeStore()
 const editingId = ref<number | null>(null)
 const formVisible = ref(false)
+const deleteDialogVisible = ref(false)
+const pendingDeleteTaxCode = ref<TaxCode | null>(null)
 const filterState = reactive({
   search: "",
   sort: "country",
@@ -26,7 +29,14 @@ const form = reactive({
   taxCode: "UK20",
   rate: "20",
   description: "Standard VAT",
+  calculationType: "percentage" as "percentage" | "withholding_tax",
+  backCalculatedRate: "",
 })
+
+const calculationTypeOptions = [
+  { label: "Standard percentage", value: "percentage" },
+  { label: "Withholding tax / gross-up", value: "withholding_tax" },
+]
 
 const countsText = computed(() => {
   const range =
@@ -39,7 +49,15 @@ const formTitle = computed(() => (editingId.value ? "Edit Tax Code" : "Add Tax C
 
 function resetForm() {
   editingId.value = null
-  Object.assign(form, { country: "", code: "", taxCode: "", rate: "", description: "" })
+  Object.assign(form, {
+    country: "",
+    code: "",
+    taxCode: "",
+    rate: "",
+    description: "",
+    calculationType: "percentage",
+    backCalculatedRate: "",
+  })
 }
 
 function openCreateModal() {
@@ -50,6 +68,11 @@ function openCreateModal() {
 function closeForm() {
   formVisible.value = false
   resetForm()
+}
+
+function closeDeleteDialog() {
+  deleteDialogVisible.value = false
+  pendingDeleteTaxCode.value = null
 }
 
 function requestParams() {
@@ -72,6 +95,8 @@ async function saveTaxCode() {
     taxCode: form.taxCode,
     rate: Number(form.rate || 0),
     description: form.description,
+    calculationType: form.calculationType,
+    backCalculatedRate: form.backCalculatedRate === "" ? null : Number(form.backCalculatedRate),
   }
 
   if (editingId.value) await taxCodeStore.update(editingId.value, payload)
@@ -83,13 +108,24 @@ async function saveTaxCode() {
 
 function editTaxCode(row: TaxCode) {
   editingId.value = row.id
-  Object.assign(form, { ...row, rate: String(row.rate) })
+  Object.assign(form, {
+    ...row,
+    rate: String(row.rate),
+    backCalculatedRate: row.backCalculatedRate === null ? "" : String(row.backCalculatedRate),
+  })
   formVisible.value = true
 }
 
-async function deleteTaxCode(row: TaxCode) {
-  if (!window.confirm(`Delete "${row.taxCode}"?`)) return
-  await taxCodeStore.remove(row.id)
+function requestDeleteTaxCode(row: TaxCode) {
+  pendingDeleteTaxCode.value = row
+  deleteDialogVisible.value = true
+}
+
+async function confirmDeleteTaxCode() {
+  if (!pendingDeleteTaxCode.value) return
+
+  await taxCodeStore.remove(pendingDeleteTaxCode.value.id)
+  closeDeleteDialog()
   await fetchTaxCodes()
 }
 
@@ -172,11 +208,28 @@ onMounted(fetchTaxCodes)
           </div>
           <div class="accounts-tax-codes__field">
             <label>Rate %</label>
-            <InputText v-model="form.rate" placeholder="e.g. 20" />
+            <InputText v-model="form.rate" placeholder="e.g. 17.6470588" />
           </div>
           <div class="accounts-tax-codes__field">
             <label>Description</label>
             <InputText v-model="form.description" placeholder="e.g. Standard VAT" />
+          </div>
+          <div class="accounts-tax-codes__field">
+            <label>Calculation</label>
+            <Dropdown
+              v-model="form.calculationType"
+              :options="calculationTypeOptions"
+              option-label="label"
+              option-value="value"
+            />
+          </div>
+          <div class="accounts-tax-codes__field">
+            <label>Back Calculated %</label>
+            <InputText
+              v-model="form.backCalculatedRate"
+              placeholder="e.g. 15 for TM WHT"
+              :disabled="form.calculationType !== 'withholding_tax'"
+            />
           </div>
         </div>
 
@@ -188,6 +241,31 @@ onMounted(fetchTaxCodes)
               class="btn btn--primary"
               :loading="taxCodeStore.saving"
               @click="saveTaxCode"
+            />
+          </div>
+        </template>
+      </Dialog>
+
+      <Dialog
+        v-model:visible="deleteDialogVisible"
+        header="Delete Tax Code"
+        modal
+        class="accounts-tax-codes__dialog"
+        :style="{ width: '460px', maxWidth: 'calc(100vw - 32px)' }"
+        @hide="closeDeleteDialog"
+      >
+        <p class="accounts-tax-codes__confirm-message">
+          Delete "{{ pendingDeleteTaxCode?.taxCode }}"? This cannot be undone.
+        </p>
+
+        <template #footer>
+          <div class="accounts-tax-codes__dialog-actions">
+            <Button label="Cancel" class="btn btn--ghost" @click="closeDeleteDialog" />
+            <Button
+              label="Delete"
+              class="btn btn--primary"
+              :loading="taxCodeStore.saving"
+              @click="confirmDeleteTaxCode"
             />
           </div>
         </template>
@@ -206,27 +284,39 @@ onMounted(fetchTaxCodes)
               <th @click="sortBy('code')">Code {{ sortMarker("code") }}</th>
               <th @click="sortBy('taxCode')">Tax Code {{ sortMarker("taxCode") }}</th>
               <th @click="sortBy('rate')">Rate % {{ sortMarker("rate") }}</th>
+              <th>Calculation</th>
               <th @click="sortBy('description')">Description {{ sortMarker("description") }}</th>
               <th>Action</th>
             </tr>
           </thead>
           <tbody>
             <tr v-if="taxCodeStore.loading">
-              <td colspan="6">Loading tax codes...</td>
+              <td colspan="7">Loading tax codes...</td>
             </tr>
             <tr v-else-if="!taxCodeStore.taxCodes.length">
-              <td colspan="6">No tax codes found.</td>
+              <td colspan="7">No tax codes found.</td>
             </tr>
             <tr v-for="row in taxCodeStore.taxCodes" v-else :key="row.id">
               <td>{{ row.country }}</td>
               <td>{{ row.code }}</td>
               <td>{{ row.taxCode }}</td>
-              <td>{{ row.rate.toFixed(2) }}</td>
+              <td>{{ row.rate.toFixed(7).replace(/\.?0+$/, "") }}</td>
+              <td>
+                {{
+                  row.calculationType === "withholding_tax"
+                    ? `WHT${row.backCalculatedRate ? ` (${row.backCalculatedRate}%)` : ""}`
+                    : "Standard"
+                }}
+              </td>
               <td>{{ row.description }}</td>
               <td>
                 <div class="accounts-tax-codes__table-actions">
                   <Button label="Edit" class="btn btn--ghost" @click="editTaxCode(row)" />
-                  <Button label="Delete" class="btn btn--ghost" @click="deleteTaxCode(row)" />
+                  <Button
+                    label="Delete"
+                    class="btn btn--ghost"
+                    @click="requestDeleteTaxCode(row)"
+                  />
                 </div>
               </td>
             </tr>

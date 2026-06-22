@@ -363,6 +363,12 @@ function labelFromMode(mode: TransportMode): string {
     .join(" ")
 }
 
+function defaultCmrFromJobNumber(jobNumber: string | null | undefined): string {
+  const digits = String(jobNumber ?? "").replace(/\D+/g, "")
+
+  return digits ? digits.slice(-4).padStart(4, "0") : ""
+}
+
 function normalizeTransportMode(value: unknown): TransportMode | null {
   if (typeof value !== "string") return null
 
@@ -1012,6 +1018,7 @@ export function useJobDetailsPage() {
   const saving = savingRef
   const lastSavedPayloadSnapshot = ref("")
   const autosaveWatchSnapshot = ref("")
+  const lastAutoCmrRef = ref("")
   const autosaveTimers = new Set<number>()
   let autosaveWatchTimer: number | null = null
 
@@ -1650,6 +1657,10 @@ export function useJobDetailsPage() {
     form.sell_costs = form.charges.filter((charge: any) => charge.type === "sell")
 
     Object.assign(form.road_detail, emptyRoadDetail(), extra.road_detail ?? {})
+    if (form.mode_of_transport === "road" && !form.road_detail.cmr_number) {
+      form.road_detail.cmr_number = defaultCmrFromJobNumber(form.job_number)
+    }
+    lastAutoCmrRef.value = defaultCmrFromJobNumber(form.job_number)
     form.order_type =
       form.mode_of_transport === "road"
         ? (form.road_detail.order_type ?? extra.order_type ?? "")
@@ -2098,6 +2109,23 @@ export function useJobDetailsPage() {
     () => form.commodity_code,
     value => {
       form.is_hazardous = isHazardousCommodity(value)
+    },
+  )
+
+  watch(
+    () => [form.mode_of_transport, form.job_number] as const,
+    ([mode, jobNumber], [_previousMode, previousJobNumber]) => {
+      if (mode !== "road") return
+
+      const nextDefault = defaultCmrFromJobNumber(jobNumber)
+      const previousDefault = lastAutoCmrRef.value || defaultCmrFromJobNumber(previousJobNumber)
+      const current = String(form.road_detail.cmr_number ?? "").trim()
+
+      if (!current || current === previousDefault) {
+        form.road_detail.cmr_number = nextDefault
+      }
+
+      lastAutoCmrRef.value = nextDefault
     },
   )
 
