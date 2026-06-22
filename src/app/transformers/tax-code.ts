@@ -8,6 +8,11 @@ function fetch(raw: any): TaxCode {
     taxCode: raw?.taxCode ?? "",
     rate: Number(raw?.rate ?? 0),
     description: raw?.description ?? "",
+    calculationType: raw?.calculationType === "withholding_tax" ? "withholding_tax" : "percentage",
+    backCalculatedRate:
+      raw?.backCalculatedRate === null || raw?.backCalculatedRate === undefined
+        ? null
+        : Number(raw.backCalculatedRate),
     isActive: raw?.isActive !== false,
   }
 }

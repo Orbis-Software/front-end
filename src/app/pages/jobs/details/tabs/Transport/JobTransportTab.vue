@@ -59,6 +59,23 @@ const activeCustomsDirection = computed({
   },
 })
 
+const customsEntryReferenceLabel = computed(() => {
+  return activeCustomsDirection.value === "import"
+    ? "Import Entry Reference"
+    : "Transit Declaration (T1) Reference"
+})
+
+const customsEntryReferencePlaceholder = computed(() => {
+  return activeCustomsDirection.value === "import" ? "Import entry ref" : "T1 reference"
+})
+
+const cmrPlaceholder = computed(() => {
+  const digits = String(form.job_number ?? "").replace(/\D+/g, "")
+  const defaultCmr = digits ? digits.slice(-4).padStart(4, "0") : ""
+
+  return defaultCmr ? `Auto ${defaultCmr}, or enter haulier CMR` : "CMR ref"
+})
+
 function syncRoadDetailDropdownFilter(event: unknown, key: string, fetchGlobalReference = false) {
   syncSearchableDropdownInput(event, form.road_detail as Record<string, any>, key, {
     fetchGlobalReference,
@@ -435,7 +452,7 @@ const globalReferenceVirtualScrollerOptions = {
 
             <label class="job-transport-tab__field">
               <span>CMR Number</span>
-              <InputText v-model="leg.extra_data.cmr_number" placeholder="CMR ref" />
+              <InputText v-model="leg.extra_data.cmr_number" :placeholder="cmrPlaceholder" />
             </label>
 
             <label class="job-transport-tab__field">
@@ -1101,7 +1118,7 @@ const globalReferenceVirtualScrollerOptions = {
 
         <label class="job-transport-tab__field">
           <span>CMR Number</span>
-          <InputText v-model="form.road_detail.cmr_number" placeholder="CMR ref" />
+          <InputText v-model="form.road_detail.cmr_number" :placeholder="cmrPlaceholder" />
         </label>
 
         <label class="job-transport-tab__field">
@@ -1323,8 +1340,11 @@ const globalReferenceVirtualScrollerOptions = {
           </label>
 
           <label class="job-transport-tab__field">
-            <span>Export Entry Ref (C88)</span>
-            <InputText v-model="form.road_detail.customs_export_entry_ref" placeholder="C88 ref" />
+            <span>{{ customsEntryReferenceLabel }}</span>
+            <InputText
+              v-model="form.road_detail.customs_export_entry_ref"
+              :placeholder="customsEntryReferencePlaceholder"
+            />
           </label>
 
           <label class="job-transport-tab__field">

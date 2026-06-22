@@ -5,6 +5,11 @@ export type ExchangeRate = {
   rate: number
   effectiveDate: string
   isActive: boolean
+  requestedDate?: string
+  isInverse?: boolean
+  sourceBase?: string
+  sourceQuote?: string
+  sourceRate?: number
 }
 
 export type ExchangeRatePayload = {
@@ -21,6 +26,12 @@ export type ExchangeRateFilters = {
   direction?: "asc" | "desc"
   page?: number
   perPage?: number
+}
+
+export type EffectiveExchangeRateParams = {
+  base: string
+  quote: string
+  date: string
 }
 
 export type ExchangeRateMeta = {

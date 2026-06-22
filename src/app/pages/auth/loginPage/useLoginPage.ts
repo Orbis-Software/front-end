@@ -1,6 +1,7 @@
 import { computed, ref, nextTick } from "vue"
 import { useRouter } from "vue-router"
 import { useToast } from "primevue/usetoast"
+import { useAppLoaderStore } from "@/app/stores/app-loader"
 import { useAuthStore } from "@/app/stores/auth"
 import AuthService from "@/app/services/auth"
 
@@ -24,6 +25,7 @@ export function useLoginPage() {
   const mfaError = ref<string>("")
 
   const authStore = useAuthStore()
+  const appLoader = useAppLoaderStore()
   const router = useRouter()
   const toast = useToast()
   const mfaChallenge = computed(() => authStore.mfaChallenge)
@@ -85,7 +87,29 @@ export function useLoginPage() {
     loading.value = true
 
     try {
-      const result = await authStore.login(email.value, password.value)
+      const result = await appLoader.withLoader(
+        {
+          title: "Signing you in",
+          message: "Checking your account details...",
+          messages: [
+            "Checking your account details...",
+            "Validating your secure session...",
+            "Loading your company workspace...",
+            "Almost ready...",
+          ],
+          iconClass: "pi pi-sign-in",
+          footer: "Securely signing in to Orbis",
+        },
+        async () => {
+          const result = await authStore.login(email.value, password.value)
+
+          if (!("mfa_required" in result && result.mfa_required)) {
+            await router.push("/")
+          }
+
+          return result
+        },
+      )
 
       if ("mfa_required" in result && result.mfa_required) {
         mfaMethod.value = result.methods.includes("authenticator")
@@ -95,8 +119,6 @@ export function useLoginPage() {
         step.value = 3
         return
       }
-
-      router.push("/")
     } catch (error: any) {
       toast.add({
         severity: "error",
@@ -120,8 +142,24 @@ export function useLoginPage() {
     loading.value = true
 
     try {
-      await authStore.verifyMfaLogin(mfaMethod.value, mfaCode.value)
-      router.push("/")
+      await appLoader.withLoader(
+        {
+          title: "Verifying security code",
+          message: "Confirming your multi-factor code...",
+          messages: [
+            "Confirming your multi-factor code...",
+            "Finalising your secure session...",
+            "Opening your workspace...",
+            "Almost ready...",
+          ],
+          iconClass: "pi pi-shield",
+          footer: "Securely signing in to Orbis",
+        },
+        async () => {
+          await authStore.verifyMfaLogin(mfaMethod.value, mfaCode.value)
+          await router.push("/")
+        },
+      )
     } catch (error: any) {
       mfaError.value = error?.response?.data?.message ?? "Invalid security code."
       toast.add({

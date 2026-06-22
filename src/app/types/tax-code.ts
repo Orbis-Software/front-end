@@ -5,6 +5,8 @@ export type TaxCode = {
   taxCode: string
   rate: number
   description: string
+  calculationType: "percentage" | "withholding_tax"
+  backCalculatedRate: number | null
   isActive: boolean
 }
 
@@ -14,6 +16,8 @@ export type TaxCodePayload = {
   taxCode: string
   rate: number
   description?: string
+  calculationType?: "percentage" | "withholding_tax"
+  backCalculatedRate?: number | null
   isActive?: boolean
 }
 

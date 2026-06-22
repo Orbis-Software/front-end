@@ -5,7 +5,6 @@ import contactsService from "@/app/services/contacts"
 import { useChargeCodeStore } from "@/app/stores/charge-codes"
 import { useExchangeRateStore } from "@/app/stores/exchange-rates"
 import { useTaxCodeStore } from "@/app/stores/tax-codes"
-import { useTransportJobStore } from "@/app/stores/transport-job"
 import type { ChargeCode } from "@/app/types/charge-code"
 import type { Contact } from "@/app/types/contact"
 import type { JobDetailsContext } from "../../JobDetailsPage.logic"
@@ -15,6 +14,8 @@ type SelectOption = {
   label: string
   value: string | number | null
   rate?: number
+  calculationType?: "percentage" | "withholding_tax"
+  backCalculatedRate?: number | null
 }
 
 type CostRow = BuyCostRow | SellChargeRow
@@ -31,7 +32,7 @@ const fallbackTaxCodeOptions: SelectOption[] = [
   { label: "GBZR", value: "GBZR", rate: 0 },
 ]
 
-const vatRateOptions: SelectOption[] = [
+const fallbackVatRateOptions: SelectOption[] = [
   { label: "20%", value: 20 },
   { label: "5%", value: 5 },
   { label: "0%", value: 0 },
@@ -150,10 +151,8 @@ export function useJobCostsTab() {
   const chargeCodeStore = useChargeCodeStore()
   const exchangeRateStore = useExchangeRateStore()
   const taxCodeStore = useTaxCodeStore()
-  const transportJobStore = useTransportJobStore()
   const supplierContacts = ref<Contact[]>([])
   const suppliersLoading = ref(false)
-  const invoiceLoading = ref(false)
   const addChargeCodeDialogVisible = ref(false)
   const addChargeCodeSaving = ref(false)
   const pendingChargeCodeDescription = ref("")
@@ -166,6 +165,17 @@ export function useJobCostsTab() {
   const buyRows = computed<BuyCostRow[]>(() => context.form.buy_costs.map(hydrateBuyRow))
   const sellRows = computed<SellChargeRow[]>(() => context.form.sell_costs.map(hydrateSellRow))
   const jobCurrency = computed(() => currencyCode(context.form.currency || "GBP"))
+  const jobRateDate = computed(() => {
+    const value = context.form.job_date
+
+    if (value instanceof Date && !Number.isNaN(value.getTime())) {
+      return value.toISOString().slice(0, 10)
+    }
+
+    const raw = String(value ?? "").slice(0, 10)
+
+    return raw || new Date().toISOString().slice(0, 10)
+  })
 
   const currencyOptions = computed<SelectOption[]>(() => {
     const options = [
@@ -203,9 +213,35 @@ export function useJobCostsTab() {
         label: code.taxCode || code.code,
         value: code.taxCode || code.code,
         rate: numberValue(code.rate),
+        calculationType: code.calculationType,
+        backCalculatedRate: code.backCalculatedRate,
       }))
 
     return options.length ? options : fallbackTaxCodeOptions
+  })
+
+  const vatRateOptions = computed<SelectOption[]>(() => {
+    const unique = new Map<number, SelectOption>()
+
+    fallbackVatRateOptions.forEach(option => unique.set(numberValue(option.value), option))
+    taxCodeOptions.value.forEach(option => {
+      const rate = numberValue(option.rate)
+
+      if (!unique.has(rate)) {
+        unique.set(rate, {
+          label:
+            option.calculationType === "withholding_tax" ? `${rate}% WHT gross-up` : `${rate}%`,
+          value: rate,
+          rate,
+          calculationType: option.calculationType,
+          backCalculatedRate: option.backCalculatedRate,
+        })
+      }
+    })
+
+    return [...unique.values()].sort(
+      (left, right) => numberValue(right.value) - numberValue(left.value),
+    )
   })
 
   const primaryJobChargeClassification = computed(() => {
@@ -421,6 +457,12 @@ export function useJobCostsTab() {
       return `Missing ${from} to ${to} exchange rate. Add or update this in Accounts > Exchange Rates.`
     }
 
+    const cached = exchangeRateStore.effectiveRates[exchangeRateCacheKey(from, to)]
+
+    if (cached?.effectiveDate) {
+      return `Using ${from} to ${to} rate ${numberValue(cached.rate).toFixed(4)} effective ${cached.effectiveDate} for job date ${jobRateDate.value}.`
+    }
+
     return `Exchange rate is managed in Accounts > Exchange Rates. Change it there to update Costs & Charges.`
   }
 
@@ -430,6 +472,15 @@ export function useJobCostsTab() {
 
     if (!code || code === target) return 1
 
+    const cached = exchangeRateStore.effectiveRates[exchangeRateCacheKey(code, target)]
+
+    if (cached !== undefined) {
+      const cachedRate = numberValue(cached?.rate, 0)
+
+      return cachedRate > 0 ? cachedRate : null
+    }
+
+    const jobDateMs = new Date(`${jobRateDate.value}T23:59:59`).getTime()
     const rates = exchangeRateStore.exchangeRates
       .filter(rate => rate.isActive !== false)
       .slice()
@@ -439,7 +490,13 @@ export function useJobCostsTab() {
 
         return rightDate - leftDate || Number(right.id ?? 0) - Number(left.id ?? 0)
       })
-    const direct = rates.find(rate => {
+    const effectiveRates = rates.filter(rate => {
+      const rateDateMs = new Date(`${rate.effectiveDate ?? ""}T00:00:00`).getTime()
+
+      return Number.isFinite(rateDateMs) && rateDateMs <= jobDateMs
+    })
+    const ratesForDate = effectiveRates.length ? effectiveRates : rates
+    const direct = ratesForDate.find(rate => {
       return rate.base?.toUpperCase() === code && rate.quote?.toUpperCase() === target
     })
 
@@ -449,12 +506,42 @@ export function useJobCostsTab() {
       return directRate > 0 ? directRate : null
     }
 
-    const inverse = rates.find(rate => {
+    const inverse = ratesForDate.find(rate => {
       return rate.base?.toUpperCase() === target && rate.quote?.toUpperCase() === code
     })
     const inverseRate = numberValue(inverse?.rate, 0)
 
     return inverseRate > 0 ? 1 / inverseRate : null
+  }
+
+  function exchangeRateCacheKey(base: string, quote: string) {
+    return exchangeRateStore.effectiveKey({
+      base: currencyCode(base),
+      quote: currencyCode(quote),
+      date: jobRateDate.value,
+    })
+  }
+
+  async function ensureEffectiveExchangeRates() {
+    const target = jobCurrency.value
+    const currencies = new Set(
+      [...buyRows.value, ...sellRows.value]
+        .map(row => currencyCode(row.currency))
+        .filter(code => code && code !== target),
+    )
+
+    await Promise.all(
+      [...currencies].map(code =>
+        exchangeRateStore
+          .fetchEffective({
+            base: code,
+            quote: target,
+            date: jobRateDate.value,
+          })
+          .catch(() => null),
+      ),
+    )
+    ;[...buyRows.value, ...sellRows.value].forEach(row => syncLineExchangeRate(row, false))
   }
 
   function effectiveExchangeRate(row: CostRow): number {
@@ -549,81 +636,6 @@ export function useJobCostsTab() {
     }
   }
 
-  async function extractPdfError(error: any) {
-    const data = error?.response?.data
-
-    if (data instanceof Blob) {
-      const text = await data.text()
-
-      try {
-        const parsed = JSON.parse(text)
-        return parsed?.message ?? text
-      } catch {
-        return text || "Unable to generate the invoice PDF."
-      }
-    }
-
-    return error?.response?.data?.message ?? error?.message ?? "Unable to generate the invoice PDF."
-  }
-
-  function openInvoiceBlob(blob: Blob) {
-    const url = URL.createObjectURL(blob)
-    window.open(url, "_blank", "noopener,noreferrer")
-    window.setTimeout(() => URL.revokeObjectURL(url), 60000)
-  }
-
-  async function generateInvoice() {
-    const id = Number(context.job.value?.id)
-
-    if (!Number.isFinite(id) || id <= 0) {
-      toast.add({
-        severity: "warn",
-        summary: "Save job first",
-        detail: "The job must be saved before an invoice can be generated.",
-        life: 3500,
-      })
-      return
-    }
-
-    if (!sellRows.value.length) {
-      toast.add({
-        severity: "warn",
-        summary: "No sell charges",
-        detail: "Add at least one sell charge before generating the invoice.",
-        life: 3500,
-      })
-      return
-    }
-
-    invoiceLoading.value = true
-
-    try {
-      await context.save({
-        successSummary: "Invoice ready",
-        successDetail: "Costs & Charges saved before generating the invoice.",
-        successLife: 1800,
-      })
-
-      const blob = await transportJobStore.jobPdf(id, "invoice")
-
-      if (!(blob instanceof Blob) || blob.type !== "application/pdf") {
-        const text = blob instanceof Blob ? await blob.text() : ""
-        throw new Error(text || "The server did not return a PDF.")
-      }
-
-      openInvoiceBlob(blob)
-    } catch (error: any) {
-      toast.add({
-        severity: "error",
-        summary: "Invoice failed",
-        detail: await extractPdfError(error),
-        life: 4500,
-      })
-    } finally {
-      invoiceLoading.value = false
-    }
-  }
-
   function requestRemoveRow(row: CostRow) {
     pendingDeleteRow.value = row
     deleteDialogVisible.value = true
@@ -708,6 +720,23 @@ export function useJobCostsTab() {
     ;[...buyRows.value, ...sellRows.value].forEach(row => syncLineExchangeRate(row, false))
   })
 
+  watch(jobRateDate, () => {
+    ;[...buyRows.value, ...sellRows.value].forEach(row => syncLineExchangeRate(row, false))
+    ensureEffectiveExchangeRates()
+  })
+
+  watch(
+    () =>
+      [
+        jobCurrency.value,
+        jobRateDate.value,
+        ...[...buyRows.value, ...sellRows.value].map(row => currencyCode(row.currency)).sort(),
+      ].join("|"),
+    () => {
+      ensureEffectiveExchangeRates()
+    },
+  )
+
   onMounted(async () => {
     await Promise.all([
       chargeCodeStore.fetchAll({ sort: "description", direction: "asc", perPage: 1000 }),
@@ -715,6 +744,7 @@ export function useJobCostsTab() {
       taxCodeStore.fetch({ perPage: 1000 }),
       loadSuppliers(),
     ])
+    await ensureEffectiveExchangeRates()
   })
 
   onUnmounted(() => {
@@ -736,7 +766,6 @@ export function useJobCostsTab() {
     suppliersLoading,
     addChargeCodeDialogVisible,
     addChargeCodeSaving,
-    invoiceLoading,
     pendingChargeCodeDescription,
     primaryJobChargeClassification,
     deleteDialogVisible,
@@ -766,6 +795,5 @@ export function useJobCostsTab() {
     applyTaxCode,
     applyVatRate,
     syncLineExchangeRate,
-    generateInvoice,
   }
 }

@@ -1,12 +1,10 @@
 <template>
   <Toast />
   <ConfirmDialog />
+  <OrbisLoader />
 
   <!-- Wait for auth hydration -->
   <router-view v-if="ready" />
-
-  <!-- Optional loading state -->
-  <div v-else class="app-loading">Loading...</div>
 </template>
 
 <script setup lang="ts">
@@ -14,11 +12,14 @@ import { computed, onBeforeUnmount, onMounted, watch } from "vue"
 import { useRouter } from "vue-router"
 import Toast from "primevue/toast"
 import ConfirmDialog from "primevue/confirmdialog"
+import OrbisLoader from "@/app/components/common/OrbisLoader/OrbisLoader.vue"
+import { useAppLoaderStore } from "@/app/stores/app-loader"
 import { useAuthStore } from "@/app/stores/auth"
 import { useUserShortcutStore } from "@/app/stores/user-shortcuts"
 import { useInteractionRecovery } from "@/app/composables/useInteractionRecovery"
 
 const auth = useAuthStore()
+const appLoader = useAppLoaderStore()
 const router = useRouter()
 const shortcutStore = useUserShortcutStore()
 const ready = computed(() => auth.ready)
@@ -82,12 +83,27 @@ function onShortcutKeydown(event: KeyboardEvent) {
 }
 
 onMounted(() => {
-  auth.hydrate()
   window.addEventListener("keydown", onShortcutKeydown)
+  void appLoader.withLoader(
+    {
+      title: "Preparing your workspace",
+      message: "Checking your secure session...",
+      messages: [
+        "Checking your secure session...",
+        "Loading company settings...",
+        "Preparing your Orbis workspace...",
+        "Almost ready...",
+      ],
+      iconClass: "pi pi-lock",
+      footer: "Securely loading your logistics workspace",
+    },
+    () => auth.hydrate(),
+  )
 })
 
 onBeforeUnmount(() => {
   window.removeEventListener("keydown", onShortcutKeydown)
+  appLoader.clearTimers()
 })
 
 watch(
@@ -99,14 +115,3 @@ watch(
   { immediate: true },
 )
 </script>
-
-<style scoped>
-.app-loading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100vh;
-  font-size: 14px;
-  color: var(--text-muted);
-}
-</style>

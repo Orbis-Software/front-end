@@ -4,16 +4,28 @@ import "./AccountsExchangeRatesSection.css"
 import { computed, onMounted, reactive, ref } from "vue"
 import Button from "primevue/button"
 import Calendar from "primevue/calendar"
+import Dialog from "primevue/dialog"
+import Dropdown from "primevue/dropdown"
 import InputText from "primevue/inputtext"
 import Paginator from "primevue/paginator"
 
 import { downloadCsv, parseCsvFile } from "@/app/composables/useAccountsDemo"
 import { useExchangeRateStore } from "@/app/stores/exchange-rates"
+import { useReferenceDataStore } from "@/app/stores/reference-data"
 import type { ExchangeRate } from "@/app/types/exchange-rate"
 
+type SelectOption = {
+  label: string
+  value: string
+}
+
 const exchangeRateStore = useExchangeRateStore()
+const referenceDataStore = useReferenceDataStore()
 const importInput = ref<HTMLInputElement | null>(null)
 const editingId = ref<number | null>(null)
+const formVisible = ref(false)
+const deleteDialogVisible = ref(false)
+const pendingDeleteRate = ref<ExchangeRate | null>(null)
 const filterState = reactive({
   search: "",
   sort: "effectiveDate",
@@ -37,14 +49,75 @@ const countsText = computed(() => {
   return `Showing ${range} of ${exchangeRateStore.filtered} exchange rates`
 })
 const firstRow = computed(() => (filterState.page - 1) * filterState.perPage)
+const formTitle = computed(() => (editingId.value ? "Edit Exchange Rate" : "Add Exchange Rate"))
+const fallbackCurrencyOptions: SelectOption[] = [
+  { label: "GBP", value: "GBP" },
+  { label: "EUR", value: "EUR" },
+  { label: "USD", value: "USD" },
+]
+const currencyOptions = computed<SelectOption[]>(() => {
+  const category = referenceDataStore.getByKey("currency")
+  const options = (category?.options ?? []).map(optionFromReference).filter(option => option.value)
+  const unique = new Map<string, SelectOption>()
+
+  ;[...options, ...fallbackCurrencyOptions].forEach(option => {
+    const value = normalizeCurrency(option.value)
+
+    if (value && !unique.has(value)) unique.set(value, { label: value, value })
+  })
+  ;[form.base, form.quote].forEach(value => {
+    const currency = normalizeCurrency(value)
+
+    if (currency && !unique.has(currency))
+      unique.set(currency, { label: currency, value: currency })
+  })
+
+  return [...unique.values()].sort((left, right) => left.label.localeCompare(right.label))
+})
 
 function iso(date: Date) {
   return date.toISOString().slice(0, 10)
 }
 
+function cleanReferenceName(value: string): string {
+  return String(value ?? "")
+    .replace(/\*$/, "")
+    .trim()
+}
+
+function normalizeCurrency(value: unknown): string {
+  return String(value ?? "")
+    .trim()
+    .toUpperCase()
+}
+
+function optionFromReference(option: any): SelectOption {
+  const name = cleanReferenceName(option?.name ?? option?.label ?? option)
+
+  return {
+    label: name,
+    value: normalizeCurrency(name),
+  }
+}
+
 function resetForm() {
   editingId.value = null
-  Object.assign(form, { base: "", quote: "", rate: "", effectiveDate: new Date() })
+  Object.assign(form, { base: "GBP", quote: "EUR", rate: "", effectiveDate: new Date() })
+}
+
+function openCreateModal() {
+  resetForm()
+  formVisible.value = true
+}
+
+function closeForm() {
+  formVisible.value = false
+  resetForm()
+}
+
+function closeDeleteDialog() {
+  deleteDialogVisible.value = false
+  pendingDeleteRate.value = null
 }
 
 function requestParams() {
@@ -55,6 +128,12 @@ async function fetchRates() {
   await exchangeRateStore.fetch(requestParams())
 }
 
+async function fetchCurrencyOptions() {
+  if (!referenceDataStore.getByKey("currency")) {
+    await referenceDataStore.fetchCategory("currency")
+  }
+}
+
 async function applyFilters() {
   filterState.page = 1
   await fetchRates()
@@ -62,8 +141,8 @@ async function applyFilters() {
 
 async function saveRate() {
   const payload = {
-    base: form.base.toUpperCase(),
-    quote: form.quote.toUpperCase(),
+    base: normalizeCurrency(form.base),
+    quote: normalizeCurrency(form.quote),
     rate: Number(form.rate || 0),
     effectiveDate: iso(form.effectiveDate),
   }
@@ -71,7 +150,7 @@ async function saveRate() {
   if (editingId.value) await exchangeRateStore.update(editingId.value, payload)
   else await exchangeRateStore.create(payload)
 
-  resetForm()
+  closeForm()
   await fetchRates()
 }
 
@@ -83,11 +162,19 @@ function editRate(row: ExchangeRate) {
     rate: String(row.rate),
     effectiveDate: new Date(`${row.effectiveDate}T00:00:00`),
   })
+  formVisible.value = true
 }
 
-async function deleteRate(row: ExchangeRate) {
-  if (!window.confirm(`Delete ${row.base}/${row.quote}?`)) return
-  await exchangeRateStore.remove(row.id)
+function requestDeleteRate(row: ExchangeRate) {
+  pendingDeleteRate.value = row
+  deleteDialogVisible.value = true
+}
+
+async function confirmDeleteRate() {
+  if (!pendingDeleteRate.value) return
+
+  await exchangeRateStore.remove(pendingDeleteRate.value.id)
+  closeDeleteDialog()
   await fetchRates()
 }
 
@@ -147,7 +234,9 @@ function sortMarker(key: string) {
   return filterState.direction === "asc" ? "^" : "v"
 }
 
-onMounted(fetchRates)
+onMounted(async () => {
+  await Promise.all([fetchRates(), fetchCurrencyOptions()])
+})
 </script>
 
 <template>
@@ -168,6 +257,7 @@ onMounted(fetchRates)
         </div>
 
         <div class="accounts-exchange-rates__actions">
+          <Button label="Add Exchange Rate" class="btn btn--primary" @click="openCreateModal" />
           <Button label="Import CSV" class="btn btn--ghost" @click="importInput?.click()" />
           <Button label="Export CSV" class="btn btn--ghost" @click="exportRates" />
           <Button label="Reset" class="btn btn--ghost" @click="resetRates" />
@@ -185,39 +275,97 @@ onMounted(fetchRates)
         </div>
       </div>
 
-      <div class="accounts-exchange-rates__form-grid">
-        <div class="accounts-exchange-rates__field">
-          <label>Base Currency</label>
-          <InputText v-model="form.base" />
+      <Dialog
+        v-model:visible="formVisible"
+        :header="formTitle"
+        modal
+        class="accounts-exchange-rates__dialog"
+        :style="{ width: '560px', maxWidth: 'calc(100vw - 32px)' }"
+        @hide="resetForm"
+      >
+        <div class="accounts-exchange-rates__form-grid">
+          <div class="accounts-exchange-rates__field">
+            <label>Base Currency</label>
+            <Dropdown
+              v-model="form.base"
+              :options="currencyOptions"
+              option-label="label"
+              option-value="value"
+              filter
+              placeholder="Select base currency"
+              class="accounts-exchange-rates__dropdown"
+              :disabled="referenceDataStore.loading && !currencyOptions.length"
+              autofocus
+            />
+          </div>
+          <div class="accounts-exchange-rates__field">
+            <label>Quote Currency</label>
+            <Dropdown
+              v-model="form.quote"
+              :options="currencyOptions"
+              option-label="label"
+              option-value="value"
+              filter
+              placeholder="Select quote currency"
+              class="accounts-exchange-rates__dropdown"
+              :disabled="referenceDataStore.loading && !currencyOptions.length"
+            />
+          </div>
+          <div class="accounts-exchange-rates__field">
+            <label>Rate</label>
+            <InputText v-model="form.rate" placeholder="e.g. 1.1700" />
+          </div>
+          <div class="accounts-exchange-rates__field">
+            <label>Effective Date</label>
+            <Calendar
+              v-model="form.effectiveDate"
+              date-format="dd/mm/yy"
+              show-icon
+              show-button-bar
+              input-id="exchange-rate-effective-date"
+              class="accounts-exchange-rates__calendar"
+            />
+          </div>
         </div>
-        <div class="accounts-exchange-rates__field">
-          <label>Quote Currency</label>
-          <InputText v-model="form.quote" />
-        </div>
-        <div class="accounts-exchange-rates__field">
-          <label>Rate</label>
-          <InputText v-model="form.rate" />
-        </div>
-        <div class="accounts-exchange-rates__field">
-          <label>Effective Date</label>
-          <Calendar
-            v-model="form.effectiveDate"
-            date-format="dd/mm/yy"
-            show-icon
-            class="accounts-exchange-rates__calendar"
-          />
-        </div>
-      </div>
 
-      <div class="accounts-exchange-rates__add-row">
-        <Button
-          :label="editingId ? 'Save Exchange Rate' : 'Add Exchange Rate'"
-          class="btn btn--primary"
-          :loading="exchangeRateStore.saving"
-          @click="saveRate"
-        />
-        <Button v-if="editingId" label="Cancel Edit" class="btn btn--ghost" @click="resetForm" />
-      </div>
+        <template #footer>
+          <div class="accounts-exchange-rates__dialog-actions">
+            <Button label="Cancel" class="btn btn--ghost" @click="closeForm" />
+            <Button
+              :label="editingId ? 'Save Exchange Rate' : 'Add Exchange Rate'"
+              class="btn btn--primary"
+              :loading="exchangeRateStore.saving"
+              @click="saveRate"
+            />
+          </div>
+        </template>
+      </Dialog>
+
+      <Dialog
+        v-model:visible="deleteDialogVisible"
+        header="Delete Exchange Rate"
+        modal
+        class="accounts-exchange-rates__dialog"
+        :style="{ width: '460px', maxWidth: 'calc(100vw - 32px)' }"
+        @hide="closeDeleteDialog"
+      >
+        <p class="accounts-exchange-rates__confirm-message">
+          Delete {{ pendingDeleteRate?.base }}/{{ pendingDeleteRate?.quote }} exchange rate? This
+          cannot be undone.
+        </p>
+
+        <template #footer>
+          <div class="accounts-exchange-rates__dialog-actions">
+            <Button label="Cancel" class="btn btn--ghost" @click="closeDeleteDialog" />
+            <Button
+              label="Delete"
+              class="btn btn--primary"
+              :loading="exchangeRateStore.saving"
+              @click="confirmDeleteRate"
+            />
+          </div>
+        </template>
+      </Dialog>
 
       <div class="accounts-exchange-rates__counts">{{ countsText }}</div>
       <div v-if="exchangeRateStore.error" class="accounts-exchange-rates__error">
@@ -252,7 +400,7 @@ onMounted(fetchRates)
               <td>
                 <div class="accounts-exchange-rates__table-actions">
                   <Button label="Edit" class="btn btn--ghost" @click="editRate(row)" />
-                  <Button label="Delete" class="btn btn--ghost" @click="deleteRate(row)" />
+                  <Button label="Delete" class="btn btn--ghost" @click="requestDeleteRate(row)" />
                 </div>
               </td>
             </tr>
