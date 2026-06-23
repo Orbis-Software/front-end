@@ -64,9 +64,15 @@
 
 .job-action-btn {
   height: 38px;
+  min-width: max-content;
   font-family: var(--font-body) !important;
   font-size: 12px !important;
   font-weight: 700;
+  white-space: nowrap;
+}
+
+.job-action-btn .p-button-label {
+  white-space: nowrap;
 }
 
 .job-action-btn--primary {

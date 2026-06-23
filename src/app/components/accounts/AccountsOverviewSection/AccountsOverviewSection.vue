@@ -1,49 +1,33 @@
 <script setup lang="ts">
 import "./AccountsOverviewSection.css"
 
-import { computed } from "vue"
+import { onMounted } from "vue"
+import { storeToRefs } from "pinia"
 
-import { useAccountsDemo } from "@/app/composables/useAccountsDemo"
+import { useAccountsSummaryStore } from "@/app/stores/accounts-summary"
 
-const { state, overviewSummary, overviewRows, creditRows, money } = useAccountsDemo()
+const accountsSummaryStore = useAccountsSummaryStore()
+const {
+  overviewSummary,
+  overviewRows,
+  creditCashSnapshot,
+  accountStatusSummary,
+  pendingJobs,
+  loading,
+  error,
+} = storeToRefs(accountsSummaryStore)
 
-const creditCashSnapshot = computed(() => {
-  const outstanding = state.invoices
-    .filter(invoice => !invoice.paid)
-    .reduce((sum, invoice) => sum + invoice.amount, 0)
-  const paid = state.invoices
-    .filter(invoice => invoice.paid)
-    .reduce((sum, invoice) => sum + invoice.amount, 0)
-  const supplierOutstanding = state.supplierInvoices
-    .filter(invoice => !invoice.paid)
-    .reduce((sum, invoice) => sum + invoice.amount, 0)
-
-  return [
-    { value: money(outstanding), label: "Customer debt still outstanding" },
-    { value: money(paid), label: "Customer receipts marked as paid" },
-    { value: money(supplierOutstanding), label: "Supplier invoices still awaiting payment" },
-    {
-      value: String(state.creditCustomers.filter(customer => customer.onHold).length),
-      label: "Customers currently on hold",
-    },
-  ]
+onMounted(() => {
+  accountsSummaryStore.fetch().catch(() => null)
 })
 
-const accountStatusSummary = computed(() => [
-  {
-    value: String(state.invoices.filter(invoice => invoice.postedPlatform).length),
-    label: "Sales invoices transferred to finance systems",
-  },
-  {
-    value: String(state.supplierInvoices.filter(invoice => invoice.status === "scheduled").length),
-    label: "Supplier invoices approved/scheduled for payment",
-  },
-  { value: String(state.exchangeRates.length), label: "Live working currency rates in the table" },
-  {
-    value: String(state.bankAccounts.length),
-    label: "Configured client bank accounts available for documents and payments",
-  },
-])
+function money(value: number, currency = "GBP") {
+  return new Intl.NumberFormat("en-GB", {
+    style: "currency",
+    currency,
+    currencyDisplay: "narrowSymbol",
+  }).format(Number.isFinite(value) ? value : 0)
+}
 
 function stageClass(stage: string) {
   if (stage.toLowerCase().includes("ready") || stage.toLowerCase().includes("delivered"))
@@ -64,8 +48,12 @@ function stageClass(stage: string) {
           </h2>
         </div>
 
-        <div class="accounts-overview__badge">Live demo snapshot</div>
+        <div class="accounts-overview__badge">
+          {{ loading ? "Loading live accounts" : "Live jobs data" }}
+        </div>
       </div>
+
+      <p v-if="error" class="accounts-overview__stack-label">{{ error }}</p>
 
       <div class="accounts-overview__summary-grid">
         <div
@@ -147,7 +135,7 @@ function stageClass(stage: string) {
               </tr>
             </thead>
             <tbody>
-              <tr v-for="job in state.pendingJobs" :key="job.job">
+              <tr v-for="job in pendingJobs" :key="job.job">
                 <td>{{ job.job }}</td>
                 <td>{{ job.customer }}</td>
                 <td>{{ job.user }}</td>

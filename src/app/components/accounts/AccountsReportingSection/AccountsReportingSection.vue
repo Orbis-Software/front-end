@@ -1,14 +1,19 @@
 <script setup lang="ts">
 import "./AccountsReportingSection.css"
 
-import { computed, ref } from "vue"
+import { computed, onMounted, ref } from "vue"
 import Button from "primevue/button"
 import Calendar from "primevue/calendar"
 import Dropdown from "primevue/dropdown"
 
-import { downloadCsv, useAccountsDemo } from "@/app/composables/useAccountsDemo"
+import { useAccountsSummaryStore } from "@/app/stores/accounts-summary"
+import { downloadCsv } from "@/app/utils/download-csv"
 
-const { state, money } = useAccountsDemo()
+const state = useAccountsSummaryStore()
+
+onMounted(() => {
+  state.fetch().catch(() => null)
+})
 
 const periodOptions = [
   { label: "This Month", value: "this-month" },
@@ -26,8 +31,18 @@ const reportOptions = [
 
 const selectedPeriod = ref("this-month")
 const selectedReport = ref("end-of-period-sales")
-const fromDate = ref(new Date("2026-03-01"))
-const toDate = ref(new Date("2026-03-31"))
+
+function monthStart(date: Date) {
+  return new Date(date.getFullYear(), date.getMonth(), 1)
+}
+
+function monthEnd(date: Date) {
+  return new Date(date.getFullYear(), date.getMonth() + 1, 0)
+}
+
+const todayDate = new Date()
+const fromDate = ref(monthStart(todayDate))
+const toDate = ref(monthEnd(todayDate))
 
 function iso(date: Date) {
   return date.toISOString().slice(0, 10)
@@ -38,16 +53,28 @@ function inPeriod(dateText: string) {
 }
 
 function applyPeriod() {
+  const now = new Date()
+
   if (selectedPeriod.value === "last-month") {
-    fromDate.value = new Date("2026-02-01")
-    toDate.value = new Date("2026-02-28")
+    const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+    fromDate.value = monthStart(lastMonth)
+    toDate.value = monthEnd(lastMonth)
   } else if (selectedPeriod.value === "this-quarter") {
-    fromDate.value = new Date("2026-01-01")
-    toDate.value = new Date("2026-03-31")
+    const quarterStartMonth = Math.floor(now.getMonth() / 3) * 3
+    fromDate.value = new Date(now.getFullYear(), quarterStartMonth, 1)
+    toDate.value = new Date(now.getFullYear(), quarterStartMonth + 3, 0)
   } else if (selectedPeriod.value === "this-month") {
-    fromDate.value = new Date("2026-03-01")
-    toDate.value = new Date("2026-03-31")
+    fromDate.value = monthStart(now)
+    toDate.value = monthEnd(now)
   }
+}
+
+function money(value: number, currency = "GBP") {
+  return new Intl.NumberFormat("en-GB", {
+    style: "currency",
+    currency: currency || "GBP",
+    currencyDisplay: "narrowSymbol",
+  }).format(Number.isFinite(value) ? value : 0)
 }
 
 const reportRows = computed(() => {
@@ -65,7 +92,7 @@ const reportRows = computed(() => {
   }
 
   if (selectedReport.value === "gross-profit-report") {
-    return state.invoices
+    return state.customerInvoices
       .filter(row => inPeriod(row.invoiceDate))
       .map(row => ({
         a: row.invoice,
@@ -78,7 +105,7 @@ const reportRows = computed(() => {
   }
 
   if (selectedReport.value === "customer-activity-report") {
-    return state.invoices
+    return state.customerInvoices
       .filter(row => inPeriod(row.invoiceDate))
       .map(row => ({
         a: row.customer,
@@ -90,7 +117,7 @@ const reportRows = computed(() => {
       }))
   }
 
-  return state.invoices
+  return state.customerInvoices
     .filter(row => inPeriod(row.invoiceDate))
     .map(row => ({
       a: row.invoice,
@@ -113,14 +140,14 @@ const reportHeadings = computed(() => {
 })
 
 const summaryCards = computed(() => {
-  const sales = state.invoices
+  const sales = state.customerInvoices
     .filter(row => inPeriod(row.invoiceDate))
     .reduce((sum, row) => sum + row.amount, 0)
   const purchases = state.supplierInvoices
     .filter(row => inPeriod(row.invoiceDate))
     .reduce((sum, row) => sum + row.amount, 0)
   const customers = new Set(
-    state.invoices.filter(row => inPeriod(row.invoiceDate)).map(row => row.customer),
+    state.customerInvoices.filter(row => inPeriod(row.invoiceDate)).map(row => row.customer),
   ).size
   return [
     { label: "Sales", value: money(sales) },

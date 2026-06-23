@@ -33,14 +33,14 @@ const JobOverviewTab = () => import("@/app/pages/jobs/details/tabs/Overview/JobO
 const JobPackagesTab = () => import("@/app/pages/jobs/details/tabs/Packages/JobPackagesTab.vue")
 const JobTransportTab = () => import("@/app/pages/jobs/details/tabs/Transport/JobTransportTab.vue")
 const JobCostsTab = () => import("@/app/pages/jobs/details/tabs/Costs/JobCostsTab.vue")
-const JobConsolidationSupplierInvoicesTab = () =>
-  import("@/app/pages/jobs/details/tabs/Consolidation/JobConsolidationSupplierInvoicesTab.vue")
+const JobSupplierInvoicesTab = () =>
+  import("@/app/pages/jobs/details/tabs/Invoices/JobSupplierInvoicesTab.vue")
 const JobConsolidationCollectionsTab = () =>
   import("@/app/pages/jobs/details/tabs/Consolidation/JobConsolidationCollectionsTab.vue")
 const JobConsolidationInvoicesTab = () =>
   import("@/app/pages/jobs/details/tabs/Consolidation/JobConsolidationInvoicesTab.vue")
-const JobConsolidationCustomerInvoiceTab = () =>
-  import("@/app/pages/jobs/details/tabs/Consolidation/JobConsolidationCustomerInvoiceTab.vue")
+const JobCustomerInvoiceTab = () =>
+  import("@/app/pages/jobs/details/tabs/Invoices/JobCustomerInvoiceTab.vue")
 const JobConsolidationWmsTab = () =>
   import("@/app/pages/jobs/details/tabs/Consolidation/JobConsolidationWmsTab.vue")
 const JobLoadPlannerTab = () =>
@@ -283,7 +283,7 @@ export const routes: RouteRecordRaw[] = [
           {
             path: "supplier-invoices",
             name: "tms.jobs.show.supplier-invoices",
-            component: JobConsolidationSupplierInvoicesTab,
+            component: JobSupplierInvoicesTab,
           },
           {
             path: "collection-orders",
@@ -298,7 +298,7 @@ export const routes: RouteRecordRaw[] = [
           {
             path: "customer-invoice",
             name: "tms.jobs.show.customer-invoice",
-            component: JobConsolidationCustomerInvoiceTab,
+            component: JobCustomerInvoiceTab,
           },
           {
             path: "wms",
