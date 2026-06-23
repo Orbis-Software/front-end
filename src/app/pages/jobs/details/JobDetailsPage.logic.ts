@@ -428,7 +428,11 @@ function serializePackageRow(row: any) {
 function serializeChargeRow(row: any): JobCharge {
   const type: "buy" | "sell" = row.type === "buy" ? "buy" : "sell"
   const quantity = Number(row.quantity ?? 0)
-  const unitAmount = Number(type === "buy" ? row.unitCost : row.unitPrice)
+  const unitAmount = Number(
+    type === "buy"
+      ? (row.unitCost ?? row.unit_cost ?? row.unit_amount ?? row.amount)
+      : (row.unitPrice ?? row.unit_price ?? row.unit_amount ?? row.amount),
+  )
   const amount =
     Number.isFinite(quantity) && Number.isFinite(unitAmount)
       ? quantity * unitAmount
@@ -451,6 +455,37 @@ function serializeChargeRow(row: any): JobCharge {
     tax_code: type === "sell" ? row.taxCode || row.tax_code || null : null,
     ...(Number.isFinite(chargeCodeId) && chargeCodeId > 0 ? { charge_code_id: chargeCodeId } : {}),
     ...(Number.isFinite(supplierId) && supplierId > 0 ? { supplier_id: supplierId } : {}),
+  }
+}
+
+function normalizeChargeRow(row: any) {
+  const type: "buy" | "sell" = row?.type === "buy" ? "buy" : "sell"
+  const quantity = numberValue(row?.quantity, 1) || 1
+  const unitAmount =
+    type === "buy"
+      ? numberValue(row?.unitCost ?? row?.unit_cost ?? row?.unit_amount ?? row?.amount, 0)
+      : numberValue(row?.unitPrice ?? row?.unit_price ?? row?.unit_amount ?? row?.amount, 0)
+
+  return {
+    ...row,
+    type,
+    description: row?.description ?? "",
+    currency: row?.currency || "GBP",
+    quantity,
+    exchangeRate: numberValue(row?.exchangeRate ?? row?.exchange_rate, 0),
+    ...(type === "buy"
+      ? {
+          supplier_id: row?.supplier_id ?? row?.supplierId ?? null,
+          chargeCodeId: row?.chargeCodeId ?? row?.charge_code_id ?? null,
+          unitCost: unitAmount,
+        }
+      : {
+          chargeCodeId: row?.chargeCodeId ?? row?.charge_code_id ?? null,
+          chargeCode: row?.chargeCode ?? row?.charge_code ?? "",
+          unitPrice: unitAmount,
+          vatRate: numberValue(row?.vatRate ?? row?.vat_rate, 0),
+          taxCode: row?.taxCode ?? row?.tax_code ?? "",
+        }),
   }
 }
 
@@ -1113,6 +1148,18 @@ export function useJobDetailsPage() {
       showCount: true,
     },
     {
+      label: "Customer Invoice",
+      name: "tms.jobs.show.customer-invoice",
+      key: "customer-invoice",
+      showCount: true,
+    },
+    {
+      label: "Supplier Invoices",
+      name: "tms.jobs.show.supplier-invoices",
+      key: "supplier-invoices",
+      showCount: true,
+    },
+    {
       label: "Load Planner",
       name: "tms.jobs.show.load-planner",
       key: "load-planner",
@@ -1152,7 +1199,15 @@ export function useJobDetailsPage() {
     },
   ]
   const consolidationTabNames = new Set(consolidationTabs.map(tab => tab.name))
-  const consolidationBaseTabs = baseTabs.filter(tab => tab.key !== "packages")
+  const normalJobTabNames = new Set(baseTabs.map(tab => tab.name))
+  const consolidationOnlyBaseExclusions = new Set([
+    "packages",
+    "customer-invoice",
+    "supplier-invoices",
+  ])
+  const consolidationBaseTabs = baseTabs.filter(
+    tab => !consolidationOnlyBaseExclusions.has(tab.key),
+  )
 
   type CustomerOption = {
     label: string
@@ -1518,7 +1573,11 @@ export function useJobDetailsPage() {
         return
       }
 
-      if (!isConsolidation && consolidationTabNames.has(routeName)) {
+      if (
+        !isConsolidation &&
+        consolidationTabNames.has(routeName) &&
+        !normalJobTabNames.has(routeName)
+      ) {
         router.replace({
           name: "tms.jobs.show.overview",
           params: route.params,
@@ -1549,10 +1608,16 @@ export function useJobDetailsPage() {
   function getTabCount(key: string) {
     if (key === "packages") return form.packages.length
     if (key === "costs") return form.buy_costs.length + form.sell_costs.length
-    if (key === "supplier-invoices") return form.consolidation_details.supplierInvoices.length
+    if (key === "supplier-invoices") {
+      return isConsolidationJob.value
+        ? form.consolidation_details.supplierInvoices.length
+        : form.buy_costs.length
+    }
     if (key === "collection-orders") return form.consolidation_details.collectionOrders.length
     if (key === "consolidated-invoices") return form.consolidation_details.consolidatedLines.length
     if (key === "customer-invoice") {
+      if (!isConsolidationJob.value) return form.sell_costs.length
+
       return (
         form.consolidation_details.domesticChargeRows.length +
         form.consolidation_details.exportChargeRows.length
@@ -1652,7 +1717,7 @@ export function useJobDetailsPage() {
 
     form.packages = Array.isArray(extra.packages) ? extra.packages.map(normalizePackageRow) : []
 
-    form.charges = Array.isArray(extra.charges) ? extra.charges : []
+    form.charges = Array.isArray(extra.charges) ? extra.charges.map(normalizeChargeRow) : []
     form.buy_costs = form.charges.filter((charge: any) => charge.type === "buy")
     form.sell_costs = form.charges.filter((charge: any) => charge.type === "sell")
 

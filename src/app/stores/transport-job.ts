@@ -4,7 +4,7 @@ import { ref } from "vue"
 import transportJobs from "@/app/services/transport-jobs"
 import type { CollectionNotePreviewPayload } from "@/app/services/transport-jobs/collection-note-preview"
 import jobPdfService from "@/app/services/transport-jobs/job-pdf"
-import type { JobPdfDocument } from "@/app/services/transport-jobs/job-pdf"
+import type { JobPdfDocument, JobPdfOptions } from "@/app/services/transport-jobs/job-pdf"
 import type {
   TransportJob,
   PaginatedResponse,
@@ -154,11 +154,11 @@ export const useTransportJobStore = defineStore("transportJob", () => {
     }
   }
 
-  async function jobPdf(id: number, document?: JobPdfDocument) {
+  async function jobPdf(id: number, document?: JobPdfDocument, options?: JobPdfOptions) {
     loading.value = true
 
     try {
-      return await jobPdfService(id, document)
+      return await jobPdfService(id, document, options)
     } finally {
       loading.value = false
     }

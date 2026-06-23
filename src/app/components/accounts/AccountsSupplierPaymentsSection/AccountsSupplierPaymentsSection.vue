@@ -1,32 +1,28 @@
 <script setup lang="ts">
 import "./AccountsSupplierPaymentsSection.css"
 
-import { computed, ref } from "vue"
+import { computed, onMounted, ref } from "vue"
+import { storeToRefs } from "pinia"
 import Button from "primevue/button"
 import Dropdown from "primevue/dropdown"
 import InputText from "primevue/inputtext"
 
-import { downloadCsv, parseCsvFile, useAccountsDemo } from "@/app/composables/useAccountsDemo"
+import { useAccountsSummaryStore } from "@/app/stores/accounts-summary"
+import { downloadCsv } from "@/app/utils/download-csv"
 
-const {
-  state,
-  selectedSupplier,
-  supplierSummary,
-  money,
-  statusLabel,
-  statusTone,
-  approveSuppliers,
-  scheduleSuppliers,
-  paySuppliers,
-  saveState,
-} = useAccountsDemo()
+const accountsSummaryStore = useAccountsSummaryStore()
+const state = accountsSummaryStore
+const { selectedSupplier } = storeToRefs(accountsSummaryStore)
+
+onMounted(() => {
+  accountsSummaryStore.fetch().catch(() => null)
+})
 
 const selectedStatus = ref("all")
 const selectedPaymentMethod = ref("Bank Transfer")
 const selectedExportFormat = ref("CSV Bank File")
 const searchText = ref("")
 const selectedSupplierIds = ref<string[]>([])
-const supplierImportInput = ref<HTMLInputElement | null>(null)
 
 const statusOptions = [
   { label: "All statuses", value: "all" },
@@ -43,6 +39,25 @@ const paymentMethodOptions = ["Bank Transfer", "SWIFT Transfer", "SEPA Transfer"
 const exportFormatOptions = ["CSV Bank File", "Payment Advice PDF", "Supplier Batch Export"].map(
   value => ({ label: value, value }),
 )
+
+const supplierSummary = computed(() => {
+  const total = state.supplierInvoices.reduce((sum, invoice) => sum + invoice.amount, 0)
+  const approved = state.supplierInvoices
+    .filter(invoice => invoice.approved)
+    .reduce((sum, invoice) => sum + invoice.amount, 0)
+  const paid = state.supplierInvoices
+    .filter(invoice => invoice.paid)
+    .reduce((sum, invoice) => sum + invoice.amount, 0)
+  const overdue = state.supplierInvoices.filter(invoice => invoice.status === "overdue").length
+
+  return [
+    { label: "Supplier Cost Lines", value: String(state.supplierInvoices.length) },
+    { label: "Pending Payment", value: money(total - paid) },
+    { label: "Approved", value: money(approved) },
+    { label: "Paid", value: money(paid) },
+    { label: "Overdue", value: String(overdue) },
+  ]
+})
 
 const filteredSuppliers = computed(() => {
   const query = searchText.value.trim().toLowerCase()
@@ -72,6 +87,41 @@ function toggleAllSuppliers(event: Event) {
 function idsOrCurrent() {
   if (selectedSupplierIds.value.length) return selectedSupplierIds.value
   return selectedSupplier.value ? [selectedSupplier.value.id] : []
+}
+
+function money(value: number, currency = "GBP") {
+  return new Intl.NumberFormat("en-GB", {
+    style: "currency",
+    currency: currency || "GBP",
+    currencyDisplay: "narrowSymbol",
+  }).format(Number.isFinite(value) ? value : 0)
+}
+
+function statusTone(status: string) {
+  if (status === "paid") return "success"
+  if (status === "approved" || status === "scheduled") return "info"
+  if (status === "overdue") return "danger"
+  return "warning"
+}
+
+function statusLabel(status: string, dueDate = "") {
+  if (status === "paid") return "Paid"
+  if (status === "approved") return "Approved"
+  if (status === "scheduled") return "Scheduled"
+  if (status === "overdue") return "Overdue"
+  return dueDate ? `Pending - due ${dueDate}` : "Pending"
+}
+
+function approveSuppliers(ids: string[]) {
+  accountsSummaryStore.approveSuppliers(ids)
+}
+
+function scheduleSuppliers(ids: string[]) {
+  accountsSummaryStore.scheduleSuppliers(ids)
+}
+
+function paySuppliers(ids: string[], method: string) {
+  accountsSummaryStore.paySuppliers(ids, method)
 }
 
 function exportSupplierCsv() {
@@ -153,65 +203,10 @@ function exportPaymentFile() {
     ]),
   ])
 }
-
-async function importSupplierCsv(event: Event) {
-  const file = (event.target as HTMLInputElement).files?.[0]
-  if (!file) return
-  const [, ...rows] = await parseCsvFile(file)
-  rows.forEach(row => {
-    state.supplierInvoices.push({
-      id: row[0] || `PINV-${Date.now()}`,
-      supplierInvoice: row[1] || "",
-      job: row[2] || "",
-      supplier: row[3] || "",
-      supplierCode: "",
-      user: "",
-      mode: row[4] || "",
-      invoiceDate: row[5] || "",
-      dueDate: row[6] || "",
-      amount: Number(row[7] || 0),
-      currency: row[8] || "GBP",
-      approved: String(row[9]).toLowerCase() === "true",
-      approvedDate: row[10] || "",
-      paid: String(row[11]).toLowerCase() === "true",
-      paidDate: row[12] || "",
-      status:
-        row[13] === "paid"
-          ? "paid"
-          : row[13] === "scheduled"
-            ? "scheduled"
-            : row[13] === "approved"
-              ? "approved"
-              : row[13] === "overdue"
-                ? "overdue"
-                : "pending",
-      paymentMethod: row[14] || "Bank Transfer",
-      chargeDescription: row[15] || "",
-      taxCode: row[16] || "",
-      bank: {
-        bankName: row[17] || "",
-        iban: row[18] || "",
-        swift: row[19] || "",
-        accountNumber: row[18] || "",
-        country: row[20] || "",
-      },
-    })
-  })
-  ;(event.target as HTMLInputElement).value = ""
-  saveState()
-}
 </script>
 
 <template>
   <div class="accounts-supplier-payments">
-    <input
-      ref="supplierImportInput"
-      type="file"
-      accept=".csv"
-      style="display: none"
-      @change="importSupplierCsv"
-    />
-
     <section class="accounts-supplier-payments__hero">
       <div class="accounts-supplier-payments__hero-head">
         <div>
@@ -227,12 +222,6 @@ async function importSupplierCsv(event: Event) {
             class="btn btn--ghost"
             size="small"
             @click="exportSupplierCsv"
-          />
-          <Button
-            label="Import Supplier CSV"
-            class="btn btn--ghost"
-            size="small"
-            @click="supplierImportInput?.click()"
           />
           <Button
             label="Approve Selected"

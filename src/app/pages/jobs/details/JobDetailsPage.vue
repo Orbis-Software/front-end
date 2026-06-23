@@ -170,41 +170,41 @@ async function onGenerateInvoice() {
     return
   }
 
-  if (!form.sell_costs.length) {
+  if (!form.sell_costs.length && !form.buy_costs.length) {
     toast.add({
       severity: "warn",
-      summary: "No sell charges",
-      detail: "Add at least one sell charge before generating the invoice.",
+      summary: "No costs or charges",
+      detail: "Add at least one Buy Cost or Sell Charge before generating the job invoice.",
       life: 3500,
     })
     return
   }
 
-  pdfLoading.value = "invoice"
+  pdfLoading.value = "job_financials"
 
   try {
     const blob = await appLoader.withLoader(
       {
-        title: "Generating invoice",
-        message: "Wait for your invoice...",
+        title: "Generating job invoice",
+        message: "Wait for your job invoice...",
         messages: [
-          "Wait for your invoice...",
+          "Wait for your job invoice...",
           "Saving Costs and Charges...",
-          "Checking the cached invoice PDF...",
-          "Preparing the invoice document...",
-          "Opening your invoice...",
+          "Preparing Buy Costs and Sell Charges...",
+          "Building the job invoice document...",
+          "Opening your job invoice...",
         ],
         iconClass: "pi pi-file-pdf",
-        footer: "Preparing a presentable invoice document",
+        footer: "Preparing a job invoice with both cost and sell lines",
       },
       async () => {
         await save({
           successSummary: "Invoice ready",
-          successDetail: "Costs & Charges saved before generating the invoice.",
+          successDetail: "Costs & Charges saved before generating the job invoice.",
           successLife: 1800,
         })
 
-        return transportJobStore.jobPdf(id, "invoice")
+        return transportJobStore.jobPdf(id, "job_financials")
       },
     )
 
@@ -308,8 +308,8 @@ function onArchive() {
           <Button
             class="job-action-btn"
             icon="pi pi-receipt"
-            :label="pdfLoading === 'invoice' ? 'Opening...' : 'Generate Invoice'"
-            :loading="pdfLoading === 'invoice'"
+            :label="pdfLoading === 'job_financials' ? 'Opening...' : 'Generate Invoice'"
+            :loading="pdfLoading === 'job_financials'"
             :disabled="loading || saving || isPdfLoading"
             @click="onGenerateInvoice"
           />
