@@ -44,6 +44,11 @@ function money(currency: string, value: number): string {
 }
 
 const rows = computed(() => jobContext.form.sell_costs)
+const invoices = computed(() =>
+  ((jobContext.form as any).invoices ?? []).filter((invoice: any) => {
+    return (invoice.invoiceType ?? invoice.invoice_type ?? "customer") === "customer"
+  }),
+)
 const invoiceCurrency = computed(() =>
   currencyCode(jobContext.form.currency || rows.value[0]?.currency),
 )
@@ -65,6 +70,17 @@ const vatTotal = computed(() =>
   }, 0),
 )
 const grandTotal = computed(() => subtotal.value + vatTotal.value)
+
+function invoiceNumber(row: any): string {
+  return row?.invoice?.invoiceNumber ?? row?.invoice?.invoice_number ?? row?.invoiceNumber ?? ""
+}
+
+function invoiceStatus(row: any): string {
+  const status = row?.invoice_status ?? row?.invoiceStatus ?? "not_invoiced"
+  return status === "printed" && invoiceNumber(row)
+    ? `Printed on ${invoiceNumber(row)}`
+    : "Not invoiced"
+}
 
 function openBlob(blob: Blob) {
   const url = URL.createObjectURL(blob)
@@ -88,6 +104,22 @@ async function extractPdfError(error: any) {
   }
 
   return error?.response?.data?.message ?? error?.message ?? "Unable to generate the invoice."
+}
+
+function showInvoiceProgressToast(detail: string) {
+  ;(toast as any).removeGroup?.("invoice-progress")
+  toast.add({
+    group: "invoice-progress",
+    severity: "info",
+    summary: "Generating invoice",
+    detail,
+    life: 60000,
+    closable: false,
+  } as any)
+}
+
+function clearInvoiceProgressToast() {
+  ;(toast as any).removeGroup?.("invoice-progress")
 }
 
 async function generateInvoice() {
@@ -114,6 +146,7 @@ async function generateInvoice() {
   }
 
   generating.value = true
+  showInvoiceProgressToast("Saving sell charges, then building the customer invoice PDF...")
 
   try {
     await jobContext.save({
@@ -122,6 +155,9 @@ async function generateInvoice() {
       successLife: 1800,
     })
 
+    showInvoiceProgressToast(
+      "Customer invoice PDF is still processing. It will open as soon as it is ready...",
+    )
     const blob = await transportJobStore.jobPdf(id, "invoice")
 
     if (!(blob instanceof Blob) || blob.type !== "application/pdf") {
@@ -130,6 +166,7 @@ async function generateInvoice() {
     }
 
     openBlob(blob)
+    await jobContext.load()
   } catch (error: any) {
     toast.add({
       severity: "error",
@@ -138,6 +175,7 @@ async function generateInvoice() {
       life: 4500,
     })
   } finally {
+    clearInvoiceProgressToast()
     generating.value = false
   }
 }
@@ -172,23 +210,35 @@ async function generateInvoice() {
 
       <template v-else>
         <div class="job-normal-invoice-tab__table-wrap">
-          <table class="job-normal-invoice-tab__table">
+          <table class="job-normal-invoice-tab__table job-normal-invoice-tab__table--customer">
+            <colgroup>
+              <col />
+              <col />
+              <col />
+              <col />
+              <col />
+              <col />
+              <col />
+              <col />
+              <col />
+            </colgroup>
             <thead>
               <tr>
                 <th>Description</th>
-                <th>Qty</th>
-                <th>Unit Price</th>
-                <th>Currency</th>
-                <th>VAT %</th>
-                <th>Net</th>
-                <th>VAT</th>
-                <th>Gross</th>
+                <th class="job-normal-invoice-tab__quantity">Qty</th>
+                <th class="job-normal-invoice-tab__money">Unit Price</th>
+                <th class="job-normal-invoice-tab__currency">Currency</th>
+                <th class="job-normal-invoice-tab__quantity">VAT %</th>
+                <th class="job-normal-invoice-tab__money">Net</th>
+                <th class="job-normal-invoice-tab__money">VAT</th>
+                <th class="job-normal-invoice-tab__money">Gross</th>
+                <th>Invoice Status</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="row in rows" :key="row.id">
                 <td>{{ row.description || "Customer charge" }}</td>
-                <td>{{ numberValue(row.quantity) }}</td>
+                <td class="job-normal-invoice-tab__quantity">{{ numberValue(row.quantity) }}</td>
                 <td class="job-normal-invoice-tab__money">
                   {{
                     money(
@@ -197,8 +247,10 @@ async function generateInvoice() {
                     )
                   }}
                 </td>
-                <td>{{ currencyCode(row.currency) }}</td>
-                <td>{{ numberValue(row.vatRate ?? row.vat_rate).toFixed(2) }}%</td>
+                <td class="job-normal-invoice-tab__currency">{{ currencyCode(row.currency) }}</td>
+                <td class="job-normal-invoice-tab__quantity">
+                  {{ numberValue(row.vatRate ?? row.vat_rate).toFixed(2) }}%
+                </td>
                 <td class="job-normal-invoice-tab__money">
                   {{
                     money(
@@ -234,6 +286,14 @@ async function generateInvoice() {
                     )
                   }}
                 </td>
+                <td>
+                  <span
+                    class="job-normal-invoice-tab__status"
+                    :class="{ 'job-normal-invoice-tab__status--printed': row.invoice_id }"
+                  >
+                    {{ invoiceStatus(row) }}
+                  </span>
+                </td>
               </tr>
             </tbody>
           </table>
@@ -255,6 +315,58 @@ async function generateInvoice() {
           <div class="job-normal-invoice-tab__metric">
             <span>Gross</span>
             <strong>{{ money(invoiceCurrency, grandTotal) }}</strong>
+          </div>
+        </div>
+
+        <div class="job-normal-invoice-tab__section job-normal-invoice-tab__section--nested">
+          <header class="job-normal-invoice-tab__subheader">
+            <div>
+              <h3>Invoice List</h3>
+              <p>Customer invoices generated from this job's Sell Charges.</p>
+            </div>
+          </header>
+
+          <div v-if="!invoices.length" class="job-normal-invoice-tab__placeholder">
+            <strong>No invoices printed yet</strong>
+            <p class="job-normal-invoice-tab__empty">Generated invoices will appear here.</p>
+          </div>
+
+          <div v-else class="job-normal-invoice-tab__table-wrap">
+            <table
+              class="job-normal-invoice-tab__table job-normal-invoice-tab__table--invoice-list"
+            >
+              <thead>
+                <tr>
+                  <th>Invoice</th>
+                  <th>Date</th>
+                  <th>Status</th>
+                  <th class="job-normal-invoice-tab__money">Total</th>
+                  <th>PDF</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="invoice in invoices" :key="invoice.id">
+                  <td>{{ invoice.invoiceNumber }}</td>
+                  <td>{{ invoice.invoiceDate || "-" }}</td>
+                  <td>{{ invoice.status || "printed" }}</td>
+                  <td class="job-normal-invoice-tab__money">
+                    {{ money(invoice.currency, numberValue(invoice.total)) }}
+                  </td>
+                  <td>
+                    <a
+                      v-if="invoice.pdfUrl"
+                      class="job-normal-invoice-tab__link"
+                      :href="invoice.pdfUrl"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Open
+                    </a>
+                    <span v-else class="job-normal-invoice-tab__muted">Cached after open</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </template>

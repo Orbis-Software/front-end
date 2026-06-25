@@ -138,7 +138,7 @@ const payloadLabelMap: Record<string, string> = {
   hazardous_class: "Hazmat Class",
   un_number: "UN Number",
   temperature_requirement: "Temperature Requirement",
-  customer_po_number: "Customer PO Number",
+  customer_po_number: "Customer Ref",
   customer_booking_ref: "Customer Booking Ref",
   our_reference: "Our Reference",
   supplier_ref: "Supplier Ref",
@@ -473,6 +473,10 @@ function normalizeChargeRow(row: any) {
     currency: row?.currency || "GBP",
     quantity,
     exchangeRate: numberValue(row?.exchangeRate ?? row?.exchange_rate, 0),
+    invoice_id: row?.invoice_id ?? row?.invoiceId ?? null,
+    invoice_status: row?.invoice_status ?? row?.invoiceStatus ?? "not_invoiced",
+    invoiced_at: row?.invoiced_at ?? row?.invoicedAt ?? null,
+    invoice: row?.invoice ?? null,
     ...(type === "buy"
       ? {
           supplier_id: row?.supplier_id ?? row?.supplierId ?? null,
@@ -1111,6 +1115,7 @@ export function useJobDetailsPage() {
     charges: [],
     buy_costs: [],
     sell_costs: [],
+    invoices: [],
     files: [],
 
     road_detail: emptyRoadDetail(),
@@ -1720,6 +1725,7 @@ export function useJobDetailsPage() {
     form.charges = Array.isArray(extra.charges) ? extra.charges.map(normalizeChargeRow) : []
     form.buy_costs = form.charges.filter((charge: any) => charge.type === "buy")
     form.sell_costs = form.charges.filter((charge: any) => charge.type === "sell")
+    form.invoices = Array.isArray(extra.invoices) ? extra.invoices : []
 
     Object.assign(form.road_detail, emptyRoadDetail(), extra.road_detail ?? {})
     if (form.mode_of_transport === "road" && !form.road_detail.cmr_number) {

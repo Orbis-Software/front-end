@@ -1,5 +1,6 @@
 <template>
   <Toast />
+  <Toast group="invoice-progress" position="top-right" />
   <ConfirmDialog />
   <OrbisLoader />
 

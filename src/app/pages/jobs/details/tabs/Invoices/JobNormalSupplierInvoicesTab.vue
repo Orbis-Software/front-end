@@ -90,6 +90,11 @@ function makeLineDraft(): SupplierInvoiceLineDraft {
 }
 
 const rows = computed(() => jobContext.form.buy_costs)
+const invoices = computed(() =>
+  ((jobContext.form as any).invoices ?? []).filter((invoice: any) => {
+    return (invoice.invoiceType ?? invoice.invoice_type) === "supplier"
+  }),
+)
 const invoiceCurrency = computed(() =>
   currencyCode(jobContext.form.currency || rows.value[0]?.currency),
 )
@@ -147,6 +152,17 @@ const totalCost = computed(() =>
     return sum + quantity * unitCost
   }, 0),
 )
+
+function invoiceNumber(row: any): string {
+  return row?.invoice?.invoiceNumber ?? row?.invoice?.invoice_number ?? row?.invoiceNumber ?? ""
+}
+
+function invoiceStatus(row: any): string {
+  const status = row?.invoice_status ?? row?.invoiceStatus ?? "not_invoiced"
+  return status === "printed" && invoiceNumber(row)
+    ? `Printed on ${invoiceNumber(row)}`
+    : "Not invoiced"
+}
 
 function supplierName(supplierId: unknown): string {
   const id = Number(supplierId)
@@ -305,6 +321,22 @@ async function extractPdfError(error: any) {
   )
 }
 
+function showInvoiceProgressToast(detail: string) {
+  ;(toast as any).removeGroup?.("invoice-progress")
+  toast.add({
+    group: "invoice-progress",
+    severity: "info",
+    summary: "Generating invoice",
+    detail,
+    life: 60000,
+    closable: false,
+  } as any)
+}
+
+function clearInvoiceProgressToast() {
+  ;(toast as any).removeGroup?.("invoice-progress")
+}
+
 function openGenerateDialog() {
   generateSupplierId.value = supplierInvoiceOptions.value[0]?.value ?? null
   generateDialogVisible.value = true
@@ -335,6 +367,7 @@ async function generateSupplierInvoice() {
   }
 
   generateLoading.value = true
+  showInvoiceProgressToast("Saving buy costs, then building the supplier invoice PDF...")
 
   try {
     await jobContext.save({
@@ -343,6 +376,9 @@ async function generateSupplierInvoice() {
       successLife: 1800,
     })
 
+    showInvoiceProgressToast(
+      "Supplier invoice PDF is still processing. It will open as soon as it is ready...",
+    )
     const blob = await transportJobStore.jobPdf(id, "supplier_invoice", { supplierId })
 
     if (!(blob instanceof Blob) || blob.type !== "application/pdf") {
@@ -351,6 +387,7 @@ async function generateSupplierInvoice() {
     }
 
     openBlob(blob)
+    await jobContext.load()
     generateDialogVisible.value = false
   } catch (error: any) {
     toast.add({
@@ -360,6 +397,7 @@ async function generateSupplierInvoice() {
       life: 4500,
     })
   } finally {
+    clearInvoiceProgressToast()
     generateLoading.value = false
   }
 }
@@ -408,15 +446,24 @@ onMounted(async () => {
 
       <template v-else>
         <div class="job-normal-invoice-tab__table-wrap">
-          <table class="job-normal-invoice-tab__table">
+          <table class="job-normal-invoice-tab__table job-normal-invoice-tab__table--supplier">
+            <colgroup>
+              <col />
+              <col />
+              <col />
+              <col />
+              <col />
+              <col />
+              <col />
+            </colgroup>
             <thead>
               <tr>
                 <th>Supplier</th>
                 <th>Cost Description</th>
-                <th>Qty</th>
-                <th>Unit Cost</th>
-                <th>Currency</th>
-                <th>Net Cost</th>
+                <th class="job-normal-invoice-tab__quantity">Qty</th>
+                <th class="job-normal-invoice-tab__money">Unit Cost</th>
+                <th class="job-normal-invoice-tab__currency">Currency</th>
+                <th class="job-normal-invoice-tab__money">Net Cost</th>
                 <th>Invoice Status</th>
               </tr>
             </thead>
@@ -430,7 +477,7 @@ onMounted(async () => {
                   <span v-else class="job-normal-invoice-tab__muted">Not selected</span>
                 </td>
                 <td>{{ row.description || "Supplier cost" }}</td>
-                <td>{{ numberValue(row.quantity) }}</td>
+                <td class="job-normal-invoice-tab__quantity">{{ numberValue(row.quantity) }}</td>
                 <td class="job-normal-invoice-tab__money">
                   {{
                     money(
@@ -439,7 +486,7 @@ onMounted(async () => {
                     )
                   }}
                 </td>
-                <td>{{ currencyCode(row.currency) }}</td>
+                <td class="job-normal-invoice-tab__currency">{{ currencyCode(row.currency) }}</td>
                 <td class="job-normal-invoice-tab__money">
                   {{
                     money(
@@ -449,7 +496,14 @@ onMounted(async () => {
                     )
                   }}
                 </td>
-                <td class="job-normal-invoice-tab__muted">Awaiting upload</td>
+                <td>
+                  <span
+                    class="job-normal-invoice-tab__status"
+                    :class="{ 'job-normal-invoice-tab__status--printed': row.invoice_id }"
+                  >
+                    {{ invoiceStatus(row) }}
+                  </span>
+                </td>
               </tr>
             </tbody>
           </table>
@@ -462,11 +516,11 @@ onMounted(async () => {
           </div>
           <div class="job-normal-invoice-tab__metric">
             <span>Matched Invoices</span>
-            <strong>0</strong>
+            <strong>{{ invoices.length }}</strong>
           </div>
           <div class="job-normal-invoice-tab__metric">
-            <span>Pending Upload</span>
-            <strong>{{ rows.length }}</strong>
+            <span>Not Invoiced</span>
+            <strong>{{ rows.filter((row: any) => !row.invoice_id).length }}</strong>
           </div>
           <div class="job-normal-invoice-tab__metric">
             <span>Total Cost</span>
@@ -474,6 +528,60 @@ onMounted(async () => {
           </div>
         </div>
       </template>
+    </div>
+
+    <div class="job-normal-invoice-tab__section">
+      <header class="job-normal-invoice-tab__subheader">
+        <div>
+          <h3>Invoice List</h3>
+          <p>Supplier invoices generated from this job's Buy Costs.</p>
+        </div>
+      </header>
+
+      <div v-if="!invoices.length" class="job-normal-invoice-tab__placeholder">
+        <strong>No invoices printed yet</strong>
+        <p class="job-normal-invoice-tab__empty">Generated supplier invoices will appear here.</p>
+      </div>
+
+      <div v-else class="job-normal-invoice-tab__table-wrap">
+        <table class="job-normal-invoice-tab__table job-normal-invoice-tab__table--invoice-list">
+          <thead>
+            <tr>
+              <th>Invoice</th>
+              <th>Supplier</th>
+              <th>Date</th>
+              <th>Status</th>
+              <th class="job-normal-invoice-tab__money">Total</th>
+              <th>PDF</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="invoice in invoices" :key="invoice.id">
+              <td>{{ invoice.invoiceNumber }}</td>
+              <td>
+                {{ supplierName(invoice.supplierId) || invoice.metadata?.supplierName || "-" }}
+              </td>
+              <td>{{ invoice.invoiceDate || "-" }}</td>
+              <td>{{ invoice.status || "printed" }}</td>
+              <td class="job-normal-invoice-tab__money">
+                {{ money(invoice.currency, numberValue(invoice.total)) }}
+              </td>
+              <td>
+                <a
+                  v-if="invoice.pdfUrl"
+                  class="job-normal-invoice-tab__link"
+                  :href="invoice.pdfUrl"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Open
+                </a>
+                <span v-else class="job-normal-invoice-tab__muted">Cached after open</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
     <Dialog

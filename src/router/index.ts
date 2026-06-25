@@ -20,6 +20,11 @@ router.beforeEach(async to => {
   const guestOnly = to.meta.guestOnly === true
   const userOnly = to.meta.authType === "user"
   const customerOnly = to.meta.authType === "customer"
+  const publicNotFound = to.meta.publicNotFound === true
+
+  if (publicNotFound && !authStore.isAuthenticated) {
+    return
+  }
 
   if (requiresAuth && !authStore.isAuthenticated) {
     return { name: "auth.login" }

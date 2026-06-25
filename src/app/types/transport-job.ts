@@ -280,6 +280,10 @@ export interface JobCharge {
   type: "buy" | "sell"
   supplier_id?: number | null
   charge_code_id?: number | null
+  invoice_id?: number | null
+  invoice_status?: string | null
+  invoiced_at?: string | null
+  invoice?: JobInvoiceSummary | null
   description?: string | null
   currency?: string | null
   quantity?: number | null
@@ -288,6 +292,28 @@ export interface JobCharge {
   amount?: number | null
   vat_rate?: number | null
   tax_code?: string | null
+}
+
+export interface JobInvoiceSummary {
+  id: number
+  jobId?: number | null
+  invoiceType?: "customer" | "supplier" | string
+  documentType?: string | null
+  supplierId?: number | null
+  invoiceNumber: string
+  invoiceDate?: string | null
+  dueDate?: string | null
+  currency?: string | null
+  subtotal?: number | null
+  totalVat?: number | null
+  total?: number | null
+  costTotal?: number | null
+  status?: string | null
+  pdfUrl?: string | null
+  pdfGeneratedAt?: string | null
+  pdfCacheReady?: boolean
+  lines?: any[]
+  metadata?: Record<string, any>
 }
 
 export type JobConsolidationCurrency = "GBP" | "USD" | "EUR" | string
@@ -548,6 +574,7 @@ export interface TransportJob {
   transport_legs?: JobTransportLeg[]
   packages?: JobPackage[]
   charges?: JobCharge[]
+  invoices?: JobInvoiceSummary[]
   consolidation_details?: JobConsolidationDetails | null
 
   files: JobFile[]

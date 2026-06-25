@@ -12,7 +12,6 @@ import InputText from "primevue/inputtext"
 import Calendar from "primevue/calendar"
 
 import JobProgressStepper from "@/app/components/jobs/details/JobProgressStepper.vue"
-import { useAppLoaderStore } from "@/app/stores/app-loader"
 import { useTransportJobStore } from "@/app/stores/transport-job"
 import type { JobPdfDocument } from "@/app/services/transport-jobs/job-pdf"
 import { useJobDetailsPage } from "./JobDetailsPage.logic"
@@ -39,7 +38,6 @@ const {
 const toast = useToast()
 const confirm = useConfirm()
 const router = useRouter()
-const appLoader = useAppLoaderStore()
 const transportJobStore = useTransportJobStore()
 const pdfLoading = ref<JobPdfDocument | null>(null)
 const archiveLoading = ref(false)
@@ -129,6 +127,22 @@ async function extractPdfError(error: any) {
   return error?.response?.data?.message ?? error?.message ?? "Unable to generate the job PDF."
 }
 
+function showInvoiceProgressToast(detail: string) {
+  ;(toast as any).removeGroup?.("invoice-progress")
+  toast.add({
+    group: "invoice-progress",
+    severity: "info",
+    summary: "Generating invoice",
+    detail,
+    life: 60000,
+    closable: false,
+  } as any)
+}
+
+function clearInvoiceProgressToast() {
+  ;(toast as any).removeGroup?.("invoice-progress")
+}
+
 async function loadPdf(document: JobPdfDocument = "job_details") {
   const id = Number(job.value?.id)
 
@@ -181,32 +195,19 @@ async function onGenerateInvoice() {
   }
 
   pdfLoading.value = "job_financials"
+  showInvoiceProgressToast("Saving costs and charges, then building the invoice PDF...")
 
   try {
-    const blob = await appLoader.withLoader(
-      {
-        title: "Generating job invoice",
-        message: "Wait for your job invoice...",
-        messages: [
-          "Wait for your job invoice...",
-          "Saving Costs and Charges...",
-          "Preparing Buy Costs and Sell Charges...",
-          "Building the job invoice document...",
-          "Opening your job invoice...",
-        ],
-        iconClass: "pi pi-file-pdf",
-        footer: "Preparing a job invoice with both cost and sell lines",
-      },
-      async () => {
-        await save({
-          successSummary: "Invoice ready",
-          successDetail: "Costs & Charges saved before generating the job invoice.",
-          successLife: 1800,
-        })
+    await save({
+      successSummary: "Invoice ready",
+      successDetail: "Costs & Charges saved before generating the job invoice.",
+      successLife: 1800,
+    })
 
-        return transportJobStore.jobPdf(id, "job_financials")
-      },
+    showInvoiceProgressToast(
+      "Invoice PDF is still processing. It will open as soon as it is ready...",
     )
+    const blob = await transportJobStore.jobPdf(id, "job_financials")
 
     if (!(blob instanceof Blob) || blob.type !== "application/pdf") {
       const text = blob instanceof Blob ? await blob.text() : ""
@@ -222,6 +223,7 @@ async function onGenerateInvoice() {
       life: 4500,
     })
   } finally {
+    clearInvoiceProgressToast()
     pdfLoading.value = null
   }
 }

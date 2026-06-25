@@ -314,18 +314,18 @@ const consolidationTransportRows = computed(() => {
       </div>
     </div>
 
-    <div v-if="isRoadMode" class="job-overview-tab__section">
+    <div class="job-overview-tab__section">
       <header class="job-overview-tab__section-header">
         <h2>Customer & References</h2>
       </header>
 
       <div class="job-overview-tab__grid job-overview-tab__grid--4">
         <label class="job-overview-tab__field">
-          <span>Customer PO Number</span>
+          <span>Customer Ref</span>
 
           <InputText
             v-model="form.customer_po_number"
-            placeholder="Purchase order ref"
+            placeholder="Customer reference / PO"
             :disabled="loading"
           />
         </label>
