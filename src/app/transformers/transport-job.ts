@@ -328,6 +328,19 @@ function fetchCharge(raw: any): JobCharge {
     type: raw.type,
     supplier_id: nullableNumber(raw.supplier_id),
     charge_code_id: nullableNumber(raw.charge_code_id),
+    invoice_id: nullableNumber(raw.invoice_id),
+    invoice_status: nullableString(raw.invoice_status),
+    invoiced_at: nullableString(raw.invoiced_at),
+    invoice: raw.invoice
+      ? {
+          id: Number(raw.invoice.id),
+          invoiceNumber: raw.invoice.invoice_number ?? raw.invoice.invoiceNumber ?? "",
+          invoiceType: raw.invoice.invoice_type ?? raw.invoice.invoiceType ?? null,
+          documentType: raw.invoice.document_type ?? raw.invoice.documentType ?? null,
+          supplierId: nullableNumber(raw.invoice.supplier_id ?? raw.invoice.supplierId),
+          status: raw.invoice.status ?? null,
+        }
+      : null,
     description: nullableString(raw.description),
     currency: nullableString(raw.currency),
     quantity: nullableNumber(raw.quantity),
@@ -336,6 +349,30 @@ function fetchCharge(raw: any): JobCharge {
     amount: nullableNumber(raw.amount),
     vat_rate: nullableNumber(raw.vat_rate),
     tax_code: nullableString(raw.tax_code),
+  }
+}
+
+function fetchInvoice(raw: any) {
+  return {
+    id: Number(raw.id),
+    jobId: nullableNumber(raw.jobId ?? raw.job_id),
+    invoiceType: raw.invoiceType ?? raw.invoice_type ?? "customer",
+    documentType: raw.documentType ?? raw.document_type ?? "invoice",
+    supplierId: nullableNumber(raw.supplierId ?? raw.supplier_id),
+    invoiceNumber: raw.invoiceNumber ?? raw.invoice_number ?? "",
+    invoiceDate: raw.invoiceDate ?? raw.invoice_date ?? null,
+    dueDate: raw.dueDate ?? raw.due_date ?? null,
+    currency: raw.currency ?? null,
+    subtotal: nullableNumber(raw.subtotal),
+    totalVat: nullableNumber(raw.totalVat ?? raw.total_vat),
+    total: nullableNumber(raw.total),
+    costTotal: nullableNumber(raw.costTotal ?? raw.cost_total),
+    status: raw.status ?? null,
+    pdfUrl: raw.pdfUrl ?? raw.pdf_url ?? null,
+    pdfGeneratedAt: raw.pdfGeneratedAt ?? raw.pdf_generated_at ?? null,
+    pdfCacheReady: Boolean(raw.pdfCacheReady ?? raw.pdf_cache_ready ?? false),
+    lines: Array.isArray(raw.lines) ? raw.lines : [],
+    metadata: raw.metadata && typeof raw.metadata === "object" ? raw.metadata : {},
   }
 }
 
@@ -438,6 +475,7 @@ const transportJobTransformer = {
 
       packages: Array.isArray(raw.packages) ? raw.packages.map(fetchPackage) : [],
       charges: Array.isArray(raw.charges) ? raw.charges.map(fetchCharge) : [],
+      invoices: Array.isArray(raw.invoices) ? raw.invoices.map(fetchInvoice) : [],
       consolidation_details: raw.consolidation_details ?? raw.consolidationDetails ?? null,
 
       files: jobFileTransformer.fetchCollection(filesRaw),

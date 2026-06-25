@@ -3,6 +3,7 @@ import type {
   JobAirDetail,
   JobConsolidationDetails,
   JobCourierDetail,
+  JobInvoiceSummary,
   JobRailDetail,
   JobRoadDetail,
   JobSeaDetail,
@@ -108,6 +109,7 @@ export type JobDetailsForm = {
   charges: any[]
   buy_costs: any[]
   sell_costs: any[]
+  invoices: JobInvoiceSummary[]
   files: any[]
 
   road_detail: JobRoadDetail

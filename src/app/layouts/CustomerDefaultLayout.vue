@@ -2,9 +2,11 @@
 import { onBeforeUnmount, onMounted } from "vue"
 import { useRoute } from "vue-router"
 import CustomerHeader from "@/app/components/customer/header/CustomerHeader.vue"
+import { useAuthStore } from "@/app/stores/auth"
 import { useUiStore } from "@/app/stores/ui"
 
 const ui = useUiStore()
+const auth = useAuthStore()
 const route = useRoute()
 
 function onResize() {
@@ -28,12 +30,13 @@ onBeforeUnmount(() => {
 <template>
   <div class="customer-shell">
     <CustomerHeader
+      v-if="auth.isAuthenticated"
       :mobile-open="ui.mobileNavOpen"
       @toggle-mobile-nav="ui.toggleMobileNav"
       @close-mobile="ui.mobileNavOpen = false"
     />
 
-    <main class="customer-content">
+    <main class="customer-content" :class="{ 'customer-content--guest': !auth.isAuthenticated }">
       <router-view :key="route.fullPath" />
     </main>
   </div>
@@ -65,5 +68,11 @@ onBeforeUnmount(() => {
   padding: 28px var(--customer-side-padding);
   flex: 1;
   box-sizing: border-box;
+}
+
+.customer-content--guest {
+  max-width: none;
+  min-height: 100vh;
+  padding: 0;
 }
 </style>

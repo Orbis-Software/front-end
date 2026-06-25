@@ -2,9 +2,11 @@
 import { computed, onMounted, onBeforeUnmount } from "vue"
 import { useRoute } from "vue-router"
 import AppHeader from "@/app/components/header/AppHeader.vue"
+import { useAuthStore } from "@/app/stores/auth"
 import { useUiStore } from "@/app/stores/ui"
 
 const ui = useUiStore()
+const auth = useAuthStore()
 const route = useRoute()
 
 const pageKey = computed(() => {
@@ -34,6 +36,7 @@ onBeforeUnmount(() => window.removeEventListener("resize", onResize))
   <div class="app-shell">
     <div class="sticky-chrome">
       <AppHeader
+        v-if="auth.isAuthenticated"
         :area="ui.area"
         :mobile-open="ui.mobileNavOpen"
         @switch-area="ui.setArea"
@@ -42,7 +45,7 @@ onBeforeUnmount(() => window.removeEventListener("resize", onResize))
       />
     </div>
 
-    <main class="app-content">
+    <main class="app-content" :class="{ 'app-content--guest': !auth.isAuthenticated }">
       <router-view :key="pageKey" />
     </main>
   </div>
@@ -74,5 +77,11 @@ onBeforeUnmount(() => window.removeEventListener("resize", onResize))
   padding: 28px var(--shell-side-padding);
   flex: 1;
   box-sizing: border-box;
+}
+
+.app-content--guest {
+  max-width: none;
+  min-height: 100vh;
+  padding: 0;
 }
 </style>

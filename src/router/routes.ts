@@ -12,6 +12,7 @@ const CustomerDefaultLayout = () => import("@/app/layouts/CustomerDefaultLayout.
    Shared / Generic Pages
 ========================= */
 const PlaceholderPage = () => import("@/app/pages/default/PlaceholderPage.vue")
+const NotFoundPage = () => import("@/app/pages/default/NotFoundPage.vue")
 
 /* =========================
    Auth
@@ -137,6 +138,16 @@ export const routes: RouteRecordRaw[] = [
         name: "auth.login",
         component: LoginPage,
       },
+      {
+        path: ":pathMatch(.*)*",
+        name: "auth.not-found",
+        component: NotFoundPage,
+        meta: {
+          title: "Page Not Found",
+          guestOnly: true,
+          authType: "guest",
+        },
+      },
     ],
   },
 
@@ -152,6 +163,16 @@ export const routes: RouteRecordRaw[] = [
         path: "",
         name: "auth.customer.login",
         component: CustomerLoginPage,
+      },
+      {
+        path: ":pathMatch(.*)*",
+        name: "auth.customer.not-found",
+        component: NotFoundPage,
+        meta: {
+          title: "Page Not Found",
+          guestOnly: true,
+          authType: "customer-guest",
+        },
       },
     ],
   },
@@ -217,6 +238,16 @@ export const routes: RouteRecordRaw[] = [
         name: "customer.settings",
         component: () => import("@/app/pages/customer/settings/CustomerSettingsPage.vue"),
         meta: { title: "Customer Settings" },
+      },
+      {
+        path: ":pathMatch(.*)*",
+        name: "customer.not-found",
+        component: NotFoundPage,
+        meta: {
+          title: "Page Not Found",
+          authType: "customer",
+          publicNotFound: true,
+        },
       },
     ],
   },
@@ -854,6 +885,16 @@ export const routes: RouteRecordRaw[] = [
             meta: { title: "User Settings - Shortcut" },
           },
         ],
+      },
+      {
+        path: ":pathMatch(.*)*",
+        name: "app.not-found",
+        component: NotFoundPage,
+        meta: {
+          title: "Page Not Found",
+          authType: "user",
+          publicNotFound: true,
+        },
       },
     ],
   },
