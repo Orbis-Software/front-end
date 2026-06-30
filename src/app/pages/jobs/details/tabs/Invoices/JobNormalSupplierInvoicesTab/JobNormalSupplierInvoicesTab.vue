@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import "./JobNormalSupplierInvoicesTab.css"
 import Button from "primevue/button"
+import Calendar from "primevue/calendar"
 import Dialog from "primevue/dialog"
 import Dropdown from "primevue/dropdown"
 import InputNumber from "primevue/inputnumber"
+import InputText from "primevue/inputtext"
 import InvoiceEmailDialog from "../InvoiceEmailDialog/InvoiceEmailDialog.vue"
 import { useJobNormalSupplierInvoicesTab } from "./JobNormalSupplierInvoicesTab"
 
@@ -31,8 +33,14 @@ const {
   money,
   numberValue,
   openGenerateDialog,
+  openPassDialog,
   openUploadDialog,
   openPendingInvoice,
+  passDialogVisible,
+  passDraft,
+  passGrossAmount,
+  passSaving,
+  passSupplierInvoice,
   removeInvoiceLine,
   rows,
   saveSupplierInvoice,
@@ -64,9 +72,22 @@ const {
             @click="openGenerateDialog"
           />
           <Button
+            :label="passSaving ? 'Passing...' : 'Pass Supplier Invoice'"
+            icon="pi pi-check-square"
+            severity="secondary"
+            :loading="passSaving"
+            :disabled="
+              !supplierInvoiceOptions.length ||
+              jobContext.saving.value ||
+              generateLoading ||
+              passSaving
+            "
+            @click="openPassDialog"
+          />
+          <Button
             label="Upload Supplier Invoice"
             icon="pi pi-upload"
-            :disabled="jobContext.saving.value || generateLoading"
+            :disabled="jobContext.saving.value || generateLoading || passSaving"
             @click="openUploadDialog"
           />
         </div>
@@ -136,7 +157,7 @@ const {
                     v-if="isPrinted(row)"
                     class="job-normal-invoice-tab__status job-normal-invoice-tab__status--printed"
                   >
-                    Printed
+                    {{ invoiceStatusLabel(row.invoice_status) }}
                     <a
                       v-if="invoicePdfUrl(row)"
                       :href="invoicePdfUrl(row)"
@@ -386,6 +407,106 @@ const {
           icon="pi pi-file-pdf"
           :loading="generateLoading"
           @click="generateSupplierInvoice"
+        />
+      </template>
+    </Dialog>
+
+    <Dialog
+      v-model:visible="passDialogVisible"
+      modal
+      header="Pass Supplier Invoice"
+      class="job-normal-invoice-tab__dialog"
+      :style="{ width: 'min(760px, 96vw)' }"
+    >
+      <div class="job-normal-invoice-tab__dialog-body">
+        <div class="job-normal-invoice-tab__form-grid">
+          <label class="job-normal-invoice-tab__field">
+            <span>Supplier</span>
+            <Dropdown
+              v-model="passDraft.supplierId"
+              :options="supplierInvoiceOptions"
+              option-label="label"
+              option-value="value"
+              placeholder="Select supplier"
+              filter
+              auto-filter-focus
+            />
+          </label>
+
+          <label class="job-normal-invoice-tab__field">
+            <span>Date Passed</span>
+            <Calendar v-model="passDraft.datePassed" date-format="yy-mm-dd" show-icon />
+          </label>
+
+          <label class="job-normal-invoice-tab__field">
+            <span>Currency</span>
+            <Dropdown
+              v-model="passDraft.currency"
+              :options="currencyOptions"
+              option-label="label"
+              option-value="value"
+            />
+          </label>
+
+          <label class="job-normal-invoice-tab__field">
+            <span>Invoice Number</span>
+            <InputText v-model="passDraft.invoiceNumber" autocomplete="off" />
+          </label>
+
+          <label class="job-normal-invoice-tab__field">
+            <span>Invoice Date</span>
+            <Calendar v-model="passDraft.invoiceDate" date-format="yy-mm-dd" show-icon />
+          </label>
+
+          <label class="job-normal-invoice-tab__field">
+            <span>Due Date</span>
+            <Calendar v-model="passDraft.dueDate" date-format="yy-mm-dd" show-icon />
+          </label>
+
+          <label class="job-normal-invoice-tab__field">
+            <span>Net Amount</span>
+            <InputNumber
+              v-model="passDraft.netAmount"
+              :min="0"
+              :min-fraction-digits="2"
+              :max-fraction-digits="2"
+            />
+          </label>
+
+          <label class="job-normal-invoice-tab__field">
+            <span>Tax Amount</span>
+            <InputNumber
+              v-model="passDraft.taxAmount"
+              :min="0"
+              :min-fraction-digits="2"
+              :max-fraction-digits="2"
+            />
+          </label>
+
+          <label class="job-normal-invoice-tab__field">
+            <span>Gross Amount</span>
+            <InputNumber
+              :model-value="passGrossAmount"
+              :min-fraction-digits="2"
+              :max-fraction-digits="2"
+              disabled
+            />
+          </label>
+        </div>
+
+        <p class="job-normal-invoice-tab__note">
+          This links the supplier's actual invoice number to job
+          {{ jobContext.form.job_number || jobContext.job.value?.job_number }}.
+        </p>
+      </div>
+
+      <template #footer>
+        <Button label="Cancel" text :disabled="passSaving" @click="passDialogVisible = false" />
+        <Button
+          :label="passSaving ? 'Passing...' : 'Pass Supplier Invoice'"
+          icon="pi pi-check"
+          :loading="passSaving"
+          @click="passSupplierInvoice"
         />
       </template>
     </Dialog>

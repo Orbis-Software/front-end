@@ -5,7 +5,12 @@ import transportJobs from "@/app/services/transport-jobs"
 import type { CollectionNotePreviewPayload } from "@/app/services/transport-jobs/collection-note-preview"
 import type { EmailJobInvoicePayload } from "@/app/services/transport-jobs/email-invoice"
 import jobPdfService from "@/app/services/transport-jobs/job-pdf"
+import type { PassSupplierInvoicePayload } from "@/app/services/transport-jobs/pass-supplier-invoice"
 import type { JobPdfDocument, JobPdfOptions } from "@/app/services/transport-jobs/job-pdf"
+import type {
+  InvoiceGenerationResponse,
+  InvoiceGenerationStatusResponse,
+} from "@/app/services/transport-jobs/invoice-generation"
 import type {
   TransportJob,
   PaginatedResponse,
@@ -175,6 +180,38 @@ export const useTransportJobStore = defineStore("transportJob", () => {
     }
   }
 
+  async function passSupplierInvoice(id: number, payload: PassSupplierInvoicePayload) {
+    loading.value = true
+
+    try {
+      return await transportJobs.passSupplierInvoice(id, payload)
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function generateCustomerInvoice(id: number): Promise<InvoiceGenerationResponse> {
+    return await transportJobs.generateCustomerInvoice(id)
+  }
+
+  async function generateSupplierInvoice(
+    id: number,
+    supplierId: number,
+  ): Promise<InvoiceGenerationResponse> {
+    return await transportJobs.generateSupplierInvoice(id, supplierId)
+  }
+
+  async function invoiceGenerationStatus(
+    id: number,
+    invoiceId: number,
+  ): Promise<InvoiceGenerationStatusResponse> {
+    return await transportJobs.invoiceGenerationStatus(id, invoiceId)
+  }
+
+  async function downloadInvoicePdf(id: number, invoiceId: number): Promise<Blob> {
+    return await transportJobs.downloadInvoicePdf(id, invoiceId)
+  }
+
   function setCreatedBy(value: number | null) {
     createdBy.value = value
   }
@@ -213,6 +250,11 @@ export const useTransportJobStore = defineStore("transportJob", () => {
     collectionNotePreview,
     jobPdf,
     emailInvoice,
+    passSupplierInvoice,
+    generateCustomerInvoice,
+    generateSupplierInvoice,
+    invoiceGenerationStatus,
+    downloadInvoicePdf,
 
     setCreatedBy,
     resetFilters,

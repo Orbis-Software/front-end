@@ -5,6 +5,7 @@ import type { JobDetailsContext } from "../../../JobDetailsPage.logic"
 import contactsService from "@/app/services/contacts"
 import { useAuthStore } from "@/app/stores/auth"
 import { useTransportJobStore } from "@/app/stores/transport-job"
+import { useInvoiceGenerationStore } from "@/app/stores/invoice-generation"
 import type { Contact } from "@/app/types/contact"
 import type { InvoiceEmailRecipientOption } from "@/app/types/invoice-email"
 
@@ -19,6 +20,7 @@ export function useJobNormalCustomerInvoiceTab() {
   const toast = useToast()
   const auth = useAuthStore()
   const transportJobStore = useTransportJobStore()
+  const invoiceGenerationStore = useInvoiceGenerationStore()
   const generating = ref(false)
   const contacts = ref<Contact[]>([])
   const pendingInvoiceBlob = ref<Blob | null>(null)
@@ -289,17 +291,18 @@ export function useJobNormalCustomerInvoiceTab() {
       showInvoiceProgressToast(
         "Customer invoice PDF is still processing. It will open as soon as it is ready...",
       )
-      const blob = await transportJobStore.jobPdf(id, "invoice")
-
-      if (!(blob instanceof Blob) || blob.type !== "application/pdf") {
-        const text = blob instanceof Blob ? await blob.text() : ""
-        throw new Error(text || "The server did not return a PDF.")
+      const generation = await transportJobStore.generateCustomerInvoice(id)
+      if (generation.generation?.id) {
+        invoiceGenerationStore.track(generation.generation.id, generation.generation)
       }
 
-      pendingInvoiceBlob.value = blob
       await jobContext.load()
-      emailInvoice.value = latestCustomerInvoice()
-      emailDialogVisible.value = true
+      toast.add({
+        severity: "info",
+        summary: "Invoice queued",
+        detail: "You can continue using Orbis while the invoice PDF is generated.",
+        life: 3500,
+      })
     } catch (error: any) {
       toast.add({
         severity: "error",

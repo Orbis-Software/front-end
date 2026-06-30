@@ -61,6 +61,9 @@ export type AccountsSupplierPayment = {
   invoiceDate: string
   dueDate: string
   amount: number
+  baseAmount: number
+  baseCurrency: string
+  exchangeRate: number
   currency: string
   approved: boolean
   approvedDate: string
