@@ -402,6 +402,12 @@ const transportJobTransformer = {
       mode_of_transport: raw.mode_of_transport ?? null,
       job_type: raw.job_type,
       status: raw.status ?? null,
+      status_notes:
+        raw.status_notes && typeof raw.status_notes === "object"
+          ? raw.status_notes
+          : raw.statusNotes && typeof raw.statusNotes === "object"
+            ? raw.statusNotes
+            : {},
 
       order_type: raw.order_type ?? null,
       consignment_number: raw.consignment_number ?? null,

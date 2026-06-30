@@ -1,15 +1,17 @@
 <script setup lang="ts">
 import "./JobDetailsPage.css"
-import { computed, ref } from "vue"
+import { computed, ref, watch } from "vue"
 import { RouterLink, RouterView, useRouter } from "vue-router"
 import ConfirmDialog from "primevue/confirmdialog"
 import { useConfirm } from "primevue/useconfirm"
 import { useToast } from "primevue/usetoast"
 
 import Button from "primevue/button"
+import Dialog from "primevue/dialog"
 import Dropdown from "primevue/dropdown"
 import InputText from "primevue/inputtext"
 import Calendar from "primevue/calendar"
+import Textarea from "primevue/textarea"
 
 import JobProgressStepper from "@/app/components/jobs/details/JobProgressStepper.vue"
 import { useTransportJobStore } from "@/app/stores/transport-job"
@@ -18,6 +20,7 @@ import { useJobDetailsPage } from "./JobDetailsPage.logic"
 
 const {
   tabs,
+  subTabs,
   isActive,
   getTabCount,
   title,
@@ -41,67 +44,211 @@ const router = useRouter()
 const transportJobStore = useTransportJobStore()
 const pdfLoading = ref<JobPdfDocument | null>(null)
 const archiveLoading = ref(false)
+const statusModalVisible = ref(false)
+const selectedStatus = ref(form.status)
 const isPdfLoading = computed(() => pdfLoading.value !== null)
 const isRoadMode = computed(() => form.mode_of_transport === "road")
+const selectedStatusDetails = computed(() => ensureStatusDetails(selectedStatus.value))
+const podFiles = computed(() =>
+  form.files.filter(file => String(file?.type ?? "").toLowerCase() === "pod"),
+)
+const pendingPodFileName = computed(() => {
+  const pendingIndex = form.upload_file_types.findIndex(
+    type => String(type ?? "").toLowerCase() === "pod",
+  )
 
-const progressSteps = computed(() => [
-  {
-    key: "job_created",
-    number: 1,
-    title: "Job Created",
-    subtitle: "Complete",
-    done: true,
-    active: false,
+  return pendingIndex >= 0 ? form.upload_files[pendingIndex]?.name || "" : ""
+})
+const currentStatusIndex = computed(() => {
+  const index = statusOptions.value.findIndex(status => status.value === form.status)
+
+  return index >= 0 ? index : 0
+})
+
+const progressSteps = computed(() =>
+  statusOptions.value.map((status, index) => ({
+    key: status.value.toLowerCase().replace(/[^a-z0-9]+/g, "_"),
+    number: index + 1,
+    title: status.label,
+    subtitle:
+      index < currentStatusIndex.value
+        ? "Complete"
+        : index === currentStatusIndex.value
+          ? "In progress"
+          : "Pending",
+    done: index < currentStatusIndex.value,
+    active: index === currentStatusIndex.value,
+  })),
+)
+const statusValues = computed(() => statusOptions.value.map(status => status.value))
+
+watch(
+  () => form.status,
+  status => {
+    selectedStatus.value = status
   },
-  {
-    key: "data_entry",
-    number: 2,
-    title: "Data Entry",
-    subtitle: "In progress",
-    done: false,
-    active: true,
-  },
-  {
-    key: "booked",
-    number: 3,
-    title: "Booked",
-    subtitle: "Pending",
-    done: false,
-    active: false,
-  },
-  {
-    key: "departed",
-    number: 4,
-    title: "Departed",
-    subtitle: "Pending",
-    done: false,
-    active: false,
-  },
-  {
-    key: "in_transit",
-    number: 5,
-    title: "In Transit",
-    subtitle: "Pending",
-    done: false,
-    active: false,
-  },
-  {
-    key: "arrived",
-    number: 6,
-    title: "Arrived",
-    subtitle: "Pending",
-    done: false,
-    active: false,
-  },
-  {
-    key: "pod_closed",
-    number: 7,
-    title: "POD / Closed",
-    subtitle: "Pending",
-    done: false,
-    active: false,
-  },
-])
+)
+
+function openStatusModal() {
+  applyStatusDateDefaults()
+  selectedStatus.value = form.status
+  ensureStatusDetails(selectedStatus.value)
+  statusModalVisible.value = true
+}
+
+function selectStatus(status: string) {
+  const previousStatus = selectedStatus.value
+  selectedStatus.value = status
+  ensureStatusDetails(status)
+  applyStatusTransitionDefaults(previousStatus, status)
+  form.status = status
+}
+
+async function saveStatusModal() {
+  form.status = selectedStatus.value
+  await save({
+    successSummary: "Status updated",
+    successDetail: "Job progress and status notes saved.",
+    successLife: 2200,
+  })
+  statusModalVisible.value = false
+}
+
+function ensureStatusDetails(status: string) {
+  if (!form.status_notes[status]) {
+    form.status_notes[status] = {
+      notes: "",
+      start_date: null,
+      completion_date: null,
+      pod_receiver_name: "",
+      pod_time: null,
+      pod_date: null,
+    }
+  }
+
+  return form.status_notes[status]
+}
+
+function dateOnly(value: unknown): string | null {
+  if (!value) return null
+
+  const raw = String(value)
+  const match = raw.match(/^(\d{4})-(\d{2})-(\d{2})/)
+  if (match) return `${match[1]}-${match[2]}-${match[3]}`
+
+  const date = new Date(raw)
+  if (Number.isNaN(date.getTime())) return null
+
+  return formatStatusDate(date)
+}
+
+function jobCreatedDate(): string | null {
+  return dateOnly(job.value?.created_at) ?? dateOnly(form.job_date)
+}
+
+function previousStatusValue(status: string): string | null {
+  const index = statusValues.value.indexOf(status)
+
+  return index > 0 ? (statusValues.value[index - 1] ?? null) : null
+}
+
+function nextStatusValue(status: string): string | null {
+  const index = statusValues.value.indexOf(status)
+
+  return index >= 0 && index < statusValues.value.length - 1
+    ? (statusValues.value[index + 1] ?? null)
+    : null
+}
+
+function defaultStartDateForStatus(status: string): string | null {
+  const previous = previousStatusValue(status)
+
+  if (!previous) return jobCreatedDate()
+
+  const previousDetails = ensureStatusDetails(previous)
+
+  return previousDetails.completion_date ?? previousDetails.start_date ?? jobCreatedDate()
+}
+
+function applyStatusDateDefaults() {
+  statusValues.value.forEach(status => {
+    const details = ensureStatusDetails(status)
+
+    if (!details.start_date) {
+      details.start_date = defaultStartDateForStatus(status)
+    }
+  })
+}
+
+function applyStatusTransitionDefaults(previousStatus: string, nextStatus: string) {
+  const previousIndex = statusValues.value.indexOf(previousStatus)
+  const nextIndex = statusValues.value.indexOf(nextStatus)
+  const nextDetails = ensureStatusDetails(nextStatus)
+
+  if (!nextDetails.start_date) {
+    nextDetails.start_date = defaultStartDateForStatus(nextStatus)
+  }
+
+  if (previousIndex >= 0 && nextIndex > previousIndex) {
+    const previousDetails = ensureStatusDetails(previousStatus)
+
+    if (!previousDetails.completion_date && nextDetails.start_date) {
+      previousDetails.completion_date = nextDetails.start_date
+    }
+  }
+}
+
+function updateStatusCompletionDate(status: string, value: Date | Date[] | null | undefined) {
+  const completionDate = formatStatusDate(value)
+  const details = ensureStatusDetails(status)
+  details.completion_date = completionDate
+
+  const next = nextStatusValue(status)
+  if (!next || !completionDate) return
+
+  const nextDetails = ensureStatusDetails(next)
+  if (!nextDetails.start_date) {
+    nextDetails.start_date = completionDate
+  }
+}
+
+function onPodUploadChange(event: Event) {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+
+  if (!file) return
+
+  const existingPendingPodIndex = form.upload_file_types.findIndex(
+    type => String(type ?? "").toLowerCase() === "pod",
+  )
+
+  if (existingPendingPodIndex >= 0) {
+    form.upload_files.splice(existingPendingPodIndex, 1, file)
+    form.upload_file_types.splice(existingPendingPodIndex, 1, "POD")
+  } else {
+    form.upload_files.push(file)
+    form.upload_file_types.push("POD")
+  }
+}
+
+function statusDateValue(value: string | null | undefined): Date | null {
+  if (!value) return null
+
+  const [year, month, day] = value.split("-").map(Number)
+  if (!year || !month || !day) return null
+
+  return new Date(year, month - 1, day)
+}
+
+function formatStatusDate(value: Date | Date[] | null | undefined): string | null {
+  if (!(value instanceof Date) || Number.isNaN(value.getTime())) return null
+
+  const year = value.getFullYear()
+  const month = String(value.getMonth() + 1).padStart(2, "0")
+  const day = String(value.getDate()).padStart(2, "0")
+
+  return `${year}-${month}-${day}`
+}
 
 function openBlob(blob: Blob) {
   const url = URL.createObjectURL(blob)
@@ -417,15 +564,15 @@ function onArchive() {
           <label class="job-header-form__field">
             <span>Status</span>
 
-            <Dropdown
-              v-model="form.status"
-              :options="statusOptions"
-              option-label="label"
-              option-value="value"
-              placeholder="— Select Status —"
-              class="job-header-form__prime"
+            <button
+              type="button"
+              class="job-status-trigger"
               :disabled="loading"
-            />
+              @click="openStatusModal"
+            >
+              <span>{{ form.status }}</span>
+              <i class="pi pi-pencil"></i>
+            </button>
           </label>
         </div>
       </div>
@@ -447,6 +594,22 @@ function onArchive() {
           </span>
         </RouterLink>
       </nav>
+
+      <nav v-if="subTabs.length" class="job-details-page__subtabs">
+        <RouterLink
+          v-for="tab in subTabs"
+          :key="tab.name"
+          :to="{ name: tab.name, params: $route.params }"
+          class="job-details-page__subtab"
+          :class="{ 'job-details-page__subtab--active': isActive(tab.name, true) }"
+        >
+          <span>{{ tab.label }}</span>
+
+          <span v-if="tab.showCount" class="job-details-page__subtab-count">
+            {{ getTabCount(tab.key) }}
+          </span>
+        </RouterLink>
+      </nav>
     </div>
 
     <div class="job-content-shell">
@@ -458,5 +621,161 @@ function onArchive() {
         </KeepAlive>
       </RouterView>
     </div>
+
+    <Dialog
+      v-model:visible="statusModalVisible"
+      modal
+      header="Job Status"
+      class="job-status-modal"
+      :style="{ width: 'min(920px, calc(100vw - 32px))' }"
+    >
+      <div class="job-status-modal__body">
+        <div class="job-status-modal__progress">
+          <button
+            v-for="(status, index) in statusOptions"
+            :key="status.value"
+            type="button"
+            class="job-status-modal__stage"
+            :class="{
+              'job-status-modal__stage--done': index < currentStatusIndex,
+              'job-status-modal__stage--active': selectedStatus === status.value,
+            }"
+            @click="selectStatus(status.value)"
+          >
+            <span class="job-status-modal__stage-dot">
+              <i v-if="index < currentStatusIndex" class="pi pi-check"></i>
+              <span v-else>{{ index + 1 }}</span>
+            </span>
+
+            <span class="job-status-modal__stage-copy">
+              <strong>{{ status.label }}</strong>
+              <small>
+                {{
+                  index < currentStatusIndex
+                    ? "Complete"
+                    : status.value === form.status
+                      ? "Current status"
+                      : "Pending"
+                }}
+              </small>
+            </span>
+          </button>
+        </div>
+
+        <div class="job-status-modal__details">
+          <div class="job-status-modal__details-head">
+            <span>Stage Notes</span>
+            <strong>{{ selectedStatus }}</strong>
+          </div>
+
+          <div class="job-status-modal__date-grid">
+            <label class="job-status-modal__field">
+              <span>Start Date</span>
+              <Calendar
+                :model-value="statusDateValue(selectedStatusDetails.start_date)"
+                date-format="dd/mm/yy"
+                showIcon
+                class="job-status-modal__input"
+                @update:model-value="selectedStatusDetails.start_date = formatStatusDate($event)"
+              />
+            </label>
+
+            <label class="job-status-modal__field">
+              <span>Completion Date</span>
+              <Calendar
+                :model-value="statusDateValue(selectedStatusDetails.completion_date)"
+                date-format="dd/mm/yy"
+                showIcon
+                class="job-status-modal__input"
+                @update:model-value="updateStatusCompletionDate(selectedStatus, $event)"
+              />
+            </label>
+          </div>
+
+          <Textarea
+            v-model="selectedStatusDetails.notes"
+            rows="8"
+            auto-resize
+            class="job-status-modal__notes"
+            placeholder="Add updates, blockers, references, or handover notes for this stage..."
+          />
+
+          <div v-if="selectedStatus === 'POD / Closed'" class="job-status-modal__pod">
+            <div class="job-status-modal__details-head">
+              <span>Proof of Delivery</span>
+            </div>
+
+            <div class="job-status-modal__date-grid">
+              <label class="job-status-modal__field">
+                <span>Receiver Name</span>
+                <InputText
+                  v-model="selectedStatusDetails.pod_receiver_name"
+                  class="job-status-modal__input"
+                  placeholder="Name signed on POD"
+                />
+              </label>
+
+              <label class="job-status-modal__field">
+                <span>Time</span>
+                <InputText
+                  v-model="selectedStatusDetails.pod_time"
+                  type="time"
+                  class="job-status-modal__input"
+                />
+              </label>
+
+              <label class="job-status-modal__field">
+                <span>Date</span>
+                <Calendar
+                  :model-value="statusDateValue(selectedStatusDetails.pod_date)"
+                  date-format="dd/mm/yy"
+                  showIcon
+                  class="job-status-modal__input"
+                  @update:model-value="selectedStatusDetails.pod_date = formatStatusDate($event)"
+                />
+              </label>
+            </div>
+
+            <label class="job-status-modal__upload">
+              <span>Upload POD</span>
+              <input type="file" accept=".pdf,image/*" @change="onPodUploadChange" />
+            </label>
+
+            <div v-if="pendingPodFileName || podFiles.length" class="job-status-modal__pod-files">
+              <div v-if="pendingPodFileName" class="job-status-modal__pod-file">
+                Pending upload: {{ pendingPodFileName }}
+              </div>
+
+              <a
+                v-for="file in podFiles"
+                :key="file.id"
+                class="job-status-modal__pod-file"
+                :href="file.url || undefined"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {{ file.path?.split("/").pop() || `POD file #${file.id}` }}
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <template #footer>
+        <Button
+          label="Cancel"
+          severity="secondary"
+          outlined
+          :disabled="saving"
+          @click="statusModalVisible = false"
+        />
+        <Button
+          icon="pi pi-save"
+          :label="saving ? 'Saving...' : 'Save Status'"
+          :loading="saving"
+          @click="saveStatusModal"
+        />
+      </template>
+    </Dialog>
   </section>
 </template>

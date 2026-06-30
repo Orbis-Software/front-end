@@ -22,6 +22,7 @@ const {
   pendingChargeCodeDescription,
   primaryJobChargeClassification,
   deleteDialogVisible,
+  printedDeleteDialogVisible,
   pendingDeleteRow,
   addBuyRow,
   addSellRow,
@@ -35,6 +36,8 @@ const {
   requestRemoveRow,
   cancelRemoveRow,
   confirmRemoveRow,
+  confirmPrintedRemoveRow,
+  printedInvoiceNumber,
   lineNet,
   sellVat,
   formatMoney,
@@ -406,6 +409,45 @@ const {
           severity="danger"
           class="job-costs-tab__dialog-danger"
           @click="confirmRemoveRow"
+        />
+      </template>
+    </Dialog>
+
+    <Dialog
+      v-model:visible="printedDeleteDialogVisible"
+      modal
+      header="Printed Invoice Warning"
+      :style="{ width: '430px' }"
+    >
+      <div class="job-costs-tab__dialog">
+        <p>
+          This line is already printed on invoice
+          <strong>{{ printedInvoiceNumber(pendingDeleteRow) }}</strong
+          >.
+        </p>
+        <p>
+          Deleting it will remove the cost line from the job, but the printed invoice record/PDF may
+          still show the original charge.
+        </p>
+        <p class="job-costs-tab__dialog-muted">
+          Confirm again only if you are sure this printed charge should be removed.
+        </p>
+      </div>
+
+      <template #footer>
+        <Button
+          type="button"
+          label="Cancel"
+          class="job-costs-tab__dialog-secondary"
+          text
+          @click="cancelRemoveRow"
+        />
+        <Button
+          type="button"
+          label="Delete Printed Line"
+          severity="danger"
+          class="job-costs-tab__dialog-danger"
+          @click="confirmPrintedRemoveRow"
         />
       </template>
     </Dialog>

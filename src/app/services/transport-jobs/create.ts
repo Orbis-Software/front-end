@@ -19,6 +19,7 @@ function toFormData(payload: TransportJobCreatePayload): FormData {
   }
   fd.append("job_type", payload.job_type)
   if (payload.status !== undefined) fd.append("status", payload.status ?? "")
+  appendNestedValue(fd, "status_notes", payload.status_notes)
 
   appendFlatValue(fd, "account_number", payload.account_number)
   appendFlatValue(fd, "order_type", payload.order_type)

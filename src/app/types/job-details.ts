@@ -16,11 +16,22 @@ export type JobDetailsTab = {
   name: string
   key: string
   showCount?: boolean
+  activeNames?: string[]
+  children?: JobDetailsTab[]
 }
 
 export type SelectOption = {
   label: string
   value: string
+}
+
+export type JobStatusStageDetails = {
+  notes: string
+  start_date: string | null
+  completion_date: string | null
+  pod_receiver_name?: string
+  pod_time?: string | null
+  pod_date?: string | null
 }
 
 export type AddressTarget = "origin" | "destination"
@@ -63,6 +74,7 @@ export type JobDetailsForm = {
   job_type: JobType | ""
   mode_of_transport: TransportMode | null
   status: string
+  status_notes: Record<string, JobStatusStageDetails>
   note: string
 
   order_type: string
@@ -111,6 +123,8 @@ export type JobDetailsForm = {
   sell_costs: any[]
   invoices: JobInvoiceSummary[]
   files: any[]
+  upload_files: File[]
+  upload_file_types: (string | null)[]
 
   road_detail: JobRoadDetail
   sea_detail: JobSeaDetail

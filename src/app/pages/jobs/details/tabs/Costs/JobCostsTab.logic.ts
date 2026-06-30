@@ -158,6 +158,7 @@ export function useJobCostsTab() {
   const pendingChargeCodeDescription = ref("")
   const pendingChargeCodeRow = ref<CostRow | null>(null)
   const deleteDialogVisible = ref(false)
+  const printedDeleteDialogVisible = ref(false)
   const pendingDeleteRow = ref<CostRow | null>(null)
   const openChargeDescriptionDropdowns = ref(0)
   let missingChargeCodeTimer: ReturnType<typeof setTimeout> | null = null
@@ -283,6 +284,21 @@ export function useJobCostsTab() {
 
   function removeSellRow(id: number | string) {
     context.form.sell_costs = context.form.sell_costs.filter(row => row.id !== id)
+  }
+
+  function printedInvoiceNumber(row: CostRow | null): string {
+    return String(
+      (row as any)?.invoice?.invoiceNumber ??
+        (row as any)?.invoice?.invoice_number ??
+        (row as any)?.invoiceNumber ??
+        "",
+    )
+  }
+
+  function isPrintedInvoiceRow(row: CostRow | null): boolean {
+    const status = String((row as any)?.invoice_status ?? (row as any)?.invoiceStatus ?? "")
+
+    return status === "printed" && printedInvoiceNumber(row) !== ""
   }
 
   function clearPendingChargeCode() {
@@ -643,10 +659,11 @@ export function useJobCostsTab() {
 
   function cancelRemoveRow() {
     deleteDialogVisible.value = false
+    printedDeleteDialogVisible.value = false
     pendingDeleteRow.value = null
   }
 
-  function confirmRemoveRow() {
+  function removePendingRow() {
     const row = pendingDeleteRow.value
 
     if (row?.type === "buy") {
@@ -656,7 +673,22 @@ export function useJobCostsTab() {
     if (row?.type === "sell") {
       removeSellRow(row.id)
     }
+  }
 
+  function confirmRemoveRow() {
+    if (isPrintedInvoiceRow(pendingDeleteRow.value)) {
+      deleteDialogVisible.value = false
+      printedDeleteDialogVisible.value = true
+      return
+    }
+
+    removePendingRow()
+
+    cancelRemoveRow()
+  }
+
+  function confirmPrintedRemoveRow() {
+    removePendingRow()
     cancelRemoveRow()
   }
 
@@ -769,11 +801,10 @@ export function useJobCostsTab() {
     pendingChargeCodeDescription,
     primaryJobChargeClassification,
     deleteDialogVisible,
+    printedDeleteDialogVisible,
     pendingDeleteRow,
     addBuyRow,
     addSellRow,
-    removeBuyRow,
-    removeSellRow,
     selectChargeDescription,
     syncChargeDescriptionFilter,
     scheduleMissingChargeDescriptionCheck,
@@ -784,6 +815,8 @@ export function useJobCostsTab() {
     requestRemoveRow,
     cancelRemoveRow,
     confirmRemoveRow,
+    confirmPrintedRemoveRow,
+    printedInvoiceNumber,
     lineNet,
     lineNetGbp,
     sellVat,
