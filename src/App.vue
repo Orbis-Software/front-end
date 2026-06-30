@@ -1,6 +1,7 @@
 <template>
   <Toast />
   <Toast group="invoice-progress" position="top-right" />
+  <InvoiceGenerationToast />
   <ConfirmDialog />
   <OrbisLoader />
 
@@ -13,6 +14,7 @@ import { computed, onBeforeUnmount, onMounted, watch } from "vue"
 import { useRouter } from "vue-router"
 import Toast from "primevue/toast"
 import ConfirmDialog from "primevue/confirmdialog"
+import InvoiceGenerationToast from "@/app/components/invoices/InvoiceGenerationToast.vue"
 import OrbisLoader from "@/app/components/common/OrbisLoader/OrbisLoader.vue"
 import { useAppLoaderStore } from "@/app/stores/app-loader"
 import { useAuthStore } from "@/app/stores/auth"

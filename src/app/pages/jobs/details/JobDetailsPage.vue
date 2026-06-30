@@ -274,22 +274,6 @@ async function extractPdfError(error: any) {
   return error?.response?.data?.message ?? error?.message ?? "Unable to generate the job PDF."
 }
 
-function showInvoiceProgressToast(detail: string) {
-  ;(toast as any).removeGroup?.("invoice-progress")
-  toast.add({
-    group: "invoice-progress",
-    severity: "info",
-    summary: "Generating invoice",
-    detail,
-    life: 60000,
-    closable: false,
-  } as any)
-}
-
-function clearInvoiceProgressToast() {
-  ;(toast as any).removeGroup?.("invoice-progress")
-}
-
 async function loadPdf(document: JobPdfDocument = "job_details") {
   const id = Number(job.value?.id)
 
@@ -314,63 +298,6 @@ async function loadPdf(document: JobPdfDocument = "job_details") {
       life: 4500,
     })
   } finally {
-    pdfLoading.value = null
-  }
-}
-
-async function onGenerateInvoice() {
-  const id = Number(job.value?.id)
-
-  if (!Number.isFinite(id) || id <= 0) {
-    toast.add({
-      severity: "warn",
-      summary: "Save job first",
-      detail: "The job must be saved before an invoice can be generated.",
-      life: 3500,
-    })
-    return
-  }
-
-  if (!form.sell_costs.length && !form.buy_costs.length) {
-    toast.add({
-      severity: "warn",
-      summary: "No costs or charges",
-      detail: "Add at least one Buy Cost or Sell Charge before generating the job invoice.",
-      life: 3500,
-    })
-    return
-  }
-
-  pdfLoading.value = "job_financials"
-  showInvoiceProgressToast("Saving costs and charges, then building the invoice PDF...")
-
-  try {
-    await save({
-      successSummary: "Invoice ready",
-      successDetail: "Costs & Charges saved before generating the job invoice.",
-      successLife: 1800,
-    })
-
-    showInvoiceProgressToast(
-      "Invoice PDF is still processing. It will open as soon as it is ready...",
-    )
-    const blob = await transportJobStore.jobPdf(id, "job_financials")
-
-    if (!(blob instanceof Blob) || blob.type !== "application/pdf") {
-      const text = blob instanceof Blob ? await blob.text() : ""
-      throw new Error(text || "The server did not return a PDF.")
-    }
-
-    openBlob(blob)
-  } catch (error: any) {
-    toast.add({
-      severity: "error",
-      summary: "Invoice failed",
-      detail: await extractPdfError(error),
-      life: 4500,
-    })
-  } finally {
-    clearInvoiceProgressToast()
     pdfLoading.value = null
   }
 }
@@ -452,15 +379,6 @@ function onArchive() {
             :loading="pdfLoading === 'transport_order'"
             :disabled="loading || isPdfLoading"
             @click="onTransportOrder"
-          />
-
-          <Button
-            class="job-action-btn"
-            icon="pi pi-receipt"
-            :label="pdfLoading === 'job_financials' ? 'Opening...' : 'Generate Invoice'"
-            :loading="pdfLoading === 'job_financials'"
-            :disabled="loading || saving || isPdfLoading"
-            @click="onGenerateInvoice"
           />
 
           <Button

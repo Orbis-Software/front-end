@@ -336,9 +336,18 @@
 .job-normal-invoice-tab__field .p-dropdown,
 .job-normal-invoice-tab__field .p-select,
 .job-normal-invoice-tab__field .p-multiselect,
+.job-normal-invoice-tab__field .p-calendar,
+.job-normal-invoice-tab__field .p-inputnumber,
+.job-normal-invoice-tab__field .p-inputnumber-input,
 .job-normal-invoice-tab__field .p-inputtext,
 .job-normal-invoice-tab__field .p-textarea {
   width: 100%;
+}
+
+.job-normal-invoice-tab__form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
 }
 
 .job-normal-invoice-tab__dialog-head {
@@ -390,5 +399,9 @@
 
   .job-normal-invoice-tab__summary {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .job-normal-invoice-tab__form-grid {
+    grid-template-columns: 1fr;
   }
 }

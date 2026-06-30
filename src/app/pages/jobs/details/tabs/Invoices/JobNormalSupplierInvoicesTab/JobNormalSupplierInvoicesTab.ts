@@ -1,10 +1,11 @@
-import { computed, inject, onMounted, reactive, ref } from "vue"
+import { computed, inject, onMounted, reactive, ref, watch } from "vue"
 import { useToast } from "primevue/usetoast"
 
 import contactsService from "@/app/services/contacts"
 import { useAuthStore } from "@/app/stores/auth"
 import { useChargeCodeStore } from "@/app/stores/charge-codes"
 import { useTransportJobStore } from "@/app/stores/transport-job"
+import { useInvoiceGenerationStore } from "@/app/stores/invoice-generation"
 import type { ChargeCode } from "@/app/types/charge-code"
 import type { Contact } from "@/app/types/contact"
 import type { JobDetailsContext } from "../../../JobDetailsPage.logic"
@@ -22,6 +23,7 @@ export function useJobNormalSupplierInvoicesTab() {
   const auth = useAuthStore()
   const chargeCodeStore = useChargeCodeStore()
   const transportJobStore = useTransportJobStore()
+  const invoiceGenerationStore = useInvoiceGenerationStore()
   const supplierContacts = ref<Contact[]>([])
   const suppliersLoading = ref(false)
   const uploadDialogVisible = ref(false)
@@ -29,6 +31,8 @@ export function useJobNormalSupplierInvoicesTab() {
   const generateDialogVisible = ref(false)
   const generateSupplierId = ref<number | null>(null)
   const generateLoading = ref(false)
+  const passDialogVisible = ref(false)
+  const passSaving = ref(false)
   const pendingInvoiceBlob = ref<Blob | null>(null)
   const emailDialogVisible = ref(false)
   const emailInvoice = ref<any | null>(null)
@@ -45,6 +49,16 @@ export function useJobNormalSupplierInvoicesTab() {
     supplierId: null as number | null,
     lines: [] as SupplierInvoiceLineDraft[],
   })
+  const passDraft = reactive({
+    supplierId: null as number | null,
+    datePassed: new Date(),
+    currency: currencyCode(jobContext.form.currency || "GBP"),
+    invoiceNumber: "",
+    invoiceDate: new Date(),
+    dueDate: addDays(new Date(), 30),
+    netAmount: 0,
+    taxAmount: 0,
+  })
 
   function numberValue(value: unknown, fallback = 0): number {
     const numeric = Number(value)
@@ -54,6 +68,28 @@ export function useJobNormalSupplierInvoicesTab() {
 
   function currencyCode(value: unknown): string {
     return String(value || jobContext.form.currency || "GBP").toUpperCase()
+  }
+
+  function addDays(date: Date, days: number): Date {
+    const next = new Date(date)
+
+    next.setDate(next.getDate() + days)
+
+    return next
+  }
+
+  function formatDate(value: Date | string | null | undefined): string {
+    if (!value) return ""
+
+    const date = value instanceof Date ? value : new Date(value)
+
+    if (Number.isNaN(date.getTime())) return ""
+
+    return [
+      date.getFullYear(),
+      String(date.getMonth() + 1).padStart(2, "0"),
+      String(date.getDate()).padStart(2, "0"),
+    ].join("-")
   }
 
   function money(currency: string, value: number): string {
@@ -153,6 +189,9 @@ export function useJobNormalSupplierInvoicesTab() {
       return sum + quantity * unitCost
     }, 0),
   )
+  const passGrossAmount = computed(() => {
+    return numberValue(passDraft.netAmount) + numberValue(passDraft.taxAmount)
+  })
 
   function invoiceNumber(row: any): string {
     return row?.invoice?.invoiceNumber ?? row?.invoice?.invoice_number ?? row?.invoiceNumber ?? ""
@@ -165,7 +204,7 @@ export function useJobNormalSupplierInvoicesTab() {
   function isPrinted(row: any): boolean {
     const status = row?.invoice_status ?? row?.invoiceStatus ?? "not_invoiced"
 
-    return status === "printed" && !!invoiceNumber(row)
+    return ["printed", "passed"].includes(status) && !!invoiceNumber(row)
   }
 
   function invoiceStatusLabel(status: unknown): string {
@@ -416,6 +455,33 @@ export function useJobNormalSupplierInvoicesTab() {
     )
   }
 
+  function supplierRows(supplierId: number) {
+    return rows.value.filter((row: any) => {
+      return Number(row.supplier_id ?? row.supplierId) === supplierId
+    })
+  }
+
+  function supplierCostCurrency(supplierId: number): string {
+    return currencyCode(supplierRows(supplierId)[0]?.currency || jobContext.form.currency || "GBP")
+  }
+
+  function supplierCostTotals(supplierId: number) {
+    return supplierRows(supplierId).reduce(
+      (totals, row: any) => {
+        const quantity = numberValue(row.quantity, 1)
+        const unitCost = numberValue(row.unitCost ?? row.unit_cost ?? row.unit_amount ?? row.amount)
+        const net = quantity * unitCost
+        const tax = net * (numberValue(row.vatRate ?? row.vat_rate) / 100)
+
+        totals.net += net
+        totals.tax += tax
+
+        return totals
+      },
+      { net: 0, tax: 0 },
+    )
+  }
+
   async function extractPdfError(error: any) {
     const data = error?.response?.data
 
@@ -456,6 +522,107 @@ export function useJobNormalSupplierInvoicesTab() {
     generateDialogVisible.value = true
   }
 
+  function openPassDialog() {
+    const supplierId = generateSupplierId.value || supplierInvoiceOptions.value[0]?.value || null
+    const today = new Date()
+
+    passDraft.supplierId = supplierId
+    passDraft.datePassed = today
+    passDraft.invoiceDate = today
+    passDraft.dueDate = addDays(today, 30)
+    passDraft.invoiceNumber = ""
+
+    if (supplierId) {
+      const totals = supplierCostTotals(supplierId)
+
+      passDraft.currency = supplierCostCurrency(supplierId)
+      passDraft.netAmount = Number(totals.net.toFixed(2))
+      passDraft.taxAmount = Number(totals.tax.toFixed(2))
+    } else {
+      passDraft.currency = currencyCode(jobContext.form.currency || "GBP")
+      passDraft.netAmount = 0
+      passDraft.taxAmount = 0
+    }
+
+    passDialogVisible.value = true
+  }
+
+  async function passSupplierInvoice() {
+    const id = Number(jobContext.job.value?.id)
+    const supplierId = Number(passDraft.supplierId)
+    const invoiceNumber = passDraft.invoiceNumber.trim()
+
+    if (!Number.isFinite(id) || id <= 0) {
+      toast.add({
+        severity: "warn",
+        summary: "Save job first",
+        detail: "The job must be saved before a supplier invoice can be passed.",
+        life: 3500,
+      })
+      return
+    }
+
+    if (!Number.isFinite(supplierId) || supplierId <= 0) {
+      toast.add({
+        severity: "warn",
+        summary: "Supplier required",
+        detail: "Select the supplier for this supplier invoice.",
+        life: 3000,
+      })
+      return
+    }
+
+    if (!invoiceNumber) {
+      toast.add({
+        severity: "warn",
+        summary: "Invoice number required",
+        detail: "Enter the supplier's invoice number.",
+        life: 3000,
+      })
+      return
+    }
+
+    passSaving.value = true
+
+    try {
+      await jobContext.save({
+        successSummary: "Supplier costs saved",
+        successDetail: "Buy Costs saved before passing the supplier invoice.",
+        successLife: 1800,
+      })
+
+      await transportJobStore.passSupplierInvoice(id, {
+        supplier_id: supplierId,
+        date_passed: formatDate(passDraft.datePassed),
+        currency: currencyCode(passDraft.currency),
+        invoice_number: invoiceNumber,
+        invoice_date: formatDate(passDraft.invoiceDate),
+        due_date: formatDate(passDraft.dueDate),
+        net_amount: numberValue(passDraft.netAmount),
+        tax_amount: numberValue(passDraft.taxAmount),
+        gross_amount: Number(passGrossAmount.value.toFixed(2)),
+      })
+
+      await jobContext.load()
+      passDialogVisible.value = false
+      toast.add({
+        severity: "success",
+        summary: "Supplier invoice passed",
+        detail: "The supplier invoice has been linked to this job.",
+        life: 2600,
+      })
+    } catch (error: any) {
+      toast.add({
+        severity: "error",
+        summary: "Pass supplier invoice failed",
+        detail: await extractPdfError(error),
+        life: 4500,
+      })
+    } finally {
+      passSaving.value = false
+    }
+  }
+
   async function generateSupplierInvoice() {
     const id = Number(jobContext.job.value?.id)
     const supplierId = Number(generateSupplierId.value)
@@ -493,18 +660,19 @@ export function useJobNormalSupplierInvoicesTab() {
       showInvoiceProgressToast(
         "Supplier invoice PDF is still processing. It will open as soon as it is ready...",
       )
-      const blob = await transportJobStore.jobPdf(id, "supplier_invoice", { supplierId })
-
-      if (!(blob instanceof Blob) || blob.type !== "application/pdf") {
-        const text = blob instanceof Blob ? await blob.text() : ""
-        throw new Error(text || "The server did not return a PDF.")
+      const generation = await transportJobStore.generateSupplierInvoice(id, supplierId)
+      if (generation.generation?.id) {
+        invoiceGenerationStore.track(generation.generation.id, generation.generation)
       }
 
-      pendingInvoiceBlob.value = blob
       await jobContext.load()
-      emailInvoice.value = latestSupplierInvoice(supplierId)
-      emailDialogVisible.value = true
       generateDialogVisible.value = false
+      toast.add({
+        severity: "info",
+        summary: "Supplier invoice queued",
+        detail: "You can continue using Orbis while the supplier invoice PDF is generated.",
+        life: 3500,
+      })
     } catch (error: any) {
       toast.add({
         severity: "error",
@@ -525,6 +693,28 @@ export function useJobNormalSupplierInvoicesTab() {
       chargeCodeStore.fetchAll({ sort: "description", direction: "asc", perPage: 1000 }),
     ])
   })
+
+  watch(
+    () => passDraft.invoiceDate,
+    value => {
+      passDraft.dueDate = addDays(value instanceof Date ? value : new Date(value), 30)
+    },
+  )
+
+  watch(
+    () => passDraft.supplierId,
+    value => {
+      const supplierId = Number(value)
+
+      if (!Number.isFinite(supplierId) || supplierId <= 0) return
+
+      const totals = supplierCostTotals(supplierId)
+
+      passDraft.currency = supplierCostCurrency(supplierId)
+      passDraft.netAmount = Number(totals.net.toFixed(2))
+      passDraft.taxAmount = Number(totals.tax.toFixed(2))
+    },
+  )
 
   return {
     addInvoiceLine,
@@ -550,8 +740,14 @@ export function useJobNormalSupplierInvoicesTab() {
     money,
     numberValue,
     openGenerateDialog,
+    openPassDialog,
     openUploadDialog,
     openPendingInvoice,
+    passDialogVisible,
+    passDraft,
+    passGrossAmount,
+    passSaving,
+    passSupplierInvoice,
     removeInvoiceLine,
     rows,
     saveSupplierInvoice,

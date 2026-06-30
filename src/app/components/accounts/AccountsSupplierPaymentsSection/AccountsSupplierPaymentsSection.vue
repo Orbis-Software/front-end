@@ -41,20 +41,24 @@ const exportFormatOptions = ["CSV Bank File", "Payment Advice PDF", "Supplier Ba
 )
 
 const supplierSummary = computed(() => {
-  const total = state.supplierInvoices.reduce((sum, invoice) => sum + invoice.amount, 0)
+  const baseCurrency = state.supplierInvoices[0]?.baseCurrency || "GBP"
+  const total = state.supplierInvoices.reduce(
+    (sum, invoice) => sum + (invoice.baseAmount ?? invoice.amount),
+    0,
+  )
   const approved = state.supplierInvoices
     .filter(invoice => invoice.approved)
-    .reduce((sum, invoice) => sum + invoice.amount, 0)
+    .reduce((sum, invoice) => sum + (invoice.baseAmount ?? invoice.amount), 0)
   const paid = state.supplierInvoices
     .filter(invoice => invoice.paid)
-    .reduce((sum, invoice) => sum + invoice.amount, 0)
+    .reduce((sum, invoice) => sum + (invoice.baseAmount ?? invoice.amount), 0)
   const overdue = state.supplierInvoices.filter(invoice => invoice.status === "overdue").length
 
   return [
     { label: "Supplier Cost Lines", value: String(state.supplierInvoices.length) },
-    { label: "Pending Payment", value: money(total - paid) },
-    { label: "Approved", value: money(approved) },
-    { label: "Paid", value: money(paid) },
+    { label: "Pending Payment", value: money(total - paid, baseCurrency) },
+    { label: "Approved", value: money(approved, baseCurrency) },
+    { label: "Paid", value: money(paid, baseCurrency) },
     { label: "Overdue", value: String(overdue) },
   ]
 })

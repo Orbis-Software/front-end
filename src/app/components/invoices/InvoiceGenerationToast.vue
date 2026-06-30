@@ -1,0 +1,195 @@
+<script setup lang="ts">
+import { onMounted } from "vue"
+import { useInvoiceGenerationStore } from "@/app/stores/invoice-generation"
+
+const store = useInvoiceGenerationStore()
+
+function title(task: any) {
+  if (task.status === "completed") return "Invoice Ready"
+  if (task.status === "failed" || task.timeout) return "Invoice Generation Failed"
+
+  return `Generating ${task.invoice_type === "supplier" ? "Supplier" : "Customer"} Invoice`
+}
+
+onMounted(() => {
+  store.hydrate()
+})
+</script>
+
+<template>
+  <div v-if="store.activeTasks.length" class="invoice-generation-stack" aria-live="polite">
+    <article
+      v-for="task in store.activeTasks"
+      :key="task.id"
+      class="invoice-generation-toast"
+      :class="`invoice-generation-toast--${task.timeout ? 'timeout' : task.status}`"
+    >
+      <button class="invoice-generation-toast__close" type="button" @click="store.remove(task.id)">
+        <span aria-hidden="true">×</span>
+        <span class="sr-only">Close</span>
+      </button>
+
+      <div class="invoice-generation-toast__title">{{ title(task) }}</div>
+      <div class="invoice-generation-toast__meta">
+        Job {{ task.job_number || task.transport_job_id || "" }}
+        <span v-if="task.invoice_number"> · {{ task.invoice_number }}</span>
+      </div>
+
+      <div class="invoice-generation-toast__message">
+        {{
+          task.timeout
+            ? "Still processing. You can refresh this status from the job later."
+            : task.stage_message
+        }}
+      </div>
+
+      <div
+        class="invoice-generation-toast__progress"
+        role="progressbar"
+        :aria-valuenow="task.timeout ? task.progress : task.progress"
+        aria-valuemin="0"
+        aria-valuemax="100"
+        :aria-label="task.stage_message"
+      >
+        <span :style="{ width: `${task.progress}%` }" />
+      </div>
+
+      <div class="invoice-generation-toast__footer">
+        <strong>{{ task.progress }}%</strong>
+        <div class="invoice-generation-toast__actions">
+          <button
+            v-if="task.status === 'completed' && task.download_available"
+            type="button"
+            @click="store.view(task)"
+          >
+            View Invoice
+          </button>
+          <button
+            v-if="task.status === 'failed' || task.timeout"
+            type="button"
+            @click="store.openJob(task)"
+          >
+            Open Job
+          </button>
+        </div>
+      </div>
+    </article>
+  </div>
+</template>
+
+<style scoped>
+.invoice-generation-stack {
+  position: fixed;
+  z-index: 1200;
+  top: 92px;
+  right: 22px;
+  width: min(380px, calc(100vw - 32px));
+  display: grid;
+  gap: 12px;
+}
+
+.invoice-generation-toast {
+  position: relative;
+  padding: 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.18);
+  color: #1f2937;
+}
+
+.invoice-generation-toast--failed,
+.invoice-generation-toast--timeout {
+  border-color: #fecaca;
+}
+
+.invoice-generation-toast--completed {
+  border-color: #bbf7d0;
+}
+
+.invoice-generation-toast__close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  color: #6b7280;
+  font-size: 1.1rem;
+}
+
+.invoice-generation-toast__title {
+  padding-right: 24px;
+  font-weight: 800;
+  font-size: 0.98rem;
+}
+
+.invoice-generation-toast__meta {
+  margin-top: 3px;
+  color: #6b7280;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.invoice-generation-toast__message {
+  margin-top: 12px;
+  color: #374151;
+  font-size: 0.9rem;
+}
+
+.invoice-generation-toast__progress {
+  height: 8px;
+  margin-top: 12px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e5e7eb;
+}
+
+.invoice-generation-toast__progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #ec691a;
+  transition: width 0.25s ease;
+}
+
+.invoice-generation-toast__footer {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.invoice-generation-toast__actions {
+  display: flex;
+  gap: 8px;
+}
+
+.invoice-generation-toast__actions button {
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #fff;
+  color: #1f2937;
+  padding: 6px 10px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.invoice-generation-toast__actions button:hover {
+  border-color: #ec691a;
+  color: #ec691a;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+</style>
