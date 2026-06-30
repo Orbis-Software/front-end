@@ -13,6 +13,7 @@ import type {
   AddressSourceType,
   AddressTarget,
   JobDetailsForm,
+  JobStatusStageDetails,
   JobDetailsTab,
   SelectOption,
 } from "@/app/types/job-details"
@@ -1037,6 +1038,106 @@ function localMileageCost(form: JobDetailsForm): number | null {
   return cost > 0 ? Number(cost.toFixed(2)) : null
 }
 
+const JOB_PROGRESS_STATUS_OPTIONS: SelectOption[] = [
+  { label: "Job Created", value: "Job Created" },
+  { label: "Data Entry", value: "Data Entry" },
+  { label: "Booked", value: "Booked" },
+  { label: "Departed", value: "Departed" },
+  { label: "In Transit", value: "In Transit" },
+  { label: "Arrived", value: "Arrived" },
+  { label: "POD / Closed", value: "POD / Closed" },
+]
+
+const JOB_PROGRESS_STATUS_ALIASES: Record<string, string> = {
+  draft: "Job Created",
+  created: "Job Created",
+  "job created": "Job Created",
+  "data entry": "Data Entry",
+  pending: "Data Entry",
+  booked: "Booked",
+  collected: "Departed",
+  departed: "Departed",
+  "in transit": "In Transit",
+  "out for delivery": "In Transit",
+  arrived: "Arrived",
+  delivered: "Arrived",
+  complete: "POD / Closed",
+  completed: "POD / Closed",
+  closed: "POD / Closed",
+  "pod received": "POD / Closed",
+  "pod / closed": "POD / Closed",
+}
+
+function normalizeJobProgressStatus(status: unknown): string {
+  const raw = String(status ?? "").trim()
+  if (!raw) return "Job Created"
+
+  return JOB_PROGRESS_STATUS_ALIASES[raw.toLowerCase()] ?? raw
+}
+
+function emptyStatusStageDetails(): JobStatusStageDetails {
+  return {
+    notes: "",
+    start_date: null,
+    completion_date: null,
+    pod_receiver_name: "",
+    pod_time: null,
+    pod_date: null,
+  }
+}
+
+function normalizeStatusStageDetails(value: unknown): JobStatusStageDetails {
+  if (typeof value === "string") {
+    return {
+      ...emptyStatusStageDetails(),
+      notes: value,
+    }
+  }
+
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return emptyStatusStageDetails()
+  }
+
+  const raw = value as Record<string, unknown>
+
+  return {
+    notes: raw.notes === null || raw.notes === undefined ? "" : String(raw.notes),
+    start_date:
+      raw.start_date === null || raw.start_date === undefined || raw.start_date === ""
+        ? null
+        : String(raw.start_date),
+    completion_date:
+      raw.completion_date === null ||
+      raw.completion_date === undefined ||
+      raw.completion_date === ""
+        ? null
+        : String(raw.completion_date),
+    pod_receiver_name:
+      raw.pod_receiver_name === null || raw.pod_receiver_name === undefined
+        ? ""
+        : String(raw.pod_receiver_name),
+    pod_time:
+      raw.pod_time === null || raw.pod_time === undefined || raw.pod_time === ""
+        ? null
+        : String(raw.pod_time).slice(0, 5),
+    pod_date:
+      raw.pod_date === null || raw.pod_date === undefined || raw.pod_date === ""
+        ? null
+        : String(raw.pod_date),
+  }
+}
+
+function normalizeStatusNotes(value: unknown): Record<string, JobStatusStageDetails> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {}
+
+  return Object.fromEntries(
+    Object.entries(value as Record<string, unknown>).map(([key, note]) => [
+      key,
+      normalizeStatusStageDetails(note),
+    ]),
+  )
+}
+
 export function useJobDetailsPage() {
   const route = useRoute()
   const router = useRouter()
@@ -1069,7 +1170,8 @@ export function useJobDetailsPage() {
     job_date: null,
     job_type: "",
     mode_of_transport: null,
-    status: "Draft",
+    status: "Job Created",
+    status_notes: {},
     note: "",
 
     order_type: "",
@@ -1117,6 +1219,8 @@ export function useJobDetailsPage() {
     sell_costs: [],
     invoices: [],
     files: [],
+    upload_files: [],
+    upload_file_types: [],
 
     road_detail: emptyRoadDetail(),
     sea_detail: emptySeaDetail(),
@@ -1128,6 +1232,29 @@ export function useJobDetailsPage() {
     multi_modal_legs: [],
     consolidation_details: emptyConsolidationDetails(),
   })
+
+  const customerInvoiceTab: JobDetailsTab = {
+    label: "Customer",
+    name: "tms.jobs.show.customer-invoice",
+    key: "customer-invoice",
+    showCount: true,
+  }
+
+  const supplierInvoicesTab: JobDetailsTab = {
+    label: "Supplier",
+    name: "tms.jobs.show.supplier-invoices",
+    key: "supplier-invoices",
+    showCount: true,
+  }
+
+  const invoicesTab: JobDetailsTab = {
+    label: "Invoices",
+    name: customerInvoiceTab.name,
+    key: "invoices",
+    showCount: true,
+    activeNames: [customerInvoiceTab.name, supplierInvoicesTab.name],
+    children: [customerInvoiceTab, supplierInvoicesTab],
+  }
 
   const baseTabs: JobDetailsTab[] = [
     {
@@ -1152,18 +1279,7 @@ export function useJobDetailsPage() {
       key: "costs",
       showCount: true,
     },
-    {
-      label: "Customer Invoice",
-      name: "tms.jobs.show.customer-invoice",
-      key: "customer-invoice",
-      showCount: true,
-    },
-    {
-      label: "Supplier Invoices",
-      name: "tms.jobs.show.supplier-invoices",
-      key: "supplier-invoices",
-      showCount: true,
-    },
+    invoicesTab,
     {
       label: "Load Planner",
       name: "tms.jobs.show.load-planner",
@@ -1172,12 +1288,7 @@ export function useJobDetailsPage() {
   ]
 
   const consolidationTabs: JobDetailsTab[] = [
-    {
-      label: "Supplier Invoices",
-      name: "tms.jobs.show.supplier-invoices",
-      key: "supplier-invoices",
-      showCount: true,
-    },
+    invoicesTab,
     {
       label: "Collection Orders",
       name: "tms.jobs.show.collection-orders",
@@ -1188,12 +1299,6 @@ export function useJobDetailsPage() {
       label: "Consolidated Invoices",
       name: "tms.jobs.show.consolidated-invoices",
       key: "consolidated-invoices",
-      showCount: true,
-    },
-    {
-      label: "Customer Invoice",
-      name: "tms.jobs.show.customer-invoice",
-      key: "customer-invoice",
       showCount: true,
     },
     {
@@ -1542,20 +1647,7 @@ export function useJobDetailsPage() {
     }))
   })
 
-  const statusOptions = computed<SelectOption[]>(() => {
-    const category = referenceDataStore.getByKey("shipment_status")
-    const options = (category?.options ?? []).map(optionFromReference)
-
-    return options.length
-      ? options
-      : [
-          { label: "Draft", value: "Draft" },
-          { label: "Booked", value: "Booked" },
-          { label: "In Transit", value: "In Transit" },
-          { label: "Delivered", value: "Delivered" },
-          { label: "Cancelled", value: "Cancelled" },
-        ]
-  })
+  const statusOptions = computed<SelectOption[]>(() => JOB_PROGRESS_STATUS_OPTIONS)
 
   const currentRouteName = computed(() => String(route.name ?? ""))
   const isConsolidationJob = computed(() => {
@@ -1564,6 +1656,14 @@ export function useJobDetailsPage() {
 
   const tabs = computed<JobDetailsTab[]>(() => {
     return isConsolidationJob.value ? [...consolidationBaseTabs, ...consolidationTabs] : baseTabs
+  })
+
+  const subTabs = computed<JobDetailsTab[]>(() => {
+    return (
+      tabs.value.find(tab => {
+        return isActive(tab.name)
+      })?.children ?? []
+    )
   })
 
   watch(
@@ -1606,13 +1706,22 @@ export function useJobDetailsPage() {
     return `${type} · ${mode}`
   })
 
-  function isActive(name: string) {
-    return currentRouteName.value === name
+  function isActive(name: string, exact = false) {
+    if (exact) return currentRouteName.value === name
+
+    const tab = tabs.value.find(tab => tab.name === name)
+
+    return (
+      currentRouteName.value === name || Boolean(tab?.activeNames?.includes(currentRouteName.value))
+    )
   }
 
-  function getTabCount(key: string) {
+  function getTabCount(key: string): number {
     if (key === "packages") return form.packages.length
     if (key === "costs") return form.buy_costs.length + form.sell_costs.length
+    if (key === "invoices") {
+      return getTabCount("customer-invoice") + getTabCount("supplier-invoices")
+    }
     if (key === "supplier-invoices") {
       return isConsolidationJob.value
         ? form.consolidation_details.supplierInvoices.length
@@ -1645,7 +1754,8 @@ export function useJobDetailsPage() {
     form.job_date = parseDate(data.job_date)
     form.job_type = data.job_type ?? ""
     form.mode_of_transport = normalizeTransportMode(data.mode_of_transport)
-    form.status = extra.status ?? "Draft"
+    form.status = normalizeJobProgressStatus(extra.status)
+    form.status_notes = normalizeStatusNotes(extra.status_notes ?? extra.statusNotes)
     form.note = data.note ?? ""
 
     form.order_type = extra.order_type ?? ""
@@ -1719,6 +1829,8 @@ export function useJobDetailsPage() {
     }
 
     form.files = data.files ?? []
+    form.upload_files = []
+    form.upload_file_types = []
 
     form.packages = Array.isArray(extra.packages) ? extra.packages.map(normalizePackageRow) : []
 
@@ -1845,7 +1957,8 @@ export function useJobDetailsPage() {
       job_date: formatDate(form.job_date),
       job_type: form.job_type || undefined,
       mode_of_transport: form.mode_of_transport,
-      status: form.status || null,
+      status: normalizeJobProgressStatus(form.status),
+      status_notes: form.status_notes,
 
       order_type: isRoadMode ? form.order_type || null : undefined,
       consignment_number: form.consignment_number || null,
@@ -1894,6 +2007,8 @@ export function useJobDetailsPage() {
       charges: [...form.buy_costs, ...form.sell_costs].map(serializeChargeRow),
       transport_legs: serializeTransportLegs(form.multi_modal_legs, existingTransportLegIds),
       consolidation_details: form.consolidation_details,
+      files: form.upload_files,
+      file_types: form.upload_file_types,
     }
   }
 
@@ -2293,6 +2408,7 @@ export function useJobDetailsPage() {
 
   return {
     tabs,
+    subTabs,
     isActive,
     getTabCount,
 

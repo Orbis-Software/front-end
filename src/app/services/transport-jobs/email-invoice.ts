@@ -1,0 +1,20 @@
+import http from "@/api/http"
+
+export type EmailJobInvoicePayload = {
+  invoiceId: number
+  recipients: string[]
+  subject: string
+  body: string
+}
+
+export default async function emailInvoice(
+  id: number,
+  payload: EmailJobInvoicePayload,
+): Promise<void> {
+  await http.post(`/transport-jobs/${id}/invoice-email`, {
+    invoice_id: payload.invoiceId,
+    recipients: payload.recipients,
+    subject: payload.subject,
+    body: payload.body,
+  })
+}

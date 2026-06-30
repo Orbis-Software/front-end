@@ -73,6 +73,7 @@ function toFormData(payload: TransportJobUpdatePayload): FormData {
   appendValue(fd, "mode_of_transport", payload.mode_of_transport)
   appendValue(fd, "job_type", payload.job_type)
   appendValue(fd, "status", payload.status)
+  appendValue(fd, "status_notes", payload.status_notes as Record<string, any> | null | undefined)
 
   appendValue(fd, "order_type", payload.order_type)
   appendValue(fd, "consignment_number", payload.consignment_number)

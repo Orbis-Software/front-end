@@ -27,6 +27,15 @@ export interface TransportJobCreator {
   email: string | null
 }
 
+export interface JobStatusStageDetails {
+  notes?: string | null
+  start_date?: string | null
+  completion_date?: string | null
+  pod_receiver_name?: string | null
+  pod_time?: string | null
+  pod_date?: string | null
+}
+
 export interface JobRoadDetail {
   id?: number
   job_id?: number
@@ -519,6 +528,7 @@ export interface TransportJob {
   mode_of_transport: TransportMode | null
   job_type: JobType
   status?: string | null
+  status_notes?: Record<string, JobStatusStageDetails> | null
 
   order_type?: string | null
   consignment_number?: string | null
@@ -591,6 +601,7 @@ export interface BaseTransportJobCreatePayload {
   job_number?: string | null
   job_date?: string | null
   status?: string | null
+  status_notes?: Record<string, JobStatusStageDetails> | null
 
   order_type?: string | null
   consignment_number?: string | null

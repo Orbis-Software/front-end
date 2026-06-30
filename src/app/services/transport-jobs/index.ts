@@ -5,6 +5,7 @@ import remove from "./remove"
 import show from "./show"
 import collectionNotePreview from "./collection-note-preview"
 import jobPdf from "./job-pdf"
+import emailInvoice from "./email-invoice"
 
 export default {
   list,
@@ -14,4 +15,5 @@ export default {
   show,
   collectionNotePreview,
   jobPdf,
+  emailInvoice,
 }

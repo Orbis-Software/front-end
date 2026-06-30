@@ -87,6 +87,31 @@ const shipmentReferenceLabel = computed(() => {
 const showShipmentReference = computed(() => {
   return ["road", "air", "sea", "rail"].includes(String(form.mode_of_transport ?? ""))
 })
+const defaultCmrNumber = computed(() => {
+  const digits = String(form.job_number ?? "").replace(/\D+/g, "")
+
+  return digits ? digits.slice(-4).padStart(4, "0") : ""
+})
+const shipmentReferenceValue = computed({
+  get: () =>
+    isRoadMode.value ? (form.road_detail.cmr_number ?? "") : (form.consignment_number ?? ""),
+  set: value => {
+    if (isRoadMode.value) {
+      form.road_detail.cmr_number = value
+      return
+    }
+
+    form.consignment_number = value
+  },
+})
+const cmrPlaceholder = computed(() =>
+  defaultCmrNumber.value
+    ? `Auto ${defaultCmrNumber.value}, or enter seller/haulier CMR`
+    : "Enter seller/haulier CMR",
+)
+const shipmentReferencePlaceholder = computed(() =>
+  isRoadMode.value ? cmrPlaceholder.value : "Shipment reference",
+)
 const declaredValueMode = computed(() => (form.currency ? "currency" : "decimal"))
 const declaredValueCurrency = computed(() => form.currency || "GBP")
 const hazardousEnabled = computed({
@@ -204,8 +229,8 @@ const consolidationTransportRows = computed(() => {
           <span>{{ shipmentReferenceLabel }}</span>
 
           <InputText
-            v-model="form.consignment_number"
-            placeholder="Shipment reference"
+            v-model="shipmentReferenceValue"
+            :placeholder="shipmentReferencePlaceholder"
             :disabled="loading"
           />
         </label>
@@ -880,7 +905,7 @@ const consolidationTransportRows = computed(() => {
             <span>CMR / Waybill No.</span>
             <InputText
               v-model="form.road_detail.cmr_number"
-              placeholder="CMR reference"
+              :placeholder="cmrPlaceholder"
               :disabled="loading"
             />
           </label>

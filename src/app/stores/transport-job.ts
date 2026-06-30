@@ -3,6 +3,7 @@ import { ref } from "vue"
 
 import transportJobs from "@/app/services/transport-jobs"
 import type { CollectionNotePreviewPayload } from "@/app/services/transport-jobs/collection-note-preview"
+import type { EmailJobInvoicePayload } from "@/app/services/transport-jobs/email-invoice"
 import jobPdfService from "@/app/services/transport-jobs/job-pdf"
 import type { JobPdfDocument, JobPdfOptions } from "@/app/services/transport-jobs/job-pdf"
 import type {
@@ -164,6 +165,16 @@ export const useTransportJobStore = defineStore("transportJob", () => {
     }
   }
 
+  async function emailInvoice(id: number, payload: EmailJobInvoicePayload) {
+    loading.value = true
+
+    try {
+      return await transportJobs.emailInvoice(id, payload)
+    } finally {
+      loading.value = false
+    }
+  }
+
   function setCreatedBy(value: number | null) {
     createdBy.value = value
   }
@@ -201,6 +212,7 @@ export const useTransportJobStore = defineStore("transportJob", () => {
     remove,
     collectionNotePreview,
     jobPdf,
+    emailInvoice,
 
     setCreatedBy,
     resetFilters,
