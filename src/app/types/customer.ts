@@ -1,4 +1,4 @@
-import type { TransportJob } from "@/app/types/transport-job"
+import type { JobInvoiceSummary, TransportJob } from "@/app/types/transport-job"
 
 export interface CustomerCompany {
   id: number
@@ -63,6 +63,7 @@ export interface CustomerAccount {
 
   contact: CustomerContact | null
   transport_jobs: TransportJob[]
+  supplier_invoices: JobInvoiceSummary[]
 
   created_at: string
   updated_at: string

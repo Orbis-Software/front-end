@@ -1,4 +1,5 @@
 import { computed, onMounted, reactive, ref, watch } from "vue"
+import type { PageState } from "primevue/paginator"
 import { useRouter } from "vue-router"
 import { useToast } from "primevue/usetoast"
 
@@ -19,6 +20,8 @@ export function useAccountsInvoicingSection() {
   const selectedAccountingPlatform = ref("Xero")
   const selectedTransferMethod = ref("Sales Invoice Push")
   const searchText = ref("")
+  const currentPage = ref(1)
+  const perPage = ref(25)
   const selectedInvoiceIds = ref<string[]>([])
   const bankImportInput = ref<HTMLInputElement | null>(null)
   const state = reactive({
@@ -39,6 +42,14 @@ export function useAccountsInvoicingSection() {
   const loading = computed(() => accountsInvoiceStore.loading)
   const error = computed(() => accountsInvoiceStore.error || "")
   const invoices = computed(() => accountsInvoiceStore.invoices)
+  const invoiceMeta = computed(() => accountsInvoiceStore.meta)
+  const firstRow = computed(() => (currentPage.value - 1) * perPage.value)
+  const invoiceCountsText = computed(() => {
+    const meta = invoiceMeta.value
+    const range = meta.from && meta.to ? `${meta.from}-${meta.to}` : "0"
+
+    return `Showing ${range} of ${meta.filtered} invoice(s)`
+  })
 
   const statusOptions = [
     { label: "All statuses", value: "all" },
@@ -92,12 +103,19 @@ export function useAccountsInvoicingSection() {
       await accountsInvoiceStore.fetch({
         search: searchText.value || undefined,
         status: selectedStatus.value,
-        perPage: 100,
+        page: currentPage.value,
+        perPage: perPage.value,
       })
 
+      const selectedStillVisible = invoices.value.some(
+        invoice => invoice.id === state.selectedInvoiceId,
+      )
       const firstInvoice = invoices.value[0]
-      if (!state.selectedInvoiceId && firstInvoice) {
+
+      if ((!state.selectedInvoiceId || !selectedStillVisible) && firstInvoice) {
         state.selectedInvoiceId = firstInvoice.id
+      } else if (!firstInvoice) {
+        state.selectedInvoiceId = ""
       }
     } catch {
       state.selectedInvoiceId = ""
@@ -128,17 +146,7 @@ export function useAccountsInvoicingSection() {
   })
 
   const filteredInvoices = computed(() => {
-    const query = searchText.value.trim().toLowerCase()
-    return invoices.value.filter(invoice => {
-      const statusMatch =
-        selectedStatus.value === "all" ||
-        invoice.status === selectedStatus.value ||
-        (selectedStatus.value === "posted" && Boolean(invoice.postedPlatform))
-      const text = [invoice.invoice, invoice.job, invoice.customer, invoice.mode, invoice.currency]
-        .join(" ")
-        .toLowerCase()
-      return statusMatch && (!query || text.includes(query))
-    })
+    return invoices.value
   })
 
   const allVisibleSelected = computed(
@@ -153,6 +161,12 @@ export function useAccountsInvoicingSection() {
     selectedInvoiceIds.value = checked
       ? Array.from(new Set([...selectedInvoiceIds.value, ...visibleIds]))
       : selectedInvoiceIds.value.filter(id => !visibleIds.includes(id))
+  }
+
+  async function onInvoicePage(event: PageState) {
+    currentPage.value = event.page + 1
+    perPage.value = event.rows
+    await fetchInvoices()
   }
 
   function requireSelection() {
@@ -281,7 +295,10 @@ export function useAccountsInvoicingSection() {
     ;(event.target as HTMLInputElement).value = ""
   }
 
-  watch([selectedStatus, searchText], fetchInvoices)
+  watch([selectedStatus, searchText], () => {
+    currentPage.value = 1
+    fetchInvoices()
+  })
   onMounted(fetchInvoices)
 
   return {
@@ -293,6 +310,9 @@ export function useAccountsInvoicingSection() {
     bankImportInput,
     loading,
     error,
+    invoiceMeta,
+    invoiceCountsText,
+    firstRow,
     state,
     statusOptions,
     accountingPlatformOptions,
@@ -305,6 +325,7 @@ export function useAccountsInvoicingSection() {
     filteredInvoices,
     allVisibleSelected,
     toggleAllInvoices,
+    onInvoicePage,
     postSelected,
     markSelectedPaid,
     printInvoice,

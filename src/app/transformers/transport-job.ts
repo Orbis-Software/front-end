@@ -7,6 +7,7 @@ import type {
   JobRoadDetail,
   JobSeaDetail,
   JobTransportLeg,
+  JobInvoiceSummary,
   TransportJob,
 } from "@/app/types/transport-job"
 import jobFileTransformer from "@/app/transformers/job-file"
@@ -352,7 +353,7 @@ function fetchCharge(raw: any): JobCharge {
   }
 }
 
-function fetchInvoice(raw: any) {
+export function fetchJobInvoice(raw: any): JobInvoiceSummary {
   return {
     id: Number(raw.id),
     jobId: nullableNumber(raw.jobId ?? raw.job_id),
@@ -371,8 +372,22 @@ function fetchInvoice(raw: any) {
     pdfUrl: raw.pdfUrl ?? raw.pdf_url ?? null,
     pdfGeneratedAt: raw.pdfGeneratedAt ?? raw.pdf_generated_at ?? null,
     pdfCacheReady: Boolean(raw.pdfCacheReady ?? raw.pdf_cache_ready ?? false),
+    generationStatus: raw.generationStatus ?? raw.generation_status ?? null,
     lines: Array.isArray(raw.lines) ? raw.lines : [],
     metadata: raw.metadata && typeof raw.metadata === "object" ? raw.metadata : {},
+    job: raw.job
+      ? {
+          id: Number(raw.job.id),
+          jobNumber: raw.job.jobNumber ?? raw.job.job_number ?? null,
+          jobDate: raw.job.jobDate ?? raw.job.job_date ?? null,
+          mode: raw.job.mode ?? raw.job.mode_of_transport ?? null,
+          customer: raw.job.customer ?? null,
+          accountNumber: raw.job.accountNumber ?? raw.job.account_number ?? null,
+          route: raw.job.route ?? null,
+          shipmentRef:
+            raw.job.shipmentRef ?? raw.job.shipment_ref ?? raw.job.consignment_number ?? null,
+        }
+      : null,
   }
 }
 
@@ -481,7 +496,7 @@ const transportJobTransformer = {
 
       packages: Array.isArray(raw.packages) ? raw.packages.map(fetchPackage) : [],
       charges: Array.isArray(raw.charges) ? raw.charges.map(fetchCharge) : [],
-      invoices: Array.isArray(raw.invoices) ? raw.invoices.map(fetchInvoice) : [],
+      invoices: Array.isArray(raw.invoices) ? raw.invoices.map(fetchJobInvoice) : [],
       consolidation_details: raw.consolidation_details ?? raw.consolidationDetails ?? null,
 
       files: jobFileTransformer.fetchCollection(filesRaw),

@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import "./AccountsSupplierPaymentsSection.css"
 
-import { computed, onMounted, ref } from "vue"
+import { computed, onMounted, ref, watch } from "vue"
+import type { PageState } from "primevue/paginator"
 import { storeToRefs } from "pinia"
 import Button from "primevue/button"
 import Dropdown from "primevue/dropdown"
 import InputText from "primevue/inputtext"
+import Paginator from "primevue/paginator"
 
 import { useAccountsSummaryStore } from "@/app/stores/accounts-summary"
 import { downloadCsv } from "@/app/utils/download-csv"
@@ -22,6 +24,8 @@ const selectedStatus = ref("all")
 const selectedPaymentMethod = ref("Bank Transfer")
 const selectedExportFormat = ref("CSV Bank File")
 const searchText = ref("")
+const currentPage = ref(1)
+const perPage = ref(25)
 const selectedSupplierIds = ref<string[]>([])
 
 const statusOptions = [
@@ -74,18 +78,38 @@ const filteredSuppliers = computed(() => {
   })
 })
 
+const firstRow = computed(() => (currentPage.value - 1) * perPage.value)
+const paginatedSuppliers = computed(() => {
+  const start = firstRow.value
+
+  return filteredSuppliers.value.slice(start, start + perPage.value)
+})
+const supplierCountsText = computed(() => {
+  if (!filteredSuppliers.value.length) return "Showing 0 of 0 supplier invoice(s)"
+
+  const from = firstRow.value + 1
+  const to = Math.min(firstRow.value + perPage.value, filteredSuppliers.value.length)
+
+  return `Showing ${from}-${to} of ${filteredSuppliers.value.length} supplier invoice(s)`
+})
+
 const allVisibleSelected = computed(
   () =>
-    filteredSuppliers.value.length > 0 &&
-    filteredSuppliers.value.every(invoice => selectedSupplierIds.value.includes(invoice.id)),
+    paginatedSuppliers.value.length > 0 &&
+    paginatedSuppliers.value.every(invoice => selectedSupplierIds.value.includes(invoice.id)),
 )
 
 function toggleAllSuppliers(event: Event) {
   const checked = (event.target as HTMLInputElement).checked
-  const visibleIds = filteredSuppliers.value.map(invoice => invoice.id)
+  const visibleIds = paginatedSuppliers.value.map(invoice => invoice.id)
   selectedSupplierIds.value = checked
     ? Array.from(new Set([...selectedSupplierIds.value, ...visibleIds]))
     : selectedSupplierIds.value.filter(id => !visibleIds.includes(id))
+}
+
+function onSupplierPage(event: PageState) {
+  currentPage.value = event.page + 1
+  perPage.value = event.rows
 }
 
 function idsOrCurrent() {
@@ -207,6 +231,10 @@ function exportPaymentFile() {
     ]),
   ])
 }
+
+watch([selectedStatus, searchText], () => {
+  currentPage.value = 1
+})
 </script>
 
 <template>
@@ -221,22 +249,15 @@ function exportPaymentFile() {
         </div>
 
         <div class="accounts-supplier-payments__hero-actions">
-          <Button
-            label="Export Supplier CSV"
-            class="btn btn--ghost"
-            size="small"
-            @click="exportSupplierCsv"
-          />
+          <Button label="Export Supplier CSV" class="btn btn--ghost" @click="exportSupplierCsv" />
           <Button
             label="Approve Selected"
             class="btn btn--ghost"
-            size="small"
             @click="approveSuppliers(idsOrCurrent())"
           />
           <Button
             label="Pay Selected"
             class="btn btn--primary"
-            size="small"
             @click="paySuppliers(idsOrCurrent(), selectedPaymentMethod)"
           />
         </div>
@@ -257,7 +278,10 @@ function exportPaymentFile() {
     <div class="accounts-supplier-payments__grid accounts-supplier-payments__grid--top">
       <section class="accounts-supplier-payments__panel">
         <div class="accounts-supplier-payments__panel-head">
-          <h3>Supplier Invoice Register</h3>
+          <div>
+            <h3>Supplier Invoice Register</h3>
+            <div class="accounts-supplier-payments__counts">{{ supplierCountsText }}</div>
+          </div>
 
           <div class="accounts-supplier-payments__filters">
             <InputText
@@ -276,7 +300,10 @@ function exportPaymentFile() {
           </div>
         </div>
 
-        <div class="accounts-supplier-payments__table-wrap">
+        <div
+          class="accounts-supplier-payments__table-wrap accounts-supplier-payments__table-wrap--register"
+        >
+          <div v-if="state.loading" class="accounts-supplier-payments__loading-bar" />
           <table class="accounts-supplier-payments__table">
             <thead>
               <tr>
@@ -302,8 +329,23 @@ function exportPaymentFile() {
             </thead>
 
             <tbody>
+              <tr v-if="state.loading">
+                <td colspan="12" class="accounts-supplier-payments__table-message">
+                  Loading supplier invoice register...
+                </td>
+              </tr>
+              <tr v-else-if="state.error">
+                <td colspan="12" class="accounts-supplier-payments__table-message">
+                  {{ state.error }}
+                </td>
+              </tr>
+              <tr v-else-if="!filteredSuppliers.length">
+                <td colspan="12" class="accounts-supplier-payments__table-message">
+                  No supplier invoices found yet.
+                </td>
+              </tr>
               <tr
-                v-for="row in filteredSuppliers"
+                v-for="row in paginatedSuppliers"
                 :key="row.id"
                 @click="state.selectedSupplierId = row.id"
               >
@@ -332,6 +374,17 @@ function exportPaymentFile() {
             </tbody>
           </table>
         </div>
+
+        <Paginator
+          v-if="filteredSuppliers.length > 0"
+          :rows="perPage"
+          :total-records="filteredSuppliers.length"
+          :first="firstRow"
+          :rows-per-page-options="[15, 25, 50, 100]"
+          class="accounts-supplier-payments__paginator"
+          template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown"
+          @page="onSupplierPage"
+        />
       </section>
 
       <aside

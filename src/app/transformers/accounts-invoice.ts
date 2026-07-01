@@ -7,18 +7,36 @@ import type {
 function status(raw: any): AccountsInvoiceStatus {
   const value = raw?.paid ? "paid" : (raw?.status ?? "printed")
 
-  return ["draft", "sent", "paid", "overdue", "printed"].includes(value) ? value : "printed"
+  return [
+    "approved",
+    "draft",
+    "sent",
+    "paid",
+    "overdue",
+    "passed",
+    "printed",
+    "scheduled",
+  ].includes(value)
+    ? value
+    : "printed"
 }
 
 function fetch(raw: any): AccountsInvoice {
   const lines = Array.isArray(raw?.lines) ? raw.lines : []
+  const invoiceType = raw?.invoiceType === "supplier" ? "supplier" : "customer"
+  const supplierName = raw?.supplier?.name ?? raw?.metadata?.supplierName ?? ""
+  const customerName = raw?.job?.customer ?? "Customer"
 
   return {
     id: String(raw?.id ?? ""),
     jobId: Number(raw?.jobId ?? raw?.job?.id ?? 0),
+    invoiceType,
+    documentType: raw?.documentType ?? "invoice",
+    supplierId: raw?.supplierId ?? null,
     invoice: raw?.invoiceNumber ?? "",
     job: raw?.job?.jobNumber ?? "",
-    customer: raw?.job?.customer ?? "Customer",
+    customer: invoiceType === "supplier" ? supplierName || "Supplier" : customerName,
+    supplier: supplierName,
     mode: raw?.job?.mode ?? "",
     invoiceDate: raw?.invoiceDate ?? "",
     dueDate: raw?.dueDate ?? "",

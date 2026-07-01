@@ -38,6 +38,7 @@ const {
   openPassDialog,
   openUploadDialog,
   openPendingInvoice,
+  passSupplierOptions,
   passDialogVisible,
   passDraft,
   passGrossAmount,
@@ -67,7 +68,7 @@ const {
 
         <div class="job-normal-invoice-tab__actions">
           <Button
-            :label="generateLoading ? 'Opening...' : 'Generate Supplier Invoice'"
+            :label="generateLoading ? 'Generating...' : 'Generate Supplier Invoice'"
             icon="pi pi-file-pdf"
             :loading="generateLoading"
             :disabled="!supplierInvoiceOptions.length || jobContext.saving.value || generateLoading"
@@ -79,7 +80,7 @@ const {
             severity="secondary"
             :loading="passSaving"
             :disabled="
-              !supplierInvoiceOptions.length ||
+              !passSupplierOptions.length ||
               jobContext.saving.value ||
               generateLoading ||
               passSaving
@@ -404,7 +405,7 @@ const {
           @click="generateDialogVisible = false"
         />
         <Button
-          :label="generateLoading ? 'Opening...' : 'Generate Supplier Invoice'"
+          :label="generateLoading ? 'Generating...' : 'Generate Supplier Invoice'"
           icon="pi pi-file-pdf"
           :loading="generateLoading"
           @click="generateSupplierInvoice"
@@ -425,7 +426,7 @@ const {
             <span>Supplier</span>
             <Dropdown
               v-model="passDraft.supplierId"
-              :options="supplierInvoiceOptions"
+              :options="passSupplierOptions"
               option-label="label"
               option-value="value"
               placeholder="Select supplier"

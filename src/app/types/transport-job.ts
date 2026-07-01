@@ -321,8 +321,19 @@ export interface JobInvoiceSummary {
   pdfUrl?: string | null
   pdfGeneratedAt?: string | null
   pdfCacheReady?: boolean
+  generationStatus?: string | null
   lines?: any[]
   metadata?: Record<string, any>
+  job?: {
+    id: number
+    jobNumber?: string | null
+    jobDate?: string | null
+    mode?: string | null
+    customer?: string | null
+    accountNumber?: string | null
+    route?: string | null
+    shipmentRef?: string | null
+  } | null
 }
 
 export type JobConsolidationCurrency = "GBP" | "USD" | "EUR" | string

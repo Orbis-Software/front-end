@@ -156,6 +156,22 @@ export function useJobNormalSupplierInvoicesTab() {
     rows.value.forEach((row: any) => {
       const supplierId = Number(row.supplier_id ?? row.supplierId)
 
+      if (Number.isFinite(supplierId) && supplierId > 0 && !hasSupplierInvoice(row)) {
+        ids.add(supplierId)
+      }
+    })
+
+    return [...ids].map(id => ({
+      label: supplierName(id) || `Supplier #${id}`,
+      value: id,
+    }))
+  })
+  const passSupplierOptions = computed(() => {
+    const ids = new Set<number>()
+
+    rows.value.forEach((row: any) => {
+      const supplierId = Number(row.supplier_id ?? row.supplierId)
+
       if (Number.isFinite(supplierId) && supplierId > 0) {
         ids.add(supplierId)
       }
@@ -203,6 +219,14 @@ export function useJobNormalSupplierInvoicesTab() {
 
   function isPrinted(row: any): boolean {
     const status = row?.invoice_status ?? row?.invoiceStatus ?? "not_invoiced"
+
+    return ["printed", "passed"].includes(status) && !!invoiceNumber(row)
+  }
+
+  function hasSupplierInvoice(row: any): boolean {
+    const status = String(row?.invoice_status ?? row?.invoiceStatus ?? "not_invoiced")
+      .toLowerCase()
+      .replace(/\s+/g, "_")
 
     return ["printed", "passed"].includes(status) && !!invoiceNumber(row)
   }
@@ -561,7 +585,7 @@ export function useJobNormalSupplierInvoicesTab() {
   }
 
   function openPassDialog() {
-    const supplierId = generateSupplierId.value || supplierInvoiceOptions.value[0]?.value || null
+    const supplierId = generateSupplierId.value || passSupplierOptions.value[0]?.value || null
     const today = new Date()
 
     passDraft.supplierId = supplierId
@@ -686,6 +710,7 @@ export function useJobNormalSupplierInvoicesTab() {
     }
 
     generateLoading.value = true
+    generateDialogVisible.value = false
     showInvoiceProgressToast("Saving buy costs, then building the supplier invoice PDF...")
 
     try {
@@ -704,7 +729,6 @@ export function useJobNormalSupplierInvoicesTab() {
       }
 
       await jobContext.load()
-      generateDialogVisible.value = false
       toast.add({
         severity: "info",
         summary: "Supplier invoice ready",
@@ -783,6 +807,7 @@ export function useJobNormalSupplierInvoicesTab() {
     openPassDialog,
     openUploadDialog,
     openPendingInvoice,
+    passSupplierOptions,
     passDialogVisible,
     passDraft,
     passGrossAmount,

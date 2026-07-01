@@ -4,6 +4,7 @@ import "./AccountsInvoicingSection.css"
 import Button from "primevue/button"
 import Dropdown from "primevue/dropdown"
 import InputText from "primevue/inputtext"
+import Paginator from "primevue/paginator"
 
 import { useAccountsInvoicingSection } from "./AccountsInvoicingSection"
 
@@ -16,6 +17,9 @@ const {
   bankImportInput,
   loading,
   error,
+  invoiceMeta,
+  invoiceCountsText,
+  firstRow,
   state,
   statusOptions,
   accountingPlatformOptions,
@@ -28,6 +32,7 @@ const {
   filteredInvoices,
   allVisibleSelected,
   toggleAllInvoices,
+  onInvoicePage,
   postSelected,
   markSelectedPaid,
   printInvoice,
@@ -60,25 +65,14 @@ const {
         </div>
 
         <div class="accounts-invoicing__hero-actions">
-          <Button
-            label="Export Bank Feed CSV"
-            class="btn btn--ghost"
-            size="small"
-            @click="exportBankFeed"
-          />
+          <Button label="Export Bank Feed CSV" class="btn btn--ghost" @click="exportBankFeed" />
           <Button
             label="Import Bank CSV"
             class="btn btn--ghost"
-            size="small"
             @click="bankImportInput?.click()"
           />
-          <Button label="Post Selected" class="btn btn--ghost" size="small" @click="postSelected" />
-          <Button
-            label="Print Invoice PDF"
-            class="btn btn--primary"
-            size="small"
-            @click="printInvoice"
-          />
+          <Button label="Post Selected" class="btn btn--ghost" @click="postSelected" />
+          <Button label="Print Invoice PDF" class="btn btn--primary" @click="printInvoice" />
         </div>
       </div>
 
@@ -97,7 +91,10 @@ const {
     <div class="accounts-invoicing__grid accounts-invoicing__grid--top">
       <section class="accounts-invoicing__panel">
         <div class="accounts-invoicing__panel-head">
-          <h3>Invoice Register</h3>
+          <div>
+            <h3>Invoice Register</h3>
+            <div class="accounts-invoicing__counts">{{ invoiceCountsText }}</div>
+          </div>
 
           <div class="accounts-invoicing__filters">
             <InputText
@@ -116,7 +113,8 @@ const {
           </div>
         </div>
 
-        <div class="accounts-invoicing__table-wrap">
+        <div class="accounts-invoicing__table-wrap accounts-invoicing__table-wrap--register">
+          <div v-if="loading" class="accounts-invoicing__loading-bar" />
           <table class="accounts-invoicing__table">
             <thead>
               <tr>
@@ -129,7 +127,7 @@ const {
                 </th>
                 <th>Invoice</th>
                 <th>Job</th>
-                <th>Customer</th>
+                <th>Party</th>
                 <th>Mode</th>
                 <th>Invoice Date</th>
                 <th>Due Date</th>
@@ -143,13 +141,17 @@ const {
 
             <tbody>
               <tr v-if="loading">
-                <td colspan="12">Loading printed invoices...</td>
+                <td colspan="12" class="accounts-invoicing__table-message">
+                  Loading invoice register...
+                </td>
               </tr>
               <tr v-else-if="error">
-                <td colspan="12">{{ error }}</td>
+                <td colspan="12" class="accounts-invoicing__table-message">{{ error }}</td>
               </tr>
               <tr v-else-if="!filteredInvoices.length">
-                <td colspan="12">No printed invoices found yet.</td>
+                <td colspan="12" class="accounts-invoicing__table-message">
+                  No printed invoices found yet.
+                </td>
               </tr>
               <template v-else>
                 <tr
@@ -216,6 +218,17 @@ const {
             </tbody>
           </table>
         </div>
+
+        <Paginator
+          v-if="invoiceMeta.filtered > 0"
+          :rows="invoiceMeta.perPage"
+          :total-records="invoiceMeta.filtered"
+          :first="firstRow"
+          :rows-per-page-options="[15, 25, 50, 100]"
+          class="accounts-invoicing__paginator"
+          template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown"
+          @page="onInvoicePage"
+        />
       </section>
 
       <aside v-if="selectedInvoice" class="accounts-invoicing__panel accounts-invoicing__detail">
