@@ -1,5 +1,5 @@
 import type { CustomerAccount, CustomerContact, CustomerContactAccount } from "@/app/types/customer"
-import transportJobTransformer from "@/app/transformers/transport-job"
+import transportJobTransformer, { fetchJobInvoice } from "@/app/transformers/transport-job"
 
 function nullableNumber(value: any): number | null {
   if (value === null || value === undefined || value === "") return null
@@ -83,6 +83,9 @@ export default {
 
       contact: fetchContact(raw.contact),
       transport_jobs: transportJobTransformer.fetchCollection(raw.transport_jobs),
+      supplier_invoices: Array.isArray(raw.supplier_invoices)
+        ? raw.supplier_invoices.map(fetchJobInvoice)
+        : [],
 
       created_at: raw.created_at,
       updated_at: raw.updated_at,

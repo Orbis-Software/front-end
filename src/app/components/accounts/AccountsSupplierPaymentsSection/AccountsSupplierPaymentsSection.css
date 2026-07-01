@@ -95,14 +95,30 @@
   min-width: 160px;
 }
 
+.accounts-supplier-payments__counts {
+  margin-top: 4px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
 .accounts-supplier-payments__table-wrap {
-  overflow-x: auto;
+  position: relative;
+  overflow-x: hidden;
+}
+
+.accounts-supplier-payments__table-wrap--register {
+  max-height: 520px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  margin-top: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
 }
 
 .accounts-supplier-payments__table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 860px;
+  table-layout: fixed;
 }
 
 .accounts-supplier-payments__table--banking {
@@ -117,12 +133,151 @@
   font-size: 12px;
   color: var(--text);
   vertical-align: middle;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.accounts-supplier-payments__table-wrap--register .accounts-supplier-payments__table th,
+.accounts-supplier-payments__table-wrap--register .accounts-supplier-payments__table td {
+  text-overflow: clip;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.accounts-supplier-payments__table-wrap--register
+  .accounts-supplier-payments__table
+  th:nth-child(1),
+.accounts-supplier-payments__table-wrap--register
+  .accounts-supplier-payments__table
+  td:nth-child(1) {
+  width: 36px;
+}
+
+.accounts-supplier-payments__table-wrap--register
+  .accounts-supplier-payments__table
+  th:nth-child(2),
+.accounts-supplier-payments__table-wrap--register
+  .accounts-supplier-payments__table
+  td:nth-child(2),
+.accounts-supplier-payments__table-wrap--register
+  .accounts-supplier-payments__table
+  th:nth-child(3),
+.accounts-supplier-payments__table-wrap--register
+  .accounts-supplier-payments__table
+  td:nth-child(3),
+.accounts-supplier-payments__table-wrap--register
+  .accounts-supplier-payments__table
+  th:nth-child(4),
+.accounts-supplier-payments__table-wrap--register
+  .accounts-supplier-payments__table
+  td:nth-child(4) {
+  width: 13%;
+}
+
+.accounts-supplier-payments__table-wrap--register
+  .accounts-supplier-payments__table
+  th:nth-child(5),
+.accounts-supplier-payments__table-wrap--register
+  .accounts-supplier-payments__table
+  td:nth-child(5),
+.accounts-supplier-payments__table-wrap--register
+  .accounts-supplier-payments__table
+  th:nth-child(9),
+.accounts-supplier-payments__table-wrap--register
+  .accounts-supplier-payments__table
+  td:nth-child(9),
+.accounts-supplier-payments__table-wrap--register
+  .accounts-supplier-payments__table
+  th:nth-child(10),
+.accounts-supplier-payments__table-wrap--register
+  .accounts-supplier-payments__table
+  td:nth-child(10) {
+  width: 7%;
+}
+
+.accounts-supplier-payments__table-wrap--register
+  .accounts-supplier-payments__table
+  th:nth-child(6),
+.accounts-supplier-payments__table-wrap--register
+  .accounts-supplier-payments__table
+  td:nth-child(6),
+.accounts-supplier-payments__table-wrap--register
+  .accounts-supplier-payments__table
+  th:nth-child(7),
+.accounts-supplier-payments__table-wrap--register
+  .accounts-supplier-payments__table
+  td:nth-child(7),
+.accounts-supplier-payments__table-wrap--register
+  .accounts-supplier-payments__table
+  th:nth-child(8),
+.accounts-supplier-payments__table-wrap--register
+  .accounts-supplier-payments__table
+  td:nth-child(8),
+.accounts-supplier-payments__table-wrap--register
+  .accounts-supplier-payments__table
+  th:nth-child(11),
+.accounts-supplier-payments__table-wrap--register
+  .accounts-supplier-payments__table
+  td:nth-child(11),
+.accounts-supplier-payments__table-wrap--register
+  .accounts-supplier-payments__table
+  th:nth-child(12),
+.accounts-supplier-payments__table-wrap--register
+  .accounts-supplier-payments__table
+  td:nth-child(12) {
+  width: 9%;
 }
 
 .accounts-supplier-payments__table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
   background: #fafafa;
   color: var(--text-muted);
   font-weight: 700;
+}
+
+.accounts-supplier-payments__table-message {
+  height: 120px;
+  text-align: center !important;
+  color: var(--text-muted) !important;
+}
+
+.accounts-supplier-payments__loading-bar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  height: 3px;
+  overflow: hidden;
+  background: #fee7d0;
+}
+
+.accounts-supplier-payments__loading-bar::after {
+  content: "";
+  display: block;
+  width: 38%;
+  height: 100%;
+  background: #f97316;
+  animation: accounts-supplier-payments-loading 1s ease-in-out infinite;
+}
+
+.accounts-supplier-payments__paginator.p-paginator {
+  justify-content: flex-end;
+  border: 0;
+  background: #fff;
+  padding: 12px 0 0;
+}
+
+@keyframes accounts-supplier-payments-loading {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(265%);
+  }
 }
 
 .checkbox-col {

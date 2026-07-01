@@ -10,6 +10,9 @@ function mapNotification(raw: any): CustomerNotification {
     url: raw.url ?? null,
     quote_id: raw.quote_id ?? null,
     quote_ref: raw.quote_ref ?? null,
+    invoice_id: raw.invoice_id ?? null,
+    invoice_type: raw.invoice_type ?? null,
+    transport_job_id: raw.transport_job_id ?? null,
     read_at: raw.read_at ?? null,
     created_at: raw.created_at ?? null,
   }

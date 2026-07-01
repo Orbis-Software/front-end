@@ -1,4 +1,12 @@
-export type AccountsInvoiceStatus = "draft" | "sent" | "paid" | "overdue" | "printed"
+export type AccountsInvoiceStatus =
+  | "approved"
+  | "draft"
+  | "paid"
+  | "overdue"
+  | "passed"
+  | "printed"
+  | "scheduled"
+  | "sent"
 
 export type AccountsInvoiceLine = {
   description: string
@@ -9,9 +17,13 @@ export type AccountsInvoiceLine = {
 export type AccountsInvoice = {
   id: string
   jobId: number
+  invoiceType: "customer" | "supplier"
+  documentType: string
+  supplierId: number | null
   invoice: string
   job: string
   customer: string
+  supplier: string
   mode: string
   invoiceDate: string
   dueDate: string

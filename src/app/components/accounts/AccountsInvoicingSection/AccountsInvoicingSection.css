@@ -95,8 +95,23 @@
   min-width: 160px;
 }
 
+.accounts-invoicing__counts {
+  margin-top: 4px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
 .accounts-invoicing__table-wrap {
+  position: relative;
   overflow-x: auto;
+}
+
+.accounts-invoicing__table-wrap--register {
+  max-height: 520px;
+  overflow: auto;
+  margin-top: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
 }
 
 .accounts-invoicing__table {
@@ -120,9 +135,53 @@
 }
 
 .accounts-invoicing__table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
   background: #fafafa;
   color: var(--text-muted);
   font-weight: 700;
+}
+
+.accounts-invoicing__table-message {
+  height: 120px;
+  text-align: center !important;
+  color: var(--text-muted) !important;
+}
+
+.accounts-invoicing__loading-bar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  height: 3px;
+  overflow: hidden;
+  background: #fee7d0;
+}
+
+.accounts-invoicing__loading-bar::after {
+  content: "";
+  display: block;
+  width: 38%;
+  height: 100%;
+  background: #f97316;
+  animation: accounts-invoicing-loading 1s ease-in-out infinite;
+}
+
+.accounts-invoicing__paginator.p-paginator {
+  justify-content: flex-end;
+  border: 0;
+  background: #fff;
+  padding: 12px 0 0;
+}
+
+@keyframes accounts-invoicing-loading {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(265%);
+  }
 }
 
 .accounts-invoicing__table-link {
