@@ -58,13 +58,7 @@ const emailRecipientOptions = computed<InvoiceEmailRecipientOption[]>(() => {
   const seen = new Set<string>()
   const customer = emailJob.value?.customer_contact
 
-  addRecipient(
-    recipients,
-    seen,
-    "Customer",
-    customer?.company_name || "Customer",
-    customer?.email,
-  )
+  addRecipient(recipients, seen, "Customer", customer?.company_name || "Customer", customer?.email)
   addRecipient(recipients, seen, "Customer", "Consignee", emailJob.value?.consignee_email)
   addRecipient(recipients, seen, "Employee", auth.user?.name || "Current user", auth.user?.email)
 
@@ -117,10 +111,13 @@ async function openEmailPdf() {
 }
 
 watch(
-  () => store.activeTasks.map(task => `${task.id}:${task.status}:${task.download_available}`).join("|"),
+  () =>
+    store.activeTasks.map(task => `${task.id}:${task.status}:${task.download_available}`).join("|"),
   () => {
     const readyTask = store.activeTasks.find(task => {
-      return task.status === "completed" && task.download_available && !openedEmailTaskIds.has(task.id)
+      return (
+        task.status === "completed" && task.download_available && !openedEmailTaskIds.has(task.id)
+      )
     })
 
     if (readyTask) {
