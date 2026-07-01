@@ -1,8 +1,19 @@
 <script setup lang="ts">
-import { onMounted } from "vue"
+import { computed, onMounted, ref, watch } from "vue"
 import { useInvoiceGenerationStore } from "@/app/stores/invoice-generation"
+import { useAuthStore } from "@/app/stores/auth"
+import transportJobs from "@/app/services/transport-jobs"
+import InvoiceEmailDialog from "@/app/pages/jobs/details/tabs/Invoices/InvoiceEmailDialog/InvoiceEmailDialog.vue"
+import type { InvoiceGenerationTask } from "@/app/services/transport-jobs/invoice-generation"
+import type { InvoiceEmailRecipientOption } from "@/app/types/invoice-email"
 
 const store = useInvoiceGenerationStore()
+const auth = useAuthStore()
+const openedEmailTaskIds = new Set<string>()
+const emailDialogVisible = ref(false)
+const emailJob = ref<any | null>(null)
+const emailInvoice = ref<any | null>(null)
+const emailTask = ref<InvoiceGenerationTask | null>(null)
 
 function title(task: any) {
   if (task.status === "completed") return "Invoice Ready"
@@ -14,6 +25,107 @@ function title(task: any) {
 onMounted(() => {
   store.hydrate()
 })
+
+function normalizeEmail(email: unknown): string {
+  return String(email || "").trim()
+}
+
+function addRecipient(
+  recipients: InvoiceEmailRecipientOption[],
+  seen: Set<string>,
+  group: string,
+  label: string,
+  email: unknown,
+) {
+  const value = normalizeEmail(email)
+
+  if (!value || seen.has(value.toLowerCase())) return
+
+  seen.add(value.toLowerCase())
+  recipients.push({
+    group,
+    label: `${label} <${value}>`,
+    value,
+  })
+}
+
+const invoiceLabel = computed(() =>
+  emailTask.value?.invoice_type === "supplier" ? "Supplier Invoice" : "Customer Invoice",
+)
+
+const emailRecipientOptions = computed<InvoiceEmailRecipientOption[]>(() => {
+  const recipients: InvoiceEmailRecipientOption[] = []
+  const seen = new Set<string>()
+  const customer = emailJob.value?.customer_contact
+
+  addRecipient(recipients, seen, "Customer", customer?.company_name || "Customer", customer?.email)
+  addRecipient(recipients, seen, "Customer", "Consignee", emailJob.value?.consignee_email)
+  addRecipient(recipients, seen, "Employee", auth.user?.name || "Current user", auth.user?.email)
+
+  return recipients
+})
+
+const emailJobSummary = computed(() => ({
+  "Job Number": emailJob.value?.job_number || emailTask.value?.job_number,
+  Customer: emailJob.value?.customer_contact?.company_name,
+  Consignee: emailJob.value?.consignee_name,
+  "Collection Date": emailJob.value?.collection_date,
+  "Delivery Date": emailJob.value?.delivery_date,
+  "Customer Ref": emailJob.value?.customer_po_number || emailJob.value?.customer_booking_ref,
+  "Invoice Total": emailInvoice.value?.total,
+}))
+
+async function openEmailDialog(task: InvoiceGenerationTask) {
+  if (!task.transport_job_id || !task.invoice_id || openedEmailTaskIds.has(task.id)) return
+
+  openedEmailTaskIds.add(task.id)
+  try {
+    const job = await transportJobs.show(task.transport_job_id)
+    const invoice =
+      (job as any).invoices?.find((row: any) => Number(row.id) === Number(task.invoice_id)) ?? null
+
+    if (!invoice) {
+      openedEmailTaskIds.delete(task.id)
+      return
+    }
+
+    emailTask.value = task
+    emailJob.value = job
+    emailInvoice.value = invoice
+    emailDialogVisible.value = true
+  } catch {
+    openedEmailTaskIds.delete(task.id)
+  }
+}
+
+async function openEmailPdf() {
+  const jobId = Number(emailTask.value?.transport_job_id)
+  const invoiceId = Number(emailTask.value?.invoice_id)
+
+  if (!Number.isFinite(jobId) || !Number.isFinite(invoiceId)) return
+
+  const blob = await transportJobs.downloadInvoicePdf(jobId, invoiceId)
+  const url = URL.createObjectURL(blob)
+  window.open(url, "_blank", "noopener,noreferrer")
+  window.setTimeout(() => URL.revokeObjectURL(url), 60000)
+}
+
+watch(
+  () =>
+    store.activeTasks.map(task => `${task.id}:${task.status}:${task.download_available}`).join("|"),
+  () => {
+    const readyTask = store.activeTasks.find(task => {
+      return (
+        task.status === "completed" && task.download_available && !openedEmailTaskIds.has(task.id)
+      )
+    })
+
+    if (readyTask) {
+      void openEmailDialog(readyTask)
+    }
+  },
+  { immediate: true },
+)
 </script>
 
 <template>
@@ -75,6 +187,19 @@ onMounted(() => {
       </div>
     </article>
   </div>
+
+  <InvoiceEmailDialog
+    v-model:visible="emailDialogVisible"
+    :title="`Send ${invoiceLabel}`"
+    :job-id="emailTask?.transport_job_id || null"
+    :invoice-id="emailTask?.invoice_id || null"
+    :invoice-label="invoiceLabel"
+    :invoice-number="emailInvoice?.invoiceNumber || emailTask?.invoice_number || 'Invoice'"
+    :pdf-url="emailInvoice?.pdfUrl || null"
+    :recipient-options="emailRecipientOptions"
+    :job-summary="emailJobSummary"
+    @open-pdf="openEmailPdf"
+  />
 </template>
 
 <style scoped>

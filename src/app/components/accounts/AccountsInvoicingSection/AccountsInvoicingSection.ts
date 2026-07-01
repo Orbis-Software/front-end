@@ -113,8 +113,10 @@ export function useAccountsInvoicingSection() {
   })
 
   const invoiceSummary = computed(() => {
-    const total = invoices.value.reduce((sum, row) => sum + row.amount, 0)
-    const paid = invoices.value.filter(row => row.paid).reduce((sum, row) => sum + row.amount, 0)
+    const total = invoices.value.reduce((sum, row) => sum + row.baseAmount, 0)
+    const paid = invoices.value
+      .filter(row => row.paid)
+      .reduce((sum, row) => sum + row.baseAmount, 0)
     const posted = invoices.value.filter(row => row.postedPlatform).length
 
     return [

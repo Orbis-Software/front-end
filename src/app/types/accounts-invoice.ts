@@ -16,6 +16,9 @@ export type AccountsInvoice = {
   invoiceDate: string
   dueDate: string
   amount: number
+  baseAmount: number
+  baseCurrency: string
+  exchangeRate: number
   cost: number
   currency: string
   paid: boolean

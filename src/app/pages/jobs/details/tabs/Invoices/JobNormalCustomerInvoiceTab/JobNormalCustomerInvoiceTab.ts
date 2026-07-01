@@ -299,8 +299,8 @@ export function useJobNormalCustomerInvoiceTab() {
       await jobContext.load()
       toast.add({
         severity: "info",
-        summary: "Invoice queued",
-        detail: "You can continue using Orbis while the invoice PDF is generated.",
+        summary: "Invoice ready",
+        detail: "The invoice PDF has been generated.",
         life: 3500,
       })
     } catch (error: any) {
