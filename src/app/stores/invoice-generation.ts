@@ -146,6 +146,7 @@ export const useInvoiceGenerationStore = defineStore("invoiceGeneration", {
         const url = URL.createObjectURL(blob)
         window.open(url, "_blank", "noopener,noreferrer")
         window.setTimeout(() => URL.revokeObjectURL(url), 60000)
+        this.remove(task.id)
       }
     },
 

@@ -362,6 +362,44 @@ export function useJobNormalSupplierInvoicesTab() {
     }
   }
 
+  function invoiceListHref(invoice: any): string {
+    return invoice?.pdfUrl || "#"
+  }
+
+  async function openInvoiceFromList(event: MouseEvent, invoice: any) {
+    if (invoice?.pdfUrl) return
+
+    event.preventDefault()
+
+    const jobId = Number(jobContext.job.value?.id)
+    const invoiceId = Number(invoice?.id)
+
+    if (!Number.isFinite(jobId) || jobId <= 0 || !Number.isFinite(invoiceId) || invoiceId <= 0) {
+      toast.add({
+        severity: "warn",
+        summary: "Invoice unavailable",
+        detail: "This supplier invoice cannot be opened yet.",
+        life: 3000,
+      })
+      return
+    }
+
+    try {
+      const blob = await transportJobStore.downloadInvoicePdf(jobId, invoiceId)
+      openBlob(blob)
+    } catch (error: any) {
+      toast.add({
+        severity: "error",
+        summary: "Invoice failed",
+        detail:
+          error?.response?.data?.message ??
+          error?.message ??
+          "Unable to open the supplier invoice PDF.",
+        life: 4500,
+      })
+    }
+  }
+
   function normalizeEmail(email: unknown): string {
     return String(email || "").trim()
   }
@@ -669,8 +707,8 @@ export function useJobNormalSupplierInvoicesTab() {
       generateDialogVisible.value = false
       toast.add({
         severity: "info",
-        summary: "Supplier invoice queued",
-        detail: "You can continue using Orbis while the supplier invoice PDF is generated.",
+        summary: "Supplier invoice ready",
+        detail: "The supplier invoice PDF has been generated.",
         life: 3500,
       })
     } catch (error: any) {
@@ -731,6 +769,7 @@ export function useJobNormalSupplierInvoicesTab() {
     invoiceDraft,
     currencyCode,
     invoiceCurrency,
+    invoiceListHref,
     invoiceNumber,
     invoicePdfUrl,
     invoiceStatusLabel,
@@ -740,6 +779,7 @@ export function useJobNormalSupplierInvoicesTab() {
     money,
     numberValue,
     openGenerateDialog,
+    openInvoiceFromList,
     openPassDialog,
     openUploadDialog,
     openPendingInvoice,

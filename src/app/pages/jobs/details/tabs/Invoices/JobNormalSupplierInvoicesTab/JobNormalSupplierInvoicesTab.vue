@@ -24,6 +24,7 @@ const {
   invoiceDraft,
   currencyCode,
   invoiceCurrency,
+  invoiceListHref,
   invoiceNumber,
   invoicePdfUrl,
   invoiceStatusLabel,
@@ -33,6 +34,7 @@ const {
   money,
   numberValue,
   openGenerateDialog,
+  openInvoiceFromList,
   openPassDialog,
   openUploadDialog,
   openPendingInvoice,
@@ -233,15 +235,14 @@ const {
             <tr v-for="invoice in invoices" :key="invoice.id">
               <td>
                 <a
-                  v-if="invoice.pdfUrl"
                   class="job-normal-invoice-tab__link"
-                  :href="invoice.pdfUrl"
+                  :href="invoiceListHref(invoice)"
                   target="_blank"
                   rel="noopener noreferrer"
+                  @click="openInvoiceFromList($event, invoice)"
                 >
                   {{ invoice.invoiceNumber }}
                 </a>
-                <span v-else>{{ invoice.invoiceNumber }}</span>
               </td>
               <td>
                 {{ supplierName(invoice.supplierId) || invoice.metadata?.supplierName || "-" }}
