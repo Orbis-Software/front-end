@@ -191,6 +191,10 @@ export function useJobNormalSupplierInvoicesTab() {
   const currencyOptions = computed(() => {
     const options = new Set(["GBP", "EUR", "USD", currencyCode(jobContext.form.currency || "GBP")])
 
+    supplierContacts.value.forEach(contact => {
+      if (contact.currency_preference) options.add(currencyCode(contact.currency_preference))
+    })
+
     rows.value.forEach((row: any) => {
       if (row.currency) options.add(currencyCode(row.currency))
     })
@@ -375,10 +379,26 @@ export function useJobNormalSupplierInvoicesTab() {
     window.setTimeout(() => URL.revokeObjectURL(url), 60000)
   }
 
-  function openPendingInvoice() {
-    if (emailInvoice.value?.pdfUrl) {
-      window.open(emailInvoice.value.pdfUrl, "_blank", "noopener,noreferrer")
-      return
+  async function openPendingInvoice() {
+    const jobId = Number(jobContext.job.value?.id)
+    const invoiceId = Number(emailInvoice.value?.id)
+
+    if (Number.isFinite(jobId) && jobId > 0 && Number.isFinite(invoiceId) && invoiceId > 0) {
+      try {
+        const blob = await transportJobStore.downloadInvoicePdf(jobId, invoiceId)
+        openBlob(blob)
+        return
+      } catch (error: any) {
+        toast.add({
+          severity: "error",
+          summary: "Invoice failed",
+          detail:
+            error?.response?.data?.message ??
+            error?.message ??
+            "Unable to open the supplier invoice PDF.",
+          life: 4500,
+        })
+      }
     }
 
     if (pendingInvoiceBlob.value) {
@@ -387,12 +407,10 @@ export function useJobNormalSupplierInvoicesTab() {
   }
 
   function invoiceListHref(invoice: any): string {
-    return invoice?.pdfUrl || "#"
+    return invoice?.id ? `#invoice-${invoice.id}` : "#"
   }
 
   async function openInvoiceFromList(event: MouseEvent, invoice: any) {
-    if (invoice?.pdfUrl) return
-
     event.preventDefault()
 
     const jobId = Number(jobContext.job.value?.id)
@@ -524,7 +542,9 @@ export function useJobNormalSupplierInvoicesTab() {
   }
 
   function supplierCostCurrency(supplierId: number): string {
-    return currencyCode(supplierRows(supplierId)[0]?.currency || jobContext.form.currency || "GBP")
+    const supplier = supplierContacts.value.find(contact => Number(contact.id) === supplierId)
+
+    return currencyCode(supplier?.currency_preference || jobContext.form.currency || "GBP")
   }
 
   function supplierCostTotals(supplierId: number) {

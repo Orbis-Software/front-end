@@ -90,6 +90,8 @@ const SystemSettingsEmailNotificationsPage = () =>
   import("@/app/pages/settings/systemSettings/emailNotifications/SystemSettingsEmailNotificationsPage.vue")
 const MasterSettingsPage = () =>
   import("@/app/pages/settings/systemSettings/master/SystemSettingsMasterPage.vue")
+const SystemSettingsAccountSettingsPage = () =>
+  import("@/app/pages/settings/systemSettings/accountSettings/SystemSettingsAccountSettingsPage.vue")
 const SystemSettingsAwbManagerPage = () =>
   import("@/app/pages/settings/systemSettings/awbManager/SystemSettingsAwbManagerPage.vue")
 const UserSettingsPage = () => import("@/app/pages/settings/userSettings/UserSettingsPage.vue")
@@ -854,6 +856,12 @@ export const routes: RouteRecordRaw[] = [
             name: "settings.system.master",
             component: MasterSettingsPage,
             meta: { title: "System Settings • Master Settings" },
+          },
+          {
+            path: "account-settings",
+            name: "settings.system.account_settings",
+            component: SystemSettingsAccountSettingsPage,
+            meta: { title: "System Settings - Account Settings" },
           },
           {
             path: "awb-manager",

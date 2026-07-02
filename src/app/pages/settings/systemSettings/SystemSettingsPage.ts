@@ -13,6 +13,7 @@ export function useSystemSettingsPage() {
       { label: "Branding", name: "settings.system.branding" },
       { label: "Email & Notifications", name: "settings.system.email_notifications" },
       { label: "Master Settings", name: "settings.system.master" },
+      { label: "Account Settings", name: "settings.system.account_settings" },
     ]
 
     if (systemSettingsStore.hasEoriNumber) {
