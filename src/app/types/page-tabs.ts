@@ -27,6 +27,7 @@ export type SystemSettingsTabName =
   | "settings.system.branding"
   | "settings.system.email_notifications"
   | "settings.system.master"
+  | "settings.system.account_settings"
   | "settings.system.awb_manager"
 
 export type SystemSettingsTab = {
