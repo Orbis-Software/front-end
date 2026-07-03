@@ -41,6 +41,7 @@ const {
         <span v-if="hasUnsavedChanges" class="account-settings-page__dirty">Unsaved changes</span>
         <Button
           label="Reset to Defaults"
+          class="btn btn--ghost"
           severity="secondary"
           outlined
           :disabled="saving || !canEdit"
@@ -49,6 +50,7 @@ const {
         <Button
           :label="saving ? 'Saving...' : 'Save Settings'"
           icon="pi pi-save"
+          class="btn btn--primary"
           :loading="saving"
           :disabled="!canEdit"
           @click="save"
@@ -133,6 +135,7 @@ const {
           <Button
             label="Add Tax Mapping"
             icon="pi pi-plus"
+            class="btn btn--ghost btn--small"
             size="small"
             outlined
             @click="addTaxMapping"
@@ -184,6 +187,7 @@ const {
                 <td>
                   <Button
                     icon="pi pi-trash"
+                    class="btn btn--icon"
                     text
                     severity="danger"
                     @click="removeTaxMapping(index)"
@@ -261,6 +265,7 @@ const {
       <template #footer>
         <Button
           label="Cancel"
+          class="btn btn--ghost"
           severity="secondary"
           text
           :disabled="saving"
@@ -268,12 +273,19 @@ const {
         />
         <Button
           label="Discard"
+          class="btn btn--ghost"
           severity="danger"
           outlined
           :disabled="saving"
           @click="discardAndContinue"
         />
-        <Button label="Save" icon="pi pi-save" :loading="saving" @click="saveAndContinue" />
+        <Button
+          label="Save"
+          icon="pi pi-save"
+          class="btn btn--primary"
+          :loading="saving"
+          @click="saveAndContinue"
+        />
       </template>
     </Dialog>
   </section>

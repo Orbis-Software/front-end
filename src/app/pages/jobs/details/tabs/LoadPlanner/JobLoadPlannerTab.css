@@ -794,3 +794,18 @@
     -webkit-print-color-adjust: exact;
   }
 }
+
+.job-load-planner-tab__header p,
+.job-load-planner-tab__toolbar,
+.job-load-planner-tab__toolbar *,
+.job-load-planner-tab__summary,
+.job-load-planner-tab__summary *,
+.job-load-planner-tab__package-list,
+.job-load-planner-tab__package-list *,
+.job-load-planner-tab__view,
+.job-load-planner-tab__view *,
+.job-load-planner-tab__manifest,
+.job-load-planner-tab__manifest * {
+  color: #1a1a18;
+  font-size: 12px;
+}

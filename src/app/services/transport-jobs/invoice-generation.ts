@@ -74,3 +74,13 @@ export async function downloadInvoicePdf(id: number, invoiceId: number): Promise
 
   return response.data
 }
+
+export async function deleteInvoice(
+  id: number,
+  invoiceId: number,
+  confirmation: string,
+): Promise<void> {
+  await http.delete(`/transport-jobs/${id}/invoices/${invoiceId}`, {
+    data: { confirmation },
+  })
+}

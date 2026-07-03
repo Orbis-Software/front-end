@@ -212,6 +212,10 @@ export const useTransportJobStore = defineStore("transportJob", () => {
     return await transportJobs.downloadInvoicePdf(id, invoiceId)
   }
 
+  async function deleteInvoice(id: number, invoiceId: number, confirmation: string): Promise<void> {
+    return await transportJobs.deleteInvoice(id, invoiceId, confirmation)
+  }
+
   function setCreatedBy(value: number | null) {
     createdBy.value = value
   }
@@ -255,6 +259,7 @@ export const useTransportJobStore = defineStore("transportJob", () => {
     generateSupplierInvoice,
     invoiceGenerationStatus,
     downloadInvoicePdf,
+    deleteInvoice,
 
     setCreatedBy,
     resetFilters,

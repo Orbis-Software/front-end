@@ -8,9 +8,10 @@ export type PassSupplierInvoicePayload = {
   invoice_number: string
   invoice_date: string
   due_date: string
-  net_amount: number
+  invoice_amount: number
   tax_amount: number
-  gross_amount: number
+  total_invoice_amount: number
+  residual_amount: boolean
 }
 
 export default async function passSupplierInvoice(

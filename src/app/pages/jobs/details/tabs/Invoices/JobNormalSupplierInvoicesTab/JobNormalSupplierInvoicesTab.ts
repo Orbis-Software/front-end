@@ -36,6 +36,11 @@ export function useJobNormalSupplierInvoicesTab() {
   const pendingInvoiceBlob = ref<Blob | null>(null)
   const emailDialogVisible = ref(false)
   const emailInvoice = ref<any | null>(null)
+  const deleteDialogVisible = ref(false)
+  const deleteBlockedDialogVisible = ref(false)
+  const deleteInvoiceTarget = ref<any | null>(null)
+  const deleteConfirmation = ref("")
+  const deletingInvoice = ref(false)
 
   type SupplierInvoiceLineDraft = {
     id: number
@@ -56,8 +61,10 @@ export function useJobNormalSupplierInvoicesTab() {
     invoiceNumber: "",
     invoiceDate: new Date(),
     dueDate: addDays(new Date(), 30),
-    netAmount: 0,
+    invoiceAmount: 0,
     taxAmount: 0,
+    residualAmount: false,
+    attachedInvoice: null as File | null,
   })
 
   function numberValue(value: unknown, fallback = 0): number {
@@ -209,8 +216,23 @@ export function useJobNormalSupplierInvoicesTab() {
       return sum + quantity * unitCost
     }, 0),
   )
-  const passGrossAmount = computed(() => {
-    return numberValue(passDraft.netAmount) + numberValue(passDraft.taxAmount)
+  const passTotalInvoiceAmount = computed(() => {
+    return numberValue(passDraft.invoiceAmount) + numberValue(passDraft.taxAmount)
+  })
+  const passSupplierOutstanding = computed(() => {
+    const supplierId = Number(passDraft.supplierId)
+
+    if (!Number.isFinite(supplierId) || supplierId <= 0) {
+      return { total: 0, passed: 0, outstandingBefore: 0, outstandingAfter: 0 }
+    }
+
+    const totals = supplierCostTotals(supplierId)
+    const total = totals.net + totals.tax
+    const passed = supplierPassedTotal(supplierId)
+    const outstandingBefore = Math.max(0, total - passed)
+    const outstandingAfter = Math.max(0, outstandingBefore - passTotalInvoiceAmount.value)
+
+    return { total, passed, outstandingBefore, outstandingAfter }
   })
 
   function invoiceNumber(row: any): string {
@@ -271,6 +293,16 @@ export function useJobNormalSupplierInvoicesTab() {
   function openUploadDialog() {
     resetDraft()
     uploadDialogVisible.value = true
+  }
+
+  function onPassInvoiceFileSelected(event: Event) {
+    const input = event.target as HTMLInputElement
+
+    passDraft.attachedInvoice = input.files?.[0] ?? null
+  }
+
+  function clearPassInvoiceAttachment() {
+    passDraft.attachedInvoice = null
   }
 
   function addInvoiceLine() {
@@ -535,6 +567,78 @@ export function useJobNormalSupplierInvoicesTab() {
     )
   }
 
+  function latestSupplierInvoiceAny() {
+    return (
+      [...invoices.value].sort((a: any, b: any) => Number(b.id ?? 0) - Number(a.id ?? 0))[0] ?? null
+    )
+  }
+
+  function openDeleteInvoice(invoice: any) {
+    const latest = latestSupplierInvoiceAny()
+
+    deleteInvoiceTarget.value = invoice
+    deleteConfirmation.value = ""
+
+    if (!latest || Number(latest.id) !== Number(invoice?.id)) {
+      deleteBlockedDialogVisible.value = true
+      return
+    }
+
+    deleteDialogVisible.value = true
+  }
+
+  async function confirmDeleteInvoice() {
+    const jobId = Number(jobContext.job.value?.id)
+    const invoiceId = Number(deleteInvoiceTarget.value?.id)
+    const invoiceNumber = String(deleteInvoiceTarget.value?.invoiceNumber ?? "")
+
+    if (!Number.isFinite(jobId) || jobId <= 0 || !Number.isFinite(invoiceId) || invoiceId <= 0) {
+      return
+    }
+
+    if (deleteConfirmation.value.trim() !== invoiceNumber) {
+      toast.add({
+        severity: "warn",
+        summary: "Confirmation required",
+        detail: "Type the exact invoice number before deleting.",
+        life: 3000,
+      })
+      return
+    }
+
+    deletingInvoice.value = true
+
+    try {
+      await transportJobStore.deleteInvoice(jobId, invoiceId, deleteConfirmation.value.trim())
+      await jobContext.load()
+      deleteDialogVisible.value = false
+      deleteInvoiceTarget.value = null
+      deleteConfirmation.value = ""
+      toast.add({
+        severity: "success",
+        summary: "Invoice deleted",
+        detail: "The latest supplier invoice was deleted and linked cost rows were reset.",
+        life: 3500,
+      })
+    } catch (error: any) {
+      if (Number(error?.response?.status) === 409) {
+        deleteDialogVisible.value = false
+        deleteBlockedDialogVisible.value = true
+        return
+      }
+
+      toast.add({
+        severity: "error",
+        summary: "Delete failed",
+        detail:
+          error?.response?.data?.message ?? error?.message ?? "Unable to delete this invoice.",
+        life: 4500,
+      })
+    } finally {
+      deletingInvoice.value = false
+    }
+  }
+
   function supplierRows(supplierId: number) {
     return rows.value.filter((row: any) => {
       return Number(row.supplier_id ?? row.supplierId) === supplierId
@@ -562,6 +666,22 @@ export function useJobNormalSupplierInvoicesTab() {
       },
       { net: 0, tax: 0 },
     )
+  }
+
+  function supplierPassedTotal(supplierId: number) {
+    return invoices.value
+      .filter((invoice: any) => {
+        const invoiceSupplierId = Number(invoice.supplierId ?? invoice.supplier_id)
+        const status = String(invoice.status ?? "").toLowerCase()
+        const source = String(invoice.metadata?.source ?? "")
+
+        return (
+          invoiceSupplierId === supplierId &&
+          status === "passed" &&
+          source === "pass_supplier_invoice"
+        )
+      })
+      .reduce((sum: number, invoice: any) => sum + numberValue(invoice.total), 0)
   }
 
   async function extractPdfError(error: any) {
@@ -613,16 +733,20 @@ export function useJobNormalSupplierInvoicesTab() {
     passDraft.invoiceDate = today
     passDraft.dueDate = addDays(today, 30)
     passDraft.invoiceNumber = ""
+    passDraft.residualAmount = false
+    passDraft.attachedInvoice = null
 
     if (supplierId) {
       const totals = supplierCostTotals(supplierId)
+      const passed = supplierPassedTotal(supplierId)
+      const outstanding = Math.max(0, totals.net + totals.tax - passed)
 
       passDraft.currency = supplierCostCurrency(supplierId)
-      passDraft.netAmount = Number(totals.net.toFixed(2))
+      passDraft.invoiceAmount = Number(Math.max(0, outstanding - totals.tax).toFixed(2))
       passDraft.taxAmount = Number(totals.tax.toFixed(2))
     } else {
       passDraft.currency = currencyCode(jobContext.form.currency || "GBP")
-      passDraft.netAmount = 0
+      passDraft.invoiceAmount = 0
       passDraft.taxAmount = 0
     }
 
@@ -664,9 +788,37 @@ export function useJobNormalSupplierInvoicesTab() {
       return
     }
 
+    const outstanding = passSupplierOutstanding.value.outstandingBefore
+    const invoiceTotal = Number(passTotalInvoiceAmount.value.toFixed(2))
+
+    if (invoiceTotal <= 0) {
+      toast.add({
+        severity: "warn",
+        summary: "Invoice amount required",
+        detail: "Enter the supplier invoice amount before passing the invoice.",
+        life: 3000,
+      })
+      return
+    }
+
+    if (invoiceTotal > Number((outstanding + 0.01).toFixed(2))) {
+      toast.add({
+        severity: "warn",
+        summary: "Amount exceeds outstanding",
+        detail: "The total invoice amount cannot be greater than the supplier outstanding amount.",
+        life: 3500,
+      })
+      return
+    }
+
     passSaving.value = true
 
     try {
+      if (passDraft.attachedInvoice) {
+        jobContext.form.upload_files.push(passDraft.attachedInvoice)
+        jobContext.form.upload_file_types.push("supplier_invoice")
+      }
+
       await jobContext.save({
         successSummary: "Supplier costs saved",
         successDetail: "Buy Costs saved before passing the supplier invoice.",
@@ -680,9 +832,10 @@ export function useJobNormalSupplierInvoicesTab() {
         invoice_number: invoiceNumber,
         invoice_date: formatDate(passDraft.invoiceDate),
         due_date: formatDate(passDraft.dueDate),
-        net_amount: numberValue(passDraft.netAmount),
+        invoice_amount: numberValue(passDraft.invoiceAmount),
         tax_amount: numberValue(passDraft.taxAmount),
-        gross_amount: Number(passGrossAmount.value.toFixed(2)),
+        total_invoice_amount: invoiceTotal,
+        residual_amount: Boolean(passDraft.residualAmount),
       })
 
       await jobContext.load()
@@ -791,10 +944,14 @@ export function useJobNormalSupplierInvoicesTab() {
       if (!Number.isFinite(supplierId) || supplierId <= 0) return
 
       const totals = supplierCostTotals(supplierId)
+      const passed = supplierPassedTotal(supplierId)
+      const outstanding = Math.max(0, totals.net + totals.tax - passed)
 
       passDraft.currency = supplierCostCurrency(supplierId)
-      passDraft.netAmount = Number(totals.net.toFixed(2))
+      passDraft.invoiceAmount = Number(Math.max(0, outstanding - totals.tax).toFixed(2))
       passDraft.taxAmount = Number(totals.tax.toFixed(2))
+      passDraft.residualAmount = false
+      passDraft.attachedInvoice = null
     },
   )
 
@@ -806,6 +963,12 @@ export function useJobNormalSupplierInvoicesTab() {
     emailInvoice,
     emailJobSummary,
     emailRecipientOptions,
+    confirmDeleteInvoice,
+    deleteBlockedDialogVisible,
+    deleteConfirmation,
+    deleteDialogVisible,
+    deleteInvoiceTarget,
+    deletingInvoice,
     generateDialogVisible,
     generateLoading,
     generateSupplierId,
@@ -822,20 +985,24 @@ export function useJobNormalSupplierInvoicesTab() {
     jobContext,
     money,
     numberValue,
+    openDeleteInvoice,
     openGenerateDialog,
     openInvoiceFromList,
     openPassDialog,
     openUploadDialog,
     openPendingInvoice,
+    onPassInvoiceFileSelected,
     passSupplierOptions,
     passDialogVisible,
     passDraft,
-    passGrossAmount,
+    passSupplierOutstanding,
+    passTotalInvoiceAmount,
     passSaving,
     passSupplierInvoice,
     removeInvoiceLine,
     rows,
     saveSupplierInvoice,
+    clearPassInvoiceAttachment,
     supplierInvoiceOptions,
     supplierName,
     supplierOptions,

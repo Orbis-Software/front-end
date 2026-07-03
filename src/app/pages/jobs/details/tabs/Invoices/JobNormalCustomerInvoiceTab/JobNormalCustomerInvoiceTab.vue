@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import "./JobNormalCustomerInvoiceTab.css"
 import Button from "primevue/button"
+import Dialog from "primevue/dialog"
+import InputText from "primevue/inputtext"
 import InvoiceEmailDialog from "../InvoiceEmailDialog/InvoiceEmailDialog.vue"
 import { useJobNormalCustomerInvoiceTab } from "./JobNormalCustomerInvoiceTab"
 
@@ -9,6 +11,12 @@ const {
   emailInvoice,
   emailJobSummary,
   emailRecipientOptions,
+  confirmDeleteInvoice,
+  deleteBlockedDialogVisible,
+  deleteConfirmation,
+  deleteDialogVisible,
+  deleteInvoiceTarget,
+  deletingInvoice,
   generateInvoice,
   generating,
   grandTotal,
@@ -22,6 +30,7 @@ const {
   jobContext,
   money,
   numberValue,
+  openDeleteInvoice,
   openPendingInvoice,
   rows,
   subtotal,
@@ -239,6 +248,61 @@ const {
         </div>
       </template>
     </div>
+
+    <Dialog
+      v-model:visible="deleteDialogVisible"
+      modal
+      header="Delete Customer Invoice"
+      class="job-normal-invoice-tab__dialog"
+      :style="{ width: 'min(520px, 94vw)' }"
+    >
+      <div class="job-normal-invoice-tab__dialog-body">
+        <p class="job-normal-invoice-tab__note">
+          This will delete the latest invoice only. To confirm, type the invoice number exactly:
+          <strong>{{ deleteInvoiceTarget?.invoiceNumber }}</strong>
+        </p>
+        <label class="job-normal-invoice-tab__field">
+          <span>Invoice Number</span>
+          <InputText v-model="deleteConfirmation" autocomplete="off" />
+        </label>
+      </div>
+
+      <template #footer>
+        <Button
+          label="Cancel"
+          text
+          :disabled="deletingInvoice"
+          @click="deleteDialogVisible = false"
+        />
+        <Button
+          label="Delete Invoice"
+          icon="pi pi-trash"
+          severity="danger"
+          :loading="deletingInvoice"
+          :disabled="deleteConfirmation.trim() !== String(deleteInvoiceTarget?.invoiceNumber ?? '')"
+          @click="confirmDeleteInvoice"
+        />
+      </template>
+    </Dialog>
+
+    <Dialog
+      v-model:visible="deleteBlockedDialogVisible"
+      modal
+      header="Invoice Cannot Be Deleted"
+      class="job-normal-invoice-tab__dialog"
+      :style="{ width: 'min(520px, 94vw)' }"
+    >
+      <div class="job-normal-invoice-tab__dialog-body">
+        <p class="job-normal-invoice-tab__note">
+          This invoice cannot be deleted because it is not the latest invoice. This keeps the
+          invoice audit trail and numbering sequence intact.
+        </p>
+      </div>
+
+      <template #footer>
+        <Button label="OK" @click="deleteBlockedDialogVisible = false" />
+      </template>
+    </Dialog>
 
     <InvoiceEmailDialog
       v-model:visible="emailDialogVisible"

@@ -9,6 +9,7 @@ import emailInvoice from "./email-invoice"
 import passSupplierInvoice from "./pass-supplier-invoice"
 import {
   downloadInvoicePdf,
+  deleteInvoice,
   generateCustomerInvoice,
   generateSupplierInvoice,
   invoiceGenerationTask,
@@ -30,4 +31,5 @@ export default {
   invoiceGenerationTask,
   invoiceGenerationStatus,
   downloadInvoicePdf,
+  deleteInvoice,
 }

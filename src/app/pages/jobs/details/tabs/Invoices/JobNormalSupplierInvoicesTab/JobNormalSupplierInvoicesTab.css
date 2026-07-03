@@ -1,1 +1,66 @@
 @import "../JobNormalInvoices.css";
+
+.job-normal-invoice-tab__outstanding {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  border: 1px solid #e6e6e6;
+  border-radius: 8px;
+  background: #fbfbfa;
+  padding: 12px;
+}
+
+.job-normal-invoice-tab__outstanding div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.job-normal-invoice-tab__outstanding span,
+.job-normal-invoice-tab__checkbox-row span {
+  color: #1a1a18;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.job-normal-invoice-tab__outstanding strong {
+  color: #1a1a18;
+  font-size: 12px;
+}
+
+.job-normal-invoice-tab__checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.job-normal-invoice-tab__file {
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 9px;
+  color: #1f2933;
+  font-size: 12px;
+}
+
+.job-normal-invoice-tab__attachment {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border: 1px solid #dbeafe;
+  border-radius: 8px;
+  background: #eff6ff;
+  color: #1a1a18;
+  padding: 8px 10px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+@media (max-width: 900px) {
+  .job-normal-invoice-tab__outstanding {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

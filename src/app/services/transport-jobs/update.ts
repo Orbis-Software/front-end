@@ -149,6 +149,7 @@ function toFormData(payload: TransportJobUpdatePayload): FormData {
 
   const files = payload.files ?? []
   const fileTypes = payload.file_types ?? []
+  const replaceFileTypes = payload.replace_file_types ?? []
 
   files.forEach((file, idx) => {
     fd.append(`files[${idx}]`, file)
@@ -157,6 +158,10 @@ function toFormData(payload: TransportJobUpdatePayload): FormData {
     if (type !== undefined) {
       fd.append(`file_types[${idx}]`, type ?? "")
     }
+  })
+
+  replaceFileTypes.forEach((type, idx) => {
+    fd.append(`replace_file_types[${idx}]`, type)
   })
 
   return fd

@@ -666,6 +666,7 @@ export interface BaseTransportJobCreatePayload {
 
   files?: File[]
   file_types?: (string | null)[]
+  replace_file_types?: string[]
 }
 
 export type TransportJobCreatePayload =

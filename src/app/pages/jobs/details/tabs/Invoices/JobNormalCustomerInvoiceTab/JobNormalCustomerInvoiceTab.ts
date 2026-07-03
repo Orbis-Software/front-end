@@ -26,6 +26,11 @@ export function useJobNormalCustomerInvoiceTab() {
   const pendingInvoiceBlob = ref<Blob | null>(null)
   const emailDialogVisible = ref(false)
   const emailInvoice = ref<any | null>(null)
+  const deleteDialogVisible = ref(false)
+  const deleteBlockedDialogVisible = ref(false)
+  const deleteInvoiceTarget = ref<any | null>(null)
+  const deleteConfirmation = ref("")
+  const deletingInvoice = ref(false)
 
   function numberValue(value: unknown, fallback = 0): number {
     const numeric = Number(value)
@@ -222,6 +227,73 @@ export function useJobNormalCustomerInvoiceTab() {
     )
   }
 
+  function openDeleteInvoice(invoice: any) {
+    const latest = latestCustomerInvoice()
+
+    deleteInvoiceTarget.value = invoice
+    deleteConfirmation.value = ""
+
+    if (!latest || Number(latest.id) !== Number(invoice?.id)) {
+      deleteBlockedDialogVisible.value = true
+      return
+    }
+
+    deleteDialogVisible.value = true
+  }
+
+  async function confirmDeleteInvoice() {
+    const jobId = Number(jobContext.job.value?.id)
+    const invoiceId = Number(deleteInvoiceTarget.value?.id)
+    const invoiceNumber = String(deleteInvoiceTarget.value?.invoiceNumber ?? "")
+
+    if (!Number.isFinite(jobId) || jobId <= 0 || !Number.isFinite(invoiceId) || invoiceId <= 0) {
+      return
+    }
+
+    if (deleteConfirmation.value.trim() !== invoiceNumber) {
+      toast.add({
+        severity: "warn",
+        summary: "Confirmation required",
+        detail: "Type the exact invoice number before deleting.",
+        life: 3000,
+      })
+      return
+    }
+
+    deletingInvoice.value = true
+
+    try {
+      await transportJobStore.deleteInvoice(jobId, invoiceId, deleteConfirmation.value.trim())
+      await jobContext.load()
+      deleteDialogVisible.value = false
+      deleteInvoiceTarget.value = null
+      deleteConfirmation.value = ""
+      toast.add({
+        severity: "success",
+        summary: "Invoice deleted",
+        detail:
+          "The latest invoice was deleted and the invoice sequence was rolled back where applicable.",
+        life: 3500,
+      })
+    } catch (error: any) {
+      if (Number(error?.response?.status) === 409) {
+        deleteDialogVisible.value = false
+        deleteBlockedDialogVisible.value = true
+        return
+      }
+
+      toast.add({
+        severity: "error",
+        summary: "Delete failed",
+        detail:
+          error?.response?.data?.message ?? error?.message ?? "Unable to delete this invoice.",
+        life: 4500,
+      })
+    } finally {
+      deletingInvoice.value = false
+    }
+  }
+
   async function extractPdfError(error: any) {
     const data = error?.response?.data
 
@@ -325,6 +397,12 @@ export function useJobNormalCustomerInvoiceTab() {
     emailInvoice,
     emailJobSummary,
     emailRecipientOptions,
+    confirmDeleteInvoice,
+    deleteBlockedDialogVisible,
+    deleteConfirmation,
+    deleteDialogVisible,
+    deleteInvoiceTarget,
+    deletingInvoice,
     generateInvoice,
     generating,
     grandTotal,
@@ -338,6 +416,7 @@ export function useJobNormalCustomerInvoiceTab() {
     jobContext,
     money,
     numberValue,
+    openDeleteInvoice,
     openPendingInvoice,
     rows,
     subtotal,
