@@ -249,3 +249,22 @@
     grid-template-columns: 1fr;
   }
 }
+
+.job-packages-tab__section-header p,
+.job-packages-tab__table,
+.job-packages-tab__table th,
+.job-packages-tab__table td,
+.job-packages-tab__table .p-inputtext,
+.job-packages-tab__table .p-dropdown,
+.job-packages-tab__table .p-dropdown-label,
+.job-packages-tab__table .p-inputnumber-input,
+.job-packages-tab__number,
+.job-packages-tab__computed,
+.job-packages-tab__empty,
+.job-packages-tab__confirm-copy,
+.job-packages-tab__total-card span,
+.job-packages-tab__total-card strong,
+.job-packages-tab__total-card small {
+  color: #1a1a18 !important;
+  font-size: 12px !important;
+}

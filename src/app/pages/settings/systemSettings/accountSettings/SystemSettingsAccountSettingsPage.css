@@ -31,6 +31,51 @@
   justify-content: flex-end;
 }
 
+.account-settings-page .p-button.btn {
+  border-radius: 8px;
+  min-height: 36px;
+  font-weight: 800;
+}
+
+.account-settings-page .p-button.btn--small {
+  min-height: 30px;
+  padding: 0 10px;
+  font-size: 12px;
+}
+
+.account-settings-page .p-button.btn--primary {
+  background: #ec691a;
+  border-color: #ec691a;
+  color: #fff;
+}
+
+.account-settings-page .p-button.btn--primary:hover:not(:disabled) {
+  background: #d85f17;
+  border-color: #d85f17;
+}
+
+.account-settings-page .p-button.btn--primary .p-button-label,
+.account-settings-page .p-button.btn--primary .p-button-icon {
+  color: #fff;
+}
+
+.account-settings-page .p-button.btn--ghost {
+  background: #fff;
+  border-color: #d8d8d4;
+  color: #2f3f52;
+}
+
+.account-settings-page .p-button.btn--ghost:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #c7c7c2;
+}
+
+.account-settings-page .p-button.btn--icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+}
+
 .account-settings-page__dirty {
   border: 1px solid #f59e0b;
   border-radius: 999px;
@@ -61,9 +106,9 @@
 }
 
 .account-settings-page__tab--active {
-  border-color: #2c7be5;
-  background: #eef6ff;
-  color: #174ea6;
+  border-color: #ec691a;
+  background: #fff7ed;
+  color: #c2410c;
 }
 
 .account-settings-page__tab span {

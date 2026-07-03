@@ -746,3 +746,25 @@
     grid-column: span 2;
   }
 }
+
+.job-consolidation-tab__section-header p,
+.job-consolidation-tab__field span,
+.job-consolidation-tab__field input,
+.job-consolidation-tab__field select,
+.job-consolidation-tab__field textarea,
+.job-consolidation-tab__field .p-inputtext,
+.job-consolidation-tab__field .p-dropdown,
+.job-consolidation-tab__field .p-select,
+.job-consolidation-tab__field .p-dropdown-label,
+.job-consolidation-tab__field .p-select-label,
+.job-consolidation-tab__supplier-package-table,
+.job-consolidation-tab__supplier-package-table *,
+.job-consolidation-tab__collection-package-table,
+.job-consolidation-tab__collection-package-table *,
+.job-consolidation-tab__invoice-lines-table,
+.job-consolidation-tab__invoice-lines-table *,
+.job-consolidation-tab__summary,
+.job-consolidation-tab__summary * {
+  color: #1a1a18 !important;
+  font-size: 12px !important;
+}

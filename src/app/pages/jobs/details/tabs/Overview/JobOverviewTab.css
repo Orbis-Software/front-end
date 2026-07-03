@@ -379,3 +379,20 @@
     grid-template-columns: 1fr;
   }
 }
+
+.job-overview-tab__section-header p,
+.job-overview-tab__header-switch span,
+.job-overview-tab__field span,
+.job-overview-tab__field input,
+.job-overview-tab__field select,
+.job-overview-tab__field textarea,
+.job-overview-tab__order-button span,
+.job-overview-tab__order-button small,
+.job-overview-tab__order-banner,
+.job-overview-tab__address-card,
+.job-overview-tab__address-card *,
+.job-overview-tab__schedule-grid,
+.job-overview-tab__schedule-grid * {
+  color: #1a1a18 !important;
+  font-size: 12px !important;
+}

@@ -578,3 +578,25 @@
     width: 100%;
   }
 }
+
+.job-transport-tab__section-header p,
+.job-transport-tab__mode-summary,
+.job-transport-tab__mode-summary *,
+.job-transport-tab__field span,
+.job-transport-tab__field input,
+.job-transport-tab__field select,
+.job-transport-tab__field textarea,
+.job-transport-tab__field .p-inputtext,
+.job-transport-tab__field .p-dropdown,
+.job-transport-tab__field .p-select,
+.job-transport-tab__field .p-dropdown-label,
+.job-transport-tab__field .p-select-label,
+.job-transport-tab__switch-group,
+.job-transport-tab__switch-group *,
+.job-transport-tab__conditional-header,
+.job-transport-tab__conditional-header *,
+.job-transport-tab__leg-table,
+.job-transport-tab__leg-table * {
+  color: #1a1a18 !important;
+  font-size: 12px !important;
+}

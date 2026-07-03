@@ -125,6 +125,7 @@ export type JobDetailsForm = {
   files: any[]
   upload_files: File[]
   upload_file_types: (string | null)[]
+  replace_file_types: string[]
 
   road_detail: JobRoadDetail
   sea_detail: JobSeaDetail

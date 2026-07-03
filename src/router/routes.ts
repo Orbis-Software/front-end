@@ -34,6 +34,7 @@ const JobOverviewTab = () => import("@/app/pages/jobs/details/tabs/Overview/JobO
 const JobPackagesTab = () => import("@/app/pages/jobs/details/tabs/Packages/JobPackagesTab.vue")
 const JobTransportTab = () => import("@/app/pages/jobs/details/tabs/Transport/JobTransportTab.vue")
 const JobCostsTab = () => import("@/app/pages/jobs/details/tabs/Costs/JobCostsTab.vue")
+const JobDocumentsTab = () => import("@/app/pages/jobs/details/tabs/Documents/JobDocumentsTab.vue")
 const JobSupplierInvoicesTab = () =>
   import("@/app/pages/jobs/details/tabs/Invoices/JobSupplierInvoicesTab.vue")
 const JobConsolidationCollectionsTab = () =>
@@ -312,6 +313,11 @@ export const routes: RouteRecordRaw[] = [
             path: "costs",
             name: "tms.jobs.show.costs",
             component: JobCostsTab,
+          },
+          {
+            path: "documents",
+            name: "tms.jobs.show.documents",
+            component: JobDocumentsTab,
           },
           {
             path: "supplier-invoices",

@@ -95,3 +95,13 @@
     grid-template-columns: 1fr;
   }
 }
+
+.job-normal-invoice-tab__email-summary span,
+.job-normal-invoice-tab__email-summary strong,
+.job-normal-invoice-tab__manual-email,
+.job-normal-invoice-tab__manual-email *,
+.job-normal-invoice-tab__field,
+.job-normal-invoice-tab__field * {
+  color: #1a1a18 !important;
+  font-size: 12px !important;
+}

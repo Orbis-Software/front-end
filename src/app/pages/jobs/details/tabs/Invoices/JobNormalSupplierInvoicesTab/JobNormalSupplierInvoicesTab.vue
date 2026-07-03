@@ -17,6 +17,12 @@ const {
   emailInvoice,
   emailJobSummary,
   emailRecipientOptions,
+  confirmDeleteInvoice,
+  deleteBlockedDialogVisible,
+  deleteConfirmation,
+  deleteDialogVisible,
+  deleteInvoiceTarget,
+  deletingInvoice,
   generateDialogVisible,
   generateLoading,
   generateSupplierId,
@@ -33,20 +39,23 @@ const {
   jobContext,
   money,
   numberValue,
+  openDeleteInvoice,
   openGenerateDialog,
   openInvoiceFromList,
   openPassDialog,
-  openUploadDialog,
   openPendingInvoice,
+  onPassInvoiceFileSelected,
   passSupplierOptions,
   passDialogVisible,
   passDraft,
-  passGrossAmount,
+  passSupplierOutstanding,
+  passTotalInvoiceAmount,
   passSaving,
   passSupplierInvoice,
   removeInvoiceLine,
   rows,
   saveSupplierInvoice,
+  clearPassInvoiceAttachment,
   supplierInvoiceOptions,
   supplierName,
   supplierOptions,
@@ -86,12 +95,6 @@ const {
               passSaving
             "
             @click="openPassDialog"
-          />
-          <Button
-            label="Upload Supplier Invoice"
-            icon="pi pi-upload"
-            :disabled="jobContext.saving.value || generateLoading || passSaving"
-            @click="openUploadDialog"
           />
         </div>
       </header>
@@ -466,9 +469,9 @@ const {
           </label>
 
           <label class="job-normal-invoice-tab__field">
-            <span>Net Amount</span>
+            <span>Invoice Amount</span>
             <InputNumber
-              v-model="passDraft.netAmount"
+              v-model="passDraft.invoiceAmount"
               :min="0"
               :min-fraction-digits="2"
               :max-fraction-digits="2"
@@ -486,14 +489,56 @@ const {
           </label>
 
           <label class="job-normal-invoice-tab__field">
-            <span>Gross Amount</span>
+            <span>Total Invoice Amount</span>
             <InputNumber
-              :model-value="passGrossAmount"
+              :model-value="passTotalInvoiceAmount"
               :min-fraction-digits="2"
               :max-fraction-digits="2"
               disabled
             />
           </label>
+        </div>
+
+        <div class="job-normal-invoice-tab__outstanding">
+          <div>
+            <span>Supplier Total Due</span>
+            <strong>{{ money(passDraft.currency, passSupplierOutstanding.total) }}</strong>
+          </div>
+          <div>
+            <span>Already Passed</span>
+            <strong>{{ money(passDraft.currency, passSupplierOutstanding.passed) }}</strong>
+          </div>
+          <div>
+            <span>Outstanding Before</span>
+            <strong>{{
+              money(passDraft.currency, passSupplierOutstanding.outstandingBefore)
+            }}</strong>
+          </div>
+          <div>
+            <span>Outstanding After</span>
+            <strong>{{
+              money(passDraft.currency, passSupplierOutstanding.outstandingAfter)
+            }}</strong>
+          </div>
+        </div>
+
+        <label class="job-normal-invoice-tab__checkbox-row">
+          <Checkbox v-model="passDraft.residualAmount" binary />
+          <span>Residual amount - leave the remaining outstanding amount as unpassed</span>
+        </label>
+
+        <label class="job-normal-invoice-tab__field">
+          <span>Attach Invoice</span>
+          <input
+            type="file"
+            class="job-normal-invoice-tab__file"
+            accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx"
+            @change="onPassInvoiceFileSelected"
+          />
+        </label>
+        <div v-if="passDraft.attachedInvoice" class="job-normal-invoice-tab__attachment">
+          <span>{{ passDraft.attachedInvoice.name }}</span>
+          <Button label="Remove" text severity="danger" @click="clearPassInvoiceAttachment" />
         </div>
 
         <p class="job-normal-invoice-tab__note">
@@ -510,6 +555,61 @@ const {
           :loading="passSaving"
           @click="passSupplierInvoice"
         />
+      </template>
+    </Dialog>
+
+    <Dialog
+      v-model:visible="deleteDialogVisible"
+      modal
+      header="Delete Supplier Invoice"
+      class="job-normal-invoice-tab__dialog"
+      :style="{ width: 'min(520px, 94vw)' }"
+    >
+      <div class="job-normal-invoice-tab__dialog-body">
+        <p class="job-normal-invoice-tab__note">
+          This will delete the latest supplier invoice only. To confirm, type the invoice number
+          exactly: <strong>{{ deleteInvoiceTarget?.invoiceNumber }}</strong>
+        </p>
+        <label class="job-normal-invoice-tab__field">
+          <span>Invoice Number</span>
+          <InputText v-model="deleteConfirmation" autocomplete="off" />
+        </label>
+      </div>
+
+      <template #footer>
+        <Button
+          label="Cancel"
+          text
+          :disabled="deletingInvoice"
+          @click="deleteDialogVisible = false"
+        />
+        <Button
+          label="Delete Invoice"
+          icon="pi pi-trash"
+          severity="danger"
+          :loading="deletingInvoice"
+          :disabled="deleteConfirmation.trim() !== String(deleteInvoiceTarget?.invoiceNumber ?? '')"
+          @click="confirmDeleteInvoice"
+        />
+      </template>
+    </Dialog>
+
+    <Dialog
+      v-model:visible="deleteBlockedDialogVisible"
+      modal
+      header="Invoice Cannot Be Deleted"
+      class="job-normal-invoice-tab__dialog"
+      :style="{ width: 'min(520px, 94vw)' }"
+    >
+      <div class="job-normal-invoice-tab__dialog-body">
+        <p class="job-normal-invoice-tab__note">
+          This invoice cannot be deleted because it is not the latest invoice. This keeps the
+          invoice audit trail and numbering sequence intact.
+        </p>
+      </div>
+
+      <template #footer>
+        <Button label="OK" @click="deleteBlockedDialogVisible = false" />
       </template>
     </Dialog>
 

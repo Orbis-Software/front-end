@@ -3,7 +3,7 @@
   --job-field-radius: 8px;
   --job-field-font-size: 12px;
   --job-field-text: #1a1a18;
-  --job-field-muted: #737373;
+  --job-field-muted: #1a1a18;
 
   display: flex;
   flex-direction: column;
@@ -18,10 +18,10 @@
    HEADER CARD
 ========================================= */
 .job-header-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
+  background: #fff;
+  border: 1px solid #e6e6e6;
   border-bottom: none;
-  border-radius: 18px 18px 0 0;
+  border-radius: 14px 14px 0 0;
   overflow: hidden;
 }
 
@@ -30,7 +30,9 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 1rem;
-  padding: 1rem;
+  padding: 13px 16px;
+  background: #f7f7f5;
+  border-bottom: 1px solid #e6e6e6;
 }
 
 .job-header-left {
@@ -47,8 +49,8 @@
 
 .job-meta {
   margin: 0.25rem 0 0;
-  font-size: 0.875rem;
-  color: var(--text-muted);
+  font-size: 12px;
+  color: #888780;
 }
 
 /* =========================================
@@ -99,7 +101,8 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding: 0 1rem 1rem;
+  padding: 14px 16px;
+  background: linear-gradient(180deg, #fff 0%, #fbfbfa 100%);
 }
 
 .job-header-form__grid {
@@ -135,7 +138,7 @@
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--job-field-muted);
+  color: #737373;
 }
 
 .job-header-form__field strong {
@@ -160,6 +163,7 @@
   font-family: var(--font-body) !important;
   font-size: var(--job-field-font-size) !important;
   color: var(--job-field-text);
+  border-color: #d9d9d9;
 }
 
 /* InputText */
@@ -171,6 +175,10 @@
   border-radius: var(--job-field-radius);
   font-size: var(--job-field-font-size);
   line-height: var(--job-field-height);
+  transition:
+    border-color 0.12s ease,
+    box-shadow 0.12s ease,
+    background 0.12s ease;
 }
 
 /* Dropdown */
@@ -179,6 +187,10 @@
   align-items: center;
   border-radius: var(--job-field-radius);
   overflow: hidden;
+  transition:
+    border-color 0.12s ease,
+    box-shadow 0.12s ease,
+    background 0.12s ease;
 }
 
 .job-header-form__field :deep(.p-dropdown-label) {
@@ -235,7 +247,7 @@
   justify-content: space-between;
   gap: 10px;
   padding: 0 10px;
-  border: 1px solid #d1d5db;
+  border: 1px solid #d9d9d9;
   border-radius: var(--job-field-radius);
   background: #fff;
   color: var(--job-field-text);
@@ -244,6 +256,10 @@
   font-size: var(--job-field-font-size);
   font-weight: 700;
   text-align: left;
+  transition:
+    border-color 0.12s ease,
+    box-shadow 0.12s ease,
+    background 0.12s ease;
 }
 
 .job-status-trigger span {
@@ -260,7 +276,7 @@
 
 .job-status-trigger i {
   flex: 0 0 auto;
-  color: #6b7280;
+  color: #b84f10;
   font-size: 12px;
 }
 
@@ -294,6 +310,93 @@
 .job-details-page :deep(select),
 .job-details-page :deep(input) {
   font-size: var(--job-field-font-size) !important;
+  color: var(--job-field-text) !important;
+}
+
+.job-details-page :deep(.p-select-label),
+.job-details-page :deep(.p-multiselect-label),
+.job-details-page :deep(.p-inputnumber-input),
+.job-details-page :deep(.p-textarea),
+.job-details-page :deep(.p-placeholder) {
+  color: var(--job-field-text) !important;
+  font-size: var(--job-field-font-size) !important;
+}
+
+.job-details-page :deep(.p-dropdown-item),
+.job-details-page :deep(.p-select-option),
+.job-details-page :deep(.p-multiselect-option) {
+  color: var(--job-field-text) !important;
+  font-size: var(--job-field-font-size) !important;
+}
+
+.job-details-page :deep(.p-dropdown-label),
+.job-details-page :deep(.p-select-label),
+.job-details-page :deep(.p-multiselect-label),
+.job-details-page :deep(.p-dropdown .p-inputtext),
+.job-details-page :deep(.p-select .p-inputtext),
+.job-details-page :deep(.p-dropdown-item),
+.job-details-page :deep(.p-select-option),
+.job-details-page :deep(.p-multiselect-option),
+.job-details-page :deep(.p-autocomplete-input),
+.job-details-page :deep(.p-treeselect-label) {
+  font-weight: 400 !important;
+}
+
+.job-details-page .job-header-form__field span,
+.job-details-page .job-costs-tab__section-header p,
+.job-details-page .job-costs-tab__table th,
+.job-details-page .job-costs-tab__number,
+.job-details-page .job-normal-invoice-tab__header p,
+.job-details-page .job-normal-invoice-tab__subheader p,
+.job-details-page .job-normal-invoice-tab__empty,
+.job-details-page .job-normal-invoice-tab__note,
+.job-details-page .job-normal-invoice-tab__muted,
+.job-details-page .job-normal-invoice-tab__metric span,
+.job-details-page .job-normal-invoice-tab__field span,
+.job-details-page .job-normal-invoice-tab__outstanding span,
+.job-details-page .job-normal-invoice-tab__checkbox-row span,
+.job-details-page .job-documents-page__header p,
+.job-details-page .job-documents-page__info span,
+.job-details-page .job-packages-tab__table th {
+  color: var(--job-field-text) !important;
+}
+
+.job-details-page .job-header-form__field > span {
+  color: #737373 !important;
+}
+
+.job-details-page .job-costs-tab__table,
+.job-details-page .job-costs-tab__table td,
+.job-details-page .job-costs-tab__table .p-inputtext,
+.job-details-page .job-costs-tab__table .p-dropdown,
+.job-details-page .job-costs-tab__table .p-select,
+.job-details-page .job-costs-tab__table .p-dropdown-label,
+.job-details-page .job-costs-tab__table .p-select-label,
+.job-details-page .job-costs-tab__table .p-inputnumber-input,
+.job-details-page .job-costs-tab__computed,
+.job-details-page .job-normal-invoice-tab__table,
+.job-details-page .job-normal-invoice-tab__table th,
+.job-details-page .job-normal-invoice-tab__table td,
+.job-details-page .job-normal-invoice-tab__status,
+.job-details-page .job-normal-invoice-tab__link,
+.job-details-page .job-normal-invoice-tab__metric strong,
+.job-details-page .job-normal-invoice-tab__placeholder strong,
+.job-details-page .job-normal-invoice-tab__field .p-dropdown,
+.job-details-page .job-normal-invoice-tab__field .p-select,
+.job-details-page .job-normal-invoice-tab__field .p-multiselect,
+.job-details-page .job-normal-invoice-tab__field .p-calendar,
+.job-details-page .job-normal-invoice-tab__field .p-inputnumber,
+.job-details-page .job-normal-invoice-tab__field .p-inputnumber-input,
+.job-details-page .job-normal-invoice-tab__field .p-inputtext,
+.job-details-page .job-normal-invoice-tab__field .p-textarea,
+.job-details-page .job-normal-invoice-tab__outstanding strong,
+.job-details-page .job-normal-invoice-tab__file,
+.job-details-page .job-normal-invoice-tab__attachment,
+.job-details-page .job-documents-page__info strong,
+.job-details-page .job-documents-page__info span,
+.job-details-page .job-documents-page__status {
+  color: var(--job-field-text) !important;
+  font-size: var(--job-field-font-size) !important;
 }
 
 .job-details-page .p-dropdown,
@@ -313,6 +416,7 @@
   border-radius: 0 !important;
   background: transparent !important;
   box-shadow: none !important;
+  font-weight: 400 !important;
 }
 
 .job-details-page .p-dropdown-trigger,
@@ -332,6 +436,13 @@
 .p-dropdown-panel .p-dropdown-header .p-inputtext {
   font-family: var(--font-body) !important;
   font-size: 12px !important;
+  font-weight: 400 !important;
+}
+
+.p-select-overlay .p-select-option,
+.p-multiselect-overlay .p-multiselect-option,
+.p-dropdown-panel .p-dropdown-item {
+  font-weight: 400 !important;
 }
 
 /* Focus */

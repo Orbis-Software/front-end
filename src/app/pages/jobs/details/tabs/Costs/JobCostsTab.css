@@ -214,6 +214,7 @@
   background: transparent;
   padding: 0 8px;
   font-size: 12px;
+  color: #1a1a18;
   outline: none;
 }
 
@@ -238,12 +239,14 @@
   padding: 0;
   text-overflow: ellipsis;
   white-space: nowrap;
+  color: #1a1a18;
+  font-size: 12px;
 }
 
 .job-costs-tab__number {
   width: 40px;
   text-align: center;
-  color: #888780;
+  color: #1a1a18;
   font-weight: 800;
 }
 
@@ -253,6 +256,23 @@
   font-size: 12px;
   text-align: right;
   white-space: nowrap;
+}
+
+.job-costs-tab__section-header p,
+.job-costs-tab__table,
+.job-costs-tab__table th,
+.job-costs-tab__table td,
+.job-costs-tab__number,
+.job-costs-tab__computed,
+.job-costs-tab__exchange-rate,
+.job-costs-tab__table .p-inputtext,
+.job-costs-tab__table .p-dropdown,
+.job-costs-tab__table .p-select,
+.job-costs-tab__table .p-dropdown-label,
+.job-costs-tab__table .p-select-label,
+.job-costs-tab__table .p-inputnumber-input {
+  color: #1a1a18 !important;
+  font-size: 12px !important;
 }
 
 .job-costs-tab__exchange-rate {

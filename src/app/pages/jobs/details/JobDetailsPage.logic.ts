@@ -1221,6 +1221,7 @@ export function useJobDetailsPage() {
     files: [],
     upload_files: [],
     upload_file_types: [],
+    replace_file_types: [],
 
     road_detail: emptyRoadDetail(),
     sea_detail: emptySeaDetail(),
@@ -1277,6 +1278,12 @@ export function useJobDetailsPage() {
       label: "Costs & Charges",
       name: "tms.jobs.show.costs",
       key: "costs",
+      showCount: true,
+    },
+    {
+      label: "Documents",
+      name: "tms.jobs.show.documents",
+      key: "documents",
       showCount: true,
     },
     invoicesTab,
@@ -1719,6 +1726,20 @@ export function useJobDetailsPage() {
   function getTabCount(key: string): number {
     if (key === "packages") return form.packages.length
     if (key === "costs") return form.buy_costs.length + form.sell_costs.length
+    if (key === "documents") {
+      const generatedDocuments = 1 + (form.mode_of_transport === "road" ? 2 : 0)
+      const hasPod = (form.files ?? []).some(
+        file => String(file?.type ?? "").toLowerCase() === "pod",
+      )
+      const podPlaceholder = hasPod ? 0 : 1
+
+      return (
+        generatedDocuments +
+        (form.files?.length ?? 0) +
+        (form.invoices?.length ?? 0) +
+        podPlaceholder
+      )
+    }
     if (key === "invoices") {
       return getTabCount("customer-invoice") + getTabCount("supplier-invoices")
     }
@@ -1831,6 +1852,7 @@ export function useJobDetailsPage() {
     form.files = data.files ?? []
     form.upload_files = []
     form.upload_file_types = []
+    form.replace_file_types = []
 
     form.packages = Array.isArray(extra.packages) ? extra.packages.map(normalizePackageRow) : []
 
@@ -2009,6 +2031,7 @@ export function useJobDetailsPage() {
       consolidation_details: form.consolidation_details,
       files: form.upload_files,
       file_types: form.upload_file_types,
+      replace_file_types: form.replace_file_types,
     }
   }
 
