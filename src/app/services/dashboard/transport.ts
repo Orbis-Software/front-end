@@ -1,12 +1,14 @@
 import http from "@/api/http"
 import type { TransportMode } from "@/app/types/transport-job"
 
-export type DashboardDateRange = "month" | "week" | "last_month"
+export type DashboardDateRange = "all_time" | "month" | "week" | "last_month"
 export type DashboardUserFocus = "all_users" | "current_user" | number
+export type DashboardJobStatus = "all" | string
 
 export interface DashboardTransportParams {
   date?: DashboardDateRange
   mode?: TransportMode | "all"
+  job_status?: DashboardJobStatus
   user_focus?: DashboardUserFocus
   q?: string
 }

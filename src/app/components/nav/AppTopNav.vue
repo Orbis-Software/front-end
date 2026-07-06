@@ -137,7 +137,7 @@ function resolveHref(path?: string) {
   cursor: pointer;
   text-decoration: none;
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: 15px;
   color: var(--text);
   transition:
     background-color 0.15s ease,
@@ -169,7 +169,7 @@ function resolveHref(path?: string) {
 @media (max-width: 1280px) {
   .nav-link {
     padding: 9px 12px;
-    font-size: 0.9rem;
+    font-size: 14px;
   }
 }
 

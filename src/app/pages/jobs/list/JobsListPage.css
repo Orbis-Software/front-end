@@ -1,7 +1,4 @@
 .jobs-list-page {
-  --font-body: "Inter";
-  --font-accent: "IBM Plex Sans";
-
   display: flex;
   flex-direction: column;
   gap: 0.5rem;

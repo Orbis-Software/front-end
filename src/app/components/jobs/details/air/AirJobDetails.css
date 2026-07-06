@@ -34,7 +34,7 @@
 }
 
 .air-card__title {
-  font-family: "IBM Plex Sans", sans-serif;
+  font-family: var(--font-accent);
   font-size: 12px;
   font-weight: 600;
   color: var(--text, #262626);
@@ -90,7 +90,7 @@
 
 .air-label,
 .air-field > label {
-  font-family: "IBM Plex Sans", sans-serif;
+  font-family: var(--font-accent);
   font-size: 10px;
   font-weight: 500;
   color: var(--text-muted, #737373);
@@ -172,7 +172,7 @@
   text-transform: uppercase;
   letter-spacing: 0.1em;
   color: var(--text-muted, #737373);
-  font-family: "IBM Plex Sans", sans-serif;
+  font-family: var(--font-accent);
   margin: 12px 0 8px;
 }
 
@@ -193,7 +193,7 @@
   border-radius: 6px;
   background: #f5f5f5;
   border: 1px solid var(--border, #c7c7c7);
-  font-family: "IBM Plex Sans", sans-serif;
+  font-family: var(--font-accent);
   font-size: 14px;
   font-weight: 600;
   color: var(--text, #262626);
@@ -221,7 +221,7 @@
 }
 
 .air-route__code {
-  font-family: "IBM Plex Sans", sans-serif;
+  font-family: var(--font-accent);
   font-size: 26px;
   font-weight: 600;
   color: var(--text, #262626);
@@ -282,7 +282,7 @@
 }
 
 .air-table th {
-  font-family: "IBM Plex Sans", sans-serif;
+  font-family: var(--font-accent);
   font-size: 10px;
   font-weight: 600;
   color: var(--text-muted, #737373);
@@ -357,7 +357,7 @@
 }
 
 .air-summary__label {
-  font-family: "IBM Plex Sans", sans-serif;
+  font-family: var(--font-accent);
   font-size: 10px;
   color: var(--text-muted, #737373);
   text-transform: uppercase;
@@ -366,7 +366,7 @@
 }
 
 .air-summary__value {
-  font-family: "IBM Plex Sans", sans-serif;
+  font-family: var(--font-accent);
   font-size: 20px;
   font-weight: 700;
   color: var(--text, #262626);

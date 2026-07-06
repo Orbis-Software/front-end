@@ -26,12 +26,7 @@
 
   color: var(--orbis-loader-text);
 
-  font-family:
-    Inter,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
+  font-family: var(--font-body);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -319,7 +314,7 @@
 .orbis-loader__brand strong {
   display: block;
 
-  font-family: "IBM Plex Sans", Inter, sans-serif;
+  font-family: var(--font-accent);
 
   font-size: 27px;
   font-weight: 800;
@@ -450,7 +445,7 @@
 .orbis-loader__card h2 {
   margin: 0;
 
-  font-family: "IBM Plex Sans", Inter, sans-serif;
+  font-family: var(--font-accent);
 
   font-size: 20px;
   font-weight: 750;
