@@ -92,7 +92,7 @@ function confirmRemoveRow() {
                 {{ index + 1 }}
               </td>
 
-              <td>
+              <td class="job-packages-tab__packaging-cell">
                 <Dropdown
                   v-model="row.package_type"
                   :options="packageTypeOptions"

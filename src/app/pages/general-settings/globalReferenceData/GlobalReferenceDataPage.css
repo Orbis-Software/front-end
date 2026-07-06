@@ -1,7 +1,4 @@
 .global-reference-page {
-  --font-body: "Inter";
-  --font-accent: "IBM Plex Sans";
-
   width: 100%;
   background: var(--bg-card);
   border: 1px solid var(--border);

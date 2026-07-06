@@ -380,7 +380,7 @@ onBeforeUnmount(() => document.removeEventListener("click", handleClickOutside))
   border-radius: 10px;
   text-decoration: none;
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: 15px;
   color: var(--text);
   border: 1px solid transparent;
   transition:

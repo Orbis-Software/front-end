@@ -1024,7 +1024,7 @@
 .consolidation-quote-text {
   width: 100%;
   margin-top: 12px;
-  font-family: var(--font-body, Inter, Arial, sans-serif);
+  font-family: var(--font-body);
   font-size: 13px;
 }
 

@@ -53,6 +53,17 @@
             />
           </div>
 
+          <div class="dash-field">
+            <label class="dash-label">JOB STATUS</label>
+            <Select
+              v-model="filters.jobStatus"
+              :options="jobStatusOptions"
+              optionLabel="label"
+              optionValue="value"
+              class="dash-select"
+            />
+          </div>
+
           <div v-if="isManagement" class="dash-field">
             <label class="dash-label">USER FOCUS</label>
             <Select
@@ -406,6 +417,7 @@ import dashboardService from "@/app/services/dashboard"
 import { useAuthStore } from "@/app/stores/auth"
 import type {
   DashboardDateRange,
+  DashboardJobStatus,
   DashboardTransportSummary,
   DashboardUserFocus,
 } from "@/app/services/dashboard/transport"
@@ -425,7 +437,8 @@ const router = useRouter()
 const auth = useAuthStore()
 
 const filters = reactive({
-  date: "month" as DashboardDateRange,
+  date: "all_time" as DashboardDateRange,
+  jobStatus: "all" as DashboardJobStatus,
   userFocus: "all_users" as DashboardUserFocus,
   mode: "all" as TransportMode | "all",
   search: "",
@@ -445,9 +458,21 @@ type SoftDeleteFields = {
 }
 
 const dateOptions = [
+  { label: "All Time", value: "all_time" },
   { label: "This Month", value: "month" },
   { label: "This Week", value: "week" },
   { label: "Last Month", value: "last_month" },
+]
+
+const jobStatusOptions = [
+  { label: "All Statuses", value: "all" },
+  { label: "Job Created", value: "Job Created" },
+  { label: "Data Entry", value: "Data Entry" },
+  { label: "Booked", value: "Booked" },
+  { label: "Departed", value: "Departed" },
+  { label: "In Transit", value: "In Transit" },
+  { label: "Arrived", value: "Arrived" },
+  { label: "POD / Closed", value: "POD / Closed" },
 ]
 
 const userFocusOptions = computed(() => [
@@ -580,7 +605,14 @@ onMounted(() => {
 })
 
 watch(
-  () => [filters.date, filters.userFocus, filters.mode, filters.search, isManagement.value],
+  () => [
+    filters.date,
+    filters.jobStatus,
+    filters.userFocus,
+    filters.mode,
+    filters.search,
+    isManagement.value,
+  ],
   () => {
     if (fetchTimer) {
       clearTimeout(fetchTimer)
@@ -598,6 +630,7 @@ async function fetchDashboard() {
   try {
     const data = await dashboardService.transport({
       date: filters.date,
+      job_status: filters.jobStatus,
       user_focus: isManagement.value ? filters.userFocus : "current_user",
       mode: filters.mode,
       q: filters.search || undefined,

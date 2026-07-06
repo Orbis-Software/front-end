@@ -1280,13 +1280,13 @@ export function useJobDetailsPage() {
       key: "costs",
       showCount: true,
     },
+    invoicesTab,
     {
       label: "Documents",
       name: "tms.jobs.show.documents",
       key: "documents",
       showCount: true,
     },
-    invoicesTab,
     {
       label: "Load Planner",
       name: "tms.jobs.show.load-planner",

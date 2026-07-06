@@ -28,7 +28,7 @@
 }
 
 .rail-card__title {
-  font-family: "IBM Plex Sans", sans-serif;
+  font-family: var(--font-accent);
   font-size: 12px;
   font-weight: 600;
   color: var(--text, #262626);
@@ -83,7 +83,7 @@
 }
 
 .rail-field label {
-  font-family: "IBM Plex Sans", sans-serif;
+  font-family: var(--font-accent);
   font-size: 10px;
   font-weight: 500;
   color: var(--text-muted, #737373);
@@ -136,7 +136,7 @@
 
 .rail-group-label {
   grid-column: 1 / -1;
-  font-family: "IBM Plex Sans", sans-serif;
+  font-family: var(--font-accent);
   font-size: 10px;
   font-weight: 500;
   color: var(--text-muted, #737373);
@@ -169,7 +169,7 @@
 }
 
 .rail-addr-block__title {
-  font-family: "IBM Plex Sans", sans-serif;
+  font-family: var(--font-accent);
   font-size: 12px;
   font-weight: 600;
   color: var(--text, #262626);
@@ -190,7 +190,7 @@
 }
 
 .rail-table th {
-  font-family: "IBM Plex Sans", sans-serif;
+  font-family: var(--font-accent);
   font-size: 10px;
   font-weight: 600;
   color: var(--text-muted, #737373);
@@ -269,7 +269,7 @@
 }
 
 .rail-summary__label {
-  font-family: "IBM Plex Sans", sans-serif;
+  font-family: var(--font-accent);
   font-size: 10px;
   color: var(--text-muted, #737373);
   text-transform: uppercase;
@@ -278,7 +278,7 @@
 }
 
 .rail-summary__value {
-  font-family: "IBM Plex Sans", sans-serif;
+  font-family: var(--font-accent);
   font-size: 20px;
   font-weight: 700;
   color: var(--text, #262626);
@@ -306,7 +306,7 @@
 }
 
 .rail-charges-summary__label {
-  font-family: "IBM Plex Sans", sans-serif;
+  font-family: var(--font-accent);
   font-size: 10px;
   color: var(--text-muted, #737373);
   text-transform: uppercase;
@@ -315,7 +315,7 @@
 }
 
 .rail-charges-summary__value {
-  font-family: "IBM Plex Sans", sans-serif;
+  font-family: var(--font-accent);
   font-size: 20px;
   font-weight: 700;
   color: var(--text, #262626);

@@ -36,7 +36,7 @@
 .quote-details-page__title small {
   display: block;
   margin-top: 4px;
-  font-family: var(--font-base);
+  font-family: var(--font-body);
   font-size: 13px;
   font-weight: 500;
   color: var(--text-muted);
@@ -277,7 +277,7 @@
 .quote-details-page__terms {
   margin: 0;
   white-space: pre-wrap;
-  font-family: var(--font-base);
+  font-family: var(--font-body);
   font-size: 13px;
   color: #475569;
   line-height: 1.6;

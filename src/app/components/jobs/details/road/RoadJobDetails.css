@@ -36,7 +36,7 @@
 }
 
 .road-card__title {
-  font-family: "IBM Plex Sans", sans-serif;
+  font-family: var(--font-accent);
   font-size: 12px;
   font-weight: 600;
   color: var(--text, #262626);
@@ -125,7 +125,7 @@
 }
 
 .road-label {
-  font-family: "IBM Plex Sans", sans-serif;
+  font-family: var(--font-accent);
   font-size: 10px;
   font-weight: 500;
   color: var(--text-muted, #737373);
@@ -181,7 +181,7 @@
   border: none;
   background: transparent;
   color: var(--text-muted, #737373);
-  font-family: "IBM Plex Sans", sans-serif;
+  font-family: var(--font-accent);
   font-size: 12px;
   font-weight: 500;
   padding: 9px 16px;
@@ -207,7 +207,7 @@
   border-radius: 6px;
   font-size: 11px;
   font-weight: 600;
-  font-family: "IBM Plex Sans", sans-serif;
+  font-family: var(--font-accent);
   background: #f9f9f9;
   color: var(--text-muted, #737373);
   cursor: pointer;
@@ -252,7 +252,7 @@
 }
 
 .road-kpi__label {
-  font-family: "IBM Plex Sans", sans-serif;
+  font-family: var(--font-accent);
   font-size: 10px;
   color: var(--text-muted, #737373);
   text-transform: uppercase;
@@ -261,7 +261,7 @@
 }
 
 .road-kpi__value {
-  font-family: "IBM Plex Sans", sans-serif;
+  font-family: var(--font-accent);
   font-size: 20px;
   font-weight: 700;
   color: var(--text, #262626);
@@ -282,7 +282,7 @@
 }
 
 .road-table th {
-  font-family: "IBM Plex Sans", sans-serif;
+  font-family: var(--font-accent);
   font-size: 10px;
   font-weight: 600;
   color: var(--text-muted, #737373);
@@ -307,7 +307,7 @@
 
 .road-table tfoot td {
   background: #efefef;
-  font-family: "IBM Plex Sans", sans-serif;
+  font-family: var(--font-accent);
   font-weight: 600;
 }
 
@@ -384,7 +384,7 @@
   border-radius: 4px;
   padding: 3px 8px;
   background: #f0f0f0;
-  font-family: "IBM Plex Sans", sans-serif;
+  font-family: var(--font-accent);
   font-size: 10px;
   font-weight: 600;
   color: var(--text-muted, #737373);
