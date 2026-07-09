@@ -6,8 +6,16 @@ import InputNumber from "primevue/inputnumber"
 import InputSwitch from "primevue/inputswitch"
 import InputText from "primevue/inputtext"
 import Textarea from "primevue/textarea"
-import { computed } from "vue"
+import { computed, inject } from "vue"
+import type { ComputedRef, Ref } from "vue"
+import type { JobPdfDocument } from "@/app/services/transport-jobs/job-pdf"
 import { useJobTransportTab } from "./JobTransportTab.logic"
+
+type JobPdfActions = {
+  pdfLoading: Ref<JobPdfDocument | null>
+  isPdfLoading: ComputedRef<boolean>
+  loadPdf: (document: JobPdfDocument) => Promise<void>
+}
 
 const {
   form,
@@ -40,11 +48,40 @@ const {
 
 const {
   roadServiceTypeOptions: roadServiceOptions,
+  roadLocalCollectionTypeOptions: localCollectionTypeOptions,
+  roadServiceLevelOptions: localServiceLevelOptions,
   roadLoadTypeOptions: loadTypeOptions,
   vehicleTypeOptions: roadVehicleOptions,
   palletTypeOptions,
   podMethodOptions,
 } = referenceOptions
+
+const jobPdfActions = inject<JobPdfActions | null>("jobPdfActions", null)
+const transportOrderLoading = computed(() => jobPdfActions?.pdfLoading.value === "transport_order")
+const transportOrderDisabled = computed(() => !jobPdfActions || jobPdfActions.isPdfLoading.value)
+const transportOrderLabel = computed(() =>
+  transportOrderLoading.value ? "Opening..." : "Transport Order",
+)
+
+const activeRoadOrderType = computed({
+  get() {
+    return form.order_type === "Domestic Collection" || form.order_type === "Local Collection"
+      ? "Domestic Collection"
+      : "Full Transport Order"
+  },
+  set(value: "Domestic Collection" | "Full Transport Order") {
+    form.order_type = value
+    form.road_detail.order_type = value
+  },
+})
+
+const domesticCollectionMileageCost = computed(() => {
+  const distance = Number(form.road_detail.local_estimated_distance_miles ?? 0)
+  const rate = Number(form.road_detail.local_rate_per_mile ?? 0)
+  const cost = distance * rate
+
+  return cost > 0 ? Number(cost.toFixed(2)) : null
+})
 
 const isCustomVehicle = computed(() => {
   return form.road_detail.vehicle_type === "Custom / Specialised Vehicle"
@@ -80,6 +117,10 @@ function syncRoadDetailDropdownFilter(event: unknown, key: string, fetchGlobalRe
   syncSearchableDropdownInput(event, form.road_detail as Record<string, any>, key, {
     fetchGlobalReference,
   })
+}
+
+function openTransportOrder() {
+  void jobPdfActions?.loadPdf("transport_order")
 }
 
 const legModeOptions = [
@@ -870,11 +911,49 @@ const globalReferenceVirtualScrollerOptions = {
 
     <div v-if="mode === 'road'" class="job-transport-tab__section">
       <header class="job-transport-tab__section-header">
-        <h2>Full Transport Order</h2>
+        <h2>Road Transport Orders</h2>
         <span class="job-transport-tab__badge">Road</span>
       </header>
 
-      <div class="job-transport-tab__grid">
+      <div class="job-transport-tab__order-tabs" aria-label="Road transport order type">
+        <button
+          type="button"
+          class="job-transport-tab__order-tab"
+          :class="{
+            'job-transport-tab__order-tab--active': activeRoadOrderType === 'Full Transport Order',
+          }"
+          @click="activeRoadOrderType = 'Full Transport Order'"
+        >
+          Full Transport Order
+        </button>
+
+        <button
+          type="button"
+          class="job-transport-tab__order-tab"
+          :class="{
+            'job-transport-tab__order-tab--active': activeRoadOrderType === 'Domestic Collection',
+          }"
+          @click="activeRoadOrderType = 'Domestic Collection'"
+        >
+          Domestic Collection
+        </button>
+      </div>
+
+      <div
+        v-if="activeRoadOrderType === 'Full Transport Order'"
+        class="job-transport-tab__order-actions"
+      >
+        <Button
+          class="job-transport-tab__document-btn"
+          icon="pi pi-truck"
+          :label="transportOrderLabel"
+          :loading="transportOrderLoading"
+          :disabled="transportOrderDisabled"
+          @click="openTransportOrder"
+        />
+      </div>
+
+      <div v-if="activeRoadOrderType === 'Full Transport Order'" class="job-transport-tab__grid">
         <label class="job-transport-tab__field">
           <span>Service Type</span>
           <Dropdown
@@ -1187,7 +1266,267 @@ const globalReferenceVirtualScrollerOptions = {
         </div>
       </div>
 
-      <div v-if="form.road_detail.full_multi_drop" class="job-transport-tab__conditional-card">
+      <div v-else class="job-transport-tab__grid">
+        <label class="job-transport-tab__field">
+          <span>Collection Type</span>
+          <Dropdown
+            v-model="form.road_detail.local_collection_type"
+            :options="localCollectionTypeOptions"
+            option-label="label"
+            option-value="value"
+            placeholder="Select collection type"
+            class="job-transport-tab__prime-select"
+            show-clear
+          />
+        </label>
+
+        <label class="job-transport-tab__field">
+          <span>Priority / Service Level</span>
+          <Dropdown
+            v-model="form.road_detail.local_service_level"
+            :options="localServiceLevelOptions"
+            option-label="label"
+            option-value="value"
+            placeholder="Select service level"
+            class="job-transport-tab__prime-select"
+            show-clear
+          />
+        </label>
+
+        <label class="job-transport-tab__field">
+          <span>Vehicle Required</span>
+          <Dropdown
+            v-model="form.road_detail.local_vehicle_required"
+            :options="roadVehicleOptions"
+            option-label="label"
+            option-value="value"
+            placeholder="Select vehicle"
+            class="job-transport-tab__prime-select"
+            show-clear
+          />
+        </label>
+
+        <label class="job-transport-tab__field">
+          <span>Zone / Area</span>
+          <InputText
+            v-model="form.road_detail.local_zone_area"
+            placeholder="e.g. London Zone 1, M60 Corridor"
+          />
+        </label>
+
+        <label class="job-transport-tab__field">
+          <span>Est. Distance (miles)</span>
+          <InputNumber
+            v-model="form.road_detail.local_estimated_distance_miles"
+            :min="0"
+            :min-fraction-digits="0"
+            :max-fraction-digits="1"
+            placeholder="0"
+          />
+        </label>
+
+        <label class="job-transport-tab__field">
+          <span>Est. Duration (hrs)</span>
+          <InputNumber
+            v-model="form.road_detail.local_estimated_duration_hours"
+            :min="0"
+            :step="0.25"
+            :min-fraction-digits="0"
+            :max-fraction-digits="2"
+            placeholder="0.0"
+          />
+        </label>
+
+        <label class="job-transport-tab__field">
+          <span>Rate per Mile (GBP)</span>
+          <InputNumber
+            v-model="form.road_detail.local_rate_per_mile"
+            mode="currency"
+            currency="GBP"
+            locale="en-GB"
+            :min="0"
+            placeholder="0.00"
+          />
+        </label>
+
+        <label class="job-transport-tab__field">
+          <span>Estimated Mileage Cost</span>
+          <InputNumber
+            :model-value="domesticCollectionMileageCost"
+            mode="currency"
+            currency="GBP"
+            locale="en-GB"
+            placeholder="Auto-calculated"
+            disabled
+          />
+        </label>
+
+        <label class="job-transport-tab__field job-transport-tab__field--span-2">
+          <span>Haulier</span>
+          <Dropdown
+            v-model="form.road_detail.local_haulier_contact_id"
+            :options="contactOptions"
+            option-label="label"
+            option-value="value"
+            placeholder="Search contacts"
+            filter
+            filter-by="label,subLabel"
+            :loading="contactOptionsLoading"
+            class="job-transport-tab__prime-select"
+            show-clear
+          >
+            <template #option="{ option }">
+              <div class="job-transport-tab__reference-option">
+                <strong>{{ option.label }}</strong>
+                <small v-if="option.subLabel">{{ option.subLabel }}</small>
+              </div>
+            </template>
+          </Dropdown>
+        </label>
+
+        <label class="job-transport-tab__field">
+          <span>Buy Cost</span>
+          <InputNumber
+            v-model="form.road_detail.local_buy_rate"
+            :min="0"
+            :max-fraction-digits="2"
+            placeholder="0.00"
+          />
+        </label>
+
+        <label class="job-transport-tab__field">
+          <span>Buy Currency</span>
+          <Dropdown
+            v-model="form.road_detail.local_buy_currency"
+            :options="subcontractorCurrencyOptions"
+            placeholder="Currency"
+            filter
+            auto-filter-focus
+            editable
+            class="job-transport-tab__prime-select"
+            show-clear
+            @filter="syncRoadDetailDropdownFilter($event, 'local_buy_currency')"
+          />
+        </label>
+
+        <label class="job-transport-tab__field job-transport-tab__field--span-4">
+          <span>Charge Description</span>
+          <Dropdown
+            v-model="form.road_detail.local_charge_description"
+            :options="haulierChargeDescriptionOptions"
+            option-label="label"
+            option-value="value"
+            placeholder="Domestic Collection"
+            filter
+            auto-filter-focus
+            editable
+            show-clear
+            class="job-transport-tab__prime-select"
+            @filter="syncRoadDetailDropdownFilter($event, 'local_charge_description')"
+          />
+        </label>
+
+        <div class="job-transport-tab__switch-group">
+          <label class="job-transport-tab__field job-transport-tab__switch-field">
+            <span>Round Trip?</span>
+            <div class="job-transport-tab__switch-row">
+              <strong>{{ form.road_detail.local_round_trip ? "Yes" : "No" }}</strong>
+              <InputSwitch
+                :model-value="Boolean(form.road_detail.local_round_trip)"
+                @update:model-value="
+                  (value: boolean) => setBooleanDetail('local_round_trip', value)
+                "
+              />
+            </div>
+          </label>
+
+          <label class="job-transport-tab__field job-transport-tab__switch-field">
+            <span>Signature Required?</span>
+            <div class="job-transport-tab__switch-row">
+              <strong>{{ form.road_detail.local_signature_required ? "Yes" : "No" }}</strong>
+              <InputSwitch
+                :model-value="Boolean(form.road_detail.local_signature_required)"
+                @update:model-value="
+                  (value: boolean) => setBooleanDetail('local_signature_required', value)
+                "
+              />
+            </div>
+          </label>
+
+          <label class="job-transport-tab__field job-transport-tab__switch-field">
+            <span>Time Critical?</span>
+            <div class="job-transport-tab__switch-row">
+              <strong>{{ form.road_detail.local_time_critical ? "Yes" : "No" }}</strong>
+              <InputSwitch
+                :model-value="Boolean(form.road_detail.local_time_critical)"
+                @update:model-value="
+                  (value: boolean) => setBooleanDetail('local_time_critical', value)
+                "
+              />
+            </div>
+          </label>
+        </div>
+
+        <label class="job-transport-tab__field">
+          <span>POD Method</span>
+          <Dropdown
+            v-model="form.road_detail.local_pod_method"
+            :options="podMethodOptions"
+            option-label="label"
+            option-value="value"
+            placeholder="Select POD method"
+            class="job-transport-tab__prime-select"
+            show-clear
+          />
+        </label>
+
+        <label class="job-transport-tab__field">
+          <span>Parking / Access Code</span>
+          <InputText
+            v-model="form.road_detail.local_parking_access_code"
+            placeholder="Barrier code, bay number"
+          />
+        </label>
+
+        <label class="job-transport-tab__field">
+          <span>Exact Delivery Time</span>
+          <InputText
+            v-model="form.road_detail.local_exact_delivery_time"
+            type="time"
+            placeholder="hh:mm"
+          />
+        </label>
+
+        <label class="job-transport-tab__field">
+          <span>Driver Assigned</span>
+          <InputText
+            v-model="form.road_detail.local_driver_assigned"
+            placeholder="Driver name / ID"
+          />
+        </label>
+
+        <label class="job-transport-tab__field">
+          <span>Driver Mobile</span>
+          <InputText
+            v-model="form.road_detail.local_driver_mobile"
+            type="tel"
+            placeholder="+44 ..."
+          />
+        </label>
+
+        <label class="job-transport-tab__field job-transport-tab__field--span-4">
+          <span>Domestic Collection Notes</span>
+          <Textarea
+            v-model="form.road_detail.local_collection_notes"
+            placeholder="Collection to warehouse notes, access codes, handling instructions..."
+          />
+        </label>
+      </div>
+
+      <div
+        v-if="activeRoadOrderType === 'Full Transport Order' && form.road_detail.full_multi_drop"
+        class="job-transport-tab__conditional-card"
+      >
         <header class="job-transport-tab__conditional-header">
           <div>
             <h3>Intermediate Stops / Multi-Drop</h3>
@@ -1275,7 +1614,9 @@ const globalReferenceVirtualScrollerOptions = {
       </div>
 
       <div
-        v-if="form.road_detail.full_customs_required"
+        v-if="
+          activeRoadOrderType === 'Full Transport Order' && form.road_detail.full_customs_required
+        "
         class="job-transport-tab__conditional-card"
       >
         <header class="job-transport-tab__conditional-header">
@@ -1892,7 +2233,9 @@ const globalReferenceVirtualScrollerOptions = {
       </div>
 
       <div
-        v-if="form.road_detail.full_subcontractor_used"
+        v-if="
+          activeRoadOrderType === 'Full Transport Order' && form.road_detail.full_subcontractor_used
+        "
         class="job-transport-tab__conditional-card"
       >
         <header class="job-transport-tab__conditional-header">

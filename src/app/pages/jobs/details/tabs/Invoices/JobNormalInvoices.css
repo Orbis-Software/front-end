@@ -213,6 +213,27 @@
 
 .job-normal-invoice-tab__section--nested {
   margin-top: 14px;
+  background: #f8f8f8;
+  border-color: #c9c9c9;
+}
+
+.job-normal-invoice-tab__section--nested .job-normal-invoice-tab__subheader {
+  background: #ececec;
+  border-color: #c9c9c9;
+}
+
+.job-normal-invoice-tab__section--nested .job-normal-invoice-tab__table-wrap,
+.job-normal-invoice-tab__section--nested .job-normal-invoice-tab__placeholder {
+  background: #f1f1f1;
+}
+
+.job-normal-invoice-tab__section--nested .job-normal-invoice-tab__table th {
+  background: #ececec;
+  border-color: #c9c9c9;
+}
+
+.job-normal-invoice-tab__section--nested .job-normal-invoice-tab__table td {
+  border-color: #d8d8d8;
 }
 
 .job-normal-invoice-tab__table--invoice-list {

@@ -19,6 +19,12 @@ type SelectOption = {
 }
 
 type CostRow = BuyCostRow | SellChargeRow
+type ChargeBasisTotals = {
+  qty: number
+  gross: number
+  volume: number
+  volumeWeight: number
+}
 
 const fallbackCurrencyOptions: SelectOption[] = [
   { label: "GBP", value: "GBP" },
@@ -79,6 +85,10 @@ function normalizeDescription(value: unknown): string {
     .toLowerCase()
 }
 
+function roundMoney(value: number): number {
+  return Math.round((value + Number.EPSILON) * 100) / 100
+}
+
 function createBuyRow(): BuyCostRow {
   return {
     id: `buy-${buyId++}`,
@@ -86,6 +96,8 @@ function createBuyRow(): BuyCostRow {
     description: "",
     supplier_id: null,
     chargeCodeId: null,
+    addToSellCharges: false,
+    linkedSellChargeId: null,
     quantity: 1,
     unitCost: 0,
     currency: "GBP",
@@ -102,12 +114,14 @@ function createSellRow(): SellChargeRow {
     chargeCodeId: null,
     chargeCode: "",
     quantity: 1,
-    unitPrice: 0,
+    unitPrice: null,
     currency: "GBP",
     exchangeRate: 1,
     vatRate: 0,
     taxCode: "",
     amount: 0,
+    sourceBuyCostId: null,
+    linkedWeightCharge: false,
   }
 }
 
@@ -116,6 +130,8 @@ function hydrateBuyRow(row: any): BuyCostRow {
   row.description = row.description ?? ""
   row.supplier_id = row.supplier_id ?? row.supplierId ?? null
   row.chargeCodeId = row.chargeCodeId ?? row.charge_code_id ?? null
+  row.addToSellCharges = Boolean(row.addToSellCharges ?? row.add_to_sell_charges ?? false)
+  row.linkedSellChargeId = row.linkedSellChargeId ?? row.linked_sell_charge_id ?? null
   row.quantity = numberValue(row.quantity, 1) || 1
   row.unitCost = numberValue(row.unitCost ?? row.unit_cost ?? row.unit_amount ?? row.amount, 0)
   row.currency = row.currency || "GBP"
@@ -130,11 +146,17 @@ function hydrateSellRow(row: any): SellChargeRow {
   row.chargeCodeId = row.chargeCodeId ?? row.charge_code_id ?? null
   row.chargeCode = row.chargeCode ?? row.charge_code ?? ""
   row.quantity = numberValue(row.quantity, 1) || 1
-  row.unitPrice = numberValue(row.unitPrice ?? row.unit_price ?? row.unit_amount ?? row.amount, 0)
+  const unitPrice = row.unitPrice ?? row.unit_price ?? row.unit_amount ?? row.amount
+  row.unitPrice =
+    unitPrice === null || unitPrice === undefined || unitPrice === ""
+      ? null
+      : numberValue(unitPrice, 0)
   row.currency = row.currency || "GBP"
   row.exchangeRate = numberValue(row.exchangeRate ?? row.exchange_rate, 0)
   row.vatRate = numberValue(row.vatRate ?? row.vat_rate, 0)
   row.taxCode = row.taxCode ?? row.tax_code ?? ""
+  row.sourceBuyCostId = row.sourceBuyCostId ?? row.source_buy_cost_id ?? null
+  row.linkedWeightCharge = Boolean(row.linkedWeightCharge ?? row.linked_weight_charge ?? false)
 
   return row
 }
@@ -161,6 +183,8 @@ export function useJobCostsTab() {
   const printedDeleteDialogVisible = ref(false)
   const pendingDeleteRow = ref<CostRow | null>(null)
   const openChargeDescriptionDropdowns = ref(0)
+  const customerChargeTables = ref<any[]>([])
+  const customerChargeTablesLoading = ref(false)
   let missingChargeCodeTimer: ReturnType<typeof setTimeout> | null = null
 
   const buyRows = computed<BuyCostRow[]>(() => context.form.buy_costs.map(hydrateBuyRow))
@@ -270,12 +294,245 @@ export function useJobCostsTab() {
     })),
   )
 
+  const activeWeightChargeTables = computed(() => {
+    const now = new Date()
+
+    return customerChargeTables.value.filter(table => {
+      if (String(table?.charge_type ?? "").toLowerCase() !== "weight_break") return false
+      if (table?.is_active === false) return false
+
+      if (table?.valid_from) {
+        const from = new Date(table.valid_from)
+        if (!Number.isNaN(from.getTime()) && now < from) return false
+      }
+
+      if (table?.valid_until) {
+        const until = new Date(table.valid_until)
+        until.setHours(23, 59, 59, 999)
+        if (!Number.isNaN(until.getTime()) && now > until) return false
+      }
+
+      return true
+    })
+  })
+
+  const chargeBasisTotals = computed<ChargeBasisTotals>(() => {
+    return (context.form.packages ?? []).reduce(
+      (totals: ChargeBasisTotals, row: any) => {
+        const quantity = numberValue(row.quantity, 1) || 1
+        totals.qty += quantity
+        totals.gross += quantity * numberValue(row.grossWeightKg ?? row.weight, 0)
+        totals.volume += quantity * numberValue(row.cbm ?? row.volume, 0)
+        totals.volumeWeight += quantity * numberValue(row.volumeWeightKg ?? row.volume_weight_kg, 0)
+
+        return totals
+      },
+      { qty: 0, gross: 0, volume: 0, volumeWeight: 0 },
+    )
+  })
+
+  function sortedBySortOrder<T extends Record<string, any>>(items: T[]): T[] {
+    return [...items].sort(
+      (left, right) => numberValue(left.sort_order) - numberValue(right.sort_order),
+    )
+  }
+
+  function metricForUnit(unit: string): number {
+    const normalized = String(unit ?? "").toLowerCase()
+
+    if (normalized.includes("m3") || normalized.includes("cube") || normalized.includes("volume")) {
+      return chargeBasisTotals.value.volume
+    }
+
+    if (normalized.includes("qty") || normalized.includes("each")) {
+      return chargeBasisTotals.value.qty
+    }
+
+    return chargeBasisTotals.value.gross || chargeBasisTotals.value.volumeWeight
+  }
+
+  function multiplierForBasis(chargeBasis: string): number {
+    const normalized = String(chargeBasis ?? "")
+      .toLowerCase()
+      .trim()
+
+    if (normalized === "per_kg") return chargeBasisTotals.value.gross
+    if (normalized === "per_qty") return chargeBasisTotals.value.qty
+    if (normalized === "per_m3") return chargeBasisTotals.value.volume
+    if (normalized === "per_shipment") return 1
+
+    return 1
+  }
+
+  function matchingWeightBreak(table: any): any | null {
+    const breaks = sortedBySortOrder(Array.isArray(table?.breaks) ? table.breaks : [])
+
+    if (!breaks.length) return null
+
+    const input = metricForUnit(String(breaks[0]?.unit ?? "kg"))
+
+    return (
+      breaks.find(chargeBreak => {
+        const min = numberValue(chargeBreak?.min_value, 0)
+        const maxRaw = chargeBreak?.max_value
+        const max =
+          maxRaw === null || maxRaw === undefined || maxRaw === ""
+            ? Infinity
+            : numberValue(maxRaw, Infinity)
+
+        return input >= min && input <= max
+      }) ??
+      breaks[breaks.length - 1] ??
+      null
+    )
+  }
+
+  function valueForBreak(row: any, breakId: number | null): any | null {
+    const values = Array.isArray(row?.values) ? row.values : []
+
+    if (!values.length) return null
+
+    if (breakId !== null) {
+      const exact = values.find((value: any) => numberValue(value?.charge_break_id, 0) === breakId)
+      if (exact) return exact
+    }
+
+    return values.find((value: any) => value?.charge_break_id === null) ?? values[0] ?? null
+  }
+
+  function linkedWeightChargeForDescription(
+    description: string,
+  ): { amount: number; currency: string } | null {
+    const normalizedDescription = normalizeDescription(description)
+
+    if (!normalizedDescription) return null
+
+    for (const table of activeWeightChargeTables.value) {
+      const matchedBreak = matchingWeightBreak(table)
+      const breakId = matchedBreak ? numberValue(matchedBreak.id, 0) : null
+      const matchedRow = sortedBySortOrder(Array.isArray(table?.rows) ? table.rows : []).find(
+        row => {
+          return normalizeDescription(row?.description ?? row?.code) === normalizedDescription
+        },
+      )
+
+      if (!matchedRow) continue
+
+      const value = valueForBreak(matchedRow, breakId)
+      const amountPerUnit = numberValue(value?.amount, 0)
+      const multiplier = multiplierForBasis(String(matchedRow?.charge_basis ?? "per_shipment"))
+
+      return {
+        amount: roundMoney(amountPerUnit * multiplier),
+        currency: String(table?.currency_code || jobCurrency.value || "GBP"),
+      }
+    }
+
+    return null
+  }
+
   function addBuyRow() {
     context.form.buy_costs.push(createBuyRow())
   }
 
   function addSellRow() {
     context.form.sell_costs.push(createSellRow())
+  }
+
+  function sellChargeForBuyRow(row: BuyCostRow): SellChargeRow | null {
+    const linkedId = row.linkedSellChargeId
+
+    if (linkedId !== null && linkedId !== undefined) {
+      const linked = sellRows.value.find(sellRow => String(sellRow.id) === String(linkedId))
+      if (linked) return linked
+    }
+
+    const sourceLinked = sellRows.value.find(sellRow => {
+      return (
+        sellRow.sourceBuyCostId !== null &&
+        sellRow.sourceBuyCostId !== undefined &&
+        String(sellRow.sourceBuyCostId) === String(row.id)
+      )
+    })
+
+    if (sourceLinked) return sourceLinked
+
+    const description = normalizeDescription(row.description)
+
+    if (!description) return null
+
+    return (
+      sellRows.value.find(sellRow => {
+        return !sellRow.sourceBuyCostId && normalizeDescription(sellRow.description) === description
+      }) ?? null
+    )
+  }
+
+  function syncLinkedSellCharge(row: BuyCostRow) {
+    const linkedWeightCharge = linkedWeightChargeForDescription(row.description)
+    const charge = findChargeCodeByDescription(row.description)
+    let sellRow = sellChargeForBuyRow(row)
+
+    if (!sellRow) {
+      sellRow = {
+        ...createSellRow(),
+        id: `sell-from-${row.id}`,
+        sourceBuyCostId: row.id,
+      }
+      context.form.sell_costs.push(sellRow)
+    }
+
+    sellRow.description = row.description
+    sellRow.chargeCodeId = charge?.id ?? row.chargeCodeId ?? sellRow.chargeCodeId ?? null
+    sellRow.chargeCode = charge?.salesNominal || sellRow.chargeCode || ""
+    sellRow.sourceBuyCostId = row.id
+    sellRow.linkedWeightCharge = Boolean(linkedWeightCharge)
+    sellRow.quantity = linkedWeightCharge ? 1 : numberValue(row.quantity, 1) || 1
+    sellRow.unitPrice = linkedWeightCharge ? linkedWeightCharge.amount : null
+    sellRow.currency = linkedWeightCharge?.currency || jobCurrency.value
+    syncLineExchangeRate(sellRow, false)
+
+    if (charge?.defaultTaxCode) {
+      sellRow.taxCode = charge.defaultTaxCode
+      applyTaxCode(sellRow, charge.defaultTaxCode)
+    }
+
+    row.addToSellCharges = true
+    row.linkedSellChargeId = sellRow.id
+  }
+
+  function removeLinkedSellCharge(row: BuyCostRow) {
+    const sellRow = sellChargeForBuyRow(row)
+
+    if (sellRow) {
+      removeSellRow(sellRow.id)
+    }
+
+    row.addToSellCharges = false
+    row.linkedSellChargeId = null
+  }
+
+  function toggleBuyRowSellCharge(row: BuyCostRow, checked: boolean) {
+    if (checked) {
+      syncLinkedSellCharge(row)
+      return
+    }
+
+    removeLinkedSellCharge(row)
+  }
+
+  function buyRowSellChargeChecked(row: BuyCostRow): boolean {
+    return Boolean(row.addToSellCharges || sellChargeForBuyRow(row))
+  }
+
+  function buyRowSellChargeTooltip(row: BuyCostRow): string {
+    const linkedWeightCharge = linkedWeightChargeForDescription(row.description)
+
+    if (linkedWeightCharge) {
+      return `Add to Sell Charges using linked customer weight charge ${formatMoney(linkedWeightCharge.amount, linkedWeightCharge.currency)}.`
+    }
+
+    return "Add this charge description to Sell Charges with a blank unit price."
   }
 
   function removeBuyRow(id: number | string) {
@@ -327,6 +584,10 @@ export function useJobCostsTab() {
     })
 
     applyChargeCode(row, charge ?? null, description)
+
+    if (row.type === "buy" && buyRowSellChargeChecked(row)) {
+      syncLinkedSellCharge(row)
+    }
   }
 
   function syncChargeDescriptionFilter(row: CostRow, event: { value?: unknown } | unknown) {
@@ -718,6 +979,28 @@ export function useJobCostsTab() {
     }
   }
 
+  async function loadCustomerChargeTables() {
+    const customerId = Number(context.form.customer_id ?? 0)
+
+    customerChargeTables.value = []
+
+    if (!Number.isFinite(customerId) || customerId <= 0) return
+
+    customerChargeTablesLoading.value = true
+
+    try {
+      const response = await contactsService.listChargeTables(customerId, {
+        per_page: 500,
+        charge_type: "weight_break",
+        is_active: true,
+      })
+
+      customerChargeTables.value = response.data ?? []
+    } finally {
+      customerChargeTablesLoading.value = false
+    }
+  }
+
   const totals = computed(() => {
     const totalBuy = buyRows.value.reduce((sum, row) => sum + lineNetGbp(row), 0)
     const totalSell = sellRows.value.reduce((sum, row) => sum + lineNetGbp(row), 0)
@@ -758,6 +1041,13 @@ export function useJobCostsTab() {
   })
 
   watch(
+    () => context.form.customer_id,
+    () => {
+      loadCustomerChargeTables()
+    },
+  )
+
+  watch(
     () =>
       [
         jobCurrency.value,
@@ -775,6 +1065,7 @@ export function useJobCostsTab() {
       exchangeRateStore.fetch({ perPage: 1000 }),
       taxCodeStore.fetch({ perPage: 1000 }),
       loadSuppliers(),
+      loadCustomerChargeTables(),
     ])
     await ensureEffectiveExchangeRates()
   })
@@ -816,6 +1107,9 @@ export function useJobCostsTab() {
     cancelRemoveRow,
     confirmRemoveRow,
     confirmPrintedRemoveRow,
+    toggleBuyRowSellCharge,
+    buyRowSellChargeChecked,
+    buyRowSellChargeTooltip,
     printedInvoiceNumber,
     lineNet,
     lineNetGbp,

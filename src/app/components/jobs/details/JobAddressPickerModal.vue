@@ -32,6 +32,7 @@ const choices = computed<AddressChoice[]>(() => {
 
   const addresses = (contact.collection_addresses ?? []).map(address => ({
     id: Number(address.id),
+    contact_id: contact.id ? Number(contact.id) : null,
     sourceType: "collection_address" as const,
     label: address.label || address.city || "Address",
     ownerName: ownerName.value,
@@ -53,6 +54,7 @@ const choices = computed<AddressChoice[]>(() => {
 
   const branches = (contact.branches ?? []).map(branch => ({
     id: Number(branch.id),
+    contact_id: contact.id ? Number(contact.id) : null,
     sourceType: "branch" as const,
     label: branch.name || branch.delivery_city || "Branch",
     ownerName: ownerName.value,

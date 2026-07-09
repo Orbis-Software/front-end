@@ -137,7 +137,14 @@ function statusLabel(status: string, dueDate = "") {
   if (status === "approved") return "Approved"
   if (status === "scheduled") return "Scheduled"
   if (status === "overdue") return "Overdue"
-  return dueDate ? `Pending - due ${dueDate}` : "Pending"
+  return "Pending"
+}
+
+function statusDetail(status: string, dueDate = "") {
+  if (!dueDate || status === "paid") return ""
+  if (status === "overdue") return `Due ${dueDate}`
+  if (status === "pending") return `Due ${dueDate}`
+  return ""
 }
 
 function approveSuppliers(ids: string[]) {
@@ -362,12 +369,18 @@ watch([selectedStatus, searchText], () => {
                 <td>{{ row.approvedDate || "-" }}</td>
                 <td>{{ row.paid ? money(row.amount, row.currency) : "-" }}</td>
                 <td>{{ row.paidDate || "-" }}</td>
-                <td>
+                <td class="accounts-supplier-payments__status-cell">
                   <span
                     class="accounts-supplier-payments__pill"
                     :class="`accounts-supplier-payments__pill--${statusTone(row.status)}`"
                   >
                     {{ statusLabel(row.status, row.dueDate) }}
+                  </span>
+                  <span
+                    v-if="statusDetail(row.status, row.dueDate)"
+                    class="accounts-supplier-payments__status-detail"
+                  >
+                    {{ statusDetail(row.status, row.dueDate) }}
                   </span>
                 </td>
               </tr>

@@ -4,6 +4,12 @@
   --job-field-font-size: 12px;
   --job-field-text: #1a1a18;
   --job-field-muted: #1a1a18;
+  --job-panel-surface: #f8f8f8;
+  --job-panel-header: #ececec;
+  --job-panel-body: #e4e4e4;
+  --job-panel-body-strong: #d3d3d3;
+  --job-panel-border: #b6b6b6;
+  --job-field-surface: #ffffff;
 
   display: flex;
   flex-direction: column;
@@ -471,9 +477,9 @@
   justify-content: flex-start;
   gap: 2px;
   padding: 0 8px;
-  background: #efefef;
-  border-top: 1px solid #ededed;
-  border-bottom: 1px solid #d9d9d9;
+  background: #cfcfcf;
+  border-top: 1px solid #bdbdbd;
+  border-bottom: 1px solid #b6b6b6;
   overflow: hidden;
 }
 
@@ -516,9 +522,9 @@
 .job-details-page__tab--active {
   flex: 0 0 auto;
   min-width: max-content;
-  background: #fff;
+  background: var(--job-panel-surface);
   color: #141414;
-  border-color: #d9d9d9;
+  border-color: #b6b6b6;
   position: relative;
   top: 1px;
   z-index: 2;
@@ -551,8 +557,8 @@
   justify-content: flex-start;
   gap: 2px;
   padding: 0 8px;
-  background: #efefef;
-  border-bottom: 1px solid #d9d9d9;
+  background: #cfcfcf;
+  border-bottom: 1px solid #b6b6b6;
   overflow: hidden;
 }
 
@@ -595,9 +601,9 @@
 .job-details-page__subtab--active {
   flex: 0 0 auto;
   min-width: max-content;
-  background: #fff;
+  background: var(--job-panel-surface);
   color: #141414;
-  border-color: #d9d9d9;
+  border-color: #b6b6b6;
   position: relative;
   top: 1px;
   z-index: 2;
@@ -627,12 +633,209 @@
    CONTENT SHELL
 ========================================= */
 .job-content-shell {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
+  background: var(--job-panel-body-strong);
+  border: 1px solid var(--job-panel-border);
   border-top: none;
   border-radius: 0 0 18px 18px;
   padding: 1rem;
   margin-top: 0;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+/* =========================================
+   SHARED JOB TAB SURFACES
+========================================= */
+.job-content-shell
+  :is(
+    .job-overview-tab__section,
+    .job-costs-tab__section,
+    .job-packages-tab__section,
+    .job-transport-tab__section,
+    .job-transport-tab__mode-card,
+    .job-normal-invoice-tab__section,
+    .job-documents-page,
+    .job-load-planner-tab__panel,
+    .job-load-planner-tab__section,
+    .job-consolidation-tab__section
+  ) {
+  background: var(--job-panel-surface) !important;
+  border-color: var(--job-panel-border) !important;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.job-content-shell
+  :is(
+    .job-overview-tab__section-header,
+    .job-costs-tab__section-header,
+    .job-packages-tab__section-header,
+    .job-transport-tab__section-header,
+    .job-normal-invoice-tab__header,
+    .job-normal-invoice-tab__subheader,
+    .job-documents-page__header,
+    .job-load-planner-tab__header,
+    .job-load-planner-tab__section-header,
+    .job-consolidation-tab__section-header
+  ) {
+  background: var(--job-panel-header) !important;
+  border-color: var(--job-panel-border) !important;
+}
+
+.job-content-shell
+  :is(
+    .job-overview-tab__grid,
+    .job-overview-tab__order-type,
+    .job-overview-tab__route-details,
+    .job-costs-tab__table-wrap,
+    .job-costs-tab__summary,
+    .job-packages-tab__table-wrap,
+    .job-transport-tab__grid,
+    .job-transport-tab__leg-card,
+    .job-transport-tab__order-panel,
+    .job-normal-invoice-tab__table-wrap,
+    .job-normal-invoice-tab__placeholder,
+    .job-normal-invoice-tab__summary,
+    .job-normal-invoice-tab__dialog-body,
+    .job-documents-page__list,
+    .job-load-planner-tab__body,
+    .job-consolidation-tab__body
+  ) {
+  background: var(--job-panel-body) !important;
+  border-color: var(--job-panel-border) !important;
+}
+
+.job-content-shell .job-transport-tab__section {
+  background: #f7f7f7 !important;
+}
+
+.job-content-shell .job-transport-tab__order-tabs {
+  background: #d8d8d8 !important;
+  border-color: #b8b8b8 !important;
+}
+
+.job-content-shell .job-transport-tab__order-tab--active {
+  background: #f7f7f7 !important;
+}
+
+.job-content-shell .job-transport-tab__grid {
+  background: #ececec !important;
+}
+
+.job-content-shell .job-transport-tab__switch-group {
+  padding: 12px;
+  background: #e8e8e8 !important;
+  border: 1px solid #c7c7c7;
+  border-radius: 12px;
+}
+
+.job-content-shell .job-transport-tab__grid--nested {
+  background: #f1f1f1 !important;
+  border: 1px solid #c7c7c7;
+  border-radius: 10px;
+}
+
+.job-content-shell .job-transport-tab__section {
+  background: #e8e8e8 !important;
+  border-color: #c7c7c7 !important;
+}
+
+.job-content-shell .job-transport-tab__switch-field,
+.job-content-shell .job-transport-tab__leg-card,
+.job-content-shell .job-transport-tab__stop-row {
+  background: #f8f8f8 !important;
+  border-color: #c9c9c9 !important;
+}
+
+.job-content-shell .job-transport-tab__conditional-card {
+  background: #e8e8e8 !important;
+  border-color: #c9c9c9 !important;
+}
+
+.job-content-shell .job-transport-tab__conditional-header,
+.job-content-shell .job-transport-tab__leg-header,
+.job-content-shell .job-transport-tab__stop-title {
+  background: #ececec !important;
+  border-color: #d6d6d6 !important;
+}
+
+.job-content-shell .job-transport-tab__stop-list,
+.job-content-shell .job-transport-tab__customs-panel {
+  background: #e8e8e8 !important;
+}
+
+.job-content-shell .job-transport-tab__customs-subsection {
+  background: #f7f7f7 !important;
+  border-color: #c9c9c9 !important;
+}
+
+.job-content-shell .job-transport-tab__customs-subsection-header {
+  background: #ececec !important;
+  border-color: #d6d6d6 !important;
+}
+
+.job-content-shell .job-costs-tab__summary {
+  background: #fff7ed !important;
+  border-color: #fdba74 !important;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.85),
+    0 10px 24px rgba(180, 83, 9, 0.08);
+}
+
+.job-content-shell .job-costs-tab__summary-row {
+  border-color: #fed7aa !important;
+}
+
+.job-content-shell .job-costs-tab__summary-row span {
+  color: #7c2d12 !important;
+}
+
+.job-content-shell .job-normal-invoice-tab__section--nested {
+  background: #f8f8f8 !important;
+  border-color: #c9c9c9 !important;
+}
+
+.job-content-shell .job-normal-invoice-tab__section--nested .job-normal-invoice-tab__subheader,
+.job-content-shell .job-normal-invoice-tab__section--nested .job-normal-invoice-tab__table th {
+  background: #ececec !important;
+  border-color: #c9c9c9 !important;
+}
+
+.job-content-shell .job-normal-invoice-tab__section--nested .job-normal-invoice-tab__table-wrap,
+.job-content-shell .job-normal-invoice-tab__section--nested .job-normal-invoice-tab__placeholder {
+  background: #f1f1f1 !important;
+  border-color: #c9c9c9 !important;
+}
+
+.job-content-shell
+  :is(
+    .job-overview-tab__field input,
+    .job-overview-tab__field select,
+    .job-overview-tab__field textarea,
+    .job-transport-tab__field input,
+    .job-transport-tab__field select,
+    .job-transport-tab__field textarea,
+    .job-costs-tab__table .p-inputtext,
+    .job-costs-tab__table .p-dropdown,
+    .job-costs-tab__table .p-select,
+    .job-costs-tab__exchange-rate,
+    .job-packages-tab__table .p-inputtext,
+    .job-packages-tab__table .p-dropdown,
+    .job-packages-tab__table .p-select,
+    .job-normal-invoice-tab__field .p-dropdown,
+    .job-normal-invoice-tab__field .p-select,
+    .job-normal-invoice-tab__field .p-multiselect,
+    .job-normal-invoice-tab__field .p-calendar,
+    .job-normal-invoice-tab__field .p-inputnumber,
+    .job-normal-invoice-tab__field .p-inputtext,
+    .job-normal-invoice-tab__field .p-textarea
+  ) {
+  background: var(--job-field-surface) !important;
+  border-color: #bdbdbd !important;
+}
+
+.job-content-shell
+  :is(.job-costs-tab__table th, .job-packages-tab__table th, .job-normal-invoice-tab__table th) {
+  background: var(--job-panel-header) !important;
+  border-color: var(--job-panel-border) !important;
 }
 
 /* =========================================

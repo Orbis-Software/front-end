@@ -46,6 +46,7 @@ export type AddressSourceType = "collection_address" | "branch"
 
 export type AddressChoice = {
   id: number
+  contact_id: number | null
   sourceType: AddressSourceType
   label: string
   ownerName: string
@@ -196,6 +197,8 @@ export type BuyCostRow = {
   description: string
   supplier_id: number | null
   chargeCodeId: number | null
+  addToSellCharges?: boolean
+  linkedSellChargeId?: number | string | null
   quantity: number
   unitCost: number
   currency: string
@@ -210,10 +213,12 @@ export type SellChargeRow = {
   chargeCodeId: number | null
   chargeCode: string
   quantity: number
-  unitPrice: number
+  unitPrice: number | null
   currency: string
   exchangeRate: number
   vatRate: number
   taxCode: string
+  sourceBuyCostId?: number | string | null
+  linkedWeightCharge?: boolean
   amount?: number | null
 }

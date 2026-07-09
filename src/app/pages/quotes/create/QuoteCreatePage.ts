@@ -2,11 +2,15 @@ import { computed, onMounted, reactive, ref, watch } from "vue"
 import { useRoute, useRouter } from "vue-router"
 import { storeToRefs } from "pinia"
 import http from "@/api/http"
+import { useCompanyStore } from "@/app/stores/company"
 import { useGlobalReferenceDataStore } from "@/app/stores/global-reference-data"
+import { useReferenceDataStore } from "@/app/stores/reference-data"
+import type { CompanyReferenceSequence } from "@/app/types/company"
 import type { GlobalReferenceDataRow } from "@/app/types/globalReferenceData"
 import { useTransportQuoteStore } from "@/app/stores/transportQuote"
 import type { TransportQuote, TransportQuotePayload } from "@/app/types/transportQuote"
 import { getPackageStackOption, setPackageStackOption } from "@/app/utils/packageStacking"
+import { buildReferenceNumber } from "@/app/utils/reference-sequence"
 import { useToast } from "primevue/usetoast"
 
 type QuoteType = "import" | "export" | "domestic" | "cross_trade" | "multi_modal"
@@ -35,6 +39,7 @@ type CustomerOption = {
 
 type DimensionRow = {
   id: number
+  package_type: string
   pieces: number
   length: number
   width: number
@@ -42,16 +47,21 @@ type DimensionRow = {
   stackable: boolean
   atTheTop: boolean
   weight: number
+  adr: boolean
   container_type: string
 }
 
 type ChargeLine = {
   id: number
+  type: "buy" | "sell"
   description: string
   qty: number
   uom: string
-  cost: number
-  markup_percent: number
+  unit_cost?: number
+  unit_price?: number
+  currency: string
+  exchange_rate: number
+  vat_rate?: number
 }
 
 const CONDITIONS: Record<string, string> = {
@@ -67,7 +77,9 @@ export function useQuoteCreatePage() {
   const route = useRoute()
   const router = useRouter()
   const quoteStore = useTransportQuoteStore()
+  const companyStore = useCompanyStore()
   const globalReferenceDataStore = useGlobalReferenceDataStore()
+  const referenceDataStore = useReferenceDataStore()
   const { data: globalReferenceData } = storeToRefs(globalReferenceDataStore)
   const toast = useToast()
 
@@ -139,7 +151,7 @@ export function useQuoteCreatePage() {
   const mode = ref<TransportMode | null>(null)
 
   const form = reactive({
-    quote_ref: generateQuoteRef(),
+    quote_ref: "",
     customer_id: null as number | null,
     customer_ref: "",
     contact_name: "",
@@ -173,7 +185,8 @@ export function useQuoteCreatePage() {
   })
 
   const dimensionRows = ref<DimensionRow[]>([])
-  const chargeLines = ref<ChargeLine[]>([])
+  const buyCostLines = ref<ChargeLine[]>([])
+  const sellChargeLines = ref<ChargeLine[]>([])
 
   const availableModes = computed(() => MODE_OPTIONS)
   const showModeSelector = computed(() => Boolean(quoteType.value))
@@ -192,6 +205,13 @@ export function useQuoteCreatePage() {
   })
 
   const accountNumberPreview = computed(() => selectedCustomer.value?.account_number ?? "")
+
+  const quoteSequence = computed<CompanyReferenceSequence | null>(() => {
+    const seqs = companyStore.item?.reference_sequences ?? []
+    if (!Array.isArray(seqs) || seqs.length === 0) return null
+
+    return seqs.find(sequence => sequence.type === "quote") ?? null
+  })
 
   const originLocationOptions = computed<SelectOption[]>(() => getLocationOptions())
   const destinationLocationOptions = computed<SelectOption[]>(() => getLocationOptions())
@@ -299,6 +319,23 @@ export function useQuoteCreatePage() {
     { label: "20% – Standard", value: 20 },
   ]
 
+  const packageTypeOptions = computed<SelectOption[]>(() => {
+    const category =
+      referenceDataStore.getByKey("package_types") ?? referenceDataStore.getByKey("packaging_types")
+
+    const options = (category?.options ?? [])
+      .map((option: any) => cleanReferenceName(option.name))
+      .filter(Boolean)
+      .map(name => ({ label: name, value: name }))
+
+    if (options.length) return options
+
+    return ["Pallet", "Carton", "Crate", "Bundle", "Box", "Piece"].map(name => ({
+      label: name,
+      value: name,
+    }))
+  })
+
   function getLocationOptions(): SelectOption[] {
     if (mode.value === "air") return terminalOptions(row => row.type === "Airport")
     if (mode.value === "sea") return terminalOptions(row => row.type === "Seaport")
@@ -370,6 +407,12 @@ export function useQuoteCreatePage() {
     return ""
   }
 
+  function cleanReferenceName(value: string): string {
+    return String(value ?? "")
+      .replace(/\*$/, "")
+      .trim()
+  }
+
   function labelWithCode(name: string, code: string): string {
     if (!name) return code
     if (!code || name.toLowerCase().includes(code.toLowerCase())) return name
@@ -405,27 +448,25 @@ export function useQuoteCreatePage() {
   const loadPlannerPackages = computed(() =>
     dimensionRows.value.map((row, index) => ({
       id: row.id,
-      type: mode.value === "road" ? "Pallet" : row.container_type || "Package",
-      desc: mode.value === "road" ? `Pallet ${index + 1}` : `Package ${index + 1}`,
+      type:
+        row.package_type || (mode.value === "road" ? "Pallet" : row.container_type || "Package"),
+      desc: `${row.package_type || "Package"} ${index + 1}`,
       length: row.length,
       width: row.width,
       height: row.height,
       qty: row.pieces,
       weight: row.weight,
       stackable: getPackageStackOption(row) === "stackable",
-      adr: Boolean(form.is_hazardous),
+      adr: Boolean(row.adr || form.is_hazardous),
     })),
   )
   const loadPlannerReference = computed(() => form.quote_ref || "Quote Load Plan")
 
   const subtotalSell = computed(() =>
-    chargeLines.value.reduce((total, line) => total + getChargeSellTotal(line), 0),
+    sellChargeLines.value.reduce((total, line) => total + getChargeLineTotal(line), 0),
   )
   const subtotalCost = computed(() =>
-    chargeLines.value.reduce(
-      (total, line) => total + Number(line.qty || 0) * Number(line.cost || 0),
-      0,
-    ),
+    buyCostLines.value.reduce((total, line) => total + getChargeLineTotal(line), 0),
   )
   const totalExclTax = computed(() => Math.max(subtotalSell.value - Number(form.discount || 0), 0))
   const taxAmount = computed(() => totalExclTax.value * (Number(form.tax_rate || 0) / 100))
@@ -459,7 +500,8 @@ export function useQuoteCreatePage() {
     mode.value = value
 
     if (!dimensionRows.value.length) addDimensionRow()
-    if (!chargeLines.value.length) addChargeLine("Freight Charge")
+    if (!buyCostLines.value.length) addBuyCostLine("Freight Charge")
+    if (!sellChargeLines.value.length) addSellChargeLine("Freight Charge")
   }
 
   function isQuoteType(value: string): value is QuoteType {
@@ -507,6 +549,7 @@ export function useQuoteCreatePage() {
   function addDimensionRow() {
     dimensionRows.value.push({
       id: Date.now() + Math.random(),
+      package_type: packageTypeOptions.value[0]?.value ?? "Pallet",
       pieces: 1,
       length: 0,
       width: 0,
@@ -514,6 +557,7 @@ export function useQuoteCreatePage() {
       stackable: true,
       atTheTop: false,
       weight: 0,
+      adr: false,
       container_type: "",
     })
   }
@@ -542,25 +586,61 @@ export function useQuoteCreatePage() {
     )
   }
 
-  function addChargeLine(description = "Freight Charge") {
-    chargeLines.value.push({
+  function addBuyCostLine(description = "Freight Charge") {
+    buyCostLines.value.push({
       id: Date.now() + Math.random(),
+      type: "buy",
       description,
       qty: 1,
       uom: "Per Shipment",
-      cost: 0,
-      markup_percent: 25,
+      unit_cost: 0,
+      currency: form.currency || "GBP",
+      exchange_rate: 1,
     })
   }
 
-  function removeChargeLine(id: number) {
-    chargeLines.value = chargeLines.value.filter(line => line.id !== id)
+  function addSellChargeLine(description = "Freight Charge") {
+    sellChargeLines.value.push({
+      id: Date.now() + Math.random(),
+      type: "sell",
+      description,
+      qty: 1,
+      uom: "Per Shipment",
+      unit_price: 0,
+      currency: form.currency || "GBP",
+      exchange_rate: 1,
+      vat_rate: 0,
+    })
   }
 
-  function getChargeSellTotal(line: ChargeLine) {
-    return (
-      Number(line.qty || 0) * Number(line.cost || 0) * (1 + Number(line.markup_percent || 0) / 100)
-    )
+  function removeBuyCostLine(id: number) {
+    buyCostLines.value = buyCostLines.value.filter(line => line.id !== id)
+  }
+
+  function removeSellChargeLine(id: number) {
+    sellChargeLines.value = sellChargeLines.value.filter(line => line.id !== id)
+  }
+
+  function getChargeLineTotal(line: ChargeLine) {
+    const amount = line.type === "buy" ? line.unit_cost : line.unit_price
+
+    return Number(line.qty || 0) * Number(amount || 0) * Number(line.exchange_rate || 1)
+  }
+
+  function refreshQuoteRefPreview(force = false) {
+    if (isEditMode.value) return
+
+    const sequence = quoteSequence.value
+
+    if (!sequence?.use_system) {
+      if (force || !form.quote_ref) form.quote_ref = ""
+      return
+    }
+
+    const preview = buildReferenceNumber(sequence, form.quote_date ?? new Date(), {
+      separator: "-",
+    })
+    if (preview && (force || !form.quote_ref)) form.quote_ref = preview
   }
 
   function onConditionsPresetChange() {
@@ -654,7 +734,7 @@ export function useQuoteCreatePage() {
   function buildPayload() {
     return {
       customer_id: form.customer_id,
-      quote_ref: form.quote_ref || null,
+      quote_ref: quoteSequence.value?.use_system ? null : form.quote_ref || null,
       quote_type: quoteType.value,
       mode_of_transport: mode.value,
       status: "draft",
@@ -707,6 +787,7 @@ export function useQuoteCreatePage() {
       },
 
       dimensions: dimensionRows.value.map(row => ({
+        package_type: row.package_type || null,
         pieces: Number(row.pieces || 0) || null,
         length: Number(row.length || 0),
         width: Number(row.width || 0),
@@ -714,15 +795,21 @@ export function useQuoteCreatePage() {
         stackable: row.stackable ?? true,
         at_the_top: row.atTheTop ?? false,
         weight: Number(row.weight || 0),
+        adr: Boolean(row.adr),
         container_type: row.container_type || null,
       })),
 
-      charges: chargeLines.value.map(line => ({
+      charges: [...buyCostLines.value, ...sellChargeLines.value].map(line => ({
+        type: line.type,
         description: line.description || null,
         qty: Number(line.qty || 0),
         uom: line.uom || null,
-        cost: Number(line.cost || 0),
-        markup_percent: Number(line.markup_percent || 0),
+        cost: Number(line.unit_cost ?? line.unit_price ?? 0),
+        unit_cost: line.type === "buy" ? Number(line.unit_cost || 0) : null,
+        unit_price: line.type === "sell" ? Number(line.unit_price || 0) : null,
+        currency: line.currency || form.currency || null,
+        exchange_rate: Number(line.exchange_rate || 1),
+        vat_rate: line.type === "sell" ? Number(line.vat_rate || 0) : null,
       })),
     } as any
   }
@@ -777,7 +864,7 @@ export function useQuoteCreatePage() {
       ? (quote.mode_of_transport as TransportMode)
       : null
 
-    form.quote_ref = quote.quote_ref ?? generateQuoteRef()
+    form.quote_ref = quote.quote_ref ?? ""
     form.customer_id = quote.customer_id
     form.customer_ref = quote.customer_ref ?? ""
     form.contact_name = quote.contact_name ?? ""
@@ -833,6 +920,7 @@ export function useQuoteCreatePage() {
     dimensionRows.value = quote.dimensions.length
       ? quote.dimensions.map(row => ({
           id: row.id ?? Date.now() + Math.random(),
+          package_type: row.package_type ?? "Pallet",
           pieces: Number(row.pieces || 1),
           length: Number(row.length || 0),
           width: Number(row.width || 0),
@@ -840,23 +928,54 @@ export function useQuoteCreatePage() {
           stackable: row.stackable ?? true,
           atTheTop: row.at_the_top ?? false,
           weight: Number(row.weight || 0),
+          adr: Boolean(row.adr),
           container_type: row.container_type ?? "",
         }))
       : []
 
-    chargeLines.value = Array.isArray(quote.charges)
-      ? quote.charges.map((line: any) => ({
-          id: line.id ?? Date.now() + Math.random(),
-          description: line.description ?? "Freight Charge",
-          qty: Number(line.qty || 1),
-          uom: line.uom ?? "Per Shipment",
-          cost: Number(line.cost || 0),
-          markup_percent: Number(line.markup_percent || 0),
-        }))
-      : []
+    const rawCharges = Array.isArray(quote.charges) ? quote.charges : []
+
+    buyCostLines.value = rawCharges
+      .filter((line: any) => (line.type ?? "buy") === "buy")
+      .map((line: any) => mapChargeLine(line, "buy"))
+
+    sellChargeLines.value = rawCharges
+      .filter((line: any) => (line.type ?? "sell") === "sell")
+      .map((line: any) => mapChargeLine(line, "sell"))
+
+    const legacyCharges = rawCharges.filter((line: any) => !line.type)
+    if (legacyCharges.length) {
+      buyCostLines.value = legacyCharges.map((line: any) => mapChargeLine(line, "buy"))
+      sellChargeLines.value = legacyCharges.map((line: any) => mapChargeLine(line, "sell"))
+    }
+
+    if (!buyCostLines.value.length && rawCharges.length) {
+      buyCostLines.value = rawCharges.map((line: any) => mapChargeLine(line, "buy"))
+    }
 
     if (!dimensionRows.value.length) addDimensionRow()
-    if (!chargeLines.value.length) addChargeLine()
+    if (!buyCostLines.value.length) addBuyCostLine()
+    if (!sellChargeLines.value.length) addSellChargeLine()
+  }
+
+  function mapChargeLine(line: any, type: "buy" | "sell"): ChargeLine {
+    const qty = Number(line.qty || 1)
+    const cost = Number(line.unit_cost ?? line.cost ?? 0)
+    const sellTotal = Number(line.sell_total ?? line.total_sell ?? 0)
+    const legacyUnitPrice = qty > 0 ? sellTotal / qty : 0
+
+    return {
+      id: line.id ?? Date.now() + Math.random(),
+      type,
+      description: line.description ?? "Freight Charge",
+      qty,
+      uom: line.uom ?? "Per Shipment",
+      unit_cost: type === "buy" ? cost : undefined,
+      unit_price: type === "sell" ? Number(line.unit_price ?? legacyUnitPrice) : undefined,
+      currency: line.currency ?? form.currency ?? "GBP",
+      exchange_rate: Number(line.exchange_rate || 1),
+      vat_rate: type === "sell" ? Number(line.vat_rate || 0) : undefined,
+    }
   }
 
   function money(value: number) {
@@ -864,10 +983,6 @@ export function useQuoteCreatePage() {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(value || 0)}`
-  }
-
-  function generateQuoteRef() {
-    return `QUO-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 9000) + 1000)}`
   }
 
   function toApiDate(value: Date | string | null) {
@@ -889,15 +1004,46 @@ export function useQuoteCreatePage() {
   }
 
   onMounted(async () => {
-    await Promise.allSettled([fetchCustomers(), globalReferenceDataStore.fetchAll()])
+    companyStore.hydrateFromAuth()
+
+    const hasSeq =
+      Array.isArray(companyStore.item?.reference_sequences) &&
+      companyStore.item.reference_sequences.length > 0
+
+    await Promise.allSettled([
+      fetchCustomers(),
+      globalReferenceDataStore.fetchAll(),
+      referenceDataStore.categories.length ? Promise.resolve() : referenceDataStore.fetchAll(),
+      hasSeq ? Promise.resolve() : companyStore.fetch(),
+    ])
 
     if (isEditMode.value && quoteId.value) {
       await loadQuoteForEdit(quoteId.value)
     } else {
+      refreshQuoteRefPreview(true)
       addDimensionRow()
-      addChargeLine("Freight Charge")
+      addBuyCostLine("Freight Charge")
+      addSellChargeLine("Freight Charge")
     }
   })
+
+  watch(
+    () => form.quote_date,
+    () => refreshQuoteRefPreview(true),
+  )
+
+  watch(
+    () => quoteSequence.value?.next_number,
+    () => refreshQuoteRefPreview(true),
+  )
+
+  watch(
+    dimensionRows,
+    rows => {
+      if (rows.some(row => row.adr)) form.is_hazardous = true
+    },
+    { deep: true },
+  )
 
   return {
     pageTitle,
@@ -935,9 +1081,11 @@ export function useQuoteCreatePage() {
     conditionsOptions,
     validityOptions,
     taxRateOptions,
+    packageTypeOptions,
 
     dimensionRows,
-    chargeLines,
+    buyCostLines,
+    sellChargeLines,
 
     totalPieces,
     totalActualWeight,
@@ -967,12 +1115,14 @@ export function useQuoteCreatePage() {
     removeDimensionRow,
     getPackageStackOption,
     setPackageStackOption,
-    addChargeLine,
-    removeChargeLine,
+    addBuyCostLine,
+    addSellChargeLine,
+    removeBuyCostLine,
+    removeSellChargeLine,
     getRowCbm,
     getRowVolumetricWeight,
     getRowLdm,
-    getChargeSellTotal,
+    getChargeLineTotal,
     onConditionsPresetChange,
     onBrowseQuotes,
     onFindQuote,

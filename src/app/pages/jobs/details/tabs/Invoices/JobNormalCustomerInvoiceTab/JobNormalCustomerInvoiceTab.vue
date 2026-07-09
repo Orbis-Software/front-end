@@ -184,69 +184,69 @@ const {
             <strong>{{ money(invoiceCurrency, grandTotal) }}</strong>
           </div>
         </div>
-
-        <div class="job-normal-invoice-tab__section job-normal-invoice-tab__section--nested">
-          <header class="job-normal-invoice-tab__subheader">
-            <div>
-              <h3>Invoice List</h3>
-              <p>Customer invoices generated from this job's Sell Charges.</p>
-            </div>
-          </header>
-
-          <div v-if="!invoices.length" class="job-normal-invoice-tab__placeholder">
-            <strong>No invoices printed yet</strong>
-            <p class="job-normal-invoice-tab__empty">Generated invoices will appear here.</p>
-          </div>
-
-          <div v-else class="job-normal-invoice-tab__table-wrap">
-            <table
-              class="job-normal-invoice-tab__table job-normal-invoice-tab__table--invoice-list job-normal-invoice-tab__table--customer-invoice-list"
-            >
-              <colgroup>
-                <col />
-                <col />
-                <col />
-                <col />
-              </colgroup>
-              <thead>
-                <tr>
-                  <th>Invoice</th>
-                  <th>Date</th>
-                  <th>Status</th>
-                  <th class="job-normal-invoice-tab__money">Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="invoice in invoices" :key="invoice.id">
-                  <td>
-                    <a
-                      v-if="invoice.pdfUrl"
-                      class="job-normal-invoice-tab__link"
-                      :href="invoice.pdfUrl"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      {{ invoice.invoiceNumber }}
-                    </a>
-                    <span v-else>{{ invoice.invoiceNumber }}</span>
-                  </td>
-                  <td>{{ invoice.invoiceDate || "-" }}</td>
-                  <td>
-                    <span
-                      class="job-normal-invoice-tab__status job-normal-invoice-tab__status--printed"
-                    >
-                      {{ invoiceStatusLabel(invoice.status) }}
-                    </span>
-                  </td>
-                  <td class="job-normal-invoice-tab__money">
-                    {{ money(invoice.currency, numberValue(invoice.total)) }}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
       </template>
+    </div>
+
+    <div class="job-normal-invoice-tab__section">
+      <header class="job-normal-invoice-tab__subheader">
+        <div>
+          <h3>Invoice List</h3>
+          <p>Customer invoices generated from this job's Sell Charges.</p>
+        </div>
+      </header>
+
+      <div v-if="!invoices.length" class="job-normal-invoice-tab__placeholder">
+        <strong>No invoices printed yet</strong>
+        <p class="job-normal-invoice-tab__empty">Generated invoices will appear here.</p>
+      </div>
+
+      <div v-else class="job-normal-invoice-tab__table-wrap">
+        <table
+          class="job-normal-invoice-tab__table job-normal-invoice-tab__table--invoice-list job-normal-invoice-tab__table--customer-invoice-list"
+        >
+          <colgroup>
+            <col />
+            <col />
+            <col />
+            <col />
+          </colgroup>
+          <thead>
+            <tr>
+              <th>Invoice</th>
+              <th>Date</th>
+              <th>Status</th>
+              <th class="job-normal-invoice-tab__money">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="invoice in invoices" :key="invoice.id">
+              <td>
+                <a
+                  v-if="invoice.pdfUrl"
+                  class="job-normal-invoice-tab__link"
+                  :href="invoice.pdfUrl"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {{ invoice.invoiceNumber }}
+                </a>
+                <span v-else>{{ invoice.invoiceNumber }}</span>
+              </td>
+              <td>{{ invoice.invoiceDate || "-" }}</td>
+              <td>
+                <span
+                  class="job-normal-invoice-tab__status job-normal-invoice-tab__status--printed"
+                >
+                  {{ invoiceStatusLabel(invoice.status) }}
+                </span>
+              </td>
+              <td class="job-normal-invoice-tab__money">
+                {{ money(invoice.currency, numberValue(invoice.total)) }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
     <Dialog

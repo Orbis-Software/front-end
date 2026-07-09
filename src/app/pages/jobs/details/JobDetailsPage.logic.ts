@@ -278,6 +278,7 @@ function addressOption(address: ContactCollectionAddress, ownerName = ""): Addre
 function contactAddressChoice(address: ContactCollectionAddress, ownerName = ""): AddressChoice {
   return {
     id: Number(address.id),
+    contact_id: address.contact_id ? Number(address.contact_id) : null,
     sourceType: "collection_address",
     label: address.label || address.city || addressSummary(address) || "Unnamed Address",
     ownerName,
@@ -301,6 +302,7 @@ function contactAddressChoice(address: ContactCollectionAddress, ownerName = "")
 function branchAddressChoice(branch: ContactBranch, ownerName = ""): AddressChoice {
   return {
     id: Number(branch.id),
+    contact_id: branch.contact_id ? Number(branch.contact_id) : null,
     sourceType: "branch",
     label: branch.name || branch.delivery_city || "Branch",
     ownerName,
@@ -534,6 +536,11 @@ function emptyRoadDetail(): JobRoadDetail {
     local_driver_assigned: null,
     local_driver_mobile: null,
     local_collection_notes: null,
+    local_haulier_contact_id: null,
+    local_haulier_name: null,
+    local_buy_rate: null,
+    local_buy_currency: null,
+    local_charge_description: null,
     full_load_type: null,
     full_load_plan_ref: null,
     full_max_stack_height_cm: null,
@@ -1016,8 +1023,13 @@ function normalizeConsolidationDetails(raw: any): JobConsolidationDetails {
 
 function detailPayloadForMode(form: JobDetailsForm): Partial<TransportJobUpdatePayload> {
   if (form.mode_of_transport === "road") {
-    form.order_type = "Full Transport Order"
-    form.road_detail.order_type = "Full Transport Order"
+    const roadOrderType =
+      form.order_type === "Local Collection"
+        ? "Domestic Collection"
+        : form.order_type || form.road_detail.order_type || "Full Transport Order"
+
+    form.order_type = roadOrderType
+    form.road_detail.order_type = roadOrderType
     form.road_detail.local_estimated_mileage_cost = localMileageCost(form)
 
     return { road_detail: form.road_detail }
@@ -1270,7 +1282,7 @@ export function useJobDetailsPage() {
       showCount: true,
     },
     {
-      label: "Transport Order",
+      label: "Transport Orders",
       name: "tms.jobs.show.transport",
       key: "transport",
     },
@@ -1407,11 +1419,40 @@ export function useJobDetailsPage() {
       if (contact?.id) contactsById.set(Number(contact.id), contact)
     })
 
-    return Array.from(contactsById.values()).map((contact: any) => ({
+    const options = Array.from(contactsById.values()).map((contact: any) => ({
       label: displayContactName(contact),
       value: Number(contact.id),
       account_number: contact.account_number ?? "",
     }))
+
+    const selectedContactId = Number(
+      selectedDestinationContactIdRef.value ?? (job.value as any)?.destination_address?.contact_id,
+    )
+
+    if (Number.isFinite(selectedContactId) && selectedContactId > 0) {
+      const hasSelectedOption = options.some(option => option.value === selectedContactId)
+
+      if (!hasSelectedOption) {
+        const selectedAddress = (job.value as any)?.destination_address
+        const label = [
+          selectedAddress?.owner_name,
+          selectedAddress?.company_name,
+          selectedAddress?.label,
+          selectedAddress?.city,
+        ]
+          .find(value => String(value ?? "").trim())
+          ?.toString()
+          .trim()
+
+        options.unshift({
+          label: label || `Contact #${selectedContactId}`,
+          value: selectedContactId,
+          account_number: "",
+        })
+      }
+    }
+
+    return options
   })
 
   const addressChoices = computed<AddressChoice[]>(() => {
@@ -1436,6 +1477,7 @@ export function useJobDetailsPage() {
       if (!exists) {
         choices.push({
           id,
+          contact_id: rawAddress.contact_id ? Number(rawAddress.contact_id) : null,
           sourceType,
           label: rawAddress.label ?? rawAddress.city ?? "Selected Address",
           ownerName: "",
@@ -2255,6 +2297,7 @@ export function useJobDetailsPage() {
     form.destination_address_source_id = choice.id
     form.destination_contact_collection_address_id =
       choice.sourceType === "collection_address" ? choice.id : null
+    selectedDestinationContactIdRef.value = choice.contact_id
 
     addressPickerVisibleRef.value = false
     scheduleAutosaveFromCurrentState()

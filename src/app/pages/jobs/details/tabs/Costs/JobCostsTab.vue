@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import "./JobCostsTab.css"
 import Button from "primevue/button"
+import Checkbox from "primevue/checkbox"
 import Dialog from "primevue/dialog"
 import Dropdown from "primevue/dropdown"
 import InputNumber from "primevue/inputnumber"
@@ -37,6 +38,9 @@ const {
   cancelRemoveRow,
   confirmRemoveRow,
   confirmPrintedRemoveRow,
+  toggleBuyRowSellCharge,
+  buyRowSellChargeChecked,
+  buyRowSellChargeTooltip,
   printedInvoiceNumber,
   lineNet,
   sellVat,
@@ -80,6 +84,7 @@ const {
               <th>Currency</th>
               <th>Ex. Rate</th>
               <th>Net</th>
+              <th>Add to Sell</th>
               <th />
             </tr>
           </thead>
@@ -154,6 +159,16 @@ const {
                 </div>
               </td>
               <td class="job-costs-tab__computed">{{ formatRowMoney(row, lineNet(row)) }}</td>
+              <td>
+                <div class="job-costs-tab__sell-link" :title="buyRowSellChargeTooltip(row)">
+                  <Checkbox
+                    :model-value="buyRowSellChargeChecked(row)"
+                    binary
+                    :input-id="`add-buy-${row.id}-to-sell`"
+                    @update:model-value="toggleBuyRowSellCharge(row, $event)"
+                  />
+                </div>
+              </td>
               <td>
                 <Button
                   type="button"

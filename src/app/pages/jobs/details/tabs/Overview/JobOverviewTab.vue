@@ -112,6 +112,11 @@ const cmrPlaceholder = computed(() =>
 const shipmentReferencePlaceholder = computed(() =>
   isRoadMode.value ? cmrPlaceholder.value : "Shipment reference",
 )
+const destinationContactPlaceholder = computed(() => {
+  const selectedLabel = String(selectedDestinationAddress.value?.label ?? "").trim()
+
+  return selectedLabel || "Search contact"
+})
 const declaredValueMode = computed(() => (form.currency ? "currency" : "decimal"))
 const declaredValueCurrency = computed(() => form.currency || "GBP")
 const hazardousEnabled = computed({
@@ -1025,7 +1030,7 @@ const consolidationTransportRows = computed(() => {
               :options="addressContactOptions"
               option-label="label"
               option-value="value"
-              placeholder="Search contact"
+              :placeholder="destinationContactPlaceholder"
               show-clear
               filter
               append-to="body"
