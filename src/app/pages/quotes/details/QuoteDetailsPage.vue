@@ -45,6 +45,17 @@
           />
 
           <Button
+            v-if="quote.status !== 'draft'"
+            label="View PDF"
+            icon="pi pi-file-pdf"
+            severity="secondary"
+            outlined
+            :loading="pdfLoading"
+            :disabled="pdfLoading"
+            @click="openQuotePdf"
+          />
+
+          <Button
             v-if="quote.status === 'draft'"
             label="Send to User"
             icon="pi pi-send"
@@ -192,14 +203,9 @@
               <strong>{{ money(quote.totals.sell) }}</strong>
             </div>
 
-            <div>
+            <div v-if="!quote.customer_facing">
               <span>Subtotal Cost</span>
               <strong>{{ money(quote.totals.cost) }}</strong>
-            </div>
-
-            <div>
-              <span>Discount</span>
-              <strong>{{ money(quote.totals.discount) }}</strong>
             </div>
 
             <div>
@@ -217,12 +223,12 @@
               <strong>{{ money(quote.totals.incl_tax) }}</strong>
             </div>
 
-            <div class="quote-details-page__totals-profit">
+            <div v-if="!quote.customer_facing" class="quote-details-page__totals-profit">
               <span>Profit</span>
               <strong>{{ money(quote.totals.profit) }}</strong>
             </div>
 
-            <div class="quote-details-page__totals-profit">
+            <div v-if="!quote.customer_facing" class="quote-details-page__totals-profit">
               <span>Profit %</span>
               <strong>{{ quote.totals.profit_percentage.toFixed(2) }}%</strong>
             </div>
@@ -252,14 +258,20 @@
           <Column field="quantity" header="Qty" />
           <Column field="uom" header="UOM" />
 
-          <Column header="Cost">
+          <Column v-if="!quote.customer_facing" header="Cost">
             <template #body="{ data }">
               {{ money(data.cost) }}
             </template>
           </Column>
 
-          <Column header="Markup %">
+          <Column v-if="!quote.customer_facing" header="Markup %">
             <template #body="{ data }"> {{ data.markup_percent }}% </template>
+          </Column>
+
+          <Column v-if="quote.customer_facing" header="Unit Price">
+            <template #body="{ data }">
+              {{ money(data.unit_price) }}
+            </template>
           </Column>
 
           <Column header="Total Sell">
@@ -366,6 +378,7 @@ const {
   loadPlannerReference,
   loading,
   actionProcessing,
+  pdfLoading,
   actionDialogVisible,
   selectedAction,
   actionNotes,
@@ -379,6 +392,7 @@ const {
   openActionModal,
   closeActionModal,
   confirmAction,
+  openQuotePdf,
   prettify,
   statusClass,
   money,

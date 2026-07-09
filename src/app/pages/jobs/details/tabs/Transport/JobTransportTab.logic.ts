@@ -15,6 +15,7 @@ import type {
   JobTransportTabMode as TransportMode,
   MultiModalLeg,
   MultiModalLegMode,
+  PackageRow,
 } from "@/app/types/job-details"
 
 let legId = 1
@@ -130,6 +131,24 @@ function createMultiDropStop(): MultiDropStop {
   }
 }
 
+function createPackageRow(): PackageRow {
+  return {
+    id: `domestic-${Date.now()}-${Math.random()}`,
+    package_type: "Pallet",
+    description: "",
+    stackable: true,
+    atTheTop: false,
+    adr: false,
+    quantity: 1,
+    lengthCm: 0,
+    widthCm: 0,
+    heightCm: 0,
+    grossWeightKg: 0,
+    volumeWeightKg: 0,
+    cbm: 0,
+  }
+}
+
 export function useJobTransportTab() {
   const jobDetails = inject<ReturnType<typeof useJobDetailsPage>>("jobDetails")
   const globalReferenceDataStore = useGlobalReferenceDataStore()
@@ -153,7 +172,19 @@ export function useJobTransportTab() {
     throw new Error("Job details context is missing")
   }
 
-  const { form, referenceOptions } = jobDetails
+  const {
+    form,
+    referenceOptions,
+    originAddressOptions,
+    addressContactOptions,
+    addressContactsLoading,
+    selectedDestinationContactId,
+    selectedOriginAddress,
+    selectedDestinationAddress,
+    openAddressModal,
+    onAddressContactFilter,
+    selectAddressContact,
+  } = jobDetails
 
   const haulierChargeDescriptionOptions = computed(() =>
     chargeCodeStore.chargeCodes.map(charge => ({
@@ -538,6 +569,34 @@ export function useJobTransportTab() {
     },
   })
 
+  const domesticPackageRows = computed<PackageRow[]>({
+    get() {
+      return Array.isArray(form.packages) ? (form.packages as PackageRow[]) : []
+    },
+    set(value) {
+      form.packages = value
+    },
+  })
+
+  const domesticPackageTotals = computed(() =>
+    domesticPackageRows.value.reduce(
+      (totals, row) => {
+        totals.pieces += numberValue(row.quantity)
+        totals.grossWeightKg += numberValue(row.grossWeightKg) * numberValue(row.quantity)
+        totals.volumeWeightKg += numberValue(row.volumeWeightKg)
+        totals.cbm += numberValue(row.cbm)
+
+        return totals
+      },
+      {
+        pieces: 0,
+        grossWeightKg: 0,
+        volumeWeightKg: 0,
+        cbm: 0,
+      },
+    ),
+  )
+
   function addLeg() {
     multiModalLegs.value = [...multiModalLegs.value, createLeg()]
   }
@@ -552,6 +611,27 @@ export function useJobTransportTab() {
 
   function removeMultiDropStop(id: number) {
     multiDropStops.value = multiDropStops.value.filter(stop => stop.id !== id)
+  }
+
+  function calculateDomesticPackage(row: PackageRow) {
+    const qty = numberValue(row.quantity)
+    const length = numberValue(row.lengthCm)
+    const width = numberValue(row.widthCm)
+    const height = numberValue(row.heightCm)
+
+    row.cbm = ((length * width * height) / 1_000_000) * qty
+    row.volumeWeightKg = ((length * width * height) / 6000) * qty
+  }
+
+  function addDomesticPackageRow() {
+    const row = createPackageRow()
+
+    calculateDomesticPackage(row)
+    domesticPackageRows.value = [...domesticPackageRows.value, row]
+  }
+
+  function removeDomesticPackageRow(row: PackageRow) {
+    domesticPackageRows.value = domesticPackageRows.value.filter(packageRow => packageRow !== row)
   }
 
   function setBooleanDetail(key: string, value: boolean) {
@@ -919,6 +999,8 @@ export function useJobTransportTab() {
     modeLabel,
     multiModalLegs,
     multiDropStops,
+    domesticPackageRows,
+    domesticPackageTotals,
     airportOptions,
     seaportOptions,
     railTerminalOptions,
@@ -927,6 +1009,12 @@ export function useJobTransportTab() {
     countryOptions,
     countriesLoading: countryStore.loading,
     referenceOptions,
+    originAddressOptions,
+    addressContactOptions,
+    addressContactsLoading,
+    selectedDestinationContactId,
+    selectedOriginAddress,
+    selectedDestinationAddress,
     haulierChargeDescriptionOptions,
     contactOptions,
     contactOptionsLoading,
@@ -939,6 +1027,12 @@ export function useJobTransportTab() {
     removeLeg,
     addMultiDropStop,
     removeMultiDropStop,
+    addDomesticPackageRow,
+    removeDomesticPackageRow,
+    calculateDomesticPackage,
+    openAddressModal,
+    onAddressContactFilter,
+    selectAddressContact,
     setBooleanDetail,
   }
 }

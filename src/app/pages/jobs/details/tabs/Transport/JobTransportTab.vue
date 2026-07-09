@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import "./JobTransportTab.css"
 import Button from "primevue/button"
+import Calendar from "primevue/calendar"
 import Dropdown from "primevue/dropdown"
 import InputNumber from "primevue/inputnumber"
 import InputSwitch from "primevue/inputswitch"
@@ -23,6 +24,8 @@ const {
   modeLabel,
   multiModalLegs,
   multiDropStops,
+  domesticPackageRows,
+  domesticPackageTotals,
   airportOptions,
   seaportOptions,
   railTerminalOptions,
@@ -31,6 +34,12 @@ const {
   countryOptions,
   countriesLoading,
   referenceOptions,
+  originAddressOptions,
+  addressContactOptions,
+  addressContactsLoading,
+  selectedDestinationContactId,
+  selectedOriginAddress,
+  selectedDestinationAddress,
   haulierChargeDescriptionOptions,
   contactOptions,
   contactOptionsLoading,
@@ -43,6 +52,12 @@ const {
   removeLeg,
   addMultiDropStop,
   removeMultiDropStop,
+  addDomesticPackageRow,
+  removeDomesticPackageRow,
+  calculateDomesticPackage,
+  openAddressModal,
+  onAddressContactFilter,
+  selectAddressContact,
   setBooleanDetail,
 } = useJobTransportTab()
 
@@ -62,6 +77,16 @@ const transportOrderDisabled = computed(() => !jobPdfActions || jobPdfActions.is
 const transportOrderLabel = computed(() =>
   transportOrderLoading.value ? "Opening..." : "Transport Order",
 )
+const collectionOrderLoading = computed(() => jobPdfActions?.pdfLoading.value === "collection_order")
+const collectionOrderDisabled = computed(() => !jobPdfActions || jobPdfActions.isPdfLoading.value)
+const collectionOrderLabel = computed(() =>
+  collectionOrderLoading.value ? "Opening..." : "Collection Order",
+)
+const destinationContactPlaceholder = computed(() => {
+  const selectedLabel = String(selectedDestinationAddress.value?.label ?? "").trim()
+
+  return selectedLabel || "Search contact"
+})
 
 const activeRoadOrderType = computed({
   get() {
@@ -121,6 +146,33 @@ function syncRoadDetailDropdownFilter(event: unknown, key: string, fetchGlobalRe
 
 function openTransportOrder() {
   void jobPdfActions?.loadPdf("transport_order")
+}
+
+function openCollectionOrder() {
+  void jobPdfActions?.loadPdf("collection_order")
+}
+
+function addressLines(address: any): string {
+  return [
+    address?.address_line_1,
+    address?.address_line_2,
+    address?.address_line_3,
+    address?.city,
+    address?.postal_code,
+    address?.country_name,
+  ]
+    .filter(Boolean)
+    .join(", ")
+}
+
+function contactLine(address: any): string {
+  return [address?.contact_person, address?.phone, address?.email].filter(Boolean).join(" | ")
+}
+
+function displayValue(value: unknown): string {
+  const text = String(value ?? "").trim()
+
+  return text || "-"
 }
 
 const legModeOptions = [
@@ -953,6 +1005,20 @@ const globalReferenceVirtualScrollerOptions = {
         />
       </div>
 
+      <div
+        v-if="activeRoadOrderType === 'Domestic Collection'"
+        class="job-transport-tab__order-actions"
+      >
+        <Button
+          class="job-transport-tab__document-btn"
+          icon="pi pi-inbox"
+          :label="collectionOrderLabel"
+          :loading="collectionOrderLoading"
+          :disabled="collectionOrderDisabled"
+          @click="openCollectionOrder"
+        />
+      </div>
+
       <div v-if="activeRoadOrderType === 'Full Transport Order'" class="job-transport-tab__grid">
         <label class="job-transport-tab__field">
           <span>Service Type</span>
@@ -1267,6 +1333,262 @@ const globalReferenceVirtualScrollerOptions = {
       </div>
 
       <div v-else class="job-transport-tab__grid">
+        <div class="job-transport-tab__detail-panel job-transport-tab__field--span-4">
+          <header class="job-transport-tab__detail-panel-header">
+            <h3>Collection Address</h3>
+            <Button
+              icon="pi pi-plus"
+              label="New Address"
+              type="button"
+              outlined
+              :disabled="!form.customer_id"
+              @click="openAddressModal('origin')"
+            />
+          </header>
+
+          <div class="job-transport-tab__grid job-transport-tab__grid--nested">
+            <label class="job-transport-tab__field job-transport-tab__field--span-2">
+              <span>Origin Address</span>
+              <Dropdown
+                v-model="form.origin_contact_collection_address_id"
+                :options="originAddressOptions"
+                option-label="label"
+                option-value="value"
+                placeholder="Select origin"
+                show-clear
+                append-to="body"
+                class="job-transport-tab__prime-select"
+              />
+            </label>
+
+            <div class="job-transport-tab__address-summary job-transport-tab__field--span-2">
+              <strong>{{ displayValue(selectedOriginAddress?.label) }}</strong>
+              <span>{{ displayValue(addressLines(selectedOriginAddress)) }}</span>
+              <span>{{ displayValue(contactLine(selectedOriginAddress)) }}</span>
+            </div>
+
+            <label class="job-transport-tab__field">
+              <span>Collection Date</span>
+              <Calendar
+                v-model="form.collection_date"
+                date-format="dd/mm/yy"
+                placeholder="dd/mm/yyyy"
+                showIcon
+              />
+            </label>
+
+            <label class="job-transport-tab__field">
+              <span>Ready Time</span>
+              <InputText v-model="form.collection_time" type="time" placeholder="hh:mm" />
+            </label>
+
+            <label class="job-transport-tab__field">
+              <span>Latest Collection</span>
+              <InputText v-model="form.latest_collection_time" type="time" placeholder="hh:mm" />
+            </label>
+
+            <label class="job-transport-tab__field">
+              <span>Loading Ref</span>
+              <InputText v-model="form.loading_reference" placeholder="Dock / bay ref" />
+            </label>
+
+            <label class="job-transport-tab__field job-transport-tab__field--span-4">
+              <span>Collection Instructions</span>
+              <Textarea
+                v-model="form.collection_instructions"
+                rows="3"
+                placeholder="Access codes, parking, dock height, forklift availability..."
+              />
+            </label>
+          </div>
+        </div>
+
+        <div class="job-transport-tab__detail-panel job-transport-tab__field--span-4">
+          <header class="job-transport-tab__detail-panel-header">
+            <h3>Delivery Address</h3>
+            <Button
+              icon="pi pi-plus"
+              label="New Address"
+              type="button"
+              outlined
+              :disabled="!form.customer_id"
+              @click="openAddressModal('destination')"
+            />
+          </header>
+
+          <div class="job-transport-tab__grid job-transport-tab__grid--nested">
+            <label class="job-transport-tab__field job-transport-tab__field--span-2">
+              <span>Destination Address</span>
+              <Dropdown
+                v-model="selectedDestinationContactId"
+                :options="addressContactOptions"
+                option-label="label"
+                option-value="value"
+                :placeholder="destinationContactPlaceholder"
+                show-clear
+                filter
+                append-to="body"
+                :loading="addressContactsLoading"
+                class="job-transport-tab__prime-select"
+                @filter="onAddressContactFilter"
+                @update:model-value="
+                  (value: number | null) => selectAddressContact('destination', value)
+                "
+              />
+            </label>
+
+            <div class="job-transport-tab__address-summary job-transport-tab__field--span-2">
+              <strong>{{ displayValue(selectedDestinationAddress?.label) }}</strong>
+              <span>{{ displayValue(addressLines(selectedDestinationAddress)) }}</span>
+              <span>{{ displayValue(contactLine(selectedDestinationAddress)) }}</span>
+            </div>
+
+            <label class="job-transport-tab__field">
+              <span>Delivery Date</span>
+              <Calendar
+                v-model="form.delivery_date"
+                date-format="dd/mm/yy"
+                placeholder="dd/mm/yyyy"
+                showIcon
+              />
+            </label>
+
+            <label class="job-transport-tab__field">
+              <span>Delivery From</span>
+              <InputText v-model="form.delivery_from_time" type="time" placeholder="hh:mm" />
+            </label>
+
+            <label class="job-transport-tab__field">
+              <span>Delivery By</span>
+              <InputText v-model="form.delivery_by_time" type="time" placeholder="hh:mm" />
+            </label>
+
+            <label class="job-transport-tab__field">
+              <span>Delivery Booking Ref</span>
+              <InputText v-model="form.delivery_booking_ref" placeholder="Booking ref" />
+            </label>
+
+            <label class="job-transport-tab__field job-transport-tab__field--span-4">
+              <span>Delivery Instructions</span>
+              <Textarea
+                v-model="form.delivery_instructions"
+                rows="3"
+                placeholder="Access codes, parking, unloading notes, POD requirements..."
+              />
+            </label>
+          </div>
+        </div>
+
+        <div class="job-transport-tab__detail-panel job-transport-tab__field--span-4">
+          <header class="job-transport-tab__detail-panel-header">
+            <h3>Packing Details</h3>
+            <Button
+              class="job-transport-tab__add-leg-btn"
+              icon="pi pi-plus"
+              label="Add Package"
+              type="button"
+              @click="addDomesticPackageRow"
+            />
+          </header>
+
+          <label class="job-transport-tab__field">
+            <span>Goods Description</span>
+            <Textarea
+              v-model="form.description_of_goods"
+              rows="3"
+              placeholder="Goods, marks, references, handling notes..."
+            />
+          </label>
+
+          <div class="job-transport-tab__package-table-wrap">
+            <table class="job-transport-tab__package-table">
+              <thead>
+                <tr>
+                  <th>Type</th>
+                  <th>Description</th>
+                  <th>Qty</th>
+                  <th>Length</th>
+                  <th>Width</th>
+                  <th>Height</th>
+                  <th>Gross kg</th>
+                  <th>CBM</th>
+                  <th></th>
+                </tr>
+              </thead>
+
+              <tbody>
+                <tr v-for="row in domesticPackageRows" :key="row.id">
+                  <td><InputText v-model="row.package_type" placeholder="Pallet" /></td>
+                  <td><InputText v-model="row.description" placeholder="Description" /></td>
+                  <td>
+                    <InputNumber
+                      v-model="row.quantity"
+                      :min="0"
+                      input-class="job-transport-tab__compact-input"
+                      @update:model-value="calculateDomesticPackage(row)"
+                    />
+                  </td>
+                  <td>
+                    <InputNumber
+                      v-model="row.lengthCm"
+                      :min="0"
+                      input-class="job-transport-tab__compact-input"
+                      @update:model-value="calculateDomesticPackage(row)"
+                    />
+                  </td>
+                  <td>
+                    <InputNumber
+                      v-model="row.widthCm"
+                      :min="0"
+                      input-class="job-transport-tab__compact-input"
+                      @update:model-value="calculateDomesticPackage(row)"
+                    />
+                  </td>
+                  <td>
+                    <InputNumber
+                      v-model="row.heightCm"
+                      :min="0"
+                      input-class="job-transport-tab__compact-input"
+                      @update:model-value="calculateDomesticPackage(row)"
+                    />
+                  </td>
+                  <td>
+                    <InputNumber
+                      v-model="row.grossWeightKg"
+                      :min="0"
+                      :max-fraction-digits="2"
+                      input-class="job-transport-tab__compact-input"
+                    />
+                  </td>
+                  <td>{{ Number(row.cbm || 0).toFixed(3) }}</td>
+                  <td>
+                    <Button
+                      icon="pi pi-times"
+                      severity="danger"
+                      text
+                      rounded
+                      type="button"
+                      @click="removeDomesticPackageRow(row)"
+                    />
+                  </td>
+                </tr>
+                <tr v-if="!domesticPackageRows.length">
+                  <td colspan="9" class="job-transport-tab__package-empty">
+                    No packages added yet.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="job-transport-tab__package-totals">
+            <span>Pieces: {{ domesticPackageTotals.pieces }}</span>
+            <span>Gross: {{ domesticPackageTotals.grossWeightKg.toFixed(2) }} kg</span>
+            <span>Volume: {{ domesticPackageTotals.volumeWeightKg.toFixed(2) }} kg</span>
+            <span>CBM: {{ domesticPackageTotals.cbm.toFixed(3) }}</span>
+          </div>
+        </div>
+
         <label class="job-transport-tab__field">
           <span>Collection Type</span>
           <Dropdown

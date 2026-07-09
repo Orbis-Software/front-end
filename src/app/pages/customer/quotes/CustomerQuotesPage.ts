@@ -98,13 +98,55 @@ export function useCustomerQuotesPage() {
     await respondToQuote(reference, "rejected")
   }
 
-  function downloadQuote(reference: string) {
-    toast.add({
-      severity: "info",
-      summary: "Download Unavailable",
-      detail: `${reference} is available in the portal, but PDF download is not configured yet.`,
-      life: 3000,
-    })
+  async function downloadQuote(reference: string) {
+    const quote = quotes.value.find(item => item.reference === reference)
+    if (!quote || actionProcessingId.value) return
+
+    actionProcessingId.value = quote.id
+
+    try {
+      const blob = await quoteStore.quotePdf(quote.id)
+
+      if (!(blob instanceof Blob) || blob.type !== "application/pdf") {
+        const text = blob instanceof Blob ? await blob.text() : ""
+        throw new Error(text || "The server did not return a PDF.")
+      }
+
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement("a")
+
+      link.href = url
+      link.download = `${reference}.pdf`
+      link.click()
+
+      window.setTimeout(() => URL.revokeObjectURL(url), 60000)
+    } catch (error: any) {
+      toast.add({
+        severity: "error",
+        summary: "PDF failed",
+        detail: await extractPdfError(error),
+        life: 4500,
+      })
+    } finally {
+      actionProcessingId.value = null
+    }
+  }
+
+  async function extractPdfError(error: any) {
+    const data = error?.response?.data
+
+    if (data instanceof Blob) {
+      const text = await data.text()
+
+      try {
+        const parsed = JSON.parse(text)
+        return parsed?.message ?? text
+      } catch {
+        return text || "Unable to generate the quote PDF."
+      }
+    }
+
+    return error?.response?.data?.message ?? error?.message ?? "Unable to generate the quote PDF."
   }
 
   async function respondToQuote(reference: string, status: "accepted" | "rejected") {

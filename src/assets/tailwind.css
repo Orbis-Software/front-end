@@ -15,8 +15,10 @@
 
   --bg-page: #d4d4d4;
   --bg-card: #ffffff;
+  --bg-card-subtle: #fbfbfa;
 
-  --border: #e5e5e5;
+  --border: #d6d6d6;
+  --surface-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 
   --text: #262626;
   --text-muted: #737373;
@@ -53,6 +55,16 @@ body,
 
 #app {
   min-height: 100vh;
+  background: var(--bg-page);
+}
+
+.card,
+.orbis-card,
+.p-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: var(--surface-shadow);
 }
 
 /* =========================
