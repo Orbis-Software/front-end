@@ -88,6 +88,63 @@
   border: 1px solid #ffd9bf;
 }
 
+.job-transport-tab__order-tabs {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  padding: 10px 14px 0;
+  background: #dedede;
+  border-bottom: 1px solid #b6b6b6;
+}
+
+.job-transport-tab__order-tab {
+  min-height: 38px;
+  padding: 0 14px;
+  border: 1px solid transparent;
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  background: transparent;
+  color: #555;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.job-transport-tab__order-tab:hover {
+  background: rgba(255, 255, 255, 0.48);
+  color: #1a1a18;
+}
+
+.job-transport-tab__order-tab--active {
+  position: relative;
+  top: 1px;
+  background: #f8f8f8;
+  border-color: #b6b6b6;
+  color: #1a1a18;
+}
+
+.job-transport-tab__order-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding: 12px 14px 0;
+  background: #ececec;
+}
+
+.job-transport-tab__document-btn {
+  min-height: 36px;
+  border-color: #ec691a !important;
+  background: #ec691a !important;
+  color: #fff !important;
+  font-size: 12px !important;
+  font-weight: 800 !important;
+}
+
+.job-transport-tab__document-btn .p-button-icon,
+.job-transport-tab__document-btn .p-button-label {
+  color: #fff !important;
+}
+
 /* ================================
    FORM GRID
 ================================ */

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import "./JobDetailsPage.css"
-import { computed, ref, watch } from "vue"
+import { computed, provide, ref, watch } from "vue"
 import { RouterLink, RouterView, useRouter } from "vue-router"
 import ConfirmDialog from "primevue/confirmdialog"
 import { useConfirm } from "primevue/useconfirm"
@@ -47,7 +47,6 @@ const archiveLoading = ref(false)
 const statusModalVisible = ref(false)
 const selectedStatus = ref(form.status)
 const isPdfLoading = computed(() => pdfLoading.value !== null)
-const isRoadMode = computed(() => form.mode_of_transport === "road")
 const selectedStatusDetails = computed(() => ensureStatusDetails(selectedStatus.value))
 const podFiles = computed(() =>
   form.files.filter(file => String(file?.type ?? "").toLowerCase() === "pod"),
@@ -302,11 +301,11 @@ async function loadPdf(document: JobPdfDocument = "job_details") {
   }
 }
 
-function onTransportOrder() {
-  if (!isRoadMode.value) return
-
-  loadPdf("transport_order")
-}
+provide("jobPdfActions", {
+  pdfLoading,
+  isPdfLoading,
+  loadPdf,
+})
 
 function archiveErrorMessage(error: any) {
   return error?.response?.data?.message ?? error?.message ?? "Unable to archive job."
@@ -371,16 +370,6 @@ function onArchive() {
         </div>
 
         <div class="job-actions">
-          <Button
-            v-if="isRoadMode"
-            class="job-action-btn"
-            icon="pi pi-truck"
-            :label="pdfLoading === 'transport_order' ? 'Opening...' : 'Transport Order'"
-            :loading="pdfLoading === 'transport_order'"
-            :disabled="loading || isPdfLoading"
-            @click="onTransportOrder"
-          />
-
           <Button
             class="job-action-btn job-action-btn--danger"
             icon="pi pi-folder"

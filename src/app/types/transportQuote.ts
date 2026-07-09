@@ -18,12 +18,14 @@ export interface TransportQuoteTotals {
 
 export interface TransportQuoteDimension {
   id?: number
+  package_type?: string | null
   pieces: number | null
   length: number | null
   width: number | null
   height: number | null
   stackable?: boolean | null
   at_the_top?: boolean | null
+  adr?: boolean | null
   weight: number | null
   cbm?: number | string | null
   volume_weight_kg?: number | string | null

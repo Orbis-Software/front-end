@@ -57,6 +57,11 @@ export interface JobRoadDetail {
   local_driver_assigned?: string | null
   local_driver_mobile?: string | null
   local_collection_notes?: string | null
+  local_haulier_contact_id?: number | null
+  local_haulier_name?: string | null
+  local_buy_rate?: number | null
+  local_buy_currency?: string | null
+  local_charge_description?: string | null
   full_load_type?: string | null
   full_load_plan_ref?: string | null
   full_max_stack_height_cm?: number | null

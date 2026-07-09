@@ -187,6 +187,10 @@
   min-width: 1100px;
 }
 
+.quote-page .quote-table--charges {
+  min-width: 1180px;
+}
+
 .quote-page .quote-table thead tr {
   background: #f7f7f5;
   border-bottom: 1px solid #e6e6e6;
@@ -249,6 +253,10 @@
   width: 130px;
 }
 
+.quote-page .table-select--currency {
+  width: 96px;
+}
+
 .quote-page .table-select.wide {
   width: 240px;
 }
@@ -304,6 +312,31 @@
   gap: 18px;
   align-items: start;
   margin-top: 20px;
+}
+
+.quote-page .quote-section-total {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 14px;
+  padding: 10px 12px;
+  border: 1px solid #e5e5e5;
+  border-top: 0;
+  border-radius: 0 0 10px 10px;
+  background: #fafafa;
+  font-size: 12px;
+}
+
+.quote-page .quote-section-total span {
+  color: #737373;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.quote-page .quote-section-total strong {
+  color: #262626;
+  font-size: 13px;
 }
 
 .quote-page .conditions-box {

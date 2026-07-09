@@ -296,6 +296,18 @@
   white-space: nowrap;
 }
 
+.accounts-supplier-payments__status-cell {
+  white-space: normal;
+}
+
+.accounts-supplier-payments__status-detail {
+  display: block;
+  margin-top: 4px;
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 1.2;
+}
+
 .accounts-supplier-payments__pill--warning {
   background: #fff7e8;
   color: #b7791f;

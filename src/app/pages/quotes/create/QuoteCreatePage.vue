@@ -115,7 +115,12 @@
 
         <div class="field">
           <label class="label">Quote Ref</label>
-          <InputText v-model="form.quote_ref" class="control" readonly />
+          <InputText
+            v-model="form.quote_ref"
+            class="control"
+            readonly
+            placeholder="System generated on save"
+          />
         </div>
 
         <div class="field">
@@ -356,7 +361,7 @@
       </div>
 
       <div class="table-head-row">
-        <div class="section-subtitle">Package / Piece Details</div>
+        <div class="section-subtitle">Package Details</div>
         <Button class="btn-add" type="button" outlined @click="addDimensionRow">+ Add Row</Button>
       </div>
 
@@ -365,17 +370,17 @@
           <thead>
             <tr>
               <th>#</th>
-              <th class="quote-table__compact-heading">
-                {{ mode === "road" ? "Pallets" : mode === "rail" ? "Units" : "Pieces" }}
-              </th>
+              <th>Packaging</th>
+              <th class="quote-table__compact-heading">Qty</th>
               <th class="quote-table__compact-heading">Length</th>
               <th class="quote-table__compact-heading">Width</th>
               <th class="quote-table__compact-heading">Height</th>
-              <th>Weight (KG)</th>
+              <th>Gross KG</th>
               <th v-if="mode === 'air'">Vol. Wt (KG)</th>
               <th>CBM</th>
               <th v-if="mode === 'road'">LDM</th>
               <th v-if="mode === 'sea' || mode === 'rail'">Container</th>
+              <th class="quote-table__check-heading">ADR</th>
               <th class="quote-table__check-heading">Stackable</th>
               <th class="quote-table__check-heading">Non-Stack</th>
               <th class="quote-table__check-heading">Top-Loadable</th>
@@ -386,6 +391,15 @@
           <tbody>
             <tr v-for="(row, index) in dimensionRows" :key="row.id">
               <td>{{ index + 1 }}</td>
+              <td>
+                <Select
+                  v-model="row.package_type"
+                  :options="packageTypeOptions"
+                  optionLabel="label"
+                  optionValue="value"
+                  class="table-select wide"
+                />
+              </td>
               <td class="quote-table__compact-cell">
                 <InputNumber
                   v-model="row.pieces"
@@ -430,6 +444,9 @@
                   optionValue="value"
                   class="table-select"
                 />
+              </td>
+              <td class="quote-table__check-cell">
+                <Checkbox v-model="row.adr" binary />
               </td>
               <td class="quote-table__check-cell">
                 <Checkbox
@@ -535,28 +552,29 @@
       </div>
 
       <div class="table-head-row">
-        <div class="section-subtitle">Charge Lines</div>
-        <Button class="btn-add" type="button" outlined @click="addChargeLine()"
-          >+ Add Charge</Button
-        >
+        <div class="section-subtitle">Buy Costs</div>
+        <Button class="btn-add" type="button" outlined @click="addBuyCostLine()">+ Add Cost</Button>
       </div>
 
       <div class="table-wrap">
-        <table class="quote-table">
+        <table class="quote-table quote-table--charges">
           <thead>
             <tr>
+              <th>#</th>
               <th>Description</th>
               <th>Qty</th>
               <th>UOM</th>
-              <th>Cost</th>
-              <th>Markup %</th>
-              <th class="text-right">Total (Sell)</th>
+              <th>Unit Cost</th>
+              <th>Currency</th>
+              <th>Ex. Rate</th>
+              <th class="text-right">Net</th>
               <th></th>
             </tr>
           </thead>
 
           <tbody>
-            <tr v-for="line in chargeLines" :key="line.id">
+            <tr v-for="(line, index) in buyCostLines" :key="line.id">
+              <td>{{ index + 1 }}</td>
               <td>
                 <Select
                   v-model="line.description"
@@ -578,7 +596,7 @@
               </td>
               <td>
                 <InputNumber
-                  v-model="line.cost"
+                  v-model="line.unit_cost"
                   inputClass="table-input"
                   mode="decimal"
                   :minFractionDigits="2"
@@ -587,16 +605,25 @@
                 />
               </td>
               <td>
+                <Select
+                  v-model="line.currency"
+                  :options="currencyOptions"
+                  optionLabel="value"
+                  optionValue="value"
+                  class="table-select table-select--currency"
+                />
+              </td>
+              <td>
                 <InputNumber
-                  v-model="line.markup_percent"
+                  v-model="line.exchange_rate"
                   inputClass="table-input"
                   mode="decimal"
-                  :minFractionDigits="2"
-                  :maxFractionDigits="2"
+                  :minFractionDigits="4"
+                  :maxFractionDigits="4"
                   :min="0"
                 />
               </td>
-              <td class="text-right">{{ getChargeSellTotal(line).toFixed(2) }}</td>
+              <td class="text-right">{{ getChargeLineTotal(line).toFixed(2) }}</td>
               <td>
                 <Button
                   icon="pi pi-times"
@@ -604,12 +631,123 @@
                   text
                   rounded
                   type="button"
-                  @click="removeChargeLine(line.id)"
+                  @click="removeBuyCostLine(line.id)"
                 />
               </td>
             </tr>
           </tbody>
         </table>
+      </div>
+
+      <div class="quote-section-total">
+        <span>Buy Total</span>
+        <strong>{{ subtotalCostDisplay }}</strong>
+      </div>
+
+      <div class="table-head-row">
+        <div class="section-subtitle">Sell Charges</div>
+        <Button class="btn-add" type="button" outlined @click="addSellChargeLine()"
+          >+ Add Charge</Button
+        >
+      </div>
+
+      <div class="table-wrap">
+        <table class="quote-table quote-table--charges">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Description</th>
+              <th>Qty</th>
+              <th>UOM</th>
+              <th>Unit Price</th>
+              <th>Currency</th>
+              <th>Ex. Rate</th>
+              <th>VAT %</th>
+              <th class="text-right">Net</th>
+              <th></th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr v-for="(line, index) in sellChargeLines" :key="line.id">
+              <td>{{ index + 1 }}</td>
+              <td>
+                <Select
+                  v-model="line.description"
+                  :options="chargeDescriptionOptions"
+                  optionLabel="label"
+                  optionValue="value"
+                  class="table-select wide"
+                />
+              </td>
+              <td><InputNumber v-model="line.qty" inputClass="table-input" :min="0" /></td>
+              <td>
+                <Select
+                  v-model="line.uom"
+                  :options="uomOptions"
+                  optionLabel="label"
+                  optionValue="value"
+                  class="table-select"
+                />
+              </td>
+              <td>
+                <InputNumber
+                  v-model="line.unit_price"
+                  inputClass="table-input"
+                  mode="decimal"
+                  :minFractionDigits="2"
+                  :maxFractionDigits="2"
+                  :min="0"
+                />
+              </td>
+              <td>
+                <Select
+                  v-model="line.currency"
+                  :options="currencyOptions"
+                  optionLabel="value"
+                  optionValue="value"
+                  class="table-select table-select--currency"
+                />
+              </td>
+              <td>
+                <InputNumber
+                  v-model="line.exchange_rate"
+                  inputClass="table-input"
+                  mode="decimal"
+                  :minFractionDigits="4"
+                  :maxFractionDigits="4"
+                  :min="0"
+                />
+              </td>
+              <td>
+                <InputNumber
+                  v-model="line.vat_rate"
+                  inputClass="table-input"
+                  mode="decimal"
+                  :minFractionDigits="2"
+                  :maxFractionDigits="2"
+                  :min="0"
+                />
+              </td>
+              <td class="text-right">{{ getChargeLineTotal(line).toFixed(2) }}</td>
+              <td>
+                <Button
+                  icon="pi pi-times"
+                  severity="danger"
+                  text
+                  rounded
+                  type="button"
+                  @click="removeSellChargeLine(line.id)"
+                />
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="quote-section-total">
+        <span>Sell Total</span>
+        <strong>{{ subtotalSellDisplay }}</strong>
       </div>
 
       <div class="bottom-section">
@@ -789,9 +927,11 @@ const {
   conditionsOptions,
   validityOptions,
   taxRateOptions,
+  packageTypeOptions,
 
   dimensionRows,
-  chargeLines,
+  buyCostLines,
+  sellChargeLines,
 
   totalPieces,
   totalActualWeight,
@@ -821,12 +961,14 @@ const {
   removeDimensionRow,
   getPackageStackOption,
   setPackageStackOption,
-  addChargeLine,
-  removeChargeLine,
+  addBuyCostLine,
+  addSellChargeLine,
+  removeBuyCostLine,
+  removeSellChargeLine,
   getRowCbm,
   getRowVolumetricWeight,
   getRowLdm,
-  getChargeSellTotal,
+  getChargeLineTotal,
   onConditionsPresetChange,
   onBrowseQuotes,
   onFindQuote,

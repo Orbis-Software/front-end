@@ -52,6 +52,9 @@ const GLOBAL_REFERENCE_OPTION_LIMIT = 150
 const HAULIER_COST_ROW_ID = "haulier-buy-rate"
 const HAULIER_COST_SOURCE = "road-haulier"
 const DEFAULT_HAULIER_CHARGE_DESCRIPTION = "Haulier Charge"
+const DOMESTIC_COLLECTION_COST_ROW_ID = "domestic-collection-buy-cost"
+const DOMESTIC_COLLECTION_COST_SOURCE = "domestic-collection"
+const DEFAULT_DOMESTIC_COLLECTION_CHARGE_DESCRIPTION = "Domestic Collection"
 
 function createLeg(): MultiModalLeg {
   return {
@@ -143,6 +146,8 @@ export function useJobTransportTab() {
   let globalReferenceFetchToken = 0
   const haulierBuyCostRowId = ref<number | string | null>(null)
   const lastHaulierChargeDescription = ref("")
+  const domesticCollectionBuyCostRowId = ref<number | string | null>(null)
+  const lastDomesticCollectionChargeDescription = ref("")
 
   if (!jobDetails) {
     throw new Error("Job details context is missing")
@@ -559,10 +564,23 @@ export function useJobTransportTab() {
     ;(form.road_detail as any).subcontractor_name = selected?.label ?? ""
   }
 
+  function syncDomesticCollectionHaulier(contactId: number | null) {
+    const selected = contactOptions.value.find(option => option.value === Number(contactId))
+
+    ;(form.road_detail as any).local_haulier_name = selected?.label ?? ""
+  }
+
   function haulierChargeDescription() {
     return (
       String((form.road_detail as any).subcontractor_charge_description ?? "").trim() ||
       DEFAULT_HAULIER_CHARGE_DESCRIPTION
+    )
+  }
+
+  function domesticCollectionChargeDescription() {
+    return (
+      String((form.road_detail as any).local_charge_description ?? "").trim() ||
+      DEFAULT_DOMESTIC_COLLECTION_CHARGE_DESCRIPTION
     )
   }
 
@@ -577,6 +595,18 @@ export function useJobTransportTab() {
   function generatedHaulierDescriptions(description: string) {
     return new Set(
       [description, lastHaulierChargeDescription.value, DEFAULT_HAULIER_CHARGE_DESCRIPTION]
+        .map(normalizeDescription)
+        .filter(Boolean),
+    )
+  }
+
+  function generatedDomesticCollectionDescriptions(description: string) {
+    return new Set(
+      [
+        description,
+        lastDomesticCollectionChargeDescription.value,
+        DEFAULT_DOMESTIC_COLLECTION_CHARGE_DESCRIPTION,
+      ]
         .map(normalizeDescription)
         .filter(Boolean),
     )
@@ -610,11 +640,44 @@ export function useJobTransportTab() {
     )
   }
 
+  function findDomesticCollectionBuyCostRow(description: string, supplierId: number | null) {
+    const byRuntimeId = form.buy_costs.find(row => {
+      return (
+        row.id === domesticCollectionBuyCostRowId.value ||
+        row.id === DOMESTIC_COLLECTION_COST_ROW_ID
+      )
+    })
+
+    if (byRuntimeId) return byRuntimeId
+
+    const descriptions = generatedDomesticCollectionDescriptions(description)
+
+    return (
+      form.buy_costs.find(row => {
+        const descriptionMatches = descriptions.has(normalizeDescription(row.description))
+        const supplierMatches =
+          !supplierId || !row.supplier_id || Number(row.supplier_id) === Number(supplierId)
+
+        return (
+          (row as any).autoSource === DOMESTIC_COLLECTION_COST_SOURCE ||
+          (descriptionMatches && supplierMatches)
+        )
+      }) ?? null
+    )
+  }
+
   function removeHaulierBuyCostRow(row: BuyCostRow | null) {
     if (!row) return
 
     form.buy_costs = form.buy_costs.filter(cost => cost.id !== row.id)
     haulierBuyCostRowId.value = null
+  }
+
+  function removeDomesticCollectionBuyCostRow(row: BuyCostRow | null) {
+    if (!row) return
+
+    form.buy_costs = form.buy_costs.filter(cost => cost.id !== row.id)
+    domesticCollectionBuyCostRowId.value = null
   }
 
   function syncHaulierBuyCost() {
@@ -670,6 +733,71 @@ export function useJobTransportTab() {
     lastHaulierChargeDescription.value = description
   }
 
+  function domesticCollectionBuyCost() {
+    const roadDetail = form.road_detail as any
+    const explicitCost = numberValue(roadDetail.local_buy_rate)
+
+    if (explicitCost > 0) return explicitCost
+
+    return numberValue(roadDetail.local_estimated_mileage_cost)
+  }
+
+  function syncDomesticCollectionBuyCost() {
+    const roadDetail = form.road_detail as any
+    const orderType = String(form.order_type || roadDetail.order_type || "")
+    const isDomesticCollection =
+      orderType === "Domestic Collection" || orderType === "Local Collection"
+    const description = domesticCollectionChargeDescription()
+    const supplierId = roadDetail.local_haulier_contact_id
+      ? Number(roadDetail.local_haulier_contact_id)
+      : null
+    const existingRow = findDomesticCollectionBuyCostRow(description, supplierId)
+
+    if (!isDomesticCollection) {
+      removeDomesticCollectionBuyCostRow(existingRow)
+      lastDomesticCollectionChargeDescription.value = description
+      return
+    }
+
+    if (!roadDetail.local_charge_description) {
+      roadDetail.local_charge_description = description
+    }
+
+    const charge = findChargeCodeByDescription(description)
+    const amount = domesticCollectionBuyCost()
+    const row =
+      existingRow ??
+      ({
+        id: DOMESTIC_COLLECTION_COST_ROW_ID,
+        type: "buy",
+        description,
+        supplier_id: supplierId,
+        chargeCodeId: null,
+        quantity: 1,
+        unitCost: 0,
+        currency: "GBP",
+        exchangeRate: 1,
+        amount: 0,
+      } as BuyCostRow)
+
+    ;(row as any).autoSource = DOMESTIC_COLLECTION_COST_SOURCE
+    row.description = description
+    row.supplier_id = supplierId
+    row.chargeCodeId = charge?.id ?? null
+    row.quantity = 1
+    row.unitCost = amount
+    row.currency = roadDetail.local_buy_currency || "GBP"
+    row.exchangeRate = row.currency === "GBP" ? 1 : row.exchangeRate || 1
+    row.amount = amount
+
+    if (!existingRow) {
+      form.buy_costs.push(row)
+    }
+
+    domesticCollectionBuyCostRowId.value = row.id
+    lastDomesticCollectionChargeDescription.value = description
+  }
+
   async function loadContactOptions() {
     contactOptionsLoading.value = true
 
@@ -708,6 +836,13 @@ export function useJobTransportTab() {
   )
 
   watch(
+    () => (form.road_detail as any).local_haulier_contact_id,
+    id => {
+      syncDomesticCollectionHaulier(id ? Number(id) : null)
+    },
+  )
+
+  watch(
     () => [
       (form.road_detail as any).full_subcontractor_used,
       (form.road_detail as any).subcontractor_contact_id,
@@ -721,6 +856,23 @@ export function useJobTransportTab() {
   )
 
   watch(
+    () => [
+      form.order_type,
+      (form.road_detail as any).order_type,
+      (form.road_detail as any).local_haulier_contact_id,
+      (form.road_detail as any).local_charge_description,
+      (form.road_detail as any).local_buy_rate,
+      (form.road_detail as any).local_buy_currency,
+      (form.road_detail as any).local_estimated_distance_miles,
+      (form.road_detail as any).local_rate_per_mile,
+      (form.road_detail as any).local_estimated_mileage_cost,
+      chargeCodeStore.chargeCodes.length,
+    ],
+    syncDomesticCollectionBuyCost,
+    { immediate: true },
+  )
+
+  watch(
     () => form.customer_id,
     customerId => {
       contactOptions.value = contactOptions.value.filter(
@@ -730,6 +882,11 @@ export function useJobTransportTab() {
       if (Number((form.road_detail as any).subcontractor_contact_id) === Number(customerId)) {
         ;(form.road_detail as any).subcontractor_contact_id = null
         ;(form.road_detail as any).subcontractor_name = ""
+      }
+
+      if (Number((form.road_detail as any).local_haulier_contact_id) === Number(customerId)) {
+        ;(form.road_detail as any).local_haulier_contact_id = null
+        ;(form.road_detail as any).local_haulier_name = ""
       }
     },
   )
