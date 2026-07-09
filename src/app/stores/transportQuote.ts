@@ -158,6 +158,17 @@ export const useTransportQuoteStore = defineStore("transportQuote", {
       }
     },
 
+    async quotePdf(id: number): Promise<Blob> {
+      this.error = null
+
+      try {
+        return await transportQuoteService.pdf(id)
+      } catch (error: any) {
+        this.error = error?.response?.data?.message ?? "Failed to generate quote PDF."
+        throw error
+      }
+    },
+
     resetSelectedQuote() {
       this.selectedQuote = null
     },

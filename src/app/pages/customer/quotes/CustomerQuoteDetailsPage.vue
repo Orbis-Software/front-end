@@ -20,6 +20,7 @@ const toast = useToast()
 const quoteStore = useTransportQuoteStore()
 
 const actionProcessing = ref(false)
+const pdfLoading = ref(false)
 const showCustomerReferenceModal = ref(false)
 const customerReferenceInput = ref("")
 
@@ -120,6 +121,52 @@ async function respond(status: "accepted" | "rejected", customerReference?: stri
   }
 }
 
+async function openQuotePdf() {
+  if (!quote.value || pdfLoading.value) return
+
+  pdfLoading.value = true
+
+  try {
+    const blob = await quoteStore.quotePdf(quote.value.id)
+
+    if (!(blob instanceof Blob) || blob.type !== "application/pdf") {
+      const text = blob instanceof Blob ? await blob.text() : ""
+      throw new Error(text || "The server did not return a PDF.")
+    }
+
+    const url = URL.createObjectURL(blob)
+
+    window.open(url, "_blank", "noopener,noreferrer")
+    window.setTimeout(() => URL.revokeObjectURL(url), 60000)
+  } catch (error: any) {
+    toast.add({
+      severity: "error",
+      summary: "PDF failed",
+      detail: await extractPdfError(error),
+      life: 4500,
+    })
+  } finally {
+    pdfLoading.value = false
+  }
+}
+
+async function extractPdfError(error: any) {
+  const data = error?.response?.data
+
+  if (data instanceof Blob) {
+    const text = await data.text()
+
+    try {
+      const parsed = JSON.parse(text)
+      return parsed?.message ?? text
+    } catch {
+      return text || "Unable to generate the quote PDF."
+    }
+  }
+
+  return error?.response?.data?.message ?? error?.message ?? "Unable to generate the quote PDF."
+}
+
 function canRespond(status: string | undefined) {
   return status === "sent"
 }
@@ -211,6 +258,15 @@ onMounted(() => {
           <span class="customer-quote-details__status" :class="statusClass(quote.status)">
             {{ quote.status === "sent" ? "Pending" : prettify(quote.status) }}
           </span>
+
+          <Button
+            label="View PDF"
+            icon="pi pi-file-pdf"
+            class="btn btn--ghost"
+            :loading="pdfLoading"
+            :disabled="pdfLoading || actionProcessing"
+            @click="openQuotePdf"
+          />
 
           <Button
             v-if="canRespond(quote.status)"

@@ -552,7 +552,7 @@
       </div>
 
       <div class="table-head-row">
-        <div class="section-subtitle">Buy Costs</div>
+        <div class="section-subtitle">Internal Buy Costs</div>
         <Button class="btn-add" type="button" outlined @click="addBuyCostLine()">+ Add Cost</Button>
       </div>
 
@@ -645,7 +645,7 @@
       </div>
 
       <div class="table-head-row">
-        <div class="section-subtitle">Sell Charges</div>
+        <div class="section-subtitle">Customer-Facing Sell Charges</div>
         <Button class="btn-add" type="button" outlined @click="addSellChargeLine()"
           >+ Add Charge</Button
         >
@@ -808,18 +808,6 @@
             </div>
             <div class="totals-row">
               <span>Subtotal (Cost)</span><strong>{{ subtotalCostDisplay }}</strong>
-            </div>
-
-            <div class="totals-row">
-              <span>Discount</span>
-              <InputNumber
-                v-model="form.discount"
-                inputClass="totals-input"
-                mode="decimal"
-                :minFractionDigits="2"
-                :maxFractionDigits="2"
-                :min="0"
-              />
             </div>
 
             <div class="totals-row">

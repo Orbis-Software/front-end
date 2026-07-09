@@ -8,10 +8,12 @@ type QuoteAction = "sent" | "approve" | "decline" | "convert"
 
 type ChargeLine = {
   id: number
+  type: string
   description: string
   quantity: number
   uom: string
   cost: number
+  unit_price: number
   markup_percent: number
   total_sell: number
 }
@@ -44,11 +46,11 @@ type QuoteDetails = {
   packing_group: string
   terms_conditions: string | null
   internal_notes: string | null
+  customer_facing: boolean
   charge_lines: ChargeLine[]
   totals: {
     sell: number
     cost: number
-    discount: number
     tax: number
     excl_tax: number
     incl_tax: number
@@ -67,6 +69,7 @@ export function useQuoteDetailsPage() {
   const selectedAction = ref<QuoteAction | null>(null)
   const actionNotes = ref("")
   const actionProcessing = ref(false)
+  const pdfLoading = ref(false)
 
   const quoteId = computed(() => {
     const id = Number(route.params.id)
@@ -302,6 +305,52 @@ export function useQuoteDetailsPage() {
     }
   }
 
+  async function openQuotePdf() {
+    if (!quote.value || pdfLoading.value) return
+
+    pdfLoading.value = true
+
+    try {
+      const blob = await quoteStore.quotePdf(quote.value.id)
+
+      if (!(blob instanceof Blob) || blob.type !== "application/pdf") {
+        const text = blob instanceof Blob ? await blob.text() : ""
+        throw new Error(text || "The server did not return a PDF.")
+      }
+
+      const url = URL.createObjectURL(blob)
+
+      window.open(url, "_blank", "noopener,noreferrer")
+      window.setTimeout(() => URL.revokeObjectURL(url), 60000)
+    } catch (error: any) {
+      toast.add({
+        severity: "error",
+        summary: "PDF failed",
+        detail: await extractPdfError(error),
+        life: 4500,
+      })
+    } finally {
+      pdfLoading.value = false
+    }
+  }
+
+  async function extractPdfError(error: any) {
+    const data = error?.response?.data
+
+    if (data instanceof Blob) {
+      const text = await data.text()
+
+      try {
+        const parsed = JSON.parse(text)
+        return parsed?.message ?? text
+      } catch {
+        return text || "Unable to generate the quote PDF."
+      }
+    }
+
+    return error?.response?.data?.message ?? error?.message ?? "Unable to generate the quote PDF."
+  }
+
   function prettify(value: unknown): string {
     return String(value ?? "")
       .replace(/_/g, " ")
@@ -326,6 +375,7 @@ export function useQuoteDetailsPage() {
   }
 
   function mapTransportQuoteToDetails(item: TransportQuote): QuoteDetails {
+    const customerFacing = isCustomerFacingStatus(item.status)
     const totals = item.totals ?? {
       subtotal_sell: 0,
       subtotal_cost: 0,
@@ -335,6 +385,18 @@ export function useQuoteDetailsPage() {
       profit_total: 0,
       profit_percent: 0,
     }
+    const chargeLines = mapChargeLines(item.charges, customerFacing)
+    const customerSubtotalSell = chargeLines.length
+      ? chargeLines.reduce((sum, line) => sum + Number(line.total_sell || 0), 0)
+      : Number(totals.subtotal_sell || 0)
+    const subtotalSell = customerFacing ? customerSubtotalSell : Number(totals.subtotal_sell || 0)
+    const taxAmount = customerFacing
+      ? subtotalSell * (Number(item.tax_rate || 0) / 100)
+      : Number(totals.tax_amount || 0)
+    const totalExclTax = customerFacing ? subtotalSell : Number(totals.total_excl_tax || 0)
+    const totalInclTax = customerFacing
+      ? totalExclTax + taxAmount
+      : Number(totals.total_incl_tax || 0)
 
     return {
       id: item.id,
@@ -368,37 +430,49 @@ export function useQuoteDetailsPage() {
       packing_group: item.packing_group || "—",
       terms_conditions: item.terms_conditions,
       internal_notes: item.note,
-      charge_lines: mapChargeLines(item.charges),
+      customer_facing: customerFacing,
+      charge_lines: chargeLines,
       totals: {
-        sell: Number(totals.subtotal_sell || 0),
+        sell: subtotalSell,
         cost: Number(totals.subtotal_cost || 0),
-        discount: Number(item.discount || 0),
-        tax: Number(totals.tax_amount || 0),
-        excl_tax: Number(totals.total_excl_tax || 0),
-        incl_tax: Number(totals.total_incl_tax || 0),
+        tax: taxAmount,
+        excl_tax: totalExclTax,
+        incl_tax: totalInclTax,
         profit: Number(totals.profit_total || 0),
         profit_percentage: Number(totals.profit_percent || 0),
       },
     }
   }
 
-  function mapChargeLines(charges: any[]): ChargeLine[] {
+  function isCustomerFacingStatus(status: unknown) {
+    return ["sent", "accepted", "rejected", "converted"].includes(
+      String(status ?? "").toLowerCase(),
+    )
+  }
+
+  function mapChargeLines(charges: any[], customerFacing: boolean): ChargeLine[] {
     if (!Array.isArray(charges)) return []
 
-    return charges.map((charge, index) => {
+    return charges
+      .filter(charge => !customerFacing || String(charge.type ?? "sell").toLowerCase() === "sell")
+      .map((charge, index) => {
       const qty = Number(charge.qty ?? charge.quantity ?? 0)
-      const cost = Number(charge.cost ?? 0)
+      const type = String(charge.type ?? "sell").toLowerCase()
+      const cost = Number(charge.unit_cost ?? charge.cost ?? 0)
+      const unitPrice = Number(charge.unit_price ?? charge.sell_unit_price ?? 0)
       const markup = Number(charge.markup_percent ?? 0)
-      const totalSell = qty * cost * (1 + markup / 100)
+      const totalSell = unitPrice > 0 ? qty * unitPrice : qty * cost * (1 + markup / 100)
 
       return {
         id: Number(charge.id ?? index + 1),
+        type,
         description: charge.description ?? "—",
         quantity: qty,
         uom: charge.uom ?? "—",
         cost,
+        unit_price: unitPrice,
         markup_percent: markup,
-        total_sell: Number(charge.total_sell ?? totalSell),
+        total_sell: Number(charge.sell_total ?? charge.total_sell ?? totalSell),
       }
     })
   }
@@ -413,6 +487,7 @@ export function useQuoteDetailsPage() {
     loadPlannerReference,
     loading,
     actionProcessing,
+    pdfLoading,
     actionDialogVisible,
     selectedAction,
     actionNotes,
@@ -426,6 +501,7 @@ export function useQuoteDetailsPage() {
     openActionModal,
     closeActionModal,
     confirmAction,
+    openQuotePdf,
     prettify,
     statusClass,
     money,

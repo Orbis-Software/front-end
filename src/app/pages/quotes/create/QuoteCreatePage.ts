@@ -468,7 +468,7 @@ export function useQuoteCreatePage() {
   const subtotalCost = computed(() =>
     buyCostLines.value.reduce((total, line) => total + getChargeLineTotal(line), 0),
   )
-  const totalExclTax = computed(() => Math.max(subtotalSell.value - Number(form.discount || 0), 0))
+  const totalExclTax = computed(() => Math.max(subtotalSell.value, 0))
   const taxAmount = computed(() => totalExclTax.value * (Number(form.tax_rate || 0) / 100))
   const totalInclTax = computed(() => totalExclTax.value + taxAmount.value)
   const profitTotal = computed(() => totalExclTax.value - subtotalCost.value)
@@ -773,7 +773,7 @@ export function useQuoteCreatePage() {
       validity_period: form.validity_period ? Number(form.validity_period) : null,
       note: form.note || null,
 
-      discount: Number(form.discount || 0),
+      discount: 0,
       tax_rate: Number(form.tax_rate || 0),
 
       totals: {
@@ -893,7 +893,7 @@ export function useQuoteCreatePage() {
     form.terms_conditions = quote.terms_conditions ?? ""
     form.validity_period = String(quote.validity_period ?? "30")
     form.note = quote.note ?? ""
-    form.discount = Number(quote.discount || 0)
+    form.discount = 0
     form.tax_rate = Number(quote.tax_rate || 0)
 
     if (quote.customer_contact) {
