@@ -59,8 +59,382 @@
   font-weight: 700;
 }
 
+.job-normal-invoice-tab__steps {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  border-bottom: 1px solid #e6e6e6;
+  padding-bottom: 12px;
+}
+
+.job-normal-invoice-tab__step {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 42px;
+  border: 1px solid #d8d8d8;
+  border-radius: 8px;
+  background: #fff;
+  color: #1a1a18;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.job-normal-invoice-tab__step:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.job-normal-invoice-tab__step span {
+  display: inline-grid;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  border-radius: 999px;
+  background: #f1f5f9;
+  font-weight: 800;
+}
+
+.job-normal-invoice-tab__step--active {
+  border-color: #d85f17;
+  background: #fff7ed;
+  color: #a34a12;
+}
+
+.job-normal-invoice-tab__step--active span {
+  background: #d85f17;
+  color: #fff;
+}
+
+.job-normal-invoice-tab__step-arrow {
+  display: inline-grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  color: #d85f17;
+  font-size: 13px;
+}
+
+.job-normal-invoice-tab__table--bill {
+  min-width: 980px;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.job-normal-invoice-tab__table--bill col:nth-child(1) {
+  width: 12%;
+}
+
+.job-normal-invoice-tab__table--bill col:nth-child(2) {
+  width: 30%;
+}
+
+.job-normal-invoice-tab__table--bill col:nth-child(3) {
+  width: 7%;
+}
+
+.job-normal-invoice-tab__table--bill col:nth-child(4) {
+  width: 10%;
+}
+
+.job-normal-invoice-tab__table--bill col:nth-child(5) {
+  width: 18%;
+}
+
+.job-normal-invoice-tab__table--bill col:nth-child(6) {
+  width: 12%;
+}
+
+.job-normal-invoice-tab__table--bill col:nth-child(7) {
+  width: 13%;
+}
+
+.job-normal-invoice-tab__table--bill col:nth-child(8) {
+  width: 5%;
+}
+
+.job-normal-invoice-tab__table--bill .p-dropdown,
+.job-normal-invoice-tab__table--bill .p-select,
+.job-normal-invoice-tab__table--bill .p-inputnumber,
+.job-normal-invoice-tab__table--bill .p-inputnumber-input {
+  width: 100%;
+}
+
+.job-normal-invoice-tab__table--bill .p-inputtext,
+.job-normal-invoice-tab__table--bill .p-dropdown,
+.job-normal-invoice-tab__table--bill .p-select,
+.job-normal-invoice-tab__table--bill .p-inputnumber-input {
+  height: 34px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: transparent;
+  color: #1a1a18;
+  font-size: 12px;
+}
+
+.job-normal-invoice-tab__table--bill .p-inputtext:hover,
+.job-normal-invoice-tab__table--bill .p-dropdown:hover,
+.job-normal-invoice-tab__table--bill .p-select:hover,
+.job-normal-invoice-tab__table--bill .p-inputnumber:hover .p-inputnumber-input,
+.job-normal-invoice-tab__table--bill .p-inputtext:focus,
+.job-normal-invoice-tab__table--bill .p-dropdown:not(.p-disabled).p-focus,
+.job-normal-invoice-tab__table--bill .p-select:not(.p-disabled).p-focus,
+.job-normal-invoice-tab__table--bill .p-inputnumber-input:focus {
+  border-color: #d9d9d9;
+  background: #fff;
+}
+
+.job-normal-invoice-tab__table--bill th {
+  padding: 9px 10px;
+  background: #fbfbfa;
+  border-top: none;
+  border-bottom: 1px solid #e6e6e6;
+  color: #1a1a18;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.job-normal-invoice-tab__table--bill td {
+  padding: 7px 10px;
+  border-bottom: 1px solid #f0f0f0;
+  vertical-align: middle;
+}
+
+.job-normal-invoice-tab__table--bill td:first-child {
+  color: #374151;
+  font-weight: 800;
+}
+
+.job-normal-invoice-tab__bill-head {
+  display: grid;
+  grid-template-columns: minmax(210px, 1.4fr) repeat(2, minmax(130px, 0.75fr)) minmax(140px, 0.9fr) minmax(190px, 1.15fr) minmax(130px, 0.75fr);
+  gap: 10px;
+  align-items: end;
+  border: 1px solid #e6e6e6;
+  border-radius: 8px;
+  background: #f7f7f5;
+  padding: 14px;
+}
+
+.job-normal-invoice-tab__bill-head .job-normal-invoice-tab__field > span {
+  color: #1a1a18;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.job-normal-invoice-tab__field--total .p-inputtext {
+  text-align: right;
+  font-weight: 800;
+  background: #fff;
+}
+
+.job-normal-invoice-tab__bill-actions {
+  display: grid;
+  grid-template-columns: auto minmax(320px, 34%);
+  gap: 14px;
+  align-items: start;
+  border-top: 1px solid #efefef;
+  padding-top: 12px;
+}
+
+.job-normal-invoice-tab__add-line-btn.p-button {
+  width: auto;
+  min-width: 148px;
+  height: 34px;
+  justify-self: start;
+  border-color: #d9d9d9;
+  border-radius: 8px;
+  background: #fff;
+  color: #1a1a18;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.job-normal-invoice-tab__add-line-btn.p-button:hover {
+  border-color: #d9d9d9;
+  background: #f1f1f1;
+  color: #1a1a18;
+}
+
+.job-normal-invoice-tab__bill-totals {
+  display: grid;
+  width: min(360px, 100%);
+  justify-self: end;
+  border: 1px solid #fdba74;
+  border-radius: 14px;
+  background: #fff7ed;
+  padding: 12px 14px;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.85),
+    0 10px 24px rgba(180, 83, 9, 0.08);
+}
+
+.job-normal-invoice-tab__bill-total-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  border-bottom: 1px solid #fed7aa;
+  padding: 7px 0;
+  color: #1a1a18;
+  font-size: 12px;
+}
+
+.job-normal-invoice-tab__bill-total-row:last-child {
+  border-bottom: none;
+}
+
+.job-normal-invoice-tab__bill-total-row span {
+  color: #7c2d12;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.job-normal-invoice-tab__bill-total-row strong {
+  color: #111827;
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.job-normal-invoice-tab__bill-total-row--grand {
+  padding-top: 10px;
+}
+
+.job-normal-invoice-tab__bill-total-row--grand strong {
+  color: #ec691a;
+  font-size: 18px;
+}
+
+.job-normal-invoice-tab__email-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.job-normal-invoice-tab__manual-email {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 8px;
+}
+
+.job-normal-invoice-tab__handoff,
+.job-normal-invoice-tab__finish {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+  border: 1px solid #fdba74;
+  border-radius: 14px;
+  background: #fff7ed;
+  padding: 16px;
+}
+
+.job-normal-invoice-tab__handoff-icon,
+.job-normal-invoice-tab__finish-mark {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 999px;
+  background: #ec691a;
+  color: #fff;
+  font-size: 16px;
+}
+
+.job-normal-invoice-tab__handoff span,
+.job-normal-invoice-tab__finish span {
+  color: #7c2d12;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.job-normal-invoice-tab__handoff h3,
+.job-normal-invoice-tab__finish h3 {
+  margin: 4px 0 6px;
+  color: #1a1a18;
+  font-size: 18px;
+}
+
+.job-normal-invoice-tab__handoff p,
+.job-normal-invoice-tab__finish p {
+  margin: 0;
+  color: #1a1a18;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.job-normal-invoice-tab__summary-list {
+  display: grid;
+  border: 1px solid #e6e6e6;
+  border-radius: 8px;
+  background: #fbfbfa;
+  overflow: hidden;
+}
+
+.job-normal-invoice-tab__summary-list div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 12px;
+  border-bottom: 1px solid #efefef;
+}
+
+.job-normal-invoice-tab__summary-list div:last-child {
+  border-bottom: none;
+}
+
+.job-normal-invoice-tab__summary-list span {
+  color: #737373;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.job-normal-invoice-tab__summary-list strong {
+  color: #1a1a18;
+  font-size: 13px;
+  text-align: right;
+}
+
 @media (max-width: 900px) {
   .job-normal-invoice-tab__outstanding {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .job-normal-invoice-tab__manual-email,
+  .job-normal-invoice-tab__steps {
+    grid-template-columns: 1fr;
+  }
+
+  .job-normal-invoice-tab__bill-head,
+  .job-normal-invoice-tab__bill-actions,
+  .job-normal-invoice-tab__handoff,
+  .job-normal-invoice-tab__finish {
+    grid-template-columns: 1fr;
+  }
+
+  .job-normal-invoice-tab__steps {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .job-normal-invoice-tab__step-arrow {
+    width: 100%;
+    transform: rotate(90deg);
   }
 }

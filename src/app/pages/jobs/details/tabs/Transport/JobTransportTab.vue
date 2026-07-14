@@ -9,7 +9,7 @@ import InputText from "primevue/inputtext"
 import Textarea from "primevue/textarea"
 import { computed, inject } from "vue"
 import type { ComputedRef, Ref } from "vue"
-import type { JobPdfDocument } from "@/app/services/transport-jobs/job-pdf"
+import type { JobPdfDocument } from "@/app/types/transport-job-service"
 import { useJobTransportTab } from "./JobTransportTab.logic"
 
 type JobPdfActions = {

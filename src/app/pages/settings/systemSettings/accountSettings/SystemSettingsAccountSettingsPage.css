@@ -116,12 +116,104 @@
   color: #64748b;
 }
 
+.account-settings-page__tab em {
+  justify-self: start;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 800;
+  line-height: 1;
+  padding: 5px 8px;
+}
+
+.account-settings-page__tab-status--connected {
+  border-color: #86efac !important;
+  background: #f0fdf4 !important;
+  color: #15803d !important;
+}
+
 .account-settings-page__fieldset {
   border: 0;
   padding: 0;
   margin: 0;
   display: grid;
   gap: 16px;
+}
+
+.account-settings-page__connect-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 18px;
+  border: 1px solid #fed7aa;
+  border-radius: 10px;
+  background: #fff7ed;
+  padding: 18px;
+}
+
+.account-settings-page__connect-copy {
+  display: grid;
+  gap: 10px;
+}
+
+.account-settings-page__connect-kicker {
+  width: fit-content;
+  border: 1px solid #fdba74;
+  border-radius: 999px;
+  background: #fff;
+  color: #c2410c;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+  padding: 6px 10px;
+  text-transform: uppercase;
+}
+
+.account-settings-page__connect-card h3 {
+  margin: 0;
+  color: #172033;
+}
+
+.account-settings-page__connect-card p {
+  margin: 0;
+  color: #475569;
+  line-height: 1.45;
+}
+
+.account-settings-page__instructions {
+  display: grid;
+  gap: 8px;
+  margin: 4px 0 0;
+  padding-left: 20px;
+  color: #334155;
+}
+
+.account-settings-page__instructions li {
+  padding-left: 4px;
+  line-height: 1.45;
+}
+
+.account-settings-page__connect-action {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  border: 1px solid #fdba74;
+  border-radius: 10px;
+  background: #fff;
+  padding: 14px;
+}
+
+.account-settings-page__connect-action span {
+  color: #9a3412;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.account-settings-page__connect-action small {
+  color: #64748b;
+  line-height: 1.4;
 }
 
 .account-settings-page__card {
@@ -203,7 +295,8 @@
 
 @media (max-width: 820px) {
   .account-settings-page__tabs,
-  .account-settings-page__grid {
+  .account-settings-page__grid,
+  .account-settings-page__connect-card {
     grid-template-columns: 1fr;
   }
 

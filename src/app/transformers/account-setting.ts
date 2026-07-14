@@ -64,6 +64,7 @@ function fetch(raw: any): AccountSetting {
     accountingSystem: systemValue(raw?.accountingSystem ?? raw?.accounting_system),
     isDefault: raw?.isDefault ?? raw?.is_default ?? false,
     isActive: raw?.isActive ?? raw?.is_active ?? true,
+    isConnected: raw?.isConnected ?? raw?.is_connected ?? false,
     nominalCodes: nominalCodes(raw?.nominalCodes ?? raw?.nominal_codes),
     taxMappings: Array.isArray(raw?.taxMappings ?? raw?.tax_mappings)
       ? (raw.taxMappings ?? raw.tax_mappings).map(taxMapping)
@@ -83,6 +84,7 @@ function payload(setting: AccountSettingPayload) {
     accountingSystem: setting.accountingSystem,
     isDefault: setting.isDefault,
     isActive: setting.isActive,
+    isConnected: setting.isConnected,
     nominalCodes: nominalCodes(setting.nominalCodes),
     taxMappings: setting.taxMappings.map(taxMapping),
     exportSettings: exportSettings(setting.exportSettings),

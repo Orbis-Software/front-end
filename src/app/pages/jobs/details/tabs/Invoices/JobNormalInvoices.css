@@ -263,11 +263,11 @@
 }
 
 .job-normal-invoice-tab__table--supplier-invoice-list col:nth-child(1) {
-  width: 22%;
+  width: 20%;
 }
 
 .job-normal-invoice-tab__table--supplier-invoice-list col:nth-child(2) {
-  width: 30%;
+  width: 27%;
 }
 
 .job-normal-invoice-tab__table--supplier-invoice-list col:nth-child(3) {
@@ -279,7 +279,11 @@
 }
 
 .job-normal-invoice-tab__table--supplier-invoice-list col:nth-child(5) {
-  width: 18%;
+  width: 15%;
+}
+
+.job-normal-invoice-tab__table--supplier-invoice-list col:nth-child(6) {
+  width: 13%;
 }
 
 .job-normal-invoice-tab__money {

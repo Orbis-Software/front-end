@@ -2,15 +2,18 @@ import { defineStore } from "pinia"
 import { ref } from "vue"
 
 import transportJobs from "@/app/services/transport-jobs"
-import type { CollectionNotePreviewPayload } from "@/app/services/transport-jobs/collection-note-preview"
-import type { EmailJobInvoicePayload } from "@/app/services/transport-jobs/email-invoice"
 import jobPdfService from "@/app/services/transport-jobs/job-pdf"
-import type { PassSupplierInvoicePayload } from "@/app/services/transport-jobs/pass-supplier-invoice"
-import type { JobPdfDocument, JobPdfOptions } from "@/app/services/transport-jobs/job-pdf"
 import type {
   InvoiceGenerationResponse,
   InvoiceGenerationStatusResponse,
-} from "@/app/services/transport-jobs/invoice-generation"
+} from "@/app/types/invoice-generation"
+import type {
+  CollectionNotePreviewPayload,
+  EmailJobInvoicePayload,
+  JobPdfDocument,
+  JobPdfOptions,
+  PassSupplierInvoicePayload,
+} from "@/app/types/transport-job-service"
 import type {
   TransportJob,
   PaginatedResponse,
@@ -197,8 +200,9 @@ export const useTransportJobStore = defineStore("transportJob", () => {
   async function generateSupplierInvoice(
     id: number,
     supplierId: number,
+    payload: Parameters<typeof transportJobs.generateSupplierInvoice>[2] = {},
   ): Promise<InvoiceGenerationResponse> {
-    return await transportJobs.generateSupplierInvoice(id, supplierId)
+    return await transportJobs.generateSupplierInvoice(id, supplierId, payload)
   }
 
   async function invoiceGenerationStatus(

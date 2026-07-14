@@ -4,7 +4,7 @@ import { useInvoiceGenerationStore } from "@/app/stores/invoice-generation"
 import { useAuthStore } from "@/app/stores/auth"
 import transportJobs from "@/app/services/transport-jobs"
 import InvoiceEmailDialog from "@/app/pages/jobs/details/tabs/Invoices/InvoiceEmailDialog/InvoiceEmailDialog.vue"
-import type { InvoiceGenerationTask } from "@/app/services/transport-jobs/invoice-generation"
+import type { InvoiceGenerationTask } from "@/app/types/invoice-generation"
 import type { InvoiceEmailRecipientOption } from "@/app/types/invoice-email"
 
 const store = useInvoiceGenerationStore()
@@ -76,6 +76,7 @@ const emailJobSummary = computed(() => ({
 }))
 
 async function openEmailDialog(task: InvoiceGenerationTask) {
+  if (task.invoice_type === "supplier") return
   if (!task.transport_job_id || !task.invoice_id || openedEmailTaskIds.has(task.id)) return
 
   openedEmailTaskIds.add(task.id)
@@ -116,7 +117,10 @@ watch(
   () => {
     const readyTask = store.activeTasks.find(task => {
       return (
-        task.status === "completed" && task.download_available && !openedEmailTaskIds.has(task.id)
+        task.invoice_type !== "supplier" &&
+        task.status === "completed" &&
+        task.download_available &&
+        !openedEmailTaskIds.has(task.id)
       )
     })
 

@@ -2,20 +2,33 @@
 import "./JobNormalSupplierInvoicesTab.css"
 import Button from "primevue/button"
 import Calendar from "primevue/calendar"
+import Checkbox from "primevue/checkbox"
 import Dialog from "primevue/dialog"
 import Dropdown from "primevue/dropdown"
 import InputNumber from "primevue/inputnumber"
 import InputText from "primevue/inputtext"
-import InvoiceEmailDialog from "../InvoiceEmailDialog/InvoiceEmailDialog.vue"
+import MultiSelect from "primevue/multiselect"
+import Textarea from "primevue/textarea"
 import { useJobNormalSupplierInvoicesTab } from "./JobNormalSupplierInvoicesTab"
 
 const {
+  addBillLine,
   addInvoiceLine,
+  addManualEmailRecipient,
+  billLineTotal,
+  billSubtotal,
+  billTaxTotal,
+  billTotal,
+  accountingProviderLabel,
+  activeAccountingSetting,
+  availableSupplierBillRows,
   chargeDescriptionOptions,
+  chargeCodeAccount,
+  closeGenerateDialog,
+  continueSupplierInvoiceAccounting,
   currencyOptions,
-  emailDialogVisible,
   emailInvoice,
-  emailJobSummary,
+  emailSending,
   emailRecipientOptions,
   confirmDeleteInvoice,
   deleteBlockedDialogVisible,
@@ -24,12 +37,15 @@ const {
   deleteInvoiceTarget,
   deletingInvoice,
   generateDialogVisible,
+  generateActionInProgress,
   generateLoading,
+  generateStep,
   generateSupplierId,
   generateSupplierInvoice,
   invoiceDraft,
   currencyCode,
   invoiceCurrency,
+  invoiceDisplayNumber,
   invoiceListHref,
   invoiceNumber,
   invoicePdfUrl,
@@ -44,6 +60,8 @@ const {
   openInvoiceFromList,
   openPassDialog,
   openPendingInvoice,
+  openSupplierBillForInvoice,
+  openSupplierInvoiceEmailStep,
   onPassInvoiceFileSelected,
   passSupplierOptions,
   passDialogVisible,
@@ -52,17 +70,27 @@ const {
   passTotalInvoiceAmount,
   passSaving,
   passSupplierInvoice,
+  removeBillLine,
   removeInvoiceLine,
   rows,
   saveSupplierInvoice,
   clearPassInvoiceAttachment,
+  setSupplierInvoiceNumber,
+  setGenerateDialogVisible,
   supplierInvoiceOptions,
+  supplierBillReference,
+  supplierEmailDraft,
+  supplierInvoiceProgress,
+  supplierInvoiceStepSummary,
   supplierName,
   supplierOptions,
   suppliersLoading,
+  selectedSupplierBillRows,
   totalCost,
+  updateBillLineDescription,
   uploadDialogVisible,
   uploadSaving,
+  sendSupplierInvoiceEmail,
 } = useJobNormalSupplierInvoicesTab()
 </script>
 
@@ -170,9 +198,9 @@ const {
                       target="_blank"
                       rel="noopener noreferrer"
                     >
-                      {{ invoiceNumber(row) }}
+                      {{ invoiceDisplayNumber(row) }}
                     </a>
-                    <span v-else>{{ invoiceNumber(row) }}</span>
+                    <span v-else>{{ invoiceDisplayNumber(row) }}</span>
                   </span>
                   <span v-else class="job-normal-invoice-tab__status">Not invoiced</span>
                 </td>
@@ -192,7 +220,7 @@ const {
           </div>
           <div class="job-normal-invoice-tab__metric">
             <span>Not Invoiced</span>
-            <strong>{{ rows.filter((row: any) => !row.invoice_id).length }}</strong>
+            <strong>{{ availableSupplierBillRows.length }}</strong>
           </div>
           <div class="job-normal-invoice-tab__metric">
             <span>Total Cost</span>
@@ -225,6 +253,7 @@ const {
             <col />
             <col />
             <col />
+            <col />
           </colgroup>
           <thead>
             <tr>
@@ -233,6 +262,7 @@ const {
               <th>Date</th>
               <th>Status</th>
               <th class="job-normal-invoice-tab__money">Total</th>
+              <th class="job-normal-invoice-tab__actions-cell">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -261,6 +291,30 @@ const {
               </td>
               <td class="job-normal-invoice-tab__money">
                 {{ money(invoice.currency, numberValue(invoice.total)) }}
+              </td>
+              <td class="job-normal-invoice-tab__actions-cell">
+                <Button
+                  icon="pi pi-pencil"
+                  text
+                  rounded
+                  aria-label="Edit supplier bill"
+                  @click="openSupplierBillForInvoice(invoice)"
+                />
+                <Button
+                  icon="pi pi-send"
+                  text
+                  rounded
+                  aria-label="Send supplier invoice"
+                  @click="openSupplierInvoiceEmailStep(invoice)"
+                />
+                <Button
+                  icon="pi pi-trash"
+                  text
+                  rounded
+                  severity="danger"
+                  aria-label="Delete supplier invoice"
+                  @click="openDeleteInvoice(invoice)"
+                />
               </td>
             </tr>
           </tbody>
@@ -376,42 +430,392 @@ const {
     </Dialog>
 
     <Dialog
-      v-model:visible="generateDialogVisible"
+      :visible="generateDialogVisible"
       modal
-      header="Generate Supplier Invoice"
+      header="Supplier Bill"
       class="job-normal-invoice-tab__dialog"
-      :style="{ width: 'min(520px, 94vw)' }"
+      :style="{ width: 'min(1180px, 96vw)' }"
+      :closable="!generateActionInProgress"
+      :close-on-escape="!generateActionInProgress"
+      @update:visible="setGenerateDialogVisible"
     >
       <div class="job-normal-invoice-tab__dialog-body">
-        <label class="job-normal-invoice-tab__field">
-          <span>Supplier</span>
-          <Dropdown
-            v-model="generateSupplierId"
-            :options="supplierInvoiceOptions"
-            option-label="label"
-            option-value="value"
-            placeholder="Select supplier"
-            filter
-            auto-filter-focus
-          />
-        </label>
-        <p class="job-normal-invoice-tab__note">
-          The generated supplier invoice will include only Buy Cost rows for the selected supplier.
-        </p>
+        <div class="job-normal-invoice-tab__steps">
+          <button
+            type="button"
+            class="job-normal-invoice-tab__step"
+            :class="{ 'job-normal-invoice-tab__step--active': generateStep === 'bill' }"
+            @click="generateStep = 'bill'"
+          >
+            <span>1</span>
+            <strong>Billing Details</strong>
+          </button>
+          <span class="job-normal-invoice-tab__step-arrow" aria-hidden="true">
+            <i class="pi pi-arrow-right" />
+          </span>
+          <button
+            type="button"
+            class="job-normal-invoice-tab__step"
+            :class="{ 'job-normal-invoice-tab__step--active': generateStep === 'email' }"
+            :disabled="!emailInvoice?.id"
+            @click="generateStep = 'email'"
+          >
+            <span>2</span>
+            <strong>Send Invoice</strong>
+          </button>
+          <span class="job-normal-invoice-tab__step-arrow" aria-hidden="true">
+            <i class="pi pi-arrow-right" />
+          </span>
+          <button
+            type="button"
+            class="job-normal-invoice-tab__step"
+            :class="{ 'job-normal-invoice-tab__step--active': generateStep === 'accounting' }"
+            :disabled="!emailInvoice?.id"
+            @click="generateStep = 'accounting'"
+          >
+            <span>3</span>
+            <strong>Connecting to Third Party</strong>
+          </button>
+          <span class="job-normal-invoice-tab__step-arrow" aria-hidden="true">
+            <i class="pi pi-arrow-right" />
+          </span>
+          <button
+            type="button"
+            class="job-normal-invoice-tab__step"
+            :class="{ 'job-normal-invoice-tab__step--active': generateStep === 'finish' }"
+            :disabled="!emailInvoice?.id"
+            @click="generateStep = 'finish'"
+          >
+            <span>4</span>
+            <strong>Finish</strong>
+          </button>
+        </div>
+
+        <template v-if="generateStep === 'bill'">
+          <div class="job-normal-invoice-tab__bill-head">
+            <label class="job-normal-invoice-tab__field job-normal-invoice-tab__field--from">
+              <span>From</span>
+              <Dropdown
+                v-model="passDraft.supplierId"
+                :options="passSupplierOptions"
+                option-label="label"
+                option-value="value"
+                placeholder="Select supplier"
+                filter
+                auto-filter-focus
+              />
+            </label>
+
+            <label class="job-normal-invoice-tab__field">
+              <span>Date</span>
+              <Calendar v-model="passDraft.invoiceDate" date-format="yy-mm-dd" show-icon />
+            </label>
+
+            <label class="job-normal-invoice-tab__field">
+              <span>Due Date</span>
+              <Calendar v-model="passDraft.dueDate" date-format="yy-mm-dd" show-icon />
+            </label>
+
+            <label class="job-normal-invoice-tab__field">
+              <span>Reference</span>
+              <InputText v-model="passDraft.reference" autocomplete="off" />
+            </label>
+
+            <label class="job-normal-invoice-tab__field">
+              <span>Invoice Number</span>
+              <InputText
+                :model-value="passDraft.invoiceNumber"
+                autocomplete="off"
+                @update:model-value="setSupplierInvoiceNumber(String($event ?? ''))"
+              />
+            </label>
+
+            <label class="job-normal-invoice-tab__field job-normal-invoice-tab__field--total">
+              <span>Total</span>
+              <InputText :model-value="money(passDraft.currency, billTotal)" readonly />
+            </label>
+          </div>
+
+          <div class="job-normal-invoice-tab__table-wrap">
+            <table class="job-normal-invoice-tab__table job-normal-invoice-tab__table--bill">
+              <colgroup>
+                <col />
+                <col />
+                <col />
+                <col />
+                <col />
+                <col />
+                <col />
+                <col />
+              </colgroup>
+              <thead>
+                <tr>
+                  <th>Item</th>
+                  <th>Description</th>
+                  <th class="job-normal-invoice-tab__quantity">Qty</th>
+                  <th class="job-normal-invoice-tab__money">Unit Price</th>
+                  <th>Account</th>
+                  <th>Tax Rate</th>
+                  <th class="job-normal-invoice-tab__money">Amount {{ passDraft.currency }}</th>
+                  <th />
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(row, index) in selectedSupplierBillRows" :key="row.id">
+                  <td>{{ index + 1 }}</td>
+                  <td>
+                    <Dropdown
+                      v-model="row.description"
+                      :options="chargeDescriptionOptions"
+                      option-label="label"
+                      option-value="value"
+                      placeholder="Select item"
+                      filter
+                      editable
+                      show-clear
+                      @change="updateBillLineDescription(row, row.description)"
+                    />
+                  </td>
+                  <td><InputNumber v-model="row.quantity" :min="0" /></td>
+                  <td>
+                    <InputNumber
+                      v-model="row.unitCost"
+                      :min="0"
+                      :min-fraction-digits="2"
+                      :max-fraction-digits="2"
+                    />
+                  </td>
+                  <td>{{ chargeCodeAccount(row) || "-" }}</td>
+                  <td>
+                    <InputNumber
+                      v-model="row.vatRate"
+                      suffix="%"
+                      :min="0"
+                      :min-fraction-digits="0"
+                      :max-fraction-digits="3"
+                    />
+                  </td>
+                  <td class="job-normal-invoice-tab__money">
+                    {{ money(passDraft.currency, billLineTotal(row)) }}
+                  </td>
+                  <td class="job-normal-invoice-tab__actions-cell">
+                    <Button
+                      icon="pi pi-times"
+                      text
+                      rounded
+                      severity="secondary"
+                      aria-label="Remove bill line"
+                      @click="removeBillLine(row)"
+                    />
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="job-normal-invoice-tab__bill-actions">
+            <Button
+              class="job-normal-invoice-tab__add-line-btn"
+              label="Add a new line"
+              icon="pi pi-plus"
+              severity="secondary"
+              outlined
+              @click="addBillLine"
+            />
+            <div class="job-normal-invoice-tab__bill-totals">
+              <div class="job-normal-invoice-tab__bill-total-row">
+                <span>Subtotal</span>
+                <strong>{{ money(passDraft.currency, billSubtotal) }}</strong>
+              </div>
+              <div class="job-normal-invoice-tab__bill-total-row">
+                <span>Tax</span>
+                <strong>{{ money(passDraft.currency, billTaxTotal) }}</strong>
+              </div>
+              <div class="job-normal-invoice-tab__bill-total-row job-normal-invoice-tab__bill-total-row--grand">
+                <span>TOTAL</span>
+                <strong>{{ money(passDraft.currency, billTotal) }}</strong>
+              </div>
+            </div>
+          </div>
+        </template>
+
+        <template v-else-if="generateStep === 'email'">
+          <div class="job-normal-invoice-tab__email-grid">
+            <label class="job-normal-invoice-tab__field">
+              <span>Recipients</span>
+              <MultiSelect
+                v-model="supplierEmailDraft.recipients"
+                :options="emailRecipientOptions"
+                option-label="label"
+                option-value="value"
+                display="chip"
+                placeholder="Select recipients"
+              />
+            </label>
+
+            <div class="job-normal-invoice-tab__manual-email">
+              <label class="job-normal-invoice-tab__field">
+                <span>Add Email</span>
+                <InputText v-model="supplierEmailDraft.manualEmail" autocomplete="off" />
+              </label>
+              <Button label="Add" icon="pi pi-plus" severity="secondary" @click="addManualEmailRecipient" />
+            </div>
+
+            <label class="job-normal-invoice-tab__field">
+              <span>Subject</span>
+              <InputText v-model="supplierEmailDraft.subject" autocomplete="off" />
+            </label>
+
+            <label class="job-normal-invoice-tab__field">
+              <span>Message</span>
+              <Textarea v-model="supplierEmailDraft.body" rows="8" auto-resize />
+            </label>
+          </div>
+
+          <div class="job-normal-invoice-tab__outstanding">
+            <div>
+              <span>Job Reference</span>
+              <strong>{{ supplierBillReference }}</strong>
+            </div>
+            <div>
+              <span>Invoice Number</span>
+              <strong>{{ emailInvoice?.invoiceNumber || passDraft.invoiceNumber }}</strong>
+            </div>
+            <div>
+              <span>Total</span>
+              <strong>{{ money(passDraft.currency, billTotal) }}</strong>
+            </div>
+          </div>
+        </template>
+
+        <template v-else-if="generateStep === 'accounting'">
+          <div class="job-normal-invoice-tab__handoff">
+            <div class="job-normal-invoice-tab__handoff-icon">
+              <i class="pi pi-link" />
+            </div>
+            <div>
+              <span>Third Party Accounting</span>
+              <h3>{{ accountingProviderLabel }}</h3>
+              <p v-if="activeAccountingSetting">
+                The supplier invoice is ready for the configured {{ accountingProviderLabel }}
+                handoff using this job's billing details, totals, tax values, and invoice PDF.
+              </p>
+              <p v-else>
+                No default accounting system is active yet. The invoice can still be finished now,
+                then connected later once Xero, Sage, or QuickBooks is configured.
+              </p>
+            </div>
+          </div>
+
+          <div class="job-normal-invoice-tab__outstanding">
+            <div>
+              <span>Invoice Number</span>
+              <strong>{{ emailInvoice?.invoiceNumber || passDraft.invoiceNumber }}</strong>
+            </div>
+            <div>
+              <span>Provider</span>
+              <strong>{{ accountingProviderLabel }}</strong>
+            </div>
+            <div>
+              <span>Status</span>
+              <strong>{{ activeAccountingSetting ? "Ready" : "Not configured" }}</strong>
+            </div>
+            <div>
+              <span>Total</span>
+              <strong>{{ money(passDraft.currency, billTotal) }}</strong>
+            </div>
+          </div>
+        </template>
+
+        <template v-else>
+          <div class="job-normal-invoice-tab__finish">
+            <div class="job-normal-invoice-tab__finish-mark">
+              <i class="pi pi-check" />
+            </div>
+            <div>
+              <span>Supplier invoice workflow complete</span>
+              <h3>{{ emailInvoice?.invoiceNumber || passDraft.invoiceNumber }}</h3>
+              <p>
+                The supplier invoice has been generated, the invoice PDF is available, and the
+                workflow is ready for the next accounts action.
+              </p>
+            </div>
+          </div>
+
+          <div class="job-normal-invoice-tab__summary-list">
+            <div v-for="item in supplierInvoiceStepSummary" :key="item.label">
+              <span>{{ item.label }}</span>
+              <strong>{{ item.value }}</strong>
+            </div>
+          </div>
+        </template>
       </div>
 
       <template #footer>
         <Button
-          label="Cancel"
+          :label="generateStep === 'finish' ? 'Close' : 'Cancel'"
           text
-          :disabled="generateLoading"
-          @click="generateDialogVisible = false"
+          :disabled="generateActionInProgress"
+          @click="closeGenerateDialog"
         />
         <Button
+          v-if="generateStep === 'email'"
+          label="Back"
+          severity="secondary"
+          outlined
+          :disabled="emailSending"
+          @click="generateStep = 'bill'"
+        />
+        <Button
+          v-if="generateStep === 'accounting'"
+          label="Back"
+          severity="secondary"
+          outlined
+          @click="generateStep = 'email'"
+        />
+        <Button
+          v-if="generateStep === 'finish'"
+          label="Back"
+          severity="secondary"
+          outlined
+          @click="generateStep = 'accounting'"
+        />
+        <Button
+          v-if="generateStep === 'email' || generateStep === 'finish'"
+          label="Open PDF"
+          icon="pi pi-external-link"
+          severity="secondary"
+          outlined
+          :disabled="emailSending"
+          @click="openPendingInvoice"
+        />
+        <Button
+          v-if="generateStep === 'email'"
+          label="Skip Email"
+          severity="secondary"
+          outlined
+          :disabled="emailSending"
+          @click="generateStep = 'accounting'"
+        />
+        <Button
+          v-if="generateStep === 'bill'"
           :label="generateLoading ? 'Generating...' : 'Generate Supplier Invoice'"
           icon="pi pi-file-pdf"
           :loading="generateLoading"
           @click="generateSupplierInvoice"
+        />
+        <Button
+          v-else-if="generateStep === 'email'"
+          :label="emailSending ? 'Sending...' : 'Send Email'"
+          icon="pi pi-send"
+          :loading="emailSending"
+          @click="sendSupplierInvoiceEmail"
+        />
+        <Button
+          v-else-if="generateStep === 'accounting'"
+          label="Continue to Finish"
+          icon="pi pi-arrow-right"
+          @click="continueSupplierInvoiceAccounting"
         />
       </template>
     </Dialog>
@@ -613,17 +1017,5 @@ const {
       </template>
     </Dialog>
 
-    <InvoiceEmailDialog
-      v-model:visible="emailDialogVisible"
-      title="Send Supplier Invoice"
-      :job-id="jobContext.job.value?.id || null"
-      :invoice-id="emailInvoice?.id || null"
-      invoice-label="Supplier Invoice"
-      :invoice-number="emailInvoice?.invoiceNumber || 'Invoice'"
-      :pdf-url="emailInvoice?.pdfUrl || null"
-      :recipient-options="emailRecipientOptions"
-      :job-summary="emailJobSummary"
-      @open-pdf="openPendingInvoice"
-    />
   </section>
 </template>

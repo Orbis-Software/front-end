@@ -16,12 +16,17 @@ const {
   loading,
   saving,
   canEdit,
+  activeSystemConfig,
+  isConnected,
   hasUnsavedChanges,
   unsavedChangesDialog,
   taxCodeOptions,
   switchSystem,
   addTaxMapping,
   removeTaxMapping,
+  isSystemConnected,
+  connectAccount,
+  disconnectAccount,
   save,
   resetDefaults,
   saveAndContinue,
@@ -69,12 +74,44 @@ const {
       >
         <strong>{{ system.label }}</strong>
         <span>{{ system.description }}</span>
+        <em :class="{ 'account-settings-page__tab-status--connected': isSystemConnected(system.key) }">
+          {{ isSystemConnected(system.key) ? "Connected" : "Not connected" }}
+        </em>
       </button>
     </div>
 
     <div v-if="loading" class="account-settings-page__loading">Loading account settings...</div>
 
     <fieldset v-else class="account-settings-page__fieldset" :disabled="saving || !canEdit">
+      <section v-if="!isConnected" class="account-settings-page__connect-card">
+        <div class="account-settings-page__connect-copy">
+          <span class="account-settings-page__connect-kicker">Third-party connection required</span>
+          <h3>{{ activeSystemConfig.connectionTitle }}</h3>
+          <p>{{ activeSystemConfig.connectionSummary }}</p>
+
+          <ol class="account-settings-page__instructions">
+            <li v-for="instruction in activeSystemConfig.instructions" :key="instruction">
+              {{ instruction }}
+            </li>
+          </ol>
+        </div>
+
+        <div class="account-settings-page__connect-action">
+          <span>{{ activeSystemConfig.label }} is not connected yet</span>
+          <Button
+            :label="`Connect ${activeSystemConfig.label} Account`"
+            icon="pi pi-link"
+            class="btn btn--primary"
+            :disabled="saving || !canEdit"
+            @click="connectAccount"
+          />
+          <small>
+            This unlocks setup fields after your integration credentials and authorisation are ready.
+          </small>
+        </div>
+      </section>
+
+      <template v-else>
       <section class="account-settings-page__card">
         <div class="account-settings-page__card-head">
           <div>
@@ -85,6 +122,14 @@ const {
             <ToggleSwitch v-model="form.isActive" />
             <span>Active</span>
           </label>
+          <Button
+            label="Disconnect"
+            icon="pi pi-unlink"
+            class="btn btn--ghost btn--small"
+            severity="secondary"
+            outlined
+            @click="disconnectAccount"
+          />
         </div>
 
         <div class="account-settings-page__grid">
@@ -245,6 +290,7 @@ const {
           </label>
         </div>
       </section>
+      </template>
     </fieldset>
 
     <p v-if="!canEdit" class="account-settings-page__readonly">

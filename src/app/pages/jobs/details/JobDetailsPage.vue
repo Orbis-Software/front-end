@@ -15,7 +15,7 @@ import Textarea from "primevue/textarea"
 
 import JobProgressStepper from "@/app/components/jobs/details/JobProgressStepper.vue"
 import { useTransportJobStore } from "@/app/stores/transport-job"
-import type { JobPdfDocument } from "@/app/services/transport-jobs/job-pdf"
+import type { JobPdfDocument } from "@/app/types/transport-job-service"
 import { useJobDetailsPage } from "./JobDetailsPage.logic"
 
 const {

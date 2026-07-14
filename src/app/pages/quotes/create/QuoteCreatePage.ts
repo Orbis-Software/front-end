@@ -5,6 +5,7 @@ import http from "@/api/http"
 import { useCompanyStore } from "@/app/stores/company"
 import { useGlobalReferenceDataStore } from "@/app/stores/global-reference-data"
 import { useReferenceDataStore } from "@/app/stores/reference-data"
+import globalReferenceDataService from "@/app/services/global-reference-data"
 import type { CompanyReferenceSequence } from "@/app/types/company"
 import type { GlobalReferenceDataRow } from "@/app/types/globalReferenceData"
 import { useTransportQuoteStore } from "@/app/stores/transportQuote"
@@ -73,6 +74,8 @@ const CONDITIONS: Record<string, string> = {
     "1. All hazardous goods must be declared at time of booking with full MSDS documentation.\n2. DG surcharges apply and are in addition to standard freight rates.\n3. Proper shipping name, UN Number and Packing Group must be provided.",
 }
 
+const GLOBAL_REFERENCE_OPTION_LIMIT = 150
+
 export function useQuoteCreatePage() {
   const route = useRoute()
   const router = useRouter()
@@ -88,6 +91,12 @@ export function useQuoteCreatePage() {
   const selectedCustomer = ref<CustomerOption | null>(null)
   const selectedContactIndex = ref<number | null>(null)
   const localError = ref<string | null>(null)
+  const globalReferenceSearchTerm = ref("")
+  const remoteGlobalReferenceRows = ref<Array<{ row: GlobalReferenceDataRow; category: string }>>(
+    [],
+  )
+  let globalReferenceFetchTimer: number | null = null
+  let globalReferenceFetchToken = 0
 
   const quoteId = computed(() => {
     const id = route.params.id
@@ -213,8 +222,69 @@ export function useQuoteCreatePage() {
     return seqs.find(sequence => sequence.type === "quote") ?? null
   })
 
-  const originLocationOptions = computed<SelectOption[]>(() => getLocationOptions())
-  const destinationLocationOptions = computed<SelectOption[]>(() => getLocationOptions())
+  const globalReferenceRows = computed(() => {
+    const rows = [
+      ...remoteGlobalReferenceRows.value,
+      ...globalReferenceData.value.terminals.map(row => ({ row, category: "Terminal" })),
+      ...globalReferenceData.value.airlines.map(row => ({ row, category: "Airline" })),
+      ...globalReferenceData.value.cities.map(row => ({ row, category: "City" })),
+    ]
+
+    return uniqueReferenceRows(rows)
+  })
+
+  const selectedLocationValues = computed(() => {
+    return new Set(
+      [form.origin, form.destination]
+        .filter((value): value is string => typeof value === "string" && Boolean(value.trim()))
+        .map(value => value.trim()),
+    )
+  })
+
+  const visibleGlobalReferenceOptions = computed<SelectOption[]>(() => {
+    const query = normalizeSearch(globalReferenceSearchTerm.value)
+    const options: SelectOption[] = []
+    const usedValues = new Set<string>()
+
+    selectedLocationValues.value.forEach(value => {
+      const option = findReferenceOptionByValue(value)
+
+      if (option && !usedValues.has(option.value)) {
+        usedValues.add(option.value)
+        options.push(option)
+        return
+      }
+
+      if (!usedValues.has(value)) {
+        usedValues.add(value)
+        options.push({
+          label: value,
+          value,
+          subLabel: "Selected value",
+          searchText: value,
+        })
+      }
+    })
+
+    for (const entry of globalReferenceRows.value) {
+      if (options.length >= GLOBAL_REFERENCE_OPTION_LIMIT) break
+      if (query && !rowMatchesSearch(entry.row, entry.category, query)) continue
+
+      const option = referenceOption(entry.row, entry.category)
+
+      if (!option.value || usedValues.has(option.value)) continue
+
+      usedValues.add(option.value)
+      options.push(option)
+    }
+
+    return options
+  })
+
+  const originLocationOptions = computed<SelectOption[]>(() => visibleGlobalReferenceOptions.value)
+  const destinationLocationOptions = computed<SelectOption[]>(
+    () => visibleGlobalReferenceOptions.value,
+  )
 
   const contactOptions = computed<SelectOption<number>[]>(() => {
     if (!selectedCustomer.value) return []
@@ -336,67 +406,6 @@ export function useQuoteCreatePage() {
     }))
   })
 
-  function getLocationOptions(): SelectOption[] {
-    if (mode.value === "air") return terminalOptions(row => row.type === "Airport")
-    if (mode.value === "sea") return terminalOptions(row => row.type === "Seaport")
-    if (mode.value === "rail") return terminalOptions(row => row.type === "Rail Freight")
-    if (mode.value === "road") {
-      return [...terminalOptions(row => row.type === "Road Freight"), ...cityOptions()]
-    }
-
-    return [...terminalOptions(() => true), ...cityOptions()]
-  }
-
-  function terminalOptions(filter: (row: GlobalReferenceDataRow) => boolean): SelectOption[] {
-    return globalReferenceData.value.terminals
-      .filter(filter)
-      .map(row => {
-        const terminalName = firstValue(row, [
-          "terminalName",
-          "terminal_name",
-          "airportName",
-          "airport_name",
-          "portName",
-          "port_name",
-          "name",
-        ])
-        const code = firstValue(row, ["code", "iata", "iataCode", "iata_code", "unlocode"])
-        const city = firstValue(row, ["city", "location", "municipality"])
-        const country = firstValue(row, ["country", "countryName", "country_name"])
-        const value = terminalName || city || code
-        const label = labelWithCode(terminalName || city, code)
-        const subLabel = [city, country, code].filter(Boolean).join(" | ")
-
-        return {
-          label,
-          value,
-          subLabel,
-          searchText: searchText(row, [label, value, subLabel]),
-        }
-      })
-      .filter(option => option.value)
-  }
-
-  function cityOptions(): SelectOption[] {
-    return globalReferenceData.value.cities
-      .map(row => {
-        const city = firstValue(row, ["fullName", "full_name", "city", "location", "name"])
-        const code = firstValue(row, ["code", "iata", "iataCode", "iata_code", "unlocode"])
-        const country = firstValue(row, ["country", "countryName", "country_name"])
-        const value = city || code
-        const label = labelWithCode(city, code)
-        const subLabel = [country, code].filter(Boolean).join(" | ")
-
-        return {
-          label,
-          value,
-          subLabel,
-          searchText: searchText(row, [label, value, subLabel]),
-        }
-      })
-      .filter(option => option.value)
-  }
-
   function firstValue(row: GlobalReferenceDataRow, keys: string[]): string {
     for (const key of keys) {
       const value = row[key]?.trim()
@@ -405,6 +414,114 @@ export function useQuoteCreatePage() {
     }
 
     return ""
+  }
+
+  function normalizeSearch(value: string): string {
+    return value.trim().toLowerCase()
+  }
+
+  function referenceValue(row: GlobalReferenceDataRow): string {
+    const name = firstValue(row, [
+      "terminalName",
+      "terminal_name",
+      "airportName",
+      "airport_name",
+      "portName",
+      "port_name",
+      "fullName",
+      "full_name",
+      "city",
+      "location",
+      "name",
+    ])
+    const code = firstValue(row, [
+      "code",
+      "iata",
+      "iataCode",
+      "iata_code",
+      "icao",
+      "awb",
+      "unlocode",
+    ])
+
+    return name || code
+  }
+
+  function referenceOption(row: GlobalReferenceDataRow, category: string): SelectOption {
+    const name = referenceValue(row)
+    const code = firstValue(row, [
+      "code",
+      "iata",
+      "iataCode",
+      "iata_code",
+      "icao",
+      "awb",
+      "unlocode",
+    ])
+    const type = firstValue(row, ["type", "function"])
+    const place = firstValue(row, ["location", "city", "state", "fleet", "municipality"])
+    const country = firstValue(row, ["country", "countryName", "country_name"])
+    const region = firstValue(row, ["region"])
+    const value = name || code
+    const label = labelWithCode(name, code)
+    const subLabel = [category, type, place, country, region].filter(Boolean).join(" | ")
+
+    return {
+      label,
+      value,
+      subLabel,
+      searchText: searchText(row, [category, label, value, subLabel]),
+    }
+  }
+
+  function findReferenceOptionByValue(value: string): SelectOption | null {
+    for (const entry of globalReferenceRows.value) {
+      if (referenceOption(entry.row, entry.category).value === value) {
+        return referenceOption(entry.row, entry.category)
+      }
+    }
+
+    return null
+  }
+
+  function rowMatchesSearch(row: GlobalReferenceDataRow, category: string, query: string): boolean {
+    return normalizeSearch(searchText(row, [category])).includes(query)
+  }
+
+  function onGlobalReferenceFilter(event: { value?: string }) {
+    globalReferenceSearchTerm.value = event.value ?? ""
+    fetchGlobalReferenceOptions(250)
+  }
+
+  async function fetchGlobalReferenceOptions(delay = 0) {
+    if (globalReferenceFetchTimer) {
+      window.clearTimeout(globalReferenceFetchTimer)
+      globalReferenceFetchTimer = null
+    }
+
+    if (delay > 0) {
+      globalReferenceFetchTimer = window.setTimeout(() => fetchGlobalReferenceOptions(), delay)
+      return
+    }
+
+    const token = ++globalReferenceFetchToken
+
+    try {
+      const response = await globalReferenceDataService.list({
+        search: globalReferenceSearchTerm.value.trim() || undefined,
+        per_page: GLOBAL_REFERENCE_OPTION_LIMIT,
+        page: 1,
+      })
+
+      if (token !== globalReferenceFetchToken) return
+
+      remoteGlobalReferenceRows.value = response.rows.map(row => ({
+        row,
+        category: referenceCategoryLabel(row.category),
+      }))
+    } catch (error) {
+      console.error("Unable to load quote global reference options", error)
+    }
   }
 
   function cleanReferenceName(value: string): string {
@@ -1012,7 +1129,7 @@ export function useQuoteCreatePage() {
 
     await Promise.allSettled([
       fetchCustomers(),
-      globalReferenceDataStore.fetchAll(),
+      fetchGlobalReferenceOptions(),
       referenceDataStore.categories.length ? Promise.resolve() : referenceDataStore.fetchAll(),
       hasSeq ? Promise.resolve() : companyStore.fetch(),
     ])
@@ -1070,6 +1187,7 @@ export function useQuoteCreatePage() {
     accountNumberPreview,
     originLocationOptions,
     destinationLocationOptions,
+    onGlobalReferenceFilter,
 
     currencyOptions,
     incotermOptions,
@@ -1129,4 +1247,42 @@ export function useQuoteCreatePage() {
     onSave,
     onCancel,
   }
+}
+
+function uniqueReferenceRows(
+  rows: Array<{ row: GlobalReferenceDataRow; category: string }>,
+): Array<{ row: GlobalReferenceDataRow; category: string }> {
+  const uniqueRows: Array<{ row: GlobalReferenceDataRow; category: string }> = []
+  const seen = new Set<string>()
+
+  for (const entry of rows) {
+    const key = [
+      entry.category,
+      entry.row.code,
+      entry.row.iata,
+      entry.row.icao,
+      entry.row.awb,
+      entry.row.fullName,
+      entry.row.terminalName,
+      entry.row.name,
+      entry.row.city,
+      entry.row.location,
+    ]
+      .filter(Boolean)
+      .join("|")
+
+    if (!key || seen.has(key)) continue
+
+    seen.add(key)
+    uniqueRows.push(entry)
+  }
+
+  return uniqueRows
+}
+
+function referenceCategoryLabel(category: string | undefined): string {
+  if (category === "airlines") return "Airline"
+  if (category === "cities") return "City"
+
+  return "Terminal"
 }

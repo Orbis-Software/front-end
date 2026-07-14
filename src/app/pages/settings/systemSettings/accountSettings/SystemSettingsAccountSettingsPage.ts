@@ -10,17 +10,57 @@ import type {
   AccountingSystem,
 } from "@/app/types/account-setting"
 
-export const accountingSystems: Array<{
+type AccountingSystemConfig = {
   key: AccountingSystem
   label: string
   description: string
-}> = [
-  { key: "xero", label: "Xero", description: "Account codes and Xero tax type names" },
-  { key: "sage", label: "Sage", description: "Nominal codes and Sage T-code mapping" },
+  connectionTitle: string
+  connectionSummary: string
+  instructions: string[]
+}
+
+export const accountingSystems: AccountingSystemConfig[] = [
+  {
+    key: "xero",
+    label: "Xero",
+    description: "Account codes and Xero tax type names",
+    connectionTitle: "Connect Xero account",
+    connectionSummary:
+      "Xero requires an OAuth app connection before Orbis can post invoices, bills, contacts, and tax mappings.",
+    instructions: [
+      "Create or select a Xero app in the Xero Developer portal.",
+      "Add the Orbis callback URL and enable accounting scopes for invoices, contacts, settings, and offline access.",
+      "Copy the client ID and client secret into the integration setup when the secure connector is enabled.",
+      "Authorise the Xero organisation, then return here to complete nominal and tax mappings.",
+    ],
+  },
+  {
+    key: "sage",
+    label: "Sage",
+    description: "Nominal codes and Sage T-code mapping",
+    connectionTitle: "Connect Sage account",
+    connectionSummary:
+      "Sage needs its business cloud app credentials and company authorisation before export defaults can be used.",
+    instructions: [
+      "Register the Orbis integration in Sage Developer and enable Accounting API access.",
+      "Configure the redirect URL supplied by Orbis and request offline refresh access.",
+      "Confirm the company, department, nominal code, and VAT T-code structure with accounts.",
+      "Authorise Sage, then return here to map nominal codes, T-codes, and export references.",
+    ],
+  },
   {
     key: "quickbooks",
     label: "QuickBooks",
     description: "Income/expense accounts and VAT agency codes",
+    connectionTitle: "Connect QuickBooks account",
+    connectionSummary:
+      "QuickBooks requires an Intuit developer app and company authorisation before Orbis can sync accounting data.",
+    instructions: [
+      "Create an Intuit Developer app and enable QuickBooks Online Accounting API access.",
+      "Add the Orbis redirect URI and prepare the client ID, client secret, and environment.",
+      "Authorise the QuickBooks company and confirm VAT agency/account names with accounts.",
+      "Return here to configure income accounts, expense accounts, VAT codes, and memo formats.",
+    ],
   },
 ]
 
@@ -41,6 +81,7 @@ function emptyForm(system: AccountingSystem): FormState {
     accountingSystem: system,
     isDefault: system === "xero",
     isActive: true,
+    isConnected: false,
     nominalCodes: {
       sales: "",
       purchase: "",
@@ -90,6 +131,7 @@ function comparableForm(state: FormState) {
     accountingSystem: state.accountingSystem,
     isDefault: Boolean(state.isDefault),
     isActive: Boolean(state.isActive),
+    isConnected: Boolean(state.isConnected),
     nominalCodes: {
       sales: normalizeString(state.nominalCodes.sales),
       purchase: normalizeString(state.nominalCodes.purchase),
@@ -142,6 +184,12 @@ export function useSystemSettingsAccountSettingsPage() {
     () => auth.hasPermission("mgmt.system.master_settings.manage") || auth.isAdmin || auth.isDev,
   )
   const activeSetting = computed(() => store.bySystem(activeSystem.value))
+  const activeSystemConfig = computed<AccountingSystemConfig>(
+    () =>
+      accountingSystems.find(system => system.key === activeSystem.value) ??
+      accountingSystems.find(system => system.key === "xero")!,
+  )
+  const isConnected = computed(() => Boolean(form.isConnected))
   const hasUnsavedChanges = computed(() => {
     if (loading.value || saving.value || !canEdit.value) return false
 
@@ -212,6 +260,35 @@ export function useSystemSettingsAccountSettingsPage() {
     form.taxMappings.splice(index, 1)
   }
 
+  function isSystemConnected(system: AccountingSystem): boolean {
+    if (system === activeSystem.value) return Boolean(form.isConnected)
+
+    return Boolean(store.bySystem(system)?.isConnected)
+  }
+
+  function connectAccount() {
+    form.isConnected = true
+    form.isActive = true
+    toast.add({
+      severity: "info",
+      summary: `${activeSystemConfig.value.label} setup unlocked`,
+      detail: "Complete the connection outside Orbis, then save the account settings and mappings here.",
+      life: 3600,
+    })
+  }
+
+  function disconnectAccount() {
+    form.isConnected = false
+    form.isActive = false
+    form.isDefault = false
+    toast.add({
+      severity: "warn",
+      summary: `${activeSystemConfig.value.label} disconnected`,
+      detail: "Mapping inputs are hidden until this accounting system is connected again.",
+      life: 3600,
+    })
+  }
+
   async function save(): Promise<boolean> {
     try {
       await store.save(
@@ -219,6 +296,7 @@ export function useSystemSettingsAccountSettingsPage() {
           accountingSystem: form.accountingSystem,
           isDefault: form.isDefault,
           isActive: form.isActive,
+          isConnected: form.isConnected,
           nominalCodes: form.nominalCodes,
           taxMappings: form.taxMappings,
           exportSettings: form.exportSettings,
@@ -306,12 +384,17 @@ export function useSystemSettingsAccountSettingsPage() {
     loading,
     saving,
     canEdit,
+    activeSystemConfig,
+    isConnected,
     hasUnsavedChanges,
     unsavedChangesDialog,
     taxCodeOptions,
     switchSystem,
     addTaxMapping,
     removeTaxMapping,
+    isSystemConnected,
+    connectAccount,
+    disconnectAccount,
     save,
     resetDefaults,
     saveAndContinue,

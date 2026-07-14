@@ -36,6 +36,7 @@ export type AccountSetting = {
   accountingSystem: AccountingSystem
   isDefault: boolean
   isActive: boolean
+  isConnected: boolean
   nominalCodes: AccountNominalCodes
   taxMappings: AccountTaxMapping[]
   exportSettings: AccountExportSettings
@@ -47,6 +48,7 @@ export type AccountSettingPayload = {
   accountingSystem: AccountingSystem
   isDefault: boolean
   isActive: boolean
+  isConnected: boolean
   nominalCodes: AccountNominalCodes
   taxMappings: AccountTaxMapping[]
   exportSettings: AccountExportSettings

@@ -214,6 +214,7 @@
             class="control"
             placeholder="Select origin"
             emptyFilterMessage="No matching location"
+            @filter="onGlobalReferenceFilter"
           >
             <template #option="{ option }">
               <div class="quote-location-option">
@@ -237,6 +238,7 @@
             class="control"
             placeholder="Select destination"
             emptyFilterMessage="No matching location"
+            @filter="onGlobalReferenceFilter"
           >
             <template #option="{ option }">
               <div class="quote-location-option">
@@ -904,6 +906,7 @@ const {
   accountNumberPreview,
   originLocationOptions,
   destinationLocationOptions,
+  onGlobalReferenceFilter,
 
   currencyOptions,
   incotermOptions,

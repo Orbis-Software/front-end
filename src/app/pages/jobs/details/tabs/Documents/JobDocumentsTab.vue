@@ -6,7 +6,7 @@ import Dialog from "primevue/dialog"
 import InputText from "primevue/inputtext"
 import { useToast } from "primevue/usetoast"
 import { useTransportJobStore } from "@/app/stores/transport-job"
-import type { JobPdfDocument } from "@/app/services/transport-jobs/job-pdf"
+import type { JobPdfDocument } from "@/app/types/transport-job-service"
 import type { JobDetailsContext } from "../../JobDetailsPage.logic"
 
 type DocumentRow = {

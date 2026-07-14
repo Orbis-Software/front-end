@@ -2,7 +2,7 @@ import { defineStore } from "pinia"
 import router from "@/router"
 import transportJobs from "@/app/services/transport-jobs"
 import { useNotificationStore } from "@/app/stores/notification"
-import type { InvoiceGenerationTask } from "@/app/services/transport-jobs/invoice-generation"
+import type { InvoiceGenerationTask } from "@/app/types/invoice-generation"
 
 type TaskState = InvoiceGenerationTask & {
   attempts: number
