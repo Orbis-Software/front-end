@@ -3,6 +3,8 @@ import "./JobNormalCustomerInvoiceTab.css"
 import Button from "primevue/button"
 import Dialog from "primevue/dialog"
 import InputText from "primevue/inputtext"
+// Customer invoices still use the shared email dialog. Supplier invoice email stays
+// inside the four-step Supplier Bill modal.
 import InvoiceEmailDialog from "../InvoiceEmailDialog/InvoiceEmailDialog.vue"
 import { useJobNormalCustomerInvoiceTab } from "./JobNormalCustomerInvoiceTab"
 
@@ -304,6 +306,7 @@ const {
       </template>
     </Dialog>
 
+    <!-- Customer invoice email only. Supplier invoices use their integrated workflow modal. -->
     <InvoiceEmailDialog
       v-model:visible="emailDialogVisible"
       title="Send Customer Invoice"

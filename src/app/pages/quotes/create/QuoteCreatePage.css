@@ -1,6 +1,27 @@
 .quote-page {
+  --quote-accent: #ec691a;
+  --quote-accent-hover: #d85d14;
+  --quote-accent-soft: #fff7ed;
+  --quote-accent-border: #fdba74;
+  --quote-accent-line: #fed7aa;
+  --quote-text: #1a1a18;
+  --quote-muted: #737373;
+  --quote-soft-muted: #888780;
+  --quote-border: #b6b6b6;
+  --quote-control-border: #bdbdbd;
+  --quote-shell: #d3d3d3;
+  --quote-surface: #f8f8f8;
+  --quote-section-head: #ececec;
+  --quote-panel-body: #dedede;
+  --quote-panel-soft: #eeeeee;
+  --quote-control-bg: #ffffff;
+  --quote-control-disabled-bg: #f7f7f7;
+
   padding: 18px 22px 40px;
   width: 100%;
+  min-height: 100%;
+  background: var(--quote-shell);
+  color: var(--quote-text);
 }
 
 .quote-page .quote-top {
@@ -15,7 +36,12 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  color: var(--quote-text);
   font-weight: 800;
+}
+
+.quote-page .quote-title i {
+  color: var(--quote-accent);
 }
 
 .quote-page .quote-actions {
@@ -26,14 +52,39 @@
 }
 
 .quote-page .btn {
-  border-radius: 10px;
+  height: 38px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.quote-page .orbis-primary.p-button {
+  border-color: var(--quote-accent) !important;
+  background: var(--quote-accent) !important;
+}
+
+.quote-page .orbis-primary.p-button:hover {
+  border-color: var(--quote-accent-hover) !important;
+  background: var(--quote-accent-hover) !important;
+}
+
+.quote-page .orbis-primary.p-button.p-button-outlined {
+  border-color: rgba(236, 105, 26, 0.55) !important;
+  background: #fff !important;
+  color: var(--quote-accent) !important;
+}
+
+.quote-page .orbis-primary.p-button.p-button-outlined:hover {
+  border-color: var(--quote-accent) !important;
+  background: var(--quote-accent-soft) !important;
+  color: var(--quote-accent-hover) !important;
 }
 
 .quote-page .card {
-  background: #fff;
-  border: 1px solid #e8e8e8;
+  background: var(--quote-surface);
+  border: 1px solid var(--quote-border);
   border-radius: 14px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.9);
 }
 
 .quote-page .section {
@@ -41,10 +92,32 @@
   margin-bottom: 14px;
 }
 
+.quote-page .section > .grid-3,
+.quote-page .section > .grid-4,
+.quote-page .section > .field,
+.quote-page .section > .haz-row,
+.quote-page .section > .summary-tiles,
+.quote-page .section > .bottom-section {
+  padding: 14px;
+  border: 1px solid var(--quote-border);
+  border-radius: 0 0 10px 10px;
+  background: var(--quote-panel-body);
+}
+
+.quote-page .section > .step-head + .grid-3,
+.quote-page .section > .step-head + .grid-4,
+.quote-page .section > .step-head + .field,
+.quote-page .section > .step-head + .haz-row,
+.quote-page .section > .step-head + .summary-tiles {
+  border-top: 0;
+  margin-top: -14px;
+}
+
 .quote-page .meta-title {
   font-weight: 800;
   font-size: 16px;
   margin-bottom: 12px;
+  color: var(--quote-text);
 }
 
 .quote-page .grid-3,
@@ -69,9 +142,11 @@
 }
 
 .quote-page .label {
-  font-size: 12px;
-  font-weight: 700;
-  color: #525252;
+  color: var(--quote-muted);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
 .quote-page .control {
@@ -99,10 +174,10 @@
   align-items: center;
   gap: 6px;
   padding: 6px 12px;
-  border: 1px solid #d4d4d4;
+  border: 1px solid var(--quote-border);
   border-radius: 999px;
-  background: #f5f5f5;
-  color: #525252;
+  background: var(--quote-section-head);
+  color: var(--quote-text);
   font-size: 12px;
   font-weight: 700;
 }
@@ -111,7 +186,7 @@
   width: 7px;
   height: 7px;
   border-radius: 999px;
-  background: #737373;
+  background: var(--quote-accent);
 }
 
 .quote-page .summary-tiles {
@@ -125,23 +200,23 @@
   flex-direction: column;
   gap: 3px;
   padding: 12px;
-  border: 1px solid #e5e5e5;
-  border-radius: 12px;
-  background: #fafafa;
+  border: 1px solid var(--quote-border);
+  border-radius: 8px;
+  background: var(--quote-panel-soft);
   min-width: 0;
 }
 
 .quote-page .summary-tile .tile-label {
   font-size: 10px;
   font-weight: 800;
-  color: #737373;
+  color: var(--quote-muted);
   text-transform: uppercase;
   letter-spacing: 0.4px;
 }
 
 .quote-page .summary-tile strong {
   font-size: 16px;
-  color: #262626;
+  color: var(--quote-text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -149,15 +224,15 @@
 
 .quote-page .summary-tile small {
   font-size: 11px;
-  color: #737373;
+  color: var(--quote-soft-muted);
 }
 
 .quote-page .section-subtitle {
   font-size: 12px;
   font-weight: 800;
-  color: #737373;
+  color: var(--quote-text);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.04em;
 }
 
 .quote-page .table-head-row {
@@ -166,18 +241,35 @@
   justify-content: space-between;
   gap: 12px;
   margin-top: 18px;
-  margin-bottom: 10px;
+  margin-bottom: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--quote-border);
+  border-radius: 10px 10px 0 0;
+  background: var(--quote-section-head);
 }
 
 .quote-page .btn-add {
-  border-color: #ec691a;
-  color: #ec691a;
-  border-radius: 10px;
+  height: 34px;
+  border-color: var(--quote-accent);
+  border-radius: 8px;
+  color: var(--quote-accent);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.quote-page .btn-add:hover {
+  border-color: var(--quote-accent-hover);
+  background: var(--quote-accent-soft);
+  color: var(--quote-accent-hover);
 }
 
 .quote-page .table-wrap {
   width: 100%;
   overflow-x: auto;
+  border: 1px solid var(--quote-border);
+  border-top: 0;
+  border-radius: 0 0 10px 10px;
+  background: var(--quote-panel-body);
 }
 
 .quote-page .quote-table {
@@ -192,29 +284,35 @@
 }
 
 .quote-page .quote-table thead tr {
-  background: #f7f7f5;
-  border-bottom: 1px solid #e6e6e6;
+  background: var(--quote-section-head);
+  border-bottom: 1px solid var(--quote-border);
 }
 
 .quote-page .quote-table th {
   padding: 9px 10px;
   text-align: left;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 800;
-  color: #737373;
+  color: var(--quote-text);
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0;
   white-space: nowrap;
 }
 
 .quote-page .quote-table td {
   padding: 7px 10px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid #d6d6d6;
+  color: var(--quote-text);
   vertical-align: middle;
+  background: var(--quote-panel-body);
 }
 
 .quote-page .quote-table tbody tr:hover {
-  background: #fafafa;
+  background: var(--quote-panel-soft);
+}
+
+.quote-page .quote-table tbody tr:hover td {
+  background: var(--quote-panel-soft);
 }
 
 .quote-page .table-input {
@@ -278,7 +376,7 @@
 }
 
 .quote-page .toggle-line strong {
-  color: #737373;
+  color: var(--quote-accent);
 }
 
 .quote-page .haz-box {
@@ -320,22 +418,22 @@
   justify-content: flex-end;
   gap: 14px;
   padding: 10px 12px;
-  border: 1px solid #e5e5e5;
+  border: 1px solid var(--quote-border);
   border-top: 0;
   border-radius: 0 0 10px 10px;
-  background: #fafafa;
+  background: var(--quote-section-head);
   font-size: 12px;
 }
 
 .quote-page .quote-section-total span {
-  color: #737373;
+  color: var(--quote-muted);
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.3px;
 }
 
 .quote-page .quote-section-total strong {
-  color: #262626;
+  color: var(--quote-text);
   font-size: 13px;
 }
 
@@ -351,9 +449,12 @@
 
 .quote-page .totals-box {
   overflow: hidden;
-  border: 1px solid #e5e5e5;
-  border-radius: 12px;
-  background: #fafafa;
+  border: 1px solid var(--quote-accent-border);
+  border-radius: 14px;
+  background: var(--quote-accent-soft);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.85),
+    0 10px 24px rgba(180, 83, 9, 0.08);
 }
 
 .quote-page .totals-row {
@@ -361,9 +462,9 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  min-height: 42px;
-  padding: 9px 14px;
-  border-bottom: 1px solid #e5e5e5;
+  min-height: 38px;
+  padding: 7px 14px;
+  border-bottom: 1px solid var(--quote-accent-line);
   font-size: 12px;
 }
 
@@ -372,33 +473,39 @@
 }
 
 .quote-page .totals-row span {
-  color: #737373;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
+  color: #7c2d12;
+  font-weight: 700;
+  text-transform: none;
+  letter-spacing: 0;
 }
 
 .quote-page .totals-row strong {
   font-size: 13px;
-  color: #262626;
+  color: #111827;
 }
 
 .quote-page .totals-row.grand {
-  background: #ec691a;
+  background: transparent;
+  padding-top: 10px;
 }
 
-.quote-page .totals-row.grand span,
+.quote-page .totals-row.grand span {
+  color: #7c2d12;
+  font-weight: 800;
+}
+
 .quote-page .totals-row.grand strong {
-  color: #fff;
+  color: var(--quote-accent);
+  font-size: 18px;
 }
 
 .quote-page .totals-row.profit {
-  background: #f0fdf4;
+  background: transparent;
 }
 
 .quote-page .totals-row.profit span,
 .quote-page .totals-row.profit strong {
-  color: #16a34a;
+  color: #15803d;
 }
 
 .quote-page .totals-input {
@@ -433,8 +540,8 @@
 }
 
 .quote-page :deep(.p-inputtext[readonly]) {
-  background: #f5f5f5;
-  color: #737373;
+  background: var(--quote-panel-soft);
+  color: var(--quote-muted);
 }
 
 .quote-page .quote-location-option {
@@ -444,15 +551,168 @@
 }
 
 .quote-page .quote-location-option strong {
-  color: #1f2937;
+  color: var(--quote-text);
   font-size: 13px;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .quote-page .quote-location-option small {
-  color: #737373;
+  color: var(--quote-soft-muted);
   font-size: 11px;
+}
+
+.quote-page .step-head {
+  display: block;
+  width: 100%;
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--quote-border);
+  border-radius: 10px 10px 0 0;
+  background: var(--quote-section-head);
+}
+
+.quote-page .step-head .badge {
+  border-color: var(--quote-accent-border);
+  background: var(--quote-accent-soft);
+  color: #9a3412;
+}
+
+.quote-page .step-head .title {
+  color: var(--quote-text);
+}
+
+.quote-page .step-head .sub {
+  color: var(--quote-soft-muted);
+}
+
+.quote-page .card-btn {
+  border-color: var(--quote-border);
+  border-radius: 8px;
+  background: var(--quote-control-bg);
+  color: var(--quote-text);
+}
+
+.quote-page .card-btn:hover {
+  border-color: var(--quote-accent);
+  background: var(--quote-accent-soft);
+}
+
+.quote-page .card-btn.active {
+  border-color: var(--quote-accent);
+  background: var(--quote-accent-soft);
+  box-shadow: 0 0 0 1px var(--quote-accent) inset;
+}
+
+.quote-page .card-btn .ttl {
+  color: var(--quote-text);
+}
+
+.quote-page .card-btn .sub {
+  color: var(--quote-soft-muted);
+}
+
+.quote-page .job-load-planner-tab {
+  padding: 0;
+  color: var(--quote-text);
+}
+
+.quote-page .job-load-planner-tab__toolbar,
+.quote-page .job-load-planner-tab__card,
+.quote-page .job-load-planner-tab__viewer,
+.quote-page .job-load-planner-tab__canvas-card,
+.quote-page .job-load-planner-tab__manifest {
+  border-color: var(--quote-border);
+  background: var(--quote-panel-body);
+}
+
+.quote-page .job-load-planner-tab__toolbar {
+  background: var(--quote-section-head);
+}
+
+.quote-page .job-load-planner-tab__stats article,
+.quote-page .job-load-planner-tab__unit,
+.quote-page .job-load-planner-tab__view-tabs,
+.quote-page .job-load-planner-tab__three-hint,
+.quote-page .job-load-planner-tab__empty {
+  border-color: var(--quote-border);
+  background: var(--quote-panel-soft);
+}
+
+.quote-page .job-load-planner-tab input,
+.quote-page .job-load-planner-tab select,
+.quote-page .job-load-planner-tab__button {
+  border-color: var(--quote-control-border);
+}
+
+.quote-page :deep(.p-inputtext),
+.quote-page :deep(.p-select),
+.quote-page :deep(.p-autocomplete-input),
+.quote-page :deep(.p-inputnumber-input),
+.quote-page :deep(.p-textarea),
+.quote-page .p-inputtext,
+.quote-page .p-select,
+.quote-page .p-autocomplete-input,
+.quote-page .p-inputnumber-input,
+.quote-page .p-textarea {
+  border-color: var(--quote-control-border);
+  border-radius: 8px;
+  background: var(--quote-control-bg);
+  color: var(--quote-text);
+  font-size: 12px;
+}
+
+.quote-page :deep(.p-select-label),
+.quote-page .p-select-label {
+  background: var(--quote-control-bg);
+}
+
+.quote-page :deep(.p-disabled),
+.quote-page :deep(.p-inputtext[readonly]),
+.quote-page :deep(.p-inputtext:disabled),
+.quote-page :deep(.p-select.p-disabled),
+.quote-page :deep(.p-autocomplete.p-disabled),
+.quote-page :deep(.p-inputnumber.p-disabled),
+.quote-page .p-disabled,
+.quote-page .p-inputtext[readonly],
+.quote-page .p-inputtext:disabled,
+.quote-page .p-select.p-disabled,
+.quote-page .p-autocomplete.p-disabled,
+.quote-page .p-inputnumber.p-disabled {
+  background: var(--quote-control-disabled-bg);
+  opacity: 1;
+}
+
+.quote-page :deep(.p-disabled .p-select-label),
+.quote-page :deep(.p-select.p-disabled .p-select-label),
+.quote-page .p-disabled .p-select-label,
+.quote-page .p-select.p-disabled .p-select-label {
+  background: var(--quote-control-disabled-bg);
+  color: var(--quote-muted);
+}
+
+.quote-page :deep(.p-inputtext:enabled:hover),
+.quote-page :deep(.p-select:not(.p-disabled):hover),
+.quote-page :deep(.p-autocomplete-input:enabled:hover),
+.quote-page :deep(.p-inputnumber-input:enabled:hover),
+.quote-page :deep(.p-textarea:enabled:hover),
+.quote-page :deep(.p-inputtext:enabled:focus),
+.quote-page :deep(.p-select:not(.p-disabled).p-focus),
+.quote-page :deep(.p-autocomplete-input:enabled:focus),
+.quote-page :deep(.p-inputnumber-input:enabled:focus),
+.quote-page :deep(.p-textarea:enabled:focus),
+.quote-page .p-inputtext:enabled:hover,
+.quote-page .p-select:not(.p-disabled):hover,
+.quote-page .p-autocomplete-input:enabled:hover,
+.quote-page .p-inputnumber-input:enabled:hover,
+.quote-page .p-textarea:enabled:hover,
+.quote-page .p-inputtext:enabled:focus,
+.quote-page .p-select:not(.p-disabled).p-focus,
+.quote-page .p-autocomplete-input:enabled:focus,
+.quote-page .p-inputnumber-input:enabled:focus,
+.quote-page .p-textarea:enabled:focus {
+  border-color: var(--quote-accent);
+  box-shadow: 0 0 0 1px rgba(236, 105, 26, 0.12);
 }
 
 @media (max-width: 1250px) {

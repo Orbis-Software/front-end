@@ -1,11 +1,5 @@
 import http from "@/api/http"
-
-export type EmailJobInvoicePayload = {
-  invoiceId: number
-  recipients: string[]
-  subject: string
-  body: string
-}
+import type { EmailJobInvoicePayload } from "@/app/types/transport-job-service"
 
 export default async function emailInvoice(
   id: number,

@@ -1,10 +1,13 @@
 import http from "@/api/http"
 import transportJobTransformer from "@/app/transformers/transport-job"
 import type { TransportJob, TransportJobUpdatePayload } from "@/app/types/transport-job"
+import type { TransportJobFormValue } from "@/app/types/transport-job-service"
 
-type FormValue = string | number | boolean | null | undefined
-
-function appendValue(fd: FormData, key: string, value: FormValue | Record<string, any>): void {
+function appendValue(
+  fd: FormData,
+  key: string,
+  value: TransportJobFormValue | Record<string, any>,
+): void {
   if (value === undefined) return
 
   if (value === null) {

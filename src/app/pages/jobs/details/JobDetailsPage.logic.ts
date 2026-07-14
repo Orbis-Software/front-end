@@ -454,8 +454,8 @@ function serializeChargeRow(row: any): JobCharge {
     unit_amount: Number.isFinite(unitAmount) ? unitAmount : 0,
     exchange_rate: Number.isFinite(exchangeRate) && exchangeRate > 0 ? exchangeRate : null,
     amount: Number.isFinite(amount) ? Number(amount.toFixed(2)) : 0,
-    vat_rate: type === "sell" ? Number(row.vatRate ?? row.vat_rate ?? 0) : null,
-    tax_code: type === "sell" ? row.taxCode || row.tax_code || null : null,
+    vat_rate: Number(row.vatRate ?? row.vat_rate ?? 0),
+    tax_code: row.taxCode || row.tax_code || null,
     ...(Number.isFinite(chargeCodeId) && chargeCodeId > 0 ? { charge_code_id: chargeCodeId } : {}),
     ...(Number.isFinite(supplierId) && supplierId > 0 ? { supplier_id: supplierId } : {}),
   }

@@ -1,36 +1,9 @@
 import http from "@/api/http"
-
-export type InvoiceGenerationStatus = "pending" | "queued" | "processing" | "completed" | "failed"
-
-export type InvoiceGenerationResponse = {
-  message?: string
-  invoice_id: number
-  generation_status: InvoiceGenerationStatus
-  download_available?: boolean
-  generation?: InvoiceGenerationTask
-  data?: any
-}
-
-export type InvoiceGenerationTask = {
-  id: string
-  invoice_id: number | null
-  transport_job_id: number
-  job_number?: string | null
-  invoice_type: "customer" | "supplier"
-  invoice_number?: string | null
-  generation_status: InvoiceGenerationStatus
-  status: InvoiceGenerationStatus
-  stage: string
-  stage_message: string
-  progress: number
-  download_available: boolean
-  started_at?: string | null
-  completed_at?: string | null
-  failed_at?: string | null
-  error_message?: string | null
-}
-
-export type InvoiceGenerationStatusResponse = InvoiceGenerationTask
+import type {
+  InvoiceGenerationResponse,
+  InvoiceGenerationStatusResponse,
+  InvoiceGenerationTask,
+} from "@/app/types/invoice-generation"
 
 export async function generateCustomerInvoice(id: number): Promise<InvoiceGenerationResponse> {
   const response = await http.post(`/transport-jobs/${id}/customer-invoices/generate`)
@@ -41,9 +14,22 @@ export async function generateCustomerInvoice(id: number): Promise<InvoiceGenera
 export async function generateSupplierInvoice(
   id: number,
   supplierId: number,
+  payload: {
+    reference?: string
+    invoice_number?: string
+    invoice_date?: string
+    due_date?: string
+    date_passed?: string
+    currency?: string
+    invoice_amount?: number
+    tax_amount?: number
+    total_invoice_amount?: number
+    residual_amount?: boolean
+  } = {},
 ): Promise<InvoiceGenerationResponse> {
   const response = await http.post(`/transport-jobs/${id}/supplier-invoices/generate`, {
     supplier_id: supplierId,
+    ...payload,
   })
 
   return response.data
