@@ -350,6 +350,8 @@ function fetchCharge(raw: any): JobCharge {
     amount: nullableNumber(raw.amount),
     vat_rate: nullableNumber(raw.vat_rate),
     tax_code: nullableString(raw.tax_code),
+    markup_percentage: nullableNumber(raw.markup_percentage ?? raw.markupPercentage),
+    add_to_sell: Boolean(raw.add_to_sell ?? raw.addToSell ?? false),
   }
 }
 

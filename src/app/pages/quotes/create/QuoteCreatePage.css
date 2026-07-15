@@ -283,6 +283,10 @@
   min-width: 1180px;
 }
 
+.quote-page .quote-table--buy-costs {
+  min-width: 1580px;
+}
+
 .quote-page .quote-table thead tr {
   background: var(--quote-section-head);
   border-bottom: 1px solid var(--quote-border);
@@ -520,9 +524,74 @@
 
 .quote-page .final-actions {
   display: flex;
+  align-items: center;
   justify-content: flex-end;
   gap: 10px;
   margin-top: 12px;
+}
+
+.quote-page .quote-draft-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-right: auto;
+  color: #5f6b7a;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.quote-page .quote-draft-status--saving,
+.quote-page .quote-draft-status--pending {
+  color: #a34d0b;
+}
+
+.quote-page .quote-draft-status--saved {
+  color: #087a55;
+}
+
+.quote-page .quote-draft-status--error {
+  color: #b42318;
+}
+
+.quote-page .quote-save-draft {
+  gap: 7px;
+}
+
+.quote-leave-dialog {
+  width: min(560px, calc(100vw - 32px));
+}
+
+.quote-leave-dialog .quote-leave-dialog__body {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 4px 0 8px;
+}
+
+.quote-leave-dialog .quote-leave-dialog__icon {
+  display: inline-flex;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #fff3e8;
+  color: #e75b0c;
+  font-size: 18px;
+}
+
+.quote-leave-dialog .quote-leave-dialog__body p {
+  margin: 1px 0 7px;
+  color: #1f2937;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.quote-leave-dialog .quote-leave-dialog__body small {
+  color: #667085;
+  font-size: 12px;
+  line-height: 1.55;
 }
 
 .quote-page :deep(.p-inputtext),
@@ -754,6 +823,11 @@
 
   .quote-page .final-actions {
     flex-direction: column;
+    align-items: stretch;
+  }
+
+  .quote-page .quote-draft-status {
+    margin: 0 0 4px;
   }
 
   .quote-page .final-actions .btn {

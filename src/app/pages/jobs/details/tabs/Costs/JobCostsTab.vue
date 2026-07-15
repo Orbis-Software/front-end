@@ -12,6 +12,7 @@ const {
   sellRows,
   totals,
   jobCurrency,
+  sellCurrency,
   currencyOptions,
   vatRateOptions,
   chargeDescriptionOptions,
@@ -30,6 +31,8 @@ const {
   selectChargeDescription,
   syncChargeDescriptionFilter,
   updateBuyPricing,
+  updateBuyCurrency,
+  setSellCurrency,
   scheduleMissingChargeDescriptionCheck,
   chargeDescriptionDropdownShown,
   chargeDescriptionDropdownHidden,
@@ -156,7 +159,7 @@ const {
                   option-value="value"
                   filter
                   auto-filter-focus
-                  @change="syncLineExchangeRate(row)"
+                  @change="updateBuyCurrency(row)"
                 />
               </td>
               <td>
@@ -206,6 +209,18 @@ const {
         </div>
 
         <div class="job-costs-tab__section-actions">
+          <label class="job-costs-tab__sell-currency">
+            <span>Sell Currency</span>
+            <Dropdown
+              :model-value="sellCurrency"
+              :options="currencyOptions"
+              option-label="label"
+              option-value="value"
+              filter
+              auto-filter-focus
+              @update:model-value="setSellCurrency"
+            />
+          </label>
           <Button
             type="button"
             class="job-costs-tab__add-btn"
@@ -268,15 +283,10 @@ const {
                 />
               </td>
               <td>
-                <Dropdown
-                  v-model="row.currency"
-                  :options="currencyOptions"
-                  option-label="label"
-                  option-value="value"
-                  filter
-                  auto-filter-focus
-                  @change="syncLineExchangeRate(row)"
-                />
+                <span class="job-costs-tab__currency-lock" title="Controlled by Sell Currency">
+                  <i class="pi pi-lock" />
+                  {{ row.currency }}
+                </span>
               </td>
               <td>
                 <div

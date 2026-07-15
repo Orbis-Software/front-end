@@ -131,7 +131,9 @@ function hydrateBuyRow(row: any): BuyCostRow {
   row.description = row.description ?? ""
   row.supplier_id = row.supplier_id ?? row.supplierId ?? null
   row.chargeCodeId = row.chargeCodeId ?? row.charge_code_id ?? null
-  row.addToSellCharges = Boolean(row.addToSellCharges ?? row.add_to_sell_charges ?? false)
+  row.addToSellCharges = Boolean(
+    row.addToSellCharges ?? row.add_to_sell_charges ?? row.add_to_sell ?? false,
+  )
   row.linkedSellChargeId = row.linkedSellChargeId ?? row.linked_sell_charge_id ?? null
   row.quantity = numberValue(row.quantity, 1) || 1
   row.unitCost = numberValue(row.unitCost ?? row.unit_cost ?? row.unit_amount ?? row.amount, 0)
@@ -192,6 +194,9 @@ export function useJobCostsTab() {
   const buyRows = computed<BuyCostRow[]>(() => context.form.buy_costs.map(hydrateBuyRow))
   const sellRows = computed<SellChargeRow[]>(() => context.form.sell_costs.map(hydrateSellRow))
   const jobCurrency = computed(() => currencyCode(context.form.currency || "GBP"))
+  const sellCurrency = ref(
+    currencyCode(context.form.sell_costs[0]?.currency || context.form.currency || "GBP"),
+  )
   const jobRateDate = computed(() => {
     const value = context.form.job_date
 
@@ -438,7 +443,10 @@ export function useJobCostsTab() {
   }
 
   function addSellRow() {
-    context.form.sell_costs.push(createSellRow())
+    const row = createSellRow()
+    row.currency = sellCurrency.value
+    syncLineExchangeRate(row, false)
+    context.form.sell_costs.push(row)
   }
 
   function sellChargeForBuyRow(row: BuyCostRow): SellChargeRow | null {
@@ -470,6 +478,146 @@ export function useJobCostsTab() {
     )
   }
 
+  function buyCostForSellCharge(row: SellChargeRow): BuyCostRow | null {
+    if (row.sourceBuyCostId !== null && row.sourceBuyCostId !== undefined) {
+      const source = buyRows.value.find(buyRow => String(buyRow.id) === String(row.sourceBuyCostId))
+      if (source) return source
+    }
+
+    const linked = buyRows.value.find(
+      buyRow =>
+        buyRow.linkedSellChargeId !== null &&
+        buyRow.linkedSellChargeId !== undefined &&
+        String(buyRow.linkedSellChargeId) === String(row.id),
+    )
+
+    if (linked) return linked
+
+    const description = normalizeDescription(row.description)
+    if (!description) return null
+
+    const matching = buyRows.value.find(
+      buyRow =>
+        numberValue(buyRow.markupPercentage) > 0 &&
+        normalizeDescription(buyRow.description) === description,
+    )
+
+    if (matching) {
+      matching.addToSellCharges = true
+      matching.linkedSellChargeId = row.id
+      row.sourceBuyCostId = matching.id
+    }
+
+    return matching ?? null
+  }
+
+  function convertCurrencyAmount(
+    amount: number,
+    sourceCurrency: string,
+    targetCurrency: string,
+  ): number | null {
+    const source = currencyCode(sourceCurrency)
+    const target = currencyCode(targetCurrency)
+
+    if (source === target) return roundMoney(amount)
+    if (amount === 0) return 0
+
+    const sourceToJobRate = exchangeRateForCurrency(source)
+    const targetToJobRate = exchangeRateForCurrency(target)
+
+    if (
+      sourceToJobRate === null ||
+      sourceToJobRate <= 0 ||
+      targetToJobRate === null ||
+      targetToJobRate <= 0
+    ) {
+      return null
+    }
+
+    return roundMoney((amount * sourceToJobRate) / targetToJobRate)
+  }
+
+  function markedUpUnitPrice(row: BuyCostRow, targetCurrency: string): number | null {
+    const markup = Math.max(0, numberValue(row.markupPercentage))
+    const markedUpSourceAmount = numberValue(row.unitCost) * (1 + markup / 100)
+
+    return convertCurrencyAmount(markedUpSourceAmount, row.currency, targetCurrency)
+  }
+
+  function updateLinkedMarkupPrice(buyRow: BuyCostRow, sellRow: SellChargeRow, notify = false) {
+    if (numberValue(buyRow.markupPercentage) <= 0) return
+
+    const convertedPrice = markedUpUnitPrice(buyRow, sellRow.currency)
+    sellRow.unitPrice = convertedPrice
+
+    if (convertedPrice === null && notify) {
+      toast.add({
+        severity: "warn",
+        summary: "Missing exchange rate",
+        detail: `Add the rates needed to convert ${currencyCode(buyRow.currency)} to ${currencyCode(sellRow.currency)} in Accounts > Exchange Rates.`,
+        life: 4500,
+      })
+    }
+  }
+
+  function refreshLinkedMarkupPrices() {
+    sellRows.value.forEach(sellRow => {
+      const buyRow = buyCostForSellCharge(sellRow)
+
+      if (buyRow) updateLinkedMarkupPrice(buyRow, sellRow)
+    })
+  }
+
+  function setSellCurrency(value: unknown, notify = true): boolean {
+    const targetCurrency = currencyCode(value)
+    const updates: Array<{ row: SellChargeRow; unitPrice: number | null }> = []
+    const missingConversions = new Set<string>()
+
+    sellRows.value.forEach(row => {
+      const sourceCurrency = currencyCode(row.currency)
+      const buyRow = buyCostForSellCharge(row)
+      const unitPrice =
+        buyRow && numberValue(buyRow.markupPercentage) > 0
+          ? markedUpUnitPrice(buyRow, targetCurrency)
+          : row.unitPrice === null || row.unitPrice === undefined
+            ? null
+            : convertCurrencyAmount(numberValue(row.unitPrice), sourceCurrency, targetCurrency)
+
+      const linkedMarkup = Boolean(buyRow && numberValue(buyRow.markupPercentage) > 0)
+      const requiresConversion =
+        linkedMarkup || (row.unitPrice !== null && row.unitPrice !== undefined)
+
+      if (unitPrice === null && requiresConversion) {
+        const conversionSource = linkedMarkup ? currencyCode(buyRow?.currency) : sourceCurrency
+        missingConversions.add(`${conversionSource} to ${targetCurrency}`)
+      }
+
+      updates.push({ row, unitPrice })
+    })
+
+    if (missingConversions.size > 0) {
+      if (notify) {
+        toast.add({
+          severity: "warn",
+          summary: "Sell currency not changed",
+          detail: `Add ${[...missingConversions].join(", ")} exchange rates in Accounts > Exchange Rates first.`,
+          life: 5000,
+        })
+      }
+
+      return false
+    }
+
+    sellCurrency.value = targetCurrency
+    updates.forEach(({ row, unitPrice }) => {
+      row.currency = targetCurrency
+      row.unitPrice = unitPrice
+      syncLineExchangeRate(row, false)
+    })
+
+    return true
+  }
+
   function syncLinkedSellCharge(row: BuyCostRow) {
     const linkedWeightCharge = linkedWeightChargeForDescription(row.description)
     const charge = findChargeCodeByDescription(row.description)
@@ -489,19 +637,21 @@ export function useJobCostsTab() {
     sellRow.chargeCode = charge?.salesNominal || sellRow.chargeCode || ""
     sellRow.sourceBuyCostId = row.id
     const markup = Math.max(0, numberValue(row.markupPercentage))
-    const markedUpUnitPrice = roundMoney(numberValue(row.unitCost) * (1 + markup / 100))
     const useMarkupPrice = markup > 0
+    const targetSellCurrency = sellCurrency.value
 
     sellRow.linkedWeightCharge = Boolean(linkedWeightCharge && !useMarkupPrice)
     sellRow.quantity = linkedWeightCharge && !useMarkupPrice ? 1 : numberValue(row.quantity, 1) || 1
     sellRow.unitPrice = useMarkupPrice
-      ? markedUpUnitPrice
+      ? markedUpUnitPrice(row, targetSellCurrency)
       : linkedWeightCharge
-        ? linkedWeightCharge.amount
+        ? convertCurrencyAmount(
+            linkedWeightCharge.amount,
+            linkedWeightCharge.currency,
+            targetSellCurrency,
+          )
         : null
-    sellRow.currency = useMarkupPrice
-      ? currencyCode(row.currency)
-      : linkedWeightCharge?.currency || jobCurrency.value
+    sellRow.currency = targetSellCurrency
     syncLineExchangeRate(sellRow, false)
 
     if (charge?.defaultTaxCode) {
@@ -515,6 +665,11 @@ export function useJobCostsTab() {
 
   function updateBuyPricing(row: BuyCostRow) {
     if (buyRowSellChargeChecked(row)) syncLinkedSellCharge(row)
+  }
+
+  function updateBuyCurrency(row: BuyCostRow) {
+    syncLineExchangeRate(row)
+    updateBuyPricing(row)
   }
 
   function removeLinkedSellCharge(row: BuyCostRow) {
@@ -550,7 +705,13 @@ export function useJobCostsTab() {
 
     const markup = Math.max(0, numberValue(row.markupPercentage))
     if (markup > 0) {
-      return `Add to Sell Charges at ${formatMoney(numberValue(row.unitCost) * (1 + markup / 100), row.currency)} (${markup}% markup).`
+      const linkedSellRow = sellChargeForBuyRow(row)
+      const targetCurrency = linkedSellRow?.currency || sellCurrency.value
+      const convertedPrice = markedUpUnitPrice(row, targetCurrency)
+
+      return convertedPrice === null
+        ? `Add to Sell Charges with ${markup}% markup. An exchange rate is required from ${currencyCode(row.currency)} to ${currencyCode(targetCurrency)}.`
+        : `Add to Sell Charges at ${formatMoney(convertedPrice, targetCurrency)} (${markup}% markup).`
     }
 
     return "Add this charge description to Sell Charges with a blank unit price. Enter markup to calculate it automatically."
@@ -840,6 +1001,7 @@ export function useJobCostsTab() {
       ),
     )
     ;[...buyRows.value, ...sellRows.value].forEach(row => syncLineExchangeRate(row, false))
+    refreshLinkedMarkupPrices()
   }
 
   function effectiveExchangeRate(row: CostRow): number {
@@ -1048,12 +1210,20 @@ export function useJobCostsTab() {
     () => exchangeRateStore.exchangeRates,
     () => {
       ;[...buyRows.value, ...sellRows.value].forEach(row => syncLineExchangeRate(row, false))
+      refreshLinkedMarkupPrices()
     },
+    { deep: true },
+  )
+
+  watch(
+    () => exchangeRateStore.effectiveRates,
+    () => refreshLinkedMarkupPrices(),
     { deep: true },
   )
 
   watch(jobCurrency, () => {
     ;[...buyRows.value, ...sellRows.value].forEach(row => syncLineExchangeRate(row, false))
+    refreshLinkedMarkupPrices()
   })
 
   watch(jobRateDate, () => {
@@ -1089,6 +1259,7 @@ export function useJobCostsTab() {
       loadCustomerChargeTables(),
     ])
     await ensureEffectiveExchangeRates()
+    setSellCurrency(sellCurrency.value, false)
   })
 
   onUnmounted(() => {
@@ -1101,6 +1272,7 @@ export function useJobCostsTab() {
     sellRows,
     totals,
     jobCurrency,
+    sellCurrency,
     currencyOptions,
     taxCodeOptions,
     vatRateOptions,
@@ -1120,6 +1292,8 @@ export function useJobCostsTab() {
     selectChargeDescription,
     syncChargeDescriptionFilter,
     updateBuyPricing,
+    updateBuyCurrency,
+    setSellCurrency,
     scheduleMissingChargeDescriptionCheck,
     chargeDescriptionDropdownShown,
     chargeDescriptionDropdownHidden,
