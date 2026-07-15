@@ -245,7 +245,11 @@ export function useJobNormalSupplierInvoicesTab() {
     return numberValue(passDraft.invoiceAmount) + numberValue(passDraft.taxAmount)
   })
   const supplierBillReference = computed(
-    () => passDraft.reference || jobContext.form.job_number || (jobContext.job.value as any)?.job_number || "",
+    () =>
+      passDraft.reference ||
+      jobContext.form.job_number ||
+      (jobContext.job.value as any)?.job_number ||
+      "",
   )
   const availableSupplierBillRows = computed(() =>
     rows.value.filter((row: any) => isAvailableSupplierBillRow(row)),
@@ -271,11 +275,7 @@ export function useJobNormalSupplierInvoicesTab() {
       setting => setting.isActive && setting.isConnected,
     )
 
-    return (
-      connectedSettings.find(setting => setting.isDefault) ??
-      connectedSettings[0] ??
-      null
-    )
+    return connectedSettings.find(setting => setting.isDefault) ?? connectedSettings[0] ?? null
   })
   const accountingProviderLabel = computed(() => {
     const system = activeAccountingSetting.value?.accountingSystem
@@ -401,7 +401,9 @@ export function useJobNormalSupplierInvoicesTab() {
     row.chargeCodeId = row.chargeCodeId ?? row.charge_code_id ?? null
     row.quantity = numberValue(row.quantity, 1) || 1
     row.unitCost = numberValue(row.unitCost ?? row.unit_cost ?? row.unit_amount ?? row.amount, 0)
-    row.currency = currencyCode(row.currency || passDraft.currency || jobContext.form.currency || "GBP")
+    row.currency = currencyCode(
+      row.currency || passDraft.currency || jobContext.form.currency || "GBP",
+    )
     row.exchangeRate = numberValue(row.exchangeRate ?? row.exchange_rate, 1) || 1
     row.vatRate = numberValue(row.vatRate ?? row.vat_rate, 0)
     row.taxCode = row.taxCode ?? row.tax_code ?? ""
@@ -933,13 +935,16 @@ export function useJobNormalSupplierInvoicesTab() {
       (jobContext.job.value as any)?.job_number ||
       ""
     autoSupplierInvoiceNumber.value = !existingInvoiceNumber
-    passDraft.invoiceNumber = existingInvoiceNumber || supplierInvoiceDefaultNumber(selectedSupplierId)
+    passDraft.invoiceNumber =
+      existingInvoiceNumber || supplierInvoiceDefaultNumber(selectedSupplierId)
     passDraft.residualAmount = Boolean(invoice?.metadata?.billFields?.residualAmount ?? false)
     passDraft.attachedInvoice = null
 
     if (selectedSupplierId) {
       const totals = supplierCostTotals(selectedSupplierId)
-      passDraft.currency = currencyCode(invoice?.currency || supplierCostCurrency(selectedSupplierId))
+      passDraft.currency = currencyCode(
+        invoice?.currency || supplierCostCurrency(selectedSupplierId),
+      )
       passDraft.invoiceAmount = numberValue(invoice?.subtotal, Number(totals.net.toFixed(2)))
       passDraft.taxAmount = numberValue(invoice?.totalVat, Number(totals.tax.toFixed(2)))
     } else {
@@ -1339,7 +1344,8 @@ export function useJobNormalSupplierInvoicesTab() {
       toast.add({
         severity: "error",
         summary: "Email failed",
-        detail: error?.response?.data?.message ?? error?.message ?? "Unable to send the invoice email.",
+        detail:
+          error?.response?.data?.message ?? error?.message ?? "Unable to send the invoice email.",
         life: 4500,
       })
     } finally {

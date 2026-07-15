@@ -11,6 +11,7 @@ import { computed, inject } from "vue"
 import type { ComputedRef, Ref } from "vue"
 import type { JobPdfDocument } from "@/app/types/transport-job-service"
 import { useJobTransportTab } from "./JobTransportTab.logic"
+import JobPackagesTab from "../Packages/JobPackagesTab.vue"
 
 type JobPdfActions = {
   pdfLoading: Ref<JobPdfDocument | null>
@@ -26,6 +27,12 @@ const {
   multiDropStops,
   domesticPackageRows,
   domesticPackageTotals,
+  collectionOrderReference,
+  domesticCollectionNetCost,
+  domesticCollectionVat,
+  domesticCollectionTotalCost,
+  raisedCollectionOrders,
+  raisingCollectionOrder,
   airportOptions,
   seaportOptions,
   railTerminalOptions,
@@ -59,6 +66,7 @@ const {
   onAddressContactFilter,
   selectAddressContact,
   setBooleanDetail,
+  raiseCollectionOrder,
 } = useJobTransportTab()
 
 const {
@@ -77,7 +85,9 @@ const transportOrderDisabled = computed(() => !jobPdfActions || jobPdfActions.is
 const transportOrderLabel = computed(() =>
   transportOrderLoading.value ? "Opening..." : "Transport Order",
 )
-const collectionOrderLoading = computed(() => jobPdfActions?.pdfLoading.value === "collection_order")
+const collectionOrderLoading = computed(
+  () => jobPdfActions?.pdfLoading.value === "collection_order",
+)
 const collectionOrderDisabled = computed(() => !jobPdfActions || jobPdfActions.isPdfLoading.value)
 const collectionOrderLabel = computed(() =>
   collectionOrderLoading.value ? "Opening..." : "Collection Order",
@@ -148,8 +158,9 @@ function openTransportOrder() {
   void jobPdfActions?.loadPdf("transport_order")
 }
 
-function openCollectionOrder() {
-  void jobPdfActions?.loadPdf("collection_order")
+async function openCollectionOrder() {
+  const raised = await raiseCollectionOrder()
+  if (raised) void jobPdfActions?.loadPdf("collection_order")
 }
 
 function addressLines(address: any): string {
@@ -1013,8 +1024,8 @@ const globalReferenceVirtualScrollerOptions = {
           class="job-transport-tab__document-btn"
           icon="pi pi-inbox"
           :label="collectionOrderLabel"
-          :loading="collectionOrderLoading"
-          :disabled="collectionOrderDisabled"
+          :loading="collectionOrderLoading || raisingCollectionOrder"
+          :disabled="collectionOrderDisabled || raisingCollectionOrder"
           @click="openCollectionOrder"
         />
       </div>
@@ -1482,111 +1493,113 @@ const globalReferenceVirtualScrollerOptions = {
         <div class="job-transport-tab__detail-panel job-transport-tab__field--span-4">
           <header class="job-transport-tab__detail-panel-header">
             <h3>Packing Details</h3>
-            <Button
-              class="job-transport-tab__add-leg-btn"
-              icon="pi pi-plus"
-              label="Add Package"
-              type="button"
-              @click="addDomesticPackageRow"
-            />
           </header>
 
-          <label class="job-transport-tab__field">
-            <span>Goods Description</span>
-            <Textarea
-              v-model="form.description_of_goods"
-              rows="3"
-              placeholder="Goods, marks, references, handling notes..."
-            />
-          </label>
+          <div class="job-transport-tab__packing-body">
+            <label class="job-transport-tab__field">
+              <span>Goods Description</span>
+              <Textarea
+                v-model="form.description_of_goods"
+                rows="3"
+                placeholder="Goods, marks, references, handling notes..."
+              />
+            </label>
 
-          <div class="job-transport-tab__package-table-wrap">
-            <table class="job-transport-tab__package-table">
-              <thead>
-                <tr>
-                  <th>Type</th>
-                  <th>Description</th>
-                  <th>Qty</th>
-                  <th>Length</th>
-                  <th>Width</th>
-                  <th>Height</th>
-                  <th>Gross kg</th>
-                  <th>CBM</th>
-                  <th></th>
-                </tr>
-              </thead>
-
-              <tbody>
-                <tr v-for="row in domesticPackageRows" :key="row.id">
-                  <td><InputText v-model="row.package_type" placeholder="Pallet" /></td>
-                  <td><InputText v-model="row.description" placeholder="Description" /></td>
-                  <td>
-                    <InputNumber
-                      v-model="row.quantity"
-                      :min="0"
-                      input-class="job-transport-tab__compact-input"
-                      @update:model-value="calculateDomesticPackage(row)"
-                    />
-                  </td>
-                  <td>
-                    <InputNumber
-                      v-model="row.lengthCm"
-                      :min="0"
-                      input-class="job-transport-tab__compact-input"
-                      @update:model-value="calculateDomesticPackage(row)"
-                    />
-                  </td>
-                  <td>
-                    <InputNumber
-                      v-model="row.widthCm"
-                      :min="0"
-                      input-class="job-transport-tab__compact-input"
-                      @update:model-value="calculateDomesticPackage(row)"
-                    />
-                  </td>
-                  <td>
-                    <InputNumber
-                      v-model="row.heightCm"
-                      :min="0"
-                      input-class="job-transport-tab__compact-input"
-                      @update:model-value="calculateDomesticPackage(row)"
-                    />
-                  </td>
-                  <td>
-                    <InputNumber
-                      v-model="row.grossWeightKg"
-                      :min="0"
-                      :max-fraction-digits="2"
-                      input-class="job-transport-tab__compact-input"
-                    />
-                  </td>
-                  <td>{{ Number(row.cbm || 0).toFixed(3) }}</td>
-                  <td>
-                    <Button
-                      icon="pi pi-times"
-                      severity="danger"
-                      text
-                      rounded
-                      type="button"
-                      @click="removeDomesticPackageRow(row)"
-                    />
-                  </td>
-                </tr>
-                <tr v-if="!domesticPackageRows.length">
-                  <td colspan="9" class="job-transport-tab__package-empty">
-                    No packages added yet.
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+            <JobPackagesTab />
           </div>
+        </div>
 
-          <div class="job-transport-tab__package-totals">
-            <span>Pieces: {{ domesticPackageTotals.pieces }}</span>
-            <span>Gross: {{ domesticPackageTotals.grossWeightKg.toFixed(2) }} kg</span>
-            <span>Volume: {{ domesticPackageTotals.volumeWeightKg.toFixed(2) }} kg</span>
-            <span>CBM: {{ domesticPackageTotals.cbm.toFixed(3) }}</span>
+        <div class="job-transport-tab__subsection job-transport-tab__field--span-4">
+          <header class="job-transport-tab__subsection-header">
+            <div>
+              <h3>Collection Costing</h3>
+              <p>VAT is displayed but excluded from the Costs &amp; Charges posting.</p>
+            </div>
+          </header>
+          <div class="job-transport-tab__grid job-transport-tab__grid--nested">
+            <label class="job-transport-tab__field"
+              ><span>Buy Currency</span
+              ><Dropdown
+                v-model="form.road_detail.local_buy_currency"
+                :options="subcontractorCurrencyOptions"
+                placeholder="Currency"
+                filter
+                editable
+                class="job-transport-tab__prime-select"
+            /></label>
+            <label class="job-transport-tab__field"
+              ><span>Buy Cost</span
+              ><InputNumber
+                v-model="form.road_detail.local_buy_rate"
+                :min="0"
+                :max-fraction-digits="2"
+            /></label>
+            <label class="job-transport-tab__field"
+              ><span>Fuel Surcharge</span
+              ><InputNumber
+                v-model="form.road_detail.local_fuel_surcharge"
+                :min="0"
+                :max-fraction-digits="2"
+            /></label>
+            <label class="job-transport-tab__field"
+              ><span>VAT %</span
+              ><InputNumber
+                v-model="form.road_detail.local_vat_rate"
+                suffix="%"
+                :min="0"
+                :max-fraction-digits="2"
+            /></label>
+            <div class="job-transport-tab__cost-summary job-transport-tab__field--span-4">
+              <span
+                >Net cost
+                <strong
+                  >{{ form.road_detail.local_buy_currency || "GBP" }}
+                  {{ domesticCollectionNetCost.toFixed(2) }}</strong
+                ></span
+              >
+              <span
+                >VAT <strong>{{ domesticCollectionVat.toFixed(2) }}</strong></span
+              >
+              <span class="job-transport-tab__cost-total"
+                >Total cost <strong>{{ domesticCollectionTotalCost.toFixed(2) }}</strong></span
+              >
+            </div>
           </div>
+        </div>
+
+        <div
+          v-if="form.is_hazardous || domesticPackageRows.some(row => row.adr)"
+          class="job-transport-tab__subsection job-transport-tab__subsection--hazard job-transport-tab__field--span-4"
+        >
+          <header class="job-transport-tab__subsection-header">
+            <div>
+              <h3>Hazardous / ADR Details</h3>
+              <p>Carried through from Job Details.</p>
+            </div>
+          </header>
+          <div class="job-transport-tab__hazard-grid">
+            <span>ADR Required <strong>Yes</strong></span>
+            <span
+              >Hazardous Class <strong>{{ displayValue(form.hazardous_class) }}</strong></span
+            >
+            <span
+              >UN Number <strong>{{ displayValue(form.un_number) }}</strong></span
+            >
+          </div>
+        </div>
+
+        <div class="job-transport-tab__subsection-title job-transport-tab__field--span-4">
+          <div>
+            <h3>Collection Details</h3>
+            <p>Service, haulier and operational requirements.</p>
+          </div>
+          <label class="job-transport-tab__field job-transport-tab__reference-field"
+            ><span>Our Collection Order Ref</span
+            ><InputText
+              :model-value="collectionOrderReference"
+              readonly
+              placeholder="Configure in System Settings"
+          /></label>
         </div>
 
         <label class="job-transport-tab__field">
@@ -1706,31 +1719,6 @@ const globalReferenceVirtualScrollerOptions = {
           </Dropdown>
         </label>
 
-        <label class="job-transport-tab__field">
-          <span>Buy Cost</span>
-          <InputNumber
-            v-model="form.road_detail.local_buy_rate"
-            :min="0"
-            :max-fraction-digits="2"
-            placeholder="0.00"
-          />
-        </label>
-
-        <label class="job-transport-tab__field">
-          <span>Buy Currency</span>
-          <Dropdown
-            v-model="form.road_detail.local_buy_currency"
-            :options="subcontractorCurrencyOptions"
-            placeholder="Currency"
-            filter
-            auto-filter-focus
-            editable
-            class="job-transport-tab__prime-select"
-            show-clear
-            @filter="syncRoadDetailDropdownFilter($event, 'local_buy_currency')"
-          />
-        </label>
-
         <label class="job-transport-tab__field job-transport-tab__field--span-4">
           <span>Charge Description</span>
           <Dropdown
@@ -1843,6 +1831,46 @@ const globalReferenceVirtualScrollerOptions = {
             placeholder="Collection to warehouse notes, access codes, handling instructions..."
           />
         </label>
+      </div>
+
+      <div
+        v-if="activeRoadOrderType === 'Domestic Collection'"
+        class="job-transport-tab__raised-orders"
+      >
+        <header>
+          <div>
+            <h3>Raised Collection Orders</h3>
+            <p>All collection orders raised for this job.</p>
+          </div>
+          <span>{{ raisedCollectionOrders.length }}</span>
+        </header>
+        <div v-if="!raisedCollectionOrders.length" class="job-transport-tab__raised-empty">
+          No collection orders have been raised yet.
+        </div>
+        <div v-else class="job-transport-tab__raised-list">
+          <div
+            v-for="order in raisedCollectionOrders"
+            :key="order.id"
+            class="job-transport-tab__raised-row"
+          >
+            <div>
+              <strong>{{ order.coRef }}</strong
+              ><small
+                >{{ order.supplier || "No haulier" }} · {{ order.pickupDate || "No date" }}</small
+              >
+            </div>
+            <div>
+              <span
+                >{{ order.buyCurrency || "GBP" }}
+                {{ Number(order.netCost || 0).toFixed(2) }} net</span
+              ><small
+                >VAT {{ Number(order.vat || 0).toFixed(2) }} · Total
+                {{ Number(order.totalCost || 0).toFixed(2) }}</small
+              >
+            </div>
+            <span class="job-transport-tab__raised-status">{{ order.status || "Raised" }}</span>
+          </div>
+        </div>
       </div>
 
       <div

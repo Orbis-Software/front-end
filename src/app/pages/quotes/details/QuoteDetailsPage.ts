@@ -456,25 +456,25 @@ export function useQuoteDetailsPage() {
     return charges
       .filter(charge => !customerFacing || String(charge.type ?? "sell").toLowerCase() === "sell")
       .map((charge, index) => {
-      const qty = Number(charge.qty ?? charge.quantity ?? 0)
-      const type = String(charge.type ?? "sell").toLowerCase()
-      const cost = Number(charge.unit_cost ?? charge.cost ?? 0)
-      const unitPrice = Number(charge.unit_price ?? charge.sell_unit_price ?? 0)
-      const markup = Number(charge.markup_percent ?? 0)
-      const totalSell = unitPrice > 0 ? qty * unitPrice : qty * cost * (1 + markup / 100)
+        const qty = Number(charge.qty ?? charge.quantity ?? 0)
+        const type = String(charge.type ?? "sell").toLowerCase()
+        const cost = Number(charge.unit_cost ?? charge.cost ?? 0)
+        const unitPrice = Number(charge.unit_price ?? charge.sell_unit_price ?? 0)
+        const markup = Number(charge.markup_percent ?? 0)
+        const totalSell = unitPrice > 0 ? qty * unitPrice : qty * cost * (1 + markup / 100)
 
-      return {
-        id: Number(charge.id ?? index + 1),
-        type,
-        description: charge.description ?? "—",
-        quantity: qty,
-        uom: charge.uom ?? "—",
-        cost,
-        unit_price: unitPrice,
-        markup_percent: markup,
-        total_sell: Number(charge.sell_total ?? charge.total_sell ?? totalSell),
-      }
-    })
+        return {
+          id: Number(charge.id ?? index + 1),
+          type,
+          description: charge.description ?? "—",
+          quantity: qty,
+          uom: charge.uom ?? "—",
+          cost,
+          unit_price: unitPrice,
+          markup_percent: markup,
+          total_sell: Number(charge.sell_total ?? charge.total_sell ?? totalSell),
+        }
+      })
   }
 
   onMounted(() => {

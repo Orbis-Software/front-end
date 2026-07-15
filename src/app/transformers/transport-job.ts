@@ -375,6 +375,7 @@ export function fetchJobInvoice(raw: any): JobInvoiceSummary {
     generationStatus: raw.generationStatus ?? raw.generation_status ?? null,
     lines: Array.isArray(raw.lines) ? raw.lines : [],
     metadata: raw.metadata && typeof raw.metadata === "object" ? raw.metadata : {},
+    xeroSync: raw.xeroSync ?? raw.xero_sync ?? null,
     job: raw.job
       ? {
           id: Number(raw.job.id),

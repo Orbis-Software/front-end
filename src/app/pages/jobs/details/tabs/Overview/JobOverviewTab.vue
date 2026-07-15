@@ -1013,7 +1013,7 @@ const consolidationTransportRows = computed(() => {
 
             <Button
               icon="pi pi-plus"
-              label="+ NEW"
+              label="NEW"
               :disabled="loading || !form.customer_id"
               type="button"
               @click="openAddressModal('origin')"
@@ -1044,7 +1044,7 @@ const consolidationTransportRows = computed(() => {
 
             <Button
               icon="pi pi-plus"
-              label="+ NEW"
+              label="NEW"
               :disabled="loading || !form.customer_id"
               type="button"
               @click="openAddressModal('destination')"

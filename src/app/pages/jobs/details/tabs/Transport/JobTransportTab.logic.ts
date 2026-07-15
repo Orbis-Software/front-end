@@ -3,6 +3,10 @@ import { storeToRefs } from "pinia"
 import { useGlobalReferenceDataStore } from "@/app/stores/global-reference-data"
 import { useChargeCodeStore } from "@/app/stores/charge-codes"
 import { useCountryStore } from "@/app/stores/country"
+import { useCompanyStore } from "@/app/stores/company"
+import http from "@/api/http"
+import { buildReferenceNumber } from "@/app/utils/reference-sequence"
+import { useToast } from "primevue/usetoast"
 import contactsService from "@/app/services/contacts"
 import globalReferenceDataService from "@/app/services/global-reference-data"
 import type { GlobalReferenceDataRow } from "@/app/types/globalReferenceData"
@@ -154,6 +158,8 @@ export function useJobTransportTab() {
   const globalReferenceDataStore = useGlobalReferenceDataStore()
   const chargeCodeStore = useChargeCodeStore()
   const countryStore = useCountryStore()
+  const companyStore = useCompanyStore()
+  const toast = useToast()
   const { data: globalReferenceData } = storeToRefs(globalReferenceDataStore)
   const contactOptionsLoading = ref(false)
   const contactOptions = ref<ContactOption[]>([])
@@ -167,10 +173,12 @@ export function useJobTransportTab() {
   const lastHaulierChargeDescription = ref("")
   const domesticCollectionBuyCostRowId = ref<number | string | null>(null)
   const lastDomesticCollectionChargeDescription = ref("")
+  const raisingCollectionOrder = ref(false)
 
   if (!jobDetails) {
     throw new Error("Job details context is missing")
   }
+  const context = jobDetails
 
   const {
     form,
@@ -191,6 +199,39 @@ export function useJobTransportTab() {
       label: charge.description,
       value: charge.description,
     })),
+  )
+
+  const collectionOrderReference = computed(() => {
+    const sequence = companyStore.item?.reference_sequences?.find(
+      sequence => sequence.type === "collection_order",
+    )
+
+    return sequence ? buildReferenceNumber(sequence, new Date()) : ""
+  })
+
+  const domesticCollectionNetCost = computed(() =>
+    Number(
+      (
+        numberValue((form.road_detail as any).local_buy_rate) +
+        numberValue((form.road_detail as any).local_fuel_surcharge)
+      ).toFixed(2),
+    ),
+  )
+  const domesticCollectionVat = computed(() =>
+    Number(
+      (
+        domesticCollectionNetCost.value *
+        (numberValue((form.road_detail as any).local_vat_rate) / 100)
+      ).toFixed(2),
+    ),
+  )
+  const domesticCollectionTotalCost = computed(() =>
+    Number((domesticCollectionNetCost.value + domesticCollectionVat.value).toFixed(2)),
+  )
+  const raisedCollectionOrders = computed<any[]>(() =>
+    Array.isArray(form.consolidation_details?.collectionOrders)
+      ? form.consolidation_details.collectionOrders
+      : [],
   )
 
   const globalReferenceRows = computed(() => {
@@ -828,54 +869,52 @@ export function useJobTransportTab() {
     const isDomesticCollection =
       orderType === "Domestic Collection" || orderType === "Local Collection"
     const description = domesticCollectionChargeDescription()
-    const supplierId = roadDetail.local_haulier_contact_id
-      ? Number(roadDetail.local_haulier_contact_id)
-      : null
-    const existingRow = findDomesticCollectionBuyCostRow(description, supplierId)
-
-    if (!isDomesticCollection) {
-      removeDomesticCollectionBuyCostRow(existingRow)
-      lastDomesticCollectionChargeDescription.value = description
-      return
-    }
+    const existingRow = form.buy_costs.find(
+      row =>
+        row.id === domesticCollectionBuyCostRowId.value ||
+        row.id === DOMESTIC_COLLECTION_COST_ROW_ID ||
+        (row as any).autoSource === DOMESTIC_COLLECTION_COST_SOURCE,
+    )
+    removeDomesticCollectionBuyCostRow(existingRow)
+    if (!isDomesticCollection) return
 
     if (!roadDetail.local_charge_description) {
       roadDetail.local_charge_description = description
     }
 
-    const charge = findChargeCodeByDescription(description)
-    const amount = domesticCollectionBuyCost()
-    const row =
-      existingRow ??
-      ({
-        id: DOMESTIC_COLLECTION_COST_ROW_ID,
-        type: "buy",
-        description,
-        supplier_id: supplierId,
-        chargeCodeId: null,
-        quantity: 1,
-        unitCost: 0,
-        currency: "GBP",
-        exchangeRate: 1,
-        amount: 0,
-      } as BuyCostRow)
-
-    ;(row as any).autoSource = DOMESTIC_COLLECTION_COST_SOURCE
-    row.description = description
-    row.supplier_id = supplierId
-    row.chargeCodeId = charge?.id ?? null
-    row.quantity = 1
-    row.unitCost = amount
-    row.currency = roadDetail.local_buy_currency || "GBP"
-    row.exchangeRate = row.currency === "GBP" ? 1 : row.exchangeRate || 1
-    row.amount = amount
-
-    if (!existingRow) {
-      form.buy_costs.push(row)
-    }
-
-    domesticCollectionBuyCostRowId.value = row.id
     lastDomesticCollectionChargeDescription.value = description
+  }
+
+  async function raiseCollectionOrder() {
+    const jobId = Number((context.job.value as any)?.id)
+    if (!jobId || raisingCollectionOrder.value) return false
+
+    raisingCollectionOrder.value = true
+    try {
+      await context.save({ silent: true })
+      await http.post(`/transport-jobs/${jobId}/collection-orders`)
+      await context.load()
+      if (!companyStore.item) await companyStore.fetch()
+      else await companyStore.fetch()
+      toast.add({
+        severity: "success",
+        summary: "Collection order raised",
+        detail: "The order was recorded and its net cost was added to Costs & Charges.",
+        life: 3500,
+      })
+      return true
+    } catch (error: any) {
+      toast.add({
+        severity: "error",
+        summary: "Could not raise collection order",
+        detail:
+          error?.response?.data?.message || error?.message || "Please check the order details.",
+        life: 5000,
+      })
+      return false
+    } finally {
+      raisingCollectionOrder.value = false
+    }
   }
 
   async function loadContactOptions() {
@@ -990,6 +1029,7 @@ export function useJobTransportTab() {
     if (!chargeCodeStore.chargeCodes.length) {
       await chargeCodeStore.fetchAll({ sort: "description", direction: "asc", perPage: 1000 })
     }
+    if (!companyStore.item) await companyStore.fetch()
     await loadContactOptions()
   })
 
@@ -1001,6 +1041,12 @@ export function useJobTransportTab() {
     multiDropStops,
     domesticPackageRows,
     domesticPackageTotals,
+    collectionOrderReference,
+    domesticCollectionNetCost,
+    domesticCollectionVat,
+    domesticCollectionTotalCost,
+    raisedCollectionOrders,
+    raisingCollectionOrder,
     airportOptions,
     seaportOptions,
     railTerminalOptions,
@@ -1034,6 +1080,7 @@ export function useJobTransportTab() {
     onAddressContactFilter,
     selectAddressContact,
     setBooleanDetail,
+    raiseCollectionOrder,
   }
 }
 

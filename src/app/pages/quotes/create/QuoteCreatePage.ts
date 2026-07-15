@@ -3,6 +3,7 @@ import { useRoute, useRouter } from "vue-router"
 import { storeToRefs } from "pinia"
 import http from "@/api/http"
 import { useCompanyStore } from "@/app/stores/company"
+import { useChargeCodeStore } from "@/app/stores/charge-codes"
 import { useGlobalReferenceDataStore } from "@/app/stores/global-reference-data"
 import { useReferenceDataStore } from "@/app/stores/reference-data"
 import globalReferenceDataService from "@/app/services/global-reference-data"
@@ -29,6 +30,7 @@ type CustomerContact = {
   name: string
   email: string
   phone: string
+  location: string
 }
 
 type CustomerOption = {
@@ -81,6 +83,7 @@ export function useQuoteCreatePage() {
   const router = useRouter()
   const quoteStore = useTransportQuoteStore()
   const companyStore = useCompanyStore()
+  const chargeCodeStore = useChargeCodeStore()
   const globalReferenceDataStore = useGlobalReferenceDataStore()
   const referenceDataStore = useReferenceDataStore()
   const { data: globalReferenceData } = storeToRefs(globalReferenceDataStore)
@@ -290,7 +293,12 @@ export function useQuoteCreatePage() {
     if (!selectedCustomer.value) return []
 
     return selectedCustomer.value.contacts.map((contact, index) => ({
-      label: contact.name || selectedCustomer.value?.name || `Contact ${index + 1}`,
+      label: [
+        contact.name || selectedCustomer.value?.name || `Contact ${index + 1}`,
+        contact.location,
+      ]
+        .filter(Boolean)
+        .join(" — "),
       value: index,
     }))
   })
@@ -339,17 +347,13 @@ export function useQuoteCreatePage() {
     { label: "Flat Rate", value: "Flat Rate" },
   ]
 
-  const chargeDescriptionOptions: SelectOption[] = [
-    "Origin Handling Charge",
-    "Freight Charge",
-    "Destination Handling Charge",
-    "Fuel Surcharge",
-    "Security Surcharge",
-    "Customs Clearance",
-    "Documentation Fee",
-    "Delivery / Cartage",
-    "Insurance Premium",
-  ].map(item => ({ label: item, value: item }))
+  const chargeDescriptionOptions = computed<SelectOption[]>(() =>
+    chargeCodeStore.chargeCodes.map(charge => ({
+      label: charge.description,
+      value: charge.description,
+    })),
+  )
+  const chargeDescriptionsLoading = computed(() => chargeCodeStore.loading)
 
   const hazardousClassOptions: SelectOption[] = [
     "Class 1 – Explosives",
@@ -939,6 +943,7 @@ export function useQuoteCreatePage() {
         params: {
           q: query || undefined,
           per_page: 20,
+          include_addresses: true,
         },
       })
 
@@ -953,19 +958,60 @@ export function useQuoteCreatePage() {
 
   function mapContactToCustomerOption(item: any): CustomerOption {
     const companyName = item.company_name ?? item.name ?? item.full_name ?? "Unnamed Customer"
-    const contactName = item.contact_name ?? item.name ?? companyName
+    const contacts: CustomerContact[] = []
+
+    const addContact = (person: any, location: any, email: any, phone: any) => {
+      const name = String(person ?? "").trim()
+      if (!name) return
+
+      const normalizedEmail = String(email ?? "").trim()
+      const normalizedPhone = String(phone ?? "").trim()
+      const normalizedLocation = String(location ?? "").trim()
+      const duplicate = contacts.some(
+        contact =>
+          contact.name.toLowerCase() === name.toLowerCase() &&
+          contact.email.toLowerCase() === normalizedEmail.toLowerCase() &&
+          contact.phone === normalizedPhone,
+      )
+
+      if (!duplicate) {
+        contacts.push({
+          name,
+          email: normalizedEmail,
+          phone: normalizedPhone,
+          location: normalizedLocation,
+        })
+      }
+    }
+
+    ;(Array.isArray(item.branches) ? item.branches : []).forEach((branch: any) => {
+      addContact(branch.contact_person, branch.name || "Branch", branch.email, branch.phone)
+    })
+
+    const collectionAddresses = item.collection_addresses ?? item.collectionAddresses ?? []
+    ;(Array.isArray(collectionAddresses) ? collectionAddresses : []).forEach((address: any) => {
+      addContact(
+        address.contact_person,
+        address.label || address.reference_code || "Address",
+        address.email,
+        address.phone,
+      )
+    })
+
+    if (!contacts.length) {
+      addContact(
+        item.contact_name ?? item.name ?? companyName,
+        "Main contact",
+        item.email,
+        item.phone ?? item.mobile,
+      )
+    }
 
     return {
       id: Number(item.id),
       name: companyName,
       account_number: item.account_number ?? "",
-      contacts: [
-        {
-          name: contactName,
-          email: item.email ?? "",
-          phone: item.phone ?? item.mobile ?? "",
-        },
-      ],
+      contacts,
     }
   }
 
@@ -1027,6 +1073,7 @@ export function useQuoteCreatePage() {
               quote.customer_contact.phone ??
               quote.customer_contact.mobile ??
               "",
+            location: "Saved quote contact",
           },
         ],
       }
@@ -1131,6 +1178,7 @@ export function useQuoteCreatePage() {
       fetchCustomers(),
       fetchGlobalReferenceOptions(),
       referenceDataStore.categories.length ? Promise.resolve() : referenceDataStore.fetchAll(),
+      chargeCodeStore.fetchAll({ sort: "description", direction: "asc", perPage: 1000 }),
       hasSeq ? Promise.resolve() : companyStore.fetch(),
     ])
 
@@ -1194,6 +1242,7 @@ export function useQuoteCreatePage() {
     containerOptions,
     uomOptions,
     chargeDescriptionOptions,
+    chargeDescriptionsLoading,
     hazardousClassOptions,
     packingGroupOptions,
     conditionsOptions,

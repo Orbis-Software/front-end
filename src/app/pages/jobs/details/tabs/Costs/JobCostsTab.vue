@@ -29,6 +29,7 @@ const {
   addSellRow,
   selectChargeDescription,
   syncChargeDescriptionFilter,
+  updateBuyPricing,
   scheduleMissingChargeDescriptionCheck,
   chargeDescriptionDropdownShown,
   chargeDescriptionDropdownHidden,
@@ -81,6 +82,7 @@ const {
               <th>Supplier</th>
               <th>Qty</th>
               <th>Unit Cost</th>
+              <th>Markup</th>
               <th>Currency</th>
               <th>Ex. Rate</th>
               <th>Net</th>
@@ -106,7 +108,6 @@ const {
                   show-clear
                   :loading="chargeCodesLoading"
                   @change="selectChargeDescription(row, row.description)"
-                  @filter="syncChargeDescriptionFilter(row, $event)"
                   @show="chargeDescriptionDropdownShown"
                   @hide="chargeDescriptionDropdownHidden"
                   @blur="scheduleMissingChargeDescriptionCheck"
@@ -134,6 +135,17 @@ const {
                   :min="0"
                   :min-fraction-digits="2"
                   :max-fraction-digits="2"
+                  @update:model-value="updateBuyPricing(row)"
+                />
+              </td>
+              <td>
+                <InputNumber
+                  v-model="row.markupPercentage"
+                  suffix="%"
+                  :min="0"
+                  :min-fraction-digits="0"
+                  :max-fraction-digits="2"
+                  @update:model-value="updateBuyPricing(row)"
                 />
               </td>
               <td>
@@ -239,7 +251,6 @@ const {
                   show-clear
                   :loading="chargeCodesLoading"
                   @change="selectChargeDescription(row, row.description)"
-                  @filter="syncChargeDescriptionFilter(row, $event)"
                   @show="chargeDescriptionDropdownShown"
                   @hide="chargeDescriptionDropdownHidden"
                   @blur="scheduleMissingChargeDescriptionCheck"
