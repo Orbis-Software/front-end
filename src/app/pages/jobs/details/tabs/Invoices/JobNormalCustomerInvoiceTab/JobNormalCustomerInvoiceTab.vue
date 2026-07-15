@@ -37,6 +37,12 @@ const {
   rows,
   subtotal,
   vatTotal,
+  canManageXero,
+  xeroReady,
+  xeroStore,
+  xeroSync,
+  xeroSyncLabel,
+  syncToXero,
 } = useJobNormalCustomerInvoiceTab()
 </script>
 
@@ -208,6 +214,7 @@ const {
         >
           <colgroup>
             <col />
+            <col v-if="xeroReady" />
             <col />
             <col />
             <col />
@@ -218,6 +225,7 @@ const {
               <th>Date</th>
               <th>Status</th>
               <th class="job-normal-invoice-tab__money">Total</th>
+              <th v-if="xeroReady">Xero</th>
             </tr>
           </thead>
           <tbody>
@@ -244,6 +252,31 @@ const {
               </td>
               <td class="job-normal-invoice-tab__money">
                 {{ money(invoice.currency, numberValue(invoice.total)) }}
+              </td>
+              <td v-if="xeroReady" class="job-normal-invoice-tab__xero-cell">
+                <Button
+                  :label="xeroSyncLabel(invoice)"
+                  icon="pi pi-cloud-upload"
+                  size="small"
+                  outlined
+                  :loading="xeroStore.syncingInvoiceId === Number(invoice.id)"
+                  :disabled="
+                    !canManageXero ||
+                    ['queued', 'processing', 'synced'].includes(
+                      String(xeroSync(invoice)?.status ?? ''),
+                    )
+                  "
+                  @click="syncToXero(invoice)"
+                />
+                <small v-if="xeroSync(invoice)?.externalReference">
+                  Ref: {{ xeroSync(invoice)?.externalReference }}
+                </small>
+                <small
+                  v-else-if="xeroSync(invoice)?.error"
+                  class="job-normal-invoice-tab__xero-error"
+                >
+                  {{ xeroSync(invoice)?.error }}
+                </small>
               </td>
             </tr>
           </tbody>

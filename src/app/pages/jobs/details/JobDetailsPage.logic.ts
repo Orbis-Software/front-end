@@ -456,6 +456,8 @@ function serializeChargeRow(row: any): JobCharge {
     amount: Number.isFinite(amount) ? Number(amount.toFixed(2)) : 0,
     vat_rate: Number(row.vatRate ?? row.vat_rate ?? 0),
     tax_code: row.taxCode || row.tax_code || null,
+    markup_percentage:
+      type === "buy" ? numberValue(row.markupPercentage ?? row.markup_percentage, 0) : null,
     ...(Number.isFinite(chargeCodeId) && chargeCodeId > 0 ? { charge_code_id: chargeCodeId } : {}),
     ...(Number.isFinite(supplierId) && supplierId > 0 ? { supplier_id: supplierId } : {}),
   }
@@ -485,6 +487,7 @@ function normalizeChargeRow(row: any) {
           supplier_id: row?.supplier_id ?? row?.supplierId ?? null,
           chargeCodeId: row?.chargeCodeId ?? row?.charge_code_id ?? null,
           unitCost: unitAmount,
+          markupPercentage: numberValue(row?.markupPercentage ?? row?.markup_percentage, 0),
         }
       : {
           chargeCodeId: row?.chargeCodeId ?? row?.charge_code_id ?? null,
@@ -540,6 +543,9 @@ function emptyRoadDetail(): JobRoadDetail {
     local_haulier_name: null,
     local_buy_rate: null,
     local_buy_currency: null,
+    local_fuel_surcharge: null,
+    local_vat_rate: null,
+    local_collection_order_ref: null,
     local_charge_description: null,
     full_load_type: null,
     full_load_plan_ref: null,
@@ -827,6 +833,16 @@ function normalizeConsolidationCollectionOrder(row: any): JobConsolidationCollec
     notes: stringValue(row?.notes),
     wmsRef: stringValue(row?.wmsRef ?? row?.wms_ref),
     lines: arrayValue(row?.lines, normalizeConsolidationPackageLine),
+    unNumber: stringValue(row?.unNumber ?? row?.un_number),
+    buyCurrency: stringValue(row?.buyCurrency ?? row?.buy_currency, "GBP"),
+    buyCost: numberValue(row?.buyCost ?? row?.buy_cost),
+    fuelSurcharge: numberValue(row?.fuelSurcharge ?? row?.fuel_surcharge),
+    vatRate: numberValue(row?.vatRate ?? row?.vat_rate),
+    vat: numberValue(row?.vat),
+    netCost: numberValue(row?.netCost ?? row?.net_cost),
+    totalCost: numberValue(row?.totalCost ?? row?.total_cost),
+    raisedAt: stringValue(row?.raisedAt ?? row?.raised_at),
+    raisedBy: stringValue(row?.raisedBy ?? row?.raised_by),
   }
 }
 

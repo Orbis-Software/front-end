@@ -631,7 +631,9 @@ const {
                 <span>Tax</span>
                 <strong>{{ money(passDraft.currency, billTaxTotal) }}</strong>
               </div>
-              <div class="job-normal-invoice-tab__bill-total-row job-normal-invoice-tab__bill-total-row--grand">
+              <div
+                class="job-normal-invoice-tab__bill-total-row job-normal-invoice-tab__bill-total-row--grand"
+              >
                 <span>TOTAL</span>
                 <strong>{{ money(passDraft.currency, billTotal) }}</strong>
               </div>
@@ -658,7 +660,12 @@ const {
                 <span>Add Email</span>
                 <InputText v-model="supplierEmailDraft.manualEmail" autocomplete="off" />
               </label>
-              <Button label="Add" icon="pi pi-plus" severity="secondary" @click="addManualEmailRecipient" />
+              <Button
+                label="Add"
+                icon="pi pi-plus"
+                severity="secondary"
+                @click="addManualEmailRecipient"
+              />
             </div>
 
             <label class="job-normal-invoice-tab__field">
@@ -1016,6 +1023,5 @@ const {
         <Button label="OK" @click="deleteBlockedDialogVisible = false" />
       </template>
     </Dialog>
-
   </section>
 </template>

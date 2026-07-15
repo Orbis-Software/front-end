@@ -6,6 +6,7 @@ import contactsService from "@/app/services/contacts"
 import { useAuthStore } from "@/app/stores/auth"
 import { useTransportJobStore } from "@/app/stores/transport-job"
 import { useInvoiceGenerationStore } from "@/app/stores/invoice-generation"
+import { useXeroIntegrationStore } from "@/app/stores/xero-integration"
 import type { Contact } from "@/app/types/contact"
 import type { InvoiceEmailRecipientOption } from "@/app/types/invoice-email"
 
@@ -21,6 +22,7 @@ export function useJobNormalCustomerInvoiceTab() {
   const auth = useAuthStore()
   const transportJobStore = useTransportJobStore()
   const invoiceGenerationStore = useInvoiceGenerationStore()
+  const xeroStore = useXeroIntegrationStore()
   const generating = ref(false)
   const contacts = ref<Contact[]>([])
   const pendingInvoiceBlob = ref<Blob | null>(null)
@@ -88,6 +90,62 @@ export function useJobNormalCustomerInvoiceTab() {
     }, 0),
   )
   const grandTotal = computed(() => subtotal.value + vatTotal.value)
+  const canManageXero = computed(
+    () => auth.hasPermission("mgmt.system.master_settings.manage") || auth.isAdmin || auth.isDev,
+  )
+  const xeroReady = computed(
+    () => xeroStore.status?.status === "connected" && xeroStore.status.settingsComplete,
+  )
+
+  function xeroSync(invoice: any) {
+    const local = xeroStore.syncResults[Number(invoice.id)]
+    if (local) {
+      return {
+        status: local.syncStatus,
+        externalInvoiceId: local.externalEntityId,
+        externalReference: local.externalReference,
+        lastSyncedAt: local.lastSyncedAt,
+        error: local.error,
+      }
+    }
+    return invoice.xeroSync ?? invoice.xero_sync ?? null
+  }
+
+  function xeroSyncLabel(invoice: any) {
+    const status = String(xeroSync(invoice)?.status ?? "")
+    if (
+      xeroStore.syncingInvoiceId === Number(invoice.id) ||
+      ["queued", "processing"].includes(status)
+    )
+      return "Syncing…"
+    if (status === "synced") return "Synced"
+    if (status === "failed") return "Resync"
+    return "Sync to Xero"
+  }
+
+  async function syncToXero(invoice: any) {
+    try {
+      const result = await xeroStore.syncInvoice(Number(invoice.id))
+      toast.add({
+        severity: result.externalEntityId ? "info" : "success",
+        summary: result.externalEntityId ? "Already synced" : "Xero sync queued",
+        detail: result.externalEntityId
+          ? "This invoice already has a Xero invoice mapping."
+          : "The customer invoice will be transferred by the accounting queue.",
+        life: 3800,
+      })
+    } catch (error: any) {
+      toast.add({
+        severity: "error",
+        summary: "Xero sync failed",
+        detail:
+          error?.response?.data?.message ||
+          error?.message ||
+          "The invoice could not be synchronised.",
+        life: 5000,
+      })
+    }
+  }
 
   function invoiceNumber(row: any): string {
     return row?.invoice?.invoiceNumber ?? row?.invoice?.invoice_number ?? row?.invoiceNumber ?? ""
@@ -390,6 +448,7 @@ export function useJobNormalCustomerInvoiceTab() {
 
   onMounted(() => {
     void loadContacts()
+    if (!xeroStore.status) void xeroStore.fetchStatus(false)
   })
 
   return {
@@ -421,5 +480,11 @@ export function useJobNormalCustomerInvoiceTab() {
     rows,
     subtotal,
     vatTotal,
+    canManageXero,
+    xeroReady,
+    xeroStore,
+    xeroSync,
+    xeroSyncLabel,
+    syncToXero,
   }
 }

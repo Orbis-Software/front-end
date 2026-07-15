@@ -216,7 +216,9 @@
 
 .job-normal-invoice-tab__bill-head {
   display: grid;
-  grid-template-columns: minmax(210px, 1.4fr) repeat(2, minmax(130px, 0.75fr)) minmax(140px, 0.9fr) minmax(190px, 1.15fr) minmax(130px, 0.75fr);
+  grid-template-columns:
+    minmax(210px, 1.4fr) repeat(2, minmax(130px, 0.75fr)) minmax(140px, 0.9fr)
+    minmax(190px, 1.15fr) minmax(130px, 0.75fr);
   gap: 10px;
   align-items: end;
   border: 1px solid #e6e6e6;

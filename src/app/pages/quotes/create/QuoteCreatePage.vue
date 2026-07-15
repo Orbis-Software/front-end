@@ -400,6 +400,12 @@
                   optionLabel="label"
                   optionValue="value"
                   class="table-select wide"
+                  placeholder="Select charge description"
+                  filter
+                  autoFilterFocus
+                  editable
+                  showClear
+                  :loading="chargeDescriptionsLoading"
                 />
               </td>
               <td class="quote-table__compact-cell">
@@ -584,6 +590,12 @@
                   optionLabel="label"
                   optionValue="value"
                   class="table-select wide"
+                  placeholder="Select charge description"
+                  filter
+                  autoFilterFocus
+                  editable
+                  showClear
+                  :loading="chargeDescriptionsLoading"
                 />
               </td>
               <td><InputNumber v-model="line.qty" inputClass="table-input" :min="0" /></td>
@@ -913,6 +925,7 @@ const {
   containerOptions,
   uomOptions,
   chargeDescriptionOptions,
+  chargeDescriptionsLoading,
   hazardousClassOptions,
   packingGroupOptions,
   conditionsOptions,

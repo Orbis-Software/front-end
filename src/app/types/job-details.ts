@@ -201,6 +201,7 @@ export type BuyCostRow = {
   linkedSellChargeId?: number | string | null
   quantity: number
   unitCost: number
+  markupPercentage: number
   currency: string
   exchangeRate: number
   amount?: number | null

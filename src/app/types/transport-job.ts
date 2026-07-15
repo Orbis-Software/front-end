@@ -61,6 +61,9 @@ export interface JobRoadDetail {
   local_haulier_name?: string | null
   local_buy_rate?: number | null
   local_buy_currency?: string | null
+  local_fuel_surcharge?: number | null
+  local_vat_rate?: number | null
+  local_collection_order_ref?: string | null
   local_charge_description?: string | null
   full_load_type?: string | null
   full_load_plan_ref?: string | null
@@ -306,6 +309,7 @@ export interface JobCharge {
   amount?: number | null
   vat_rate?: number | null
   tax_code?: string | null
+  markup_percentage?: number | null
 }
 
 export interface JobInvoiceSummary {
@@ -329,6 +333,13 @@ export interface JobInvoiceSummary {
   generationStatus?: string | null
   lines?: any[]
   metadata?: Record<string, any>
+  xeroSync?: {
+    status: string
+    externalInvoiceId?: string | null
+    externalReference?: string | null
+    lastSyncedAt?: string | null
+    error?: string | null
+  } | null
   job?: {
     id: number
     jobNumber?: string | null
@@ -411,6 +422,16 @@ export interface JobConsolidationCollectionOrder {
   notes: string
   wmsRef: string
   lines: JobConsolidationPackageLine[]
+  unNumber?: string
+  buyCurrency?: string
+  buyCost?: number
+  fuelSurcharge?: number
+  vatRate?: number
+  vat?: number
+  netCost?: number
+  totalCost?: number
+  raisedAt?: string
+  raisedBy?: string
 }
 
 export interface JobConsolidationGoodsRow {

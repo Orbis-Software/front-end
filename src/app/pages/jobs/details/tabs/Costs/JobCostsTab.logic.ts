@@ -100,6 +100,7 @@ function createBuyRow(): BuyCostRow {
     linkedSellChargeId: null,
     quantity: 1,
     unitCost: 0,
+    markupPercentage: 0,
     currency: "GBP",
     exchangeRate: 1,
     amount: 0,
@@ -134,6 +135,7 @@ function hydrateBuyRow(row: any): BuyCostRow {
   row.linkedSellChargeId = row.linkedSellChargeId ?? row.linked_sell_charge_id ?? null
   row.quantity = numberValue(row.quantity, 1) || 1
   row.unitCost = numberValue(row.unitCost ?? row.unit_cost ?? row.unit_amount ?? row.amount, 0)
+  row.markupPercentage = numberValue(row.markupPercentage ?? row.markup_percentage, 0)
   row.currency = row.currency || "GBP"
   row.exchangeRate = numberValue(row.exchangeRate ?? row.exchange_rate, 0)
 
@@ -486,10 +488,20 @@ export function useJobCostsTab() {
     sellRow.chargeCodeId = charge?.id ?? row.chargeCodeId ?? sellRow.chargeCodeId ?? null
     sellRow.chargeCode = charge?.salesNominal || sellRow.chargeCode || ""
     sellRow.sourceBuyCostId = row.id
-    sellRow.linkedWeightCharge = Boolean(linkedWeightCharge)
-    sellRow.quantity = linkedWeightCharge ? 1 : numberValue(row.quantity, 1) || 1
-    sellRow.unitPrice = linkedWeightCharge ? linkedWeightCharge.amount : null
-    sellRow.currency = linkedWeightCharge?.currency || jobCurrency.value
+    const markup = Math.max(0, numberValue(row.markupPercentage))
+    const markedUpUnitPrice = roundMoney(numberValue(row.unitCost) * (1 + markup / 100))
+    const useMarkupPrice = markup > 0
+
+    sellRow.linkedWeightCharge = Boolean(linkedWeightCharge && !useMarkupPrice)
+    sellRow.quantity = linkedWeightCharge && !useMarkupPrice ? 1 : numberValue(row.quantity, 1) || 1
+    sellRow.unitPrice = useMarkupPrice
+      ? markedUpUnitPrice
+      : linkedWeightCharge
+        ? linkedWeightCharge.amount
+        : null
+    sellRow.currency = useMarkupPrice
+      ? currencyCode(row.currency)
+      : linkedWeightCharge?.currency || jobCurrency.value
     syncLineExchangeRate(sellRow, false)
 
     if (charge?.defaultTaxCode) {
@@ -499,6 +511,10 @@ export function useJobCostsTab() {
 
     row.addToSellCharges = true
     row.linkedSellChargeId = sellRow.id
+  }
+
+  function updateBuyPricing(row: BuyCostRow) {
+    if (buyRowSellChargeChecked(row)) syncLinkedSellCharge(row)
   }
 
   function removeLinkedSellCharge(row: BuyCostRow) {
@@ -532,7 +548,12 @@ export function useJobCostsTab() {
       return `Add to Sell Charges using linked customer weight charge ${formatMoney(linkedWeightCharge.amount, linkedWeightCharge.currency)}.`
     }
 
-    return "Add this charge description to Sell Charges with a blank unit price."
+    const markup = Math.max(0, numberValue(row.markupPercentage))
+    if (markup > 0) {
+      return `Add to Sell Charges at ${formatMoney(numberValue(row.unitCost) * (1 + markup / 100), row.currency)} (${markup}% markup).`
+    }
+
+    return "Add this charge description to Sell Charges with a blank unit price. Enter markup to calculate it automatically."
   }
 
   function removeBuyRow(id: number | string) {
@@ -1098,6 +1119,7 @@ export function useJobCostsTab() {
     addSellRow,
     selectChargeDescription,
     syncChargeDescriptionFilter,
+    updateBuyPricing,
     scheduleMissingChargeDescriptionCheck,
     chargeDescriptionDropdownShown,
     chargeDescriptionDropdownHidden,

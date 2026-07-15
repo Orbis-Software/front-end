@@ -1,1 +1,15 @@
 @import "../JobNormalInvoices.css";
+
+.job-normal-invoice-tab__xero-cell {
+  min-width: 150px;
+}
+
+.job-normal-invoice-tab__xero-cell small {
+  display: block;
+  margin-top: 0.35rem;
+  color: #667085;
+}
+
+.job-normal-invoice-tab__xero-error {
+  color: #b42318 !important;
+}
