@@ -1,13 +1,11 @@
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from "vue"
 import { onBeforeRouteLeave, useRoute, useRouter } from "vue-router"
 import { storeToRefs } from "pinia"
-import http from "@/api/http"
 import { useCompanyStore } from "@/app/stores/company"
 import { useChargeCodeStore } from "@/app/stores/charge-codes"
+import { useContactStore } from "@/app/stores/contact"
 import { useGlobalReferenceDataStore } from "@/app/stores/global-reference-data"
 import { useReferenceDataStore } from "@/app/stores/reference-data"
-import globalReferenceDataService from "@/app/services/global-reference-data"
-import contactsService from "@/app/services/contacts"
 import type { CompanyReferenceSequence } from "@/app/types/company"
 import type { Contact } from "@/app/types/contact"
 import type { GlobalReferenceDataRow } from "@/app/types/globalReferenceData"
@@ -85,7 +83,6 @@ const CONDITIONS: Record<string, string> = {
 }
 
 const GLOBAL_REFERENCE_OPTION_LIMIT = 150
-const QUOTE_AUTOSAVE_DELAY_MS = 2500
 const NEW_QUOTE_RECOVERY_KEY = "orbis:quote-draft:new"
 
 export function useQuoteCreatePage() {
@@ -94,6 +91,7 @@ export function useQuoteCreatePage() {
   const quoteStore = useTransportQuoteStore()
   const companyStore = useCompanyStore()
   const chargeCodeStore = useChargeCodeStore()
+  const contactStore = useContactStore()
   const globalReferenceDataStore = useGlobalReferenceDataStore()
   const referenceDataStore = useReferenceDataStore()
   const { data: globalReferenceData } = storeToRefs(globalReferenceDataStore)
@@ -110,7 +108,6 @@ export function useQuoteCreatePage() {
   )
   let globalReferenceFetchTimer: number | null = null
   let globalReferenceFetchToken = 0
-  let autosaveTimer: number | null = null
   let draftSavePromise: Promise<TransportQuote | null> | null = null
   let leaveDecisionPromise: Promise<boolean> | null = null
   let resolveLeaveDecision: ((allow: boolean) => void) | null = null
@@ -144,7 +141,7 @@ export function useQuoteCreatePage() {
   const saveButtonLabel = computed(() => (isEditMode.value ? "Update Quote" : "Submit Quote"))
   const autosaveStatus = computed(() => {
     if (autosaveState.value === "saving") return "Saving draft…"
-    if (autosaveState.value === "pending") return "Draft changes pending"
+    if (autosaveState.value === "pending") return "Unsaved changes"
     if (autosaveState.value === "error") return "Draft save failed — changes kept locally"
     if (lastDraftSavedAt.value) {
       return `Draft saved at ${lastDraftSavedAt.value.toLocaleTimeString([], {
@@ -153,7 +150,7 @@ export function useQuoteCreatePage() {
       })}`
     }
 
-    return "Draft autosave ready"
+    return "Draft saves only when requested"
   })
 
   const QUOTE_TYPES = [
@@ -528,7 +525,7 @@ export function useQuoteCreatePage() {
     const token = ++globalReferenceFetchToken
 
     try {
-      const response = await globalReferenceDataService.list({
+      const response = await globalReferenceDataStore.list({
         search: globalReferenceSearchTerm.value.trim() || undefined,
         per_page: GLOBAL_REFERENCE_OPTION_LIMIT,
         page: 1,
@@ -931,7 +928,7 @@ export function useQuoteCreatePage() {
         }),
       )
     } catch {
-      // Server autosave remains active when browser storage is unavailable.
+      // Browser recovery is optional and must never trigger a server save.
     }
   }
 
@@ -975,7 +972,7 @@ export function useQuoteCreatePage() {
       try {
         window.localStorage.removeItem(key)
       } catch {
-        // Ignore unavailable browser storage and continue with server autosave.
+        // Ignore unavailable browser storage.
       }
       return false
     }
@@ -1015,18 +1012,6 @@ export function useQuoteCreatePage() {
       life: 3000,
     })
     return false
-  }
-
-  function scheduleAutosave() {
-    if (autosaveTimer !== null) window.clearTimeout(autosaveTimer)
-    autosaveState.value = "pending"
-
-    if (!validateDraftRequired()) return
-
-    autosaveTimer = window.setTimeout(() => {
-      autosaveTimer = null
-      void saveDraft({ updateRoute: true })
-    }, QUOTE_AUTOSAVE_DELAY_MS)
   }
 
   async function saveDraft(options: { notify?: boolean; updateRoute?: boolean } = {}) {
@@ -1084,7 +1069,7 @@ export function useQuoteCreatePage() {
         hasUnsavedChanges.value = false
       } else {
         saveLocalRecovery()
-        scheduleAutosave()
+        autosaveState.value = "pending"
       }
 
       if (!existingId && options.updateRoute && route.name === "tms.quotes.create") {
@@ -1193,11 +1178,6 @@ export function useQuoteCreatePage() {
   }
 
   function leaveWithoutSavingLatestChanges() {
-    if (autosaveTimer !== null) {
-      window.clearTimeout(autosaveTimer)
-      autosaveTimer = null
-    }
-
     hasUnsavedChanges.value = false
     removeLocalRecovery()
     completeLeaveDecision(true)
@@ -1205,7 +1185,6 @@ export function useQuoteCreatePage() {
 
   function stayOnQuote() {
     completeLeaveDecision(false)
-    if (hasUnsavedChanges.value) scheduleAutosave()
   }
 
   function onCancel() {
@@ -1310,15 +1289,13 @@ export function useQuoteCreatePage() {
     loadingCustomers.value = true
 
     try {
-      const response = await http.get("/contacts", {
-        params: {
-          q: query || undefined,
-          per_page: 20,
-          include_addresses: true,
-        },
+      const response = await contactStore.query({
+        q: query || undefined,
+        per_page: 20,
+        include_addresses: true,
       })
 
-      const rows = response.data?.data ?? response.data ?? []
+      const rows = response.data ?? []
       customerSuggestions.value = Array.isArray(rows) ? rows.map(mapContactToCustomerOption) : []
     } catch {
       customerSuggestions.value = []
@@ -1331,12 +1308,12 @@ export function useQuoteCreatePage() {
     suppliersLoading.value = true
 
     try {
-      const firstResponse = await contactsService.list({ page: 1, per_page: 500 })
+      const firstResponse = await contactStore.query({ page: 1, per_page: 500 })
       const contacts = [...(firstResponse.data ?? [])]
       const lastPage = Number(firstResponse.meta?.last_page ?? 1)
 
       for (let page = 2; page <= lastPage; page += 1) {
-        const response = await contactsService.list({ page, per_page: 500 })
+        const response = await contactStore.query({ page, per_page: 500 })
         contacts.push(...(response.data ?? []))
       }
 
@@ -1600,11 +1577,9 @@ export function useQuoteCreatePage() {
       toast.add({
         severity: "info",
         summary: "Unsaved Quote Restored",
-        detail:
-          "Your locally recovered quote changes have been restored and will be saved as a draft.",
+        detail: "Your browser-only recovery has been restored. Save it as a draft when ready.",
         life: 4500,
       })
-      scheduleAutosave()
     }
   })
 
@@ -1634,8 +1609,8 @@ export function useQuoteCreatePage() {
       changeVersion += 1
       hasUnsavedChanges.value = true
       hasQuoteActivity.value = true
+      autosaveState.value = "pending"
       saveLocalRecovery()
-      scheduleAutosave()
     },
     { deep: true },
   )
@@ -1645,16 +1620,10 @@ export function useQuoteCreatePage() {
 
     saveLocalRecovery()
 
-    if (autosaveTimer !== null) {
-      window.clearTimeout(autosaveTimer)
-      autosaveTimer = null
-    }
-
     return requestLeaveDecision()
   })
 
   onBeforeUnmount(() => {
-    if (autosaveTimer !== null) window.clearTimeout(autosaveTimer)
     window.removeEventListener("beforeunload", handleBeforeUnload)
   })
 

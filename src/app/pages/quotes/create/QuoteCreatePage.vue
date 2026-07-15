@@ -962,8 +962,8 @@
         <div>
           <p>Would you like to save the current quote as a draft before leaving?</p>
           <small>
-            Previously autosaved information will remain in the existing draft. Choosing “Leave
-            Without Saving” discards only the latest pending changes.
+            “Save Draft & Leave” creates or updates one draft. “Leave Without Saving” discards the
+            pending changes and will not create a quote.
           </small>
         </div>
       </div>

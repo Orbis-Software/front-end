@@ -1,6 +1,9 @@
 import { defineStore } from "pinia"
 import globalReferenceDataService from "@/app/services/global-reference-data"
-import type { GlobalReferenceDataSet } from "@/app/types/globalReferenceData"
+import type {
+  GlobalReferenceDataListParams,
+  GlobalReferenceDataSet,
+} from "@/app/types/globalReferenceData"
 
 type State = {
   data: GlobalReferenceDataSet
@@ -24,6 +27,10 @@ export const useGlobalReferenceDataStore = defineStore("global-reference-data", 
   }),
 
   actions: {
+    async list(params: GlobalReferenceDataListParams) {
+      return globalReferenceDataService.list(params)
+    },
+
     async fetchAll() {
       this.loading = true
       this.error = null
