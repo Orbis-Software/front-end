@@ -8,6 +8,7 @@ import type {
   PaginatedResponse,
 } from "@/app/types/contact"
 import contacts from "@/app/services/contacts"
+import type { ListContactsParams } from "@/app/services/contacts/list"
 import { useContactTypeStore } from "@/app/stores/contact-type"
 
 export const useContactStore = defineStore("contact", () => {
@@ -71,6 +72,10 @@ export const useContactStore = defineStore("contact", () => {
     } finally {
       loading.value = false
     }
+  }
+
+  async function query(params: ListContactsParams = {}) {
+    return contacts.list(params)
   }
 
   async function fetchTypes() {
@@ -284,6 +289,7 @@ export const useContactStore = defineStore("contact", () => {
     lastPage,
 
     fetch,
+    query,
     exportContacts,
     setTypeId,
     setSearch,
