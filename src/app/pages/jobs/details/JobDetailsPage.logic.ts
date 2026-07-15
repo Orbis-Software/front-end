@@ -458,6 +458,10 @@ function serializeChargeRow(row: any): JobCharge {
     tax_code: row.taxCode || row.tax_code || null,
     markup_percentage:
       type === "buy" ? numberValue(row.markupPercentage ?? row.markup_percentage, 0) : null,
+    add_to_sell:
+      type === "buy"
+        ? Boolean(row.addToSellCharges ?? row.add_to_sell_charges ?? row.add_to_sell ?? false)
+        : false,
     ...(Number.isFinite(chargeCodeId) && chargeCodeId > 0 ? { charge_code_id: chargeCodeId } : {}),
     ...(Number.isFinite(supplierId) && supplierId > 0 ? { supplier_id: supplierId } : {}),
   }
@@ -488,6 +492,9 @@ function normalizeChargeRow(row: any) {
           chargeCodeId: row?.chargeCodeId ?? row?.charge_code_id ?? null,
           unitCost: unitAmount,
           markupPercentage: numberValue(row?.markupPercentage ?? row?.markup_percentage, 0),
+          addToSellCharges: Boolean(
+            row?.addToSellCharges ?? row?.add_to_sell_charges ?? row?.add_to_sell ?? false,
+          ),
         }
       : {
           chargeCodeId: row?.chargeCodeId ?? row?.charge_code_id ?? null,

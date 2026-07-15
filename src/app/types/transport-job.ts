@@ -310,6 +310,7 @@ export interface JobCharge {
   vat_rate?: number | null
   tax_code?: string | null
   markup_percentage?: number | null
+  add_to_sell?: boolean
 }
 
 export interface JobInvoiceSummary {

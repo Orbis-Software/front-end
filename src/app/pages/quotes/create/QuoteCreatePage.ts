@@ -1,5 +1,5 @@
-import { computed, onMounted, reactive, ref, watch } from "vue"
-import { useRoute, useRouter } from "vue-router"
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from "vue"
+import { onBeforeRouteLeave, useRoute, useRouter } from "vue-router"
 import { storeToRefs } from "pinia"
 import http from "@/api/http"
 import { useCompanyStore } from "@/app/stores/company"
@@ -7,7 +7,9 @@ import { useChargeCodeStore } from "@/app/stores/charge-codes"
 import { useGlobalReferenceDataStore } from "@/app/stores/global-reference-data"
 import { useReferenceDataStore } from "@/app/stores/reference-data"
 import globalReferenceDataService from "@/app/services/global-reference-data"
+import contactsService from "@/app/services/contacts"
 import type { CompanyReferenceSequence } from "@/app/types/company"
+import type { Contact } from "@/app/types/contact"
 import type { GlobalReferenceDataRow } from "@/app/types/globalReferenceData"
 import { useTransportQuoteStore } from "@/app/stores/transportQuote"
 import type { TransportQuote, TransportQuotePayload } from "@/app/types/transportQuote"
@@ -17,6 +19,7 @@ import { useToast } from "primevue/usetoast"
 
 type QuoteType = "import" | "export" | "domestic" | "cross_trade" | "multi_modal"
 type TransportMode = "air" | "road" | "rail" | "sea"
+type LocationField = "origin" | "destination"
 
 type SelectOption<T = string> = {
   label: string
@@ -65,6 +68,11 @@ type ChargeLine = {
   currency: string
   exchange_rate: number
   vat_rate?: number
+  supplier_id?: number | null
+  markup_percent?: number
+  add_to_sell?: boolean
+  linked_sell_line_id?: number | null
+  source_buy_line_id?: number | null
 }
 
 const CONDITIONS: Record<string, string> = {
@@ -77,6 +85,8 @@ const CONDITIONS: Record<string, string> = {
 }
 
 const GLOBAL_REFERENCE_OPTION_LIMIT = 150
+const QUOTE_AUTOSAVE_DELAY_MS = 2500
+const NEW_QUOTE_RECOVERY_KEY = "orbis:quote-draft:new"
 
 export function useQuoteCreatePage() {
   const route = useRoute()
@@ -100,6 +110,13 @@ export function useQuoteCreatePage() {
   )
   let globalReferenceFetchTimer: number | null = null
   let globalReferenceFetchToken = 0
+  let autosaveTimer: number | null = null
+  let draftSavePromise: Promise<TransportQuote | null> | null = null
+  let leaveDecisionPromise: Promise<boolean> | null = null
+  let resolveLeaveDecision: ((allow: boolean) => void) | null = null
+  let formReady = false
+  let allowNavigation = false
+  let changeVersion = 0
 
   const quoteId = computed(() => {
     const id = route.params.id
@@ -110,6 +127,13 @@ export function useQuoteCreatePage() {
   })
 
   const isEditMode = computed(() => Boolean(quoteId.value))
+  const activeDraftId = ref<number | null>(quoteId.value)
+  const hasUnsavedChanges = ref(false)
+  const hasQuoteActivity = ref(false)
+  const autosaveState = ref<"idle" | "pending" | "saving" | "saved" | "error">("idle")
+  const lastDraftSavedAt = ref<Date | null>(null)
+  const leaveDraftDialogVisible = ref(false)
+  const leaveDraftDialogSaving = ref(false)
   const saving = computed(() => quoteStore.saving || quoteStore.loading)
   const error = computed(() => localError.value || quoteStore.error)
 
@@ -118,6 +142,19 @@ export function useQuoteCreatePage() {
   )
   const pageStatusLabel = computed(() => quoteStore.selectedQuote?.status ?? "Draft")
   const saveButtonLabel = computed(() => (isEditMode.value ? "Update Quote" : "Submit Quote"))
+  const autosaveStatus = computed(() => {
+    if (autosaveState.value === "saving") return "Saving draft…"
+    if (autosaveState.value === "pending") return "Draft changes pending"
+    if (autosaveState.value === "error") return "Draft save failed — changes kept locally"
+    if (lastDraftSavedAt.value) {
+      return `Draft saved at ${lastDraftSavedAt.value.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      })}`
+    }
+
+    return "Draft autosave ready"
+  })
 
   const QUOTE_TYPES = [
     { key: "import", title: "Import", subtitle: "Inbound shipment", icon: "pi pi-download" },
@@ -199,6 +236,8 @@ export function useQuoteCreatePage() {
   const dimensionRows = ref<DimensionRow[]>([])
   const buyCostLines = ref<ChargeLine[]>([])
   const sellChargeLines = ref<ChargeLine[]>([])
+  const supplierContacts = ref<Contact[]>([])
+  const suppliersLoading = ref(false)
 
   const availableModes = computed(() => MODE_OPTIONS)
   const showModeSelector = computed(() => Boolean(quoteType.value))
@@ -236,38 +275,10 @@ export function useQuoteCreatePage() {
     return uniqueReferenceRows(rows)
   })
 
-  const selectedLocationValues = computed(() => {
-    return new Set(
-      [form.origin, form.destination]
-        .filter((value): value is string => typeof value === "string" && Boolean(value.trim()))
-        .map(value => value.trim()),
-    )
-  })
-
   const visibleGlobalReferenceOptions = computed<SelectOption[]>(() => {
     const query = normalizeSearch(globalReferenceSearchTerm.value)
     const options: SelectOption[] = []
     const usedValues = new Set<string>()
-
-    selectedLocationValues.value.forEach(value => {
-      const option = findReferenceOptionByValue(value)
-
-      if (option && !usedValues.has(option.value)) {
-        usedValues.add(option.value)
-        options.push(option)
-        return
-      }
-
-      if (!usedValues.has(value)) {
-        usedValues.add(value)
-        options.push({
-          label: value,
-          value,
-          subLabel: "Selected value",
-          searchText: value,
-        })
-      }
-    })
 
     for (const entry of globalReferenceRows.value) {
       if (options.length >= GLOBAL_REFERENCE_OPTION_LIMIT) break
@@ -354,6 +365,12 @@ export function useQuoteCreatePage() {
     })),
   )
   const chargeDescriptionsLoading = computed(() => chargeCodeStore.loading)
+  const supplierOptions = computed<SelectOption<number>[]>(() =>
+    supplierContacts.value.map(contact => ({
+      label: contact.company_name || `Contact ${contact.id}`,
+      value: Number(contact.id),
+    })),
+  )
 
   const hazardousClassOptions: SelectOption[] = [
     "Class 1 – Explosives",
@@ -478,23 +495,23 @@ export function useQuoteCreatePage() {
     }
   }
 
-  function findReferenceOptionByValue(value: string): SelectOption | null {
-    for (const entry of globalReferenceRows.value) {
-      if (referenceOption(entry.row, entry.category).value === value) {
-        return referenceOption(entry.row, entry.category)
-      }
-    }
-
-    return null
-  }
-
   function rowMatchesSearch(row: GlobalReferenceDataRow, category: string, query: string): boolean {
     return normalizeSearch(searchText(row, [category])).includes(query)
   }
 
-  function onGlobalReferenceFilter(event: { value?: string }) {
-    globalReferenceSearchTerm.value = event.value ?? ""
-    fetchGlobalReferenceOptions(250)
+  function onGlobalReferenceComplete(event: { query?: string }) {
+    globalReferenceSearchTerm.value = event.query ?? ""
+    void fetchGlobalReferenceOptions()
+  }
+
+  function updateLocationValue(field: LocationField, value: unknown) {
+    const nextValue =
+      value && typeof value === "object" && "value" in value
+        ? String((value as SelectOption).value ?? "")
+        : String(value ?? "")
+
+    form[field] = nextValue
+    globalReferenceSearchTerm.value = nextValue
   }
 
   async function fetchGlobalReferenceOptions(delay = 0) {
@@ -717,6 +734,10 @@ export function useQuoteCreatePage() {
       unit_cost: 0,
       currency: form.currency || "GBP",
       exchange_rate: 1,
+      supplier_id: null,
+      markup_percent: 0,
+      add_to_sell: false,
+      linked_sell_line_id: null,
     })
   }
 
@@ -731,15 +752,125 @@ export function useQuoteCreatePage() {
       currency: form.currency || "GBP",
       exchange_rate: 1,
       vat_rate: 0,
+      source_buy_line_id: null,
     })
   }
 
   function removeBuyCostLine(id: number) {
+    const line = buyCostLines.value.find(item => item.id === id)
+    if (line?.linked_sell_line_id) {
+      sellChargeLines.value = sellChargeLines.value.filter(
+        item => item.id !== line.linked_sell_line_id,
+      )
+    }
+
     buyCostLines.value = buyCostLines.value.filter(line => line.id !== id)
   }
 
   function removeSellChargeLine(id: number) {
+    const line = sellChargeLines.value.find(item => item.id === id)
+    const source = buyCostLines.value.find(
+      item => item.id === line?.source_buy_line_id || item.linked_sell_line_id === id,
+    )
+
+    if (source) {
+      source.add_to_sell = false
+      source.linked_sell_line_id = null
+    }
+
     sellChargeLines.value = sellChargeLines.value.filter(line => line.id !== id)
+  }
+
+  function linkedSellLine(line: ChargeLine): ChargeLine | undefined {
+    return sellChargeLines.value.find(
+      sellLine =>
+        sellLine.id === line.linked_sell_line_id || sellLine.source_buy_line_id === line.id,
+    )
+  }
+
+  function syncBuyLineToSell(line: ChargeLine) {
+    if (!line.add_to_sell) return
+
+    let sellLine = linkedSellLine(line)
+    if (!sellLine) {
+      const description = String(line.description || "")
+        .trim()
+        .toLowerCase()
+
+      sellLine = sellChargeLines.value.find(
+        item =>
+          !item.source_buy_line_id &&
+          Number(item.unit_price || 0) === 0 &&
+          String(item.description || "")
+            .trim()
+            .toLowerCase() === description,
+      )
+    }
+
+    if (!sellLine) {
+      sellLine = {
+        id: Date.now() + Math.random(),
+        type: "sell",
+        description: line.description,
+        qty: Number(line.qty || 0),
+        uom: line.uom,
+        unit_price: 0,
+        currency: line.currency || form.currency || "GBP",
+        exchange_rate: Number(line.exchange_rate || 1),
+        vat_rate: 0,
+        source_buy_line_id: line.id,
+      }
+      sellChargeLines.value.push(sellLine)
+    }
+
+    const unitCost = Number(line.unit_cost || 0)
+    const markup = Math.max(0, Number(line.markup_percent || 0))
+
+    sellLine.description = line.description
+    sellLine.qty = Number(line.qty || 0)
+    sellLine.uom = line.uom
+    sellLine.unit_price = Math.round(unitCost * (1 + markup / 100) * 100) / 100
+    sellLine.currency = line.currency || form.currency || "GBP"
+    sellLine.exchange_rate = Number(line.exchange_rate || 1)
+    sellLine.source_buy_line_id = line.id
+    line.linked_sell_line_id = sellLine.id
+  }
+
+  function toggleBuyLineAddToSell(line: ChargeLine, checked: boolean) {
+    line.add_to_sell = checked
+
+    if (checked) {
+      syncBuyLineToSell(line)
+      return
+    }
+
+    const sellLine = linkedSellLine(line)
+    if (sellLine) {
+      sellChargeLines.value = sellChargeLines.value.filter(item => item.id !== sellLine.id)
+    }
+    line.linked_sell_line_id = null
+  }
+
+  function restoreBuySellLinks() {
+    const claimedSellIds = new Set<number>()
+
+    buyCostLines.value.forEach(buyLine => {
+      if (!buyLine.add_to_sell) return
+
+      const match = sellChargeLines.value.find(
+        sellLine =>
+          !claimedSellIds.has(sellLine.id) &&
+          sellLine.description.trim().toLowerCase() === buyLine.description.trim().toLowerCase(),
+      )
+
+      if (match) {
+        claimedSellIds.add(match.id)
+        buyLine.linked_sell_line_id = match.id
+        match.source_buy_line_id = buyLine.id
+      } else {
+        syncBuyLineToSell(buyLine)
+      }
+    })
   }
 
   function getChargeLineTotal(line: ChargeLine) {
@@ -768,6 +899,234 @@ export function useQuoteCreatePage() {
     form.terms_conditions = CONDITIONS[form.conditions_preset] ?? ""
   }
 
+  function recoveryKey(id = activeDraftId.value ?? quoteId.value): string {
+    return id ? `orbis:quote-draft:${id}` : NEW_QUOTE_RECOVERY_KEY
+  }
+
+  function saveLocalRecovery() {
+    if (!hasUnsavedChanges.value) return
+
+    const formSnapshot = {
+      ...form,
+      quote_date: toApiDate(form.quote_date),
+      follow_up_date: toApiDate(form.follow_up_date),
+      valid_until: toApiDate(form.valid_until),
+      etd: toApiDate(form.etd),
+      eta: toApiDate(form.eta),
+    }
+
+    try {
+      window.localStorage.setItem(
+        recoveryKey(),
+        JSON.stringify({
+          saved_at: new Date().toISOString(),
+          quote_type: quoteType.value,
+          mode: mode.value,
+          form: formSnapshot,
+          selected_customer: selectedCustomer.value,
+          selected_contact_index: selectedContactIndex.value,
+          dimensions: dimensionRows.value,
+          buy_costs: buyCostLines.value,
+          sell_charges: sellChargeLines.value,
+        }),
+      )
+    } catch {
+      // Server autosave remains active when browser storage is unavailable.
+    }
+  }
+
+  function restoreLocalRecovery(): boolean {
+    const key = quoteId.value ? recoveryKey(quoteId.value) : NEW_QUOTE_RECOVERY_KEY
+    let raw: string | null = null
+
+    try {
+      raw = window.localStorage.getItem(key)
+    } catch {
+      return false
+    }
+
+    if (!raw) return false
+
+    try {
+      const snapshot = JSON.parse(raw)
+      if (isQuoteType(snapshot.quote_type)) quoteType.value = snapshot.quote_type
+      if (isTransportMode(snapshot.mode)) mode.value = snapshot.mode
+
+      if (snapshot.form && typeof snapshot.form === "object") {
+        Object.assign(form, snapshot.form)
+        form.quote_date = fromApiDate(snapshot.form.quote_date) ?? new Date()
+        form.follow_up_date = fromApiDate(snapshot.form.follow_up_date)
+        form.valid_until = fromApiDate(snapshot.form.valid_until)
+        form.etd = fromApiDate(snapshot.form.etd)
+        form.eta = fromApiDate(snapshot.form.eta)
+      }
+
+      selectedCustomer.value = snapshot.selected_customer ?? null
+      selectedContactIndex.value = snapshot.selected_contact_index ?? null
+      dimensionRows.value = Array.isArray(snapshot.dimensions) ? snapshot.dimensions : []
+      buyCostLines.value = Array.isArray(snapshot.buy_costs) ? snapshot.buy_costs : []
+      sellChargeLines.value = Array.isArray(snapshot.sell_charges) ? snapshot.sell_charges : []
+
+      hasUnsavedChanges.value = true
+      hasQuoteActivity.value = true
+      autosaveState.value = "pending"
+      return true
+    } catch {
+      try {
+        window.localStorage.removeItem(key)
+      } catch {
+        // Ignore unavailable browser storage and continue with server autosave.
+      }
+      return false
+    }
+  }
+
+  function removeLocalRecovery() {
+    try {
+      window.localStorage.removeItem(NEW_QUOTE_RECOVERY_KEY)
+      const id = activeDraftId.value ?? quoteId.value
+      if (id) window.localStorage.removeItem(recoveryKey(id))
+    } catch {
+      // Browser storage may be unavailable; navigation can still continue.
+    }
+  }
+
+  function validateDraftRequired(notify = false): boolean {
+    const missing = !quoteType.value
+      ? {
+          message: "Please select a quote type.",
+          summary: "Quote Type Required",
+        }
+      : !mode.value
+        ? {
+            message: "Please select a mode of transport.",
+            summary: "Mode Required",
+          }
+        : null
+
+    if (!missing) return true
+    if (!notify) return false
+
+    localError.value = missing.message
+    toast.add({
+      severity: "warn",
+      summary: missing.summary,
+      detail: missing.message,
+      life: 3000,
+    })
+    return false
+  }
+
+  function scheduleAutosave() {
+    if (autosaveTimer !== null) window.clearTimeout(autosaveTimer)
+    autosaveState.value = "pending"
+
+    if (!validateDraftRequired()) return
+
+    autosaveTimer = window.setTimeout(() => {
+      autosaveTimer = null
+      void saveDraft({ updateRoute: true })
+    }, QUOTE_AUTOSAVE_DELAY_MS)
+  }
+
+  async function saveDraft(options: { notify?: boolean; updateRoute?: boolean } = {}) {
+    const notify = Boolean(options.notify)
+    localError.value = null
+
+    if (!validateDraftRequired(notify)) return null
+
+    if (draftSavePromise) {
+      try {
+        await draftSavePromise
+      } catch {
+        // The active save reports its own error and keeps a local recovery copy.
+      }
+      if (!hasUnsavedChanges.value && quoteStore.selectedQuote) {
+        if (notify) {
+          toast.add({
+            severity: "success",
+            summary: "Draft Saved",
+            detail: `${quoteStore.selectedQuote.quote_ref || `QUOTE-${quoteStore.selectedQuote.id}`} is safely saved as a draft.`,
+            life: 3000,
+          })
+        }
+        return quoteStore.selectedQuote
+      }
+    }
+
+    const versionBeingSaved = changeVersion
+    const existingId = activeDraftId.value ?? quoteId.value
+    autosaveState.value = "saving"
+
+    draftSavePromise = (async () => {
+      const payload = buildPayload() as TransportQuotePayload
+      return existingId
+        ? quoteStore.updateQuote(existingId, payload)
+        : quoteStore.createQuote(payload)
+    })()
+
+    try {
+      const quote = await draftSavePromise
+      if (!quote) return null
+
+      activeDraftId.value = quote.id
+      lastDraftSavedAt.value = new Date()
+      autosaveState.value = "saved"
+
+      try {
+        window.localStorage.removeItem(NEW_QUOTE_RECOVERY_KEY)
+        window.localStorage.removeItem(recoveryKey(quote.id))
+      } catch {
+        // The server draft is already saved even if browser storage cleanup fails.
+      }
+
+      if (versionBeingSaved === changeVersion) {
+        hasUnsavedChanges.value = false
+      } else {
+        saveLocalRecovery()
+        scheduleAutosave()
+      }
+
+      if (!existingId && options.updateRoute && route.name === "tms.quotes.create") {
+        allowNavigation = true
+        try {
+          await router.replace({ name: "tms.quotes.edit", params: { id: quote.id } })
+        } finally {
+          allowNavigation = false
+        }
+      }
+
+      if (notify) {
+        toast.add({
+          severity: "success",
+          summary: "Draft Saved",
+          detail: `${quote.quote_ref || `QUOTE-${quote.id}`} is safely saved as a draft.`,
+          life: 3000,
+        })
+      }
+
+      return quote
+    } catch (error: any) {
+      const message = error?.response?.data?.message ?? "Unable to save quotation draft."
+      autosaveState.value = "error"
+      localError.value = notify ? message : null
+      saveLocalRecovery()
+
+      if (notify) {
+        toast.add({
+          severity: "error",
+          summary: "Draft Save Failed",
+          detail: `${message} Your changes are still kept locally in this browser.`,
+          life: 5000,
+        })
+      }
+
+      return null
+    } finally {
+      draftSavePromise = null
+    }
+  }
+
   function onBrowseQuotes() {
     router.push({ name: "tms.quotes.index" })
   }
@@ -777,67 +1136,76 @@ export function useQuoteCreatePage() {
   }
 
   async function onSave() {
-    localError.value = null
+    if (!validateDraftRequired(true)) return
 
-    if (!quoteType.value) {
-      localError.value = "Please select a quote type."
+    const wasExistingQuote = Boolean(activeDraftId.value ?? quoteId.value)
+    const quote = await saveDraft({ updateRoute: false })
+    if (!quote) return
 
-      toast.add({
-        severity: "warn",
-        summary: "Quote Type Required",
-        detail: "Please select a quote type.",
-        life: 3000,
+    toast.add({
+      severity: "success",
+      summary: wasExistingQuote ? "Quotation Updated" : "Quotation Created",
+      detail: `${quote.quote_ref || `QUOTE-${quote.id}`} saved successfully.`,
+      life: 3000,
+    })
+
+    setTimeout(() => {
+      allowNavigation = true
+      router.push({
+        name: "tms.quotes.show",
+        params: { id: quote.id },
       })
+    }, 700)
+  }
 
-      return
-    }
+  async function onSaveDraft() {
+    await saveDraft({ notify: true, updateRoute: true })
+  }
 
-    if (!mode.value) {
-      localError.value = "Please select a mode of transport."
+  function requestLeaveDecision(): Promise<boolean> {
+    if (leaveDecisionPromise) return leaveDecisionPromise
 
-      toast.add({
-        severity: "warn",
-        summary: "Mode Required",
-        detail: "Please select a mode of transport.",
-        life: 3000,
-      })
+    leaveDraftDialogVisible.value = true
+    leaveDecisionPromise = new Promise<boolean>(resolve => {
+      resolveLeaveDecision = resolve
+    })
 
-      return
-    }
+    return leaveDecisionPromise
+  }
+
+  function completeLeaveDecision(allow: boolean) {
+    const resolve = resolveLeaveDecision
+    resolveLeaveDecision = null
+    leaveDecisionPromise = null
+    leaveDraftDialogVisible.value = false
+    resolve?.(allow)
+  }
+
+  async function saveDraftAndLeave() {
+    leaveDraftDialogSaving.value = true
 
     try {
-      const payload = buildPayload()
-
-      const quote =
-        isEditMode.value && quoteId.value
-          ? await quoteStore.updateQuote(quoteId.value, payload as TransportQuotePayload)
-          : await quoteStore.createQuote(payload as TransportQuotePayload)
-
-      toast.add({
-        severity: "success",
-        summary: isEditMode.value ? "Quotation Updated" : "Quotation Created",
-        detail: `${quote.quote_ref || `QUOTE-${quote.id}`} saved successfully.`,
-        life: 3000,
-      })
-
-      setTimeout(() => {
-        router.push({
-          name: "tms.quotes.show",
-          params: { id: quote.id },
-        })
-      }, 700)
-    } catch (error: any) {
-      const message = error?.response?.data?.message ?? "Unable to save quotation."
-
-      localError.value = message
-
-      toast.add({
-        severity: "error",
-        summary: "Save Failed",
-        detail: message,
-        life: 4000,
-      })
+      const quote = await saveDraft({ notify: true, updateRoute: false })
+      if (quote) completeLeaveDecision(true)
+    } finally {
+      leaveDraftDialogSaving.value = false
     }
+  }
+
+  function leaveWithoutSavingLatestChanges() {
+    if (autosaveTimer !== null) {
+      window.clearTimeout(autosaveTimer)
+      autosaveTimer = null
+    }
+
+    hasUnsavedChanges.value = false
+    removeLocalRecovery()
+    completeLeaveDecision(true)
+  }
+
+  function stayOnQuote() {
+    completeLeaveDecision(false)
+    if (hasUnsavedChanges.value) scheduleAutosave()
   }
 
   function onCancel() {
@@ -922,6 +1290,7 @@ export function useQuoteCreatePage() {
 
       charges: [...buyCostLines.value, ...sellChargeLines.value].map(line => ({
         type: line.type,
+        supplier_id: line.type === "buy" ? line.supplier_id || null : null,
         description: line.description || null,
         qty: Number(line.qty || 0),
         uom: line.uom || null,
@@ -931,6 +1300,8 @@ export function useQuoteCreatePage() {
         currency: line.currency || form.currency || null,
         exchange_rate: Number(line.exchange_rate || 1),
         vat_rate: line.type === "sell" ? Number(line.vat_rate || 0) : null,
+        markup_percent: line.type === "buy" ? Number(line.markup_percent || 0) : 0,
+        add_to_sell: line.type === "buy" && Boolean(line.add_to_sell),
       })),
     } as any
   }
@@ -953,6 +1324,27 @@ export function useQuoteCreatePage() {
       customerSuggestions.value = []
     } finally {
       loadingCustomers.value = false
+    }
+  }
+
+  async function fetchSuppliers() {
+    suppliersLoading.value = true
+
+    try {
+      const firstResponse = await contactsService.list({ page: 1, per_page: 500 })
+      const contacts = [...(firstResponse.data ?? [])]
+      const lastPage = Number(firstResponse.meta?.last_page ?? 1)
+
+      for (let page = 2; page <= lastPage; page += 1) {
+        const response = await contactsService.list({ page, per_page: 500 })
+        contacts.push(...(response.data ?? []))
+      }
+
+      supplierContacts.value = contacts
+    } catch {
+      supplierContacts.value = []
+    } finally {
+      suppliersLoading.value = false
     }
   }
 
@@ -988,16 +1380,6 @@ export function useQuoteCreatePage() {
       addContact(branch.contact_person, branch.name || "Branch", branch.email, branch.phone)
     })
 
-    const collectionAddresses = item.collection_addresses ?? item.collectionAddresses ?? []
-    ;(Array.isArray(collectionAddresses) ? collectionAddresses : []).forEach((address: any) => {
-      addContact(
-        address.contact_person,
-        address.label || address.reference_code || "Address",
-        address.email,
-        address.phone,
-      )
-    })
-
     if (!contacts.length) {
       addContact(
         item.contact_name ?? item.name ?? companyName,
@@ -1019,6 +1401,7 @@ export function useQuoteCreatePage() {
     const quote = await quoteStore.fetchQuote(id)
 
     fillFormFromQuote(quote)
+    return quote
   }
 
   function fillFormFromQuote(quote: TransportQuote) {
@@ -1117,6 +1500,8 @@ export function useQuoteCreatePage() {
       buyCostLines.value = rawCharges.map((line: any) => mapChargeLine(line, "buy"))
     }
 
+    restoreBuySellLinks()
+
     if (!dimensionRows.value.length) addDimensionRow()
     if (!buyCostLines.value.length) addBuyCostLine()
     if (!sellChargeLines.value.length) addSellChargeLine()
@@ -1139,6 +1524,11 @@ export function useQuoteCreatePage() {
       currency: line.currency ?? form.currency ?? "GBP",
       exchange_rate: Number(line.exchange_rate || 1),
       vat_rate: type === "sell" ? Number(line.vat_rate || 0) : undefined,
+      supplier_id: type === "buy" ? Number(line.supplier_id || 0) || null : null,
+      markup_percent: type === "buy" ? Number(line.markup_percent || 0) : 0,
+      add_to_sell: type === "buy" && Boolean(line.add_to_sell),
+      linked_sell_line_id: null,
+      source_buy_line_id: null,
     }
   }
 
@@ -1167,6 +1557,14 @@ export function useQuoteCreatePage() {
     return Number.isNaN(date.getTime()) ? null : date
   }
 
+  function handleBeforeUnload(event: BeforeUnloadEvent) {
+    if (!hasQuoteActivity.value || allowNavigation) return
+
+    saveLocalRecovery()
+    event.preventDefault()
+    event.returnValue = ""
+  }
+
   onMounted(async () => {
     companyStore.hydrateFromAuth()
 
@@ -1176,6 +1574,7 @@ export function useQuoteCreatePage() {
 
     await Promise.allSettled([
       fetchCustomers(),
+      fetchSuppliers(),
       fetchGlobalReferenceOptions(),
       referenceDataStore.categories.length ? Promise.resolve() : referenceDataStore.fetchAll(),
       chargeCodeStore.fetchAll({ sort: "description", direction: "asc", perPage: 1000 }),
@@ -1183,12 +1582,29 @@ export function useQuoteCreatePage() {
     ])
 
     if (isEditMode.value && quoteId.value) {
-      await loadQuoteForEdit(quoteId.value)
+      const quote = await loadQuoteForEdit(quoteId.value)
+      activeDraftId.value = quote.id
+      lastDraftSavedAt.value = quote.updated_at ? new Date(quote.updated_at) : null
     } else {
       refreshQuoteRefPreview(true)
       addDimensionRow()
       addBuyCostLine("Freight Charge")
       addSellChargeLine("Freight Charge")
+    }
+
+    const recovered = restoreLocalRecovery()
+    formReady = true
+    window.addEventListener("beforeunload", handleBeforeUnload)
+
+    if (recovered) {
+      toast.add({
+        severity: "info",
+        summary: "Unsaved Quote Restored",
+        detail:
+          "Your locally recovered quote changes have been restored and will be saved as a draft.",
+        life: 4500,
+      })
+      scheduleAutosave()
     }
   })
 
@@ -1210,11 +1626,47 @@ export function useQuoteCreatePage() {
     { deep: true },
   )
 
+  watch(
+    [quoteType, mode, form, dimensionRows, buyCostLines, sellChargeLines],
+    () => {
+      if (!formReady) return
+
+      changeVersion += 1
+      hasUnsavedChanges.value = true
+      hasQuoteActivity.value = true
+      saveLocalRecovery()
+      scheduleAutosave()
+    },
+    { deep: true },
+  )
+
+  onBeforeRouteLeave(async () => {
+    if (allowNavigation || !hasQuoteActivity.value) return true
+
+    saveLocalRecovery()
+
+    if (autosaveTimer !== null) {
+      window.clearTimeout(autosaveTimer)
+      autosaveTimer = null
+    }
+
+    return requestLeaveDecision()
+  })
+
+  onBeforeUnmount(() => {
+    if (autosaveTimer !== null) window.clearTimeout(autosaveTimer)
+    window.removeEventListener("beforeunload", handleBeforeUnload)
+  })
+
   return {
     pageTitle,
     pageStatusLabel,
     formTitle,
     saveButtonLabel,
+    autosaveStatus,
+    autosaveState,
+    leaveDraftDialogVisible,
+    leaveDraftDialogSaving,
     saving,
     error,
 
@@ -1235,7 +1687,8 @@ export function useQuoteCreatePage() {
     accountNumberPreview,
     originLocationOptions,
     destinationLocationOptions,
-    onGlobalReferenceFilter,
+    onGlobalReferenceComplete,
+    updateLocationValue,
 
     currencyOptions,
     incotermOptions,
@@ -1243,6 +1696,8 @@ export function useQuoteCreatePage() {
     uomOptions,
     chargeDescriptionOptions,
     chargeDescriptionsLoading,
+    supplierOptions,
+    suppliersLoading,
     hazardousClassOptions,
     packingGroupOptions,
     conditionsOptions,
@@ -1286,6 +1741,8 @@ export function useQuoteCreatePage() {
     addSellChargeLine,
     removeBuyCostLine,
     removeSellChargeLine,
+    syncBuyLineToSell,
+    toggleBuyLineAddToSell,
     getRowCbm,
     getRowVolumetricWeight,
     getRowLdm,
@@ -1294,6 +1751,10 @@ export function useQuoteCreatePage() {
     onBrowseQuotes,
     onFindQuote,
     onSave,
+    onSaveDraft,
+    saveDraftAndLeave,
+    leaveWithoutSavingLatestChanges,
+    stayOnQuote,
     onCancel,
   }
 }

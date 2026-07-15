@@ -203,18 +203,20 @@
       <div class="grid-4">
         <div class="field">
           <label class="label">Origin Port / Location</label>
-          <Select
-            v-model="form.origin"
-            :options="originLocationOptions"
+          <AutoComplete
+            :modelValue="form.origin"
+            :suggestions="originLocationOptions"
             optionLabel="label"
-            optionValue="value"
-            filter
-            filterBy="label,subLabel,searchText"
-            editable
-            class="control"
+            class="control quote-location-autocomplete"
+            inputClass="control"
             placeholder="Select origin"
-            emptyFilterMessage="No matching location"
-            @filter="onGlobalReferenceFilter"
+            dropdown
+            :completeOnFocus="true"
+            :minLength="0"
+            :delay="150"
+            emptySearchMessage="No matching location"
+            @update:modelValue="updateLocationValue('origin', $event)"
+            @complete="onGlobalReferenceComplete"
           >
             <template #option="{ option }">
               <div class="quote-location-option">
@@ -222,23 +224,25 @@
                 <small v-if="option.subLabel">{{ option.subLabel }}</small>
               </div>
             </template>
-          </Select>
+          </AutoComplete>
         </div>
 
         <div class="field">
           <label class="label">Destination Port / Location</label>
-          <Select
-            v-model="form.destination"
-            :options="destinationLocationOptions"
+          <AutoComplete
+            :modelValue="form.destination"
+            :suggestions="destinationLocationOptions"
             optionLabel="label"
-            optionValue="value"
-            filter
-            filterBy="label,subLabel,searchText"
-            editable
-            class="control"
+            class="control quote-location-autocomplete"
+            inputClass="control"
             placeholder="Select destination"
-            emptyFilterMessage="No matching location"
-            @filter="onGlobalReferenceFilter"
+            dropdown
+            :completeOnFocus="true"
+            :minLength="0"
+            :delay="150"
+            emptySearchMessage="No matching location"
+            @update:modelValue="updateLocationValue('destination', $event)"
+            @complete="onGlobalReferenceComplete"
           >
             <template #option="{ option }">
               <div class="quote-location-option">
@@ -246,7 +250,7 @@
                 <small v-if="option.subLabel">{{ option.subLabel }}</small>
               </div>
             </template>
-          </Select>
+          </AutoComplete>
         </div>
 
         <div class="field">
@@ -565,17 +569,20 @@
       </div>
 
       <div class="table-wrap">
-        <table class="quote-table quote-table--charges">
+        <table class="quote-table quote-table--charges quote-table--buy-costs">
           <thead>
             <tr>
               <th>#</th>
               <th>Description</th>
+              <th>Supplier</th>
               <th>Qty</th>
               <th>UOM</th>
               <th>Unit Cost</th>
+              <th>Mark-up</th>
               <th>Currency</th>
               <th>Ex. Rate</th>
               <th class="text-right">Net</th>
+              <th class="quote-table__check-heading">Add to Sell</th>
               <th></th>
             </tr>
           </thead>
@@ -596,9 +603,31 @@
                   editable
                   showClear
                   :loading="chargeDescriptionsLoading"
+                  @change="syncBuyLineToSell(line)"
                 />
               </td>
-              <td><InputNumber v-model="line.qty" inputClass="table-input" :min="0" /></td>
+              <td>
+                <Select
+                  v-model="line.supplier_id"
+                  :options="supplierOptions"
+                  optionLabel="label"
+                  optionValue="value"
+                  class="table-select wide"
+                  placeholder="Select supplier"
+                  filter
+                  autoFilterFocus
+                  showClear
+                  :loading="suppliersLoading"
+                />
+              </td>
+              <td>
+                <InputNumber
+                  v-model="line.qty"
+                  inputClass="table-input"
+                  :min="0"
+                  @update:modelValue="syncBuyLineToSell(line)"
+                />
+              </td>
               <td>
                 <Select
                   v-model="line.uom"
@@ -606,6 +635,7 @@
                   optionLabel="label"
                   optionValue="value"
                   class="table-select"
+                  @change="syncBuyLineToSell(line)"
                 />
               </td>
               <td>
@@ -616,6 +646,18 @@
                   :minFractionDigits="2"
                   :maxFractionDigits="2"
                   :min="0"
+                  @update:modelValue="syncBuyLineToSell(line)"
+                />
+              </td>
+              <td>
+                <InputNumber
+                  v-model="line.markup_percent"
+                  inputClass="table-input"
+                  suffix="%"
+                  :minFractionDigits="0"
+                  :maxFractionDigits="2"
+                  :min="0"
+                  @update:modelValue="syncBuyLineToSell(line)"
                 />
               </td>
               <td>
@@ -625,6 +667,7 @@
                   optionLabel="value"
                   optionValue="value"
                   class="table-select table-select--currency"
+                  @change="syncBuyLineToSell(line)"
                 />
               </td>
               <td>
@@ -635,9 +678,18 @@
                   :minFractionDigits="4"
                   :maxFractionDigits="4"
                   :min="0"
+                  @update:modelValue="syncBuyLineToSell(line)"
                 />
               </td>
               <td class="text-right">{{ getChargeLineTotal(line).toFixed(2) }}</td>
+              <td class="quote-table__check-cell">
+                <Checkbox
+                  :modelValue="Boolean(line.add_to_sell)"
+                  binary
+                  :inputId="`quote-buy-${line.id}-add-to-sell`"
+                  @update:modelValue="toggleBuyLineAddToSell(line, Boolean($event))"
+                />
+              </td>
               <td>
                 <Button
                   icon="pi pi-times"
@@ -853,9 +905,33 @@
           </div>
 
           <div class="final-actions">
+            <span
+              class="quote-draft-status"
+              :class="`quote-draft-status--${autosaveState}`"
+              role="status"
+            >
+              <i
+                class="pi"
+                :class="autosaveState === 'error' ? 'pi-exclamation-triangle' : 'pi-cloud'"
+              />
+              {{ autosaveStatus }}
+            </span>
+
             <Button class="btn" outlined type="button" :disabled="saving" @click="onCancel"
               >Cancel</Button
             >
+
+            <Button
+              class="btn quote-save-draft"
+              outlined
+              type="button"
+              :loading="autosaveState === 'saving'"
+              :disabled="saving"
+              @click="onSaveDraft"
+            >
+              <i v-if="autosaveState !== 'saving'" class="pi pi-save" />
+              Save as Draft
+            </Button>
 
             <Button
               class="btn orbis-primary"
@@ -871,6 +947,53 @@
         </div>
       </div>
     </section>
+
+    <Dialog
+      v-model:visible="leaveDraftDialogVisible"
+      modal
+      :closable="false"
+      :closeOnEscape="false"
+      :dismissableMask="false"
+      header="Leave Quote Builder?"
+      class="quote-leave-dialog"
+    >
+      <div class="quote-leave-dialog__body">
+        <span class="quote-leave-dialog__icon"><i class="pi pi-exclamation-triangle" /></span>
+        <div>
+          <p>Would you like to save the current quote as a draft before leaving?</p>
+          <small>
+            Previously autosaved information will remain in the existing draft. Choosing “Leave
+            Without Saving” discards only the latest pending changes.
+          </small>
+        </div>
+      </div>
+
+      <template #footer>
+        <Button
+          label="Stay on Quote"
+          severity="secondary"
+          text
+          type="button"
+          :disabled="leaveDraftDialogSaving"
+          @click="stayOnQuote"
+        />
+        <Button
+          label="Leave Without Saving"
+          severity="danger"
+          outlined
+          type="button"
+          :disabled="leaveDraftDialogSaving || autosaveState === 'saving'"
+          @click="leaveWithoutSavingLatestChanges"
+        />
+        <Button
+          label="Save Draft & Leave"
+          icon="pi pi-save"
+          type="button"
+          :loading="leaveDraftDialogSaving"
+          @click="saveDraftAndLeave"
+        />
+      </template>
+    </Dialog>
   </div>
 </template>
 
@@ -886,6 +1009,7 @@ import Select from "primevue/select"
 import InputNumber from "primevue/inputnumber"
 import InputSwitch from "primevue/inputswitch"
 import Checkbox from "primevue/checkbox"
+import Dialog from "primevue/dialog"
 
 import ModeSelector from "@/app/components/jobs/ModeSelector.vue"
 import LoadPlannerPanel from "@/app/components/load-planner/LoadPlannerPanel.vue"
@@ -898,6 +1022,10 @@ const {
   pageStatusLabel,
   formTitle,
   saveButtonLabel,
+  autosaveStatus,
+  autosaveState,
+  leaveDraftDialogVisible,
+  leaveDraftDialogSaving,
   saving,
   error,
 
@@ -918,7 +1046,8 @@ const {
   accountNumberPreview,
   originLocationOptions,
   destinationLocationOptions,
-  onGlobalReferenceFilter,
+  onGlobalReferenceComplete,
+  updateLocationValue,
 
   currencyOptions,
   incotermOptions,
@@ -926,6 +1055,8 @@ const {
   uomOptions,
   chargeDescriptionOptions,
   chargeDescriptionsLoading,
+  supplierOptions,
+  suppliersLoading,
   hazardousClassOptions,
   packingGroupOptions,
   conditionsOptions,
@@ -969,6 +1100,8 @@ const {
   addSellChargeLine,
   removeBuyCostLine,
   removeSellChargeLine,
+  syncBuyLineToSell,
+  toggleBuyLineAddToSell,
   getRowCbm,
   getRowVolumetricWeight,
   getRowLdm,
@@ -977,6 +1110,10 @@ const {
   onBrowseQuotes,
   onFindQuote,
   onSave,
+  onSaveDraft,
+  saveDraftAndLeave,
+  leaveWithoutSavingLatestChanges,
+  stayOnQuote,
   onCancel,
 } = useQuoteCreatePage()
 </script>
