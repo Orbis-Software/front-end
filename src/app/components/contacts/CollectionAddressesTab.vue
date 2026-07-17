@@ -814,17 +814,20 @@ function displayType(c: CollectionUI) {
   display: grid;
   grid-template-columns: 340px 1fr;
   gap: 14px;
-  align-items: start;
+  align-items: stretch;
 }
 
 @media (max-width: 1100px) {
   .split {
     grid-template-columns: 1fr;
+    align-items: start;
   }
 }
 
 /* left list */
 .list {
+  position: relative;
+  min-height: 0;
   border: 1px solid #e5e7eb;
   border-radius: 14px;
   background: #fff;
@@ -832,8 +835,22 @@ function displayType(c: CollectionUI) {
 }
 
 .listInner {
-  max-height: 620px;
-  overflow: auto;
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+@media (max-width: 1100px) {
+  .list {
+    position: static;
+    width: 100%;
+  }
+
+  .listInner {
+    position: static;
+    max-height: min(620px, 55vh);
+  }
 }
 
 .listItem {
@@ -1068,5 +1085,98 @@ function displayType(c: CollectionUI) {
 .btn--danger:hover {
   background: #ffe4e6;
   border-color: #fecaca;
+}
+
+/* Contact Details standard palette */
+.emptyState {
+  border-color: var(--contact-details-border);
+  background: var(--contact-details-panel-body);
+  color: var(--contact-details-muted);
+}
+
+.list {
+  border-color: var(--contact-details-border);
+  background: var(--contact-details-surface);
+}
+
+.listItem {
+  border-color: var(--contact-details-border);
+  background: var(--contact-details-control-bg);
+}
+
+.listItem:hover {
+  background: var(--contact-details-panel-soft);
+}
+
+.listItem--active {
+  border-left-color: var(--contact-details-accent);
+  background: var(--contact-details-accent-soft);
+}
+
+.listItem__title,
+.metaChip,
+.badge,
+.editorTitle {
+  color: var(--contact-details-text);
+}
+
+.listItem__desc,
+.switchHint,
+.editorSub,
+.emptyEditor,
+.label,
+.hint,
+.badge--muted {
+  color: var(--contact-details-muted);
+}
+
+.pinIcon,
+.metaChip,
+.badge {
+  border-color: var(--contact-details-control-border);
+  background: var(--contact-details-control-bg);
+}
+
+.pinIcon {
+  border-color: #fdba74;
+  background: var(--contact-details-accent-soft);
+}
+
+.editor {
+  border-color: var(--contact-details-border);
+  background: var(--contact-details-panel-body);
+}
+
+.editorHead {
+  border-color: var(--contact-details-border);
+  background: var(--contact-details-section-head);
+}
+
+.editorBody {
+  background: var(--contact-details-panel-body);
+}
+
+.switchRow {
+  border-color: var(--contact-details-control-border);
+  background: var(--contact-details-panel-soft);
+}
+
+.input {
+  min-height: 40px;
+  border-color: var(--contact-details-control-border);
+  border-radius: 8px;
+  background: var(--contact-details-control-bg);
+  color: var(--contact-details-text);
+}
+
+.input:hover,
+.input:focus {
+  border-color: var(--contact-details-accent);
+  box-shadow: 0 0 0 2px rgba(236, 105, 26, 0.12);
+}
+
+.divider,
+.editorActions {
+  border-color: var(--contact-details-border);
 }
 </style>

@@ -88,6 +88,7 @@ export type JobDetailsContext = {
   selectedDestinationAddress: any
   openAddressModal: (target: AddressTarget) => void
   createAndSelectAddress: (payload: JobTransportAddressPayload) => Promise<void>
+  selectDestinationAddress: (addressId: number | null) => void
   onAddressContactFilter: (event: { value?: string }) => void
   selectAddressContact: (target: AddressTarget, contactId: number | null) => Promise<void>
   chooseAddressSource: (choice: AddressChoice) => void
@@ -329,7 +330,7 @@ function addressChoiceToDisplay(choice: AddressChoice | null): ContactCollection
   return {
     id: choice.id,
     contact_id: null,
-    label: [choice.ownerName, choice.label].filter(Boolean).join(" - ") || choice.label,
+    label: choice.label,
     address_line_1: choice.address_line_1,
     address_line_2: choice.address_line_2,
     address_line_3: choice.address_line_3,
@@ -443,6 +444,7 @@ function serializeChargeRow(row: any): JobCharge {
   const id = Number(row.id)
   const chargeCodeId = Number(row.chargeCodeId ?? row.charge_code_id)
   const supplierId = Number(row.supplierId ?? row.supplier_id)
+  const isHouseAccount = type === "buy" && row.supplier_id === "house_account"
   const exchangeRate = Number(row.exchangeRate ?? row.exchange_rate)
 
   return {
@@ -462,6 +464,7 @@ function serializeChargeRow(row: any): JobCharge {
       type === "buy"
         ? Boolean(row.addToSellCharges ?? row.add_to_sell_charges ?? row.add_to_sell ?? false)
         : false,
+    is_house_account: isHouseAccount,
     ...(Number.isFinite(chargeCodeId) && chargeCodeId > 0 ? { charge_code_id: chargeCodeId } : {}),
     ...(Number.isFinite(supplierId) && supplierId > 0 ? { supplier_id: supplierId } : {}),
   }
@@ -474,6 +477,8 @@ function normalizeChargeRow(row: any) {
     type === "buy"
       ? numberValue(row?.unitCost ?? row?.unit_cost ?? row?.unit_amount ?? row?.amount, 0)
       : numberValue(row?.unitPrice ?? row?.unit_price ?? row?.unit_amount ?? row?.amount, 0)
+  const isHouseAccount =
+    type === "buy" && booleanValue(row?.is_house_account ?? row?.isHouseAccount, false)
 
   return {
     ...row,
@@ -488,7 +493,9 @@ function normalizeChargeRow(row: any) {
     invoice: row?.invoice ?? null,
     ...(type === "buy"
       ? {
-          supplier_id: row?.supplier_id ?? row?.supplierId ?? null,
+          supplier_id: isHouseAccount
+            ? "house_account"
+            : (row?.supplier_id ?? row?.supplierId ?? null),
           chargeCodeId: row?.chargeCodeId ?? row?.charge_code_id ?? null,
           unitCost: unitAmount,
           markupPercentage: numberValue(row?.markupPercentage ?? row?.markup_percentage, 0),
@@ -1408,24 +1415,25 @@ export function useJobDetailsPage() {
   })
 
   const originAddressOptions = computed<AddressSelectOption[]>(() => {
-    return (selectedCustomer.value?.collection_addresses ?? [])
-      .filter(address => Boolean(address.is_collection))
-      .map(address => addressOption(address))
+    return (selectedCustomer.value?.collection_addresses ?? []).map(address =>
+      addressOption(address),
+    )
   })
 
   const destinationAddressOptions = computed<AddressSelectOption[]>(() => {
     const optionsById = new Map<number, AddressSelectOption>()
 
-    destinationContactsRef.value.forEach(contact => {
-      const ownerName = displayContactName(contact)
-
-      ;(contact.collection_addresses ?? []).forEach(address => {
-        optionsById.set(Number(address.id), addressOption(address, ownerName))
-      })
+    ;(selectedCustomer.value?.collection_addresses ?? []).forEach(address => {
+      optionsById.set(Number(address.id), addressOption(address))
     })
 
     const currentAddress = (job.value as any)?.destination_address
-    if (currentAddress?.id && !optionsById.has(Number(currentAddress.id))) {
+    const selectedAddressId = Number(form.destination_contact_collection_address_id)
+    if (
+      currentAddress?.id &&
+      selectedAddressId === Number(currentAddress.id) &&
+      !optionsById.has(Number(currentAddress.id))
+    ) {
       optionsById.set(Number(currentAddress.id), addressOption(currentAddress))
     }
 
@@ -1557,6 +1565,20 @@ export function useJobDetailsPage() {
   })
 
   const selectedDestinationAddress = computed<ContactCollectionAddress | null>(() => {
+    if (form.destination_address_source_type === "collection_address") {
+      const addressId = Number(form.destination_address_source_id)
+      const loadedDestinationAddress = (job.value as any)?.destination_address
+
+      return (
+        selectedCustomer.value?.collection_addresses?.find(
+          address => Number(address.id) === addressId,
+        ) ??
+        (loadedDestinationAddress?.id && Number(loadedDestinationAddress.id) === addressId
+          ? loadedDestinationAddress
+          : null)
+      )
+    }
+
     return addressChoiceToDisplay(
       findAddressChoice(form.destination_address_source_type, form.destination_address_source_id),
     )
@@ -2289,6 +2311,10 @@ export function useJobDetailsPage() {
       loaded,
       ...customerContactsRef.value.filter(contact => Number(contact.id) !== Number(customerId)),
     ]
+    destinationContactsRef.value = [
+      loaded,
+      ...destinationContactsRef.value.filter(contact => Number(contact.id) !== Number(customerId)),
+    ]
 
     return loaded
   }
@@ -2323,6 +2349,17 @@ export function useJobDetailsPage() {
     selectedDestinationContactIdRef.value = choice.contact_id
 
     addressPickerVisibleRef.value = false
+    scheduleAutosaveFromCurrentState()
+  }
+
+  function selectDestinationAddress(addressId: number | null) {
+    const selectedId = addressId ? Number(addressId) : null
+
+    form.destination_contact_collection_address_id = selectedId
+    form.destination_address_source_type = selectedId ? "collection_address" : null
+    form.destination_address_source_id = selectedId
+    selectedDestinationContactIdRef.value = selectedId ? Number(form.customer_id) : null
+
     scheduleAutosaveFromCurrentState()
   }
 
@@ -2374,6 +2411,10 @@ export function useJobDetailsPage() {
       form.account_number = customer?.account_number ?? ""
 
       form.origin_contact_collection_address_id = null
+      form.destination_contact_collection_address_id = null
+      form.destination_address_source_type = null
+      form.destination_address_source_id = null
+      selectedDestinationContactIdRef.value = null
 
       await loadSelectedCustomer(id ? Number(id) : null)
     },
@@ -2435,6 +2476,7 @@ export function useJobDetailsPage() {
     selectedDestinationAddress,
     openAddressModal,
     createAndSelectAddress,
+    selectDestinationAddress,
     onAddressContactFilter,
     selectAddressContact,
     chooseAddressSource,
@@ -2533,6 +2575,7 @@ export function useJobDetailsPage() {
     load,
     openAddressModal,
     createAndSelectAddress,
+    selectDestinationAddress,
     onCustomerFilter,
     onAddressContactFilter,
     selectAddressContact,

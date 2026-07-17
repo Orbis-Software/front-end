@@ -1,7 +1,23 @@
 .contact-create-page {
+  --contact-accent: #ec691a;
+  --contact-accent-hover: #d85d14;
+  --contact-accent-soft: #fff7ed;
+  --contact-text: #1a1a18;
+  --contact-muted: #737373;
+  --contact-border: #b6b6b6;
+  --contact-control-border: #bdbdbd;
+  --contact-shell: #d3d3d3;
+  --contact-surface: #f8f8f8;
+  --contact-section-head: #ececec;
+  --contact-panel-body: #dedede;
+  --contact-control-bg: #ffffff;
+  --contact-control-disabled-bg: #eeeeee;
+
   max-width: 1400px;
   margin: 0 auto;
   padding: 22px 32px;
+  background: var(--contact-shell);
+  color: var(--contact-text);
 }
 
 .page-header {
@@ -315,4 +331,182 @@
   outline: none;
   box-shadow: 0 0 0 2px rgba(236, 105, 26, 0.1);
   border-color: rgba(236, 105, 26, 0.35);
+}
+
+/* Contact form palette shared with Job Details and Quote Builder. */
+.contact-create-page .page-title,
+.contact-create-page .section-head h2,
+.contact-create-page .field label,
+.contact-create-page .type-pill,
+.contact-create-page .usage-pill {
+  color: var(--contact-text);
+}
+
+.contact-create-page .page-subtitle,
+.contact-create-page .hint,
+.contact-create-page .footer {
+  color: var(--contact-muted);
+}
+
+.contact-create-page .card {
+  border-color: var(--contact-border);
+  border-radius: 14px;
+  background: var(--contact-surface);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.contact-create-page .section {
+  padding: 0 14px 14px;
+  border: 1px solid var(--contact-border);
+  border-radius: 10px;
+  background: var(--contact-panel-body);
+  overflow: hidden;
+}
+
+.contact-create-page .section-head {
+  margin: 0 -14px 14px;
+  padding: 12px 14px;
+  border-color: var(--contact-border);
+  background: var(--contact-section-head);
+}
+
+.contact-create-page .section-head i {
+  color: var(--contact-accent);
+}
+
+.contact-create-page .divider {
+  height: 0;
+  margin: 12px 0;
+  background: transparent;
+}
+
+.contact-create-page .grid {
+  gap: 12px;
+}
+
+.contact-create-page .field input,
+.contact-create-page .field select,
+.contact-create-page .p-autocomplete-input {
+  min-height: 40px;
+  border-color: var(--contact-control-border);
+  border-radius: 8px;
+  background: var(--contact-control-bg);
+  color: var(--contact-text);
+}
+
+.contact-create-page .field input:hover,
+.contact-create-page .field select:hover,
+.contact-create-page .p-autocomplete-input:hover,
+.contact-create-page .field input:focus,
+.contact-create-page .field select:focus,
+.contact-create-page .p-autocomplete-input:focus {
+  border-color: var(--contact-accent);
+  box-shadow: 0 0 0 2px rgba(236, 105, 26, 0.12);
+}
+
+.contact-create-page .field input.readonly {
+  border-color: var(--contact-control-border);
+  background: var(--contact-control-disabled-bg);
+  color: var(--contact-muted);
+}
+
+.contact-create-page .type-pill,
+.contact-create-page .usage-pill {
+  min-height: 42px;
+  border-color: var(--contact-control-border);
+  border-radius: 8px;
+  background: var(--contact-control-bg);
+}
+
+.contact-create-page .type-pill:hover,
+.contact-create-page .usage-pill:hover,
+.contact-create-page .type-pill.checked,
+.contact-create-page .usage-pill.checked {
+  border-color: var(--contact-accent);
+  background: var(--contact-accent-soft);
+}
+
+.contact-create-page .type-pill input,
+.contact-create-page .usage-pill input {
+  accent-color: var(--contact-accent);
+}
+
+.contact-create-page .p-autocomplete {
+  width: 100%;
+}
+
+.contact-create-page .p-autocomplete-dropdown {
+  border-color: var(--contact-control-border);
+  background: var(--contact-control-bg);
+  color: var(--contact-muted);
+}
+
+.contact-create-page .actions {
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid var(--contact-border);
+  border-radius: 10px;
+  background: var(--contact-section-head);
+}
+
+.contact-create-page .btn {
+  min-height: 38px;
+  border-color: var(--contact-control-border);
+  border-radius: 8px;
+  background: var(--contact-control-bg);
+  color: var(--contact-text);
+}
+
+.contact-create-page .btn:hover {
+  border-color: var(--contact-accent);
+  background: var(--contact-accent-soft);
+}
+
+.contact-create-page .btn.primary,
+.contact-create-page .btn.primary:hover {
+  border-color: var(--contact-accent);
+  background: var(--contact-accent);
+  color: #fff;
+}
+
+.contact-create-page .btn.primary:hover {
+  border-color: var(--contact-accent-hover);
+  background: var(--contact-accent-hover);
+}
+
+.contact-leave-dialog {
+  width: min(540px, calc(100vw - 32px));
+}
+
+.contact-leave-dialog .contact-leave-dialog__body {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 4px 0 8px;
+}
+
+.contact-leave-dialog .contact-leave-dialog__icon {
+  display: inline-flex;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #fff3e8;
+  color: #e75b0c;
+  font-size: 18px;
+}
+
+.contact-leave-dialog .contact-leave-dialog__body p {
+  margin: 1px 0 7px;
+  color: #1f2937;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.contact-leave-dialog .contact-leave-dialog__body small {
+  color: #667085;
+  font-size: 12px;
+  line-height: 1.55;
 }

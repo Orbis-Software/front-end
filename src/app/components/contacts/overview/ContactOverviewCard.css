@@ -353,3 +353,84 @@
   color: #166534;
   font-weight: 700;
 }
+
+/* Contact Details standard palette */
+.contact-details-page .contact-overview__hero {
+  border-color: var(--contact-details-border);
+  background: var(--contact-details-panel-body);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+
+.contact-details-page .contact-overview__mini-card {
+  border-color: var(--contact-details-control-border);
+  background: var(--contact-details-control-bg);
+}
+
+.contact-details-page .contact-overview__title,
+.contact-details-page .contact-overview__mini-value,
+.contact-details-page .overview-panel__title,
+.contact-details-page .overview-details__value,
+.contact-details-page .overview-stat__value {
+  color: var(--contact-details-text);
+}
+
+.contact-details-page .contact-overview__mini-label,
+.contact-details-page .contact-overview__mini-subtext,
+.contact-details-page .overview-panel__eyebrow,
+.contact-details-page .overview-details__label,
+.contact-details-page .overview-stat__label {
+  color: var(--contact-details-muted);
+}
+
+.contact-details-page .contact-overview__chip {
+  border-color: #fdba74;
+  background: var(--contact-details-accent-soft);
+  color: #9a3412;
+}
+
+.contact-details-page .overview-panel {
+  border-color: var(--contact-details-border);
+  background: var(--contact-details-panel-body);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.85);
+  overflow: hidden;
+}
+
+.contact-details-page .overview-panel__head {
+  border-color: var(--contact-details-border);
+  background: var(--contact-details-section-head);
+}
+
+.contact-details-page .overview-details__item,
+.contact-details-page .overview-stat {
+  border-color: var(--contact-details-control-border);
+  background: var(--contact-details-control-bg);
+}
+
+.contact-details-page .overview-stat--blue,
+.contact-details-page .overview-stat--amber,
+.contact-details-page .overview-stat--green,
+.contact-details-page .overview-stat--orange,
+.contact-details-page .overview-stat--neutral {
+  background: var(--contact-details-control-bg);
+}
+
+.contact-details-page .contact-overview__chip--danger {
+  border-color: rgba(185, 28, 28, 0.2);
+  background: rgba(185, 28, 28, 0.12);
+  color: #991b1b;
+}
+
+.contact-details-page .contact-overview__chip--success {
+  border-color: rgba(22, 163, 74, 0.2);
+  background: rgba(22, 163, 74, 0.12);
+  color: #166534;
+}
+
+.contact-details-page .contact-overview__mini-value--warning,
+.contact-details-page .overview-details__value--danger {
+  color: #b91c1c;
+}
+
+.contact-details-page .overview-details__value--success {
+  color: #166534;
+}

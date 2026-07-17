@@ -15,6 +15,15 @@ type SpacePreset = {
   label: string
 }
 
+type LoadSpaceDefinition = {
+  l: number
+  w: number
+  h: number
+  maxWt: number
+  palH: number
+  presetKey?: string
+}
+
 type LoadUnit = {
   id: string
   sourceId?: string | number
@@ -102,6 +111,9 @@ const props = withDefaults(
     referenceLabel?: string
     transportMode?: string
     emptyMessage?: string
+    vehicleType?: string
+    vehicleLoadSpace?: Record<string, unknown> | null
+    lockVehicleType?: boolean
   }>(),
   {
     packages: () => [],
@@ -109,6 +121,9 @@ const props = withDefaults(
     referenceLabel: "Reference",
     transportMode: "road",
     emptyMessage: "Add package dimensions or add a manual unit here.",
+    vehicleType: "",
+    vehicleLoadSpace: null,
+    lockVehicleType: false,
   },
 )
 
@@ -329,7 +344,51 @@ const jobRefLocal = computed({
   set() {},
 })
 
+function loadSpaceFromMetadata(
+  metadata: Record<string, unknown> | null,
+): LoadSpaceDefinition | null {
+  if (!metadata) return null
+
+  const l = Number(metadata.length_cm ?? metadata.lengthCm ?? metadata.l ?? 0)
+  const w = Number(metadata.width_cm ?? metadata.widthCm ?? metadata.w ?? 0)
+  const h = Number(metadata.height_cm ?? metadata.heightCm ?? metadata.h ?? 0)
+  const maxWt = Number(metadata.max_weight_kg ?? metadata.maxWeightKg ?? metadata.maxWt ?? 0)
+  const palH = Number(metadata.pallet_base_cm ?? metadata.palletBaseCm ?? metadata.palH ?? 15)
+  const presetKey = String(metadata.preset_key ?? metadata.presetKey ?? "").trim()
+
+  if (![l, w, h, maxWt].every(value => Number.isFinite(value) && value > 0)) return null
+
+  return {
+    l,
+    w,
+    h,
+    maxWt,
+    palH: Number.isFinite(palH) && palH >= 0 ? palH : 15,
+    presetKey: presetKey || undefined,
+  }
+}
+
+const usesExternalVehicle = computed(
+  () => props.lockVehicleType && String(props.transportMode).toLowerCase() === "road",
+)
+const externalLoadSpace = computed(() => loadSpaceFromMetadata(props.vehicleLoadSpace))
+const hasUsableSpaceDimensions = computed(() =>
+  [space.l, space.w, space.h, space.maxWt].every(value => Number.isFinite(value) && value > 0),
+)
+const loadSpaceBlocked = computed(
+  () =>
+    usesExternalVehicle.value &&
+    (!props.vehicleType.trim() || (!externalLoadSpace.value && !hasUsableSpaceDimensions.value)),
+)
+const loadSpaceRequiredMessage = computed(() => {
+  if (!props.vehicleType.trim()) return "Select the Vehicle Type in Shipment Summary first."
+
+  return "This vehicle has no Reference Data dimensions. Enter its load-space dimensions below."
+})
+
 const vehicleLabel = computed(() => {
+  if (usesExternalVehicle.value) return props.vehicleType.trim() || "Vehicle type not selected"
+
   const preset = SPACE_PRESETS[spacePresetKey.value]
   if (preset) return preset.label
 
@@ -540,6 +599,31 @@ function applySpacePreset() {
   scheduleCalculate()
 }
 
+function applyExternalVehicleLoadSpace() {
+  const definition = externalLoadSpace.value
+
+  if (!definition) {
+    spacePresetKey.value = ""
+    space.l = 0
+    space.w = 0
+    space.h = 0
+    space.maxWt = 0
+    space.palH = 15
+    layout.value = null
+    nextTick(drawAll)
+    return
+  }
+
+  space.l = definition.l
+  space.w = definition.w
+  space.h = definition.h
+  space.maxWt = definition.maxWt
+  space.palH = definition.palH
+  spacePresetKey.value =
+    definition.presetKey && SPACE_PRESETS[definition.presetKey] ? definition.presetKey : ""
+  scheduleCalculate()
+}
+
 function applyUnitType() {
   const preset = UNIT_PRESETS[formUnit.type]
   if (!preset) return
@@ -592,6 +676,12 @@ function expandUnits(units: LoadUnit[]): PlacedUnit[] {
 }
 
 function calculate() {
+  if (loadSpaceBlocked.value) {
+    layout.value = null
+    drawAll()
+    return
+  }
+
   const tLen = Number(space.l || 0)
   const tWid = Number(space.w || 0)
   const tHei = Number(space.h || 0)
@@ -1372,6 +1462,11 @@ function disablePrintMode() {
 }
 
 function selectDefaultPresetForMode() {
+  if (usesExternalVehicle.value) {
+    applyExternalVehicleLoadSpace()
+    return
+  }
+
   const mode = String(props.transportMode ?? "").toLowerCase()
   if (mode === "sea") spacePresetKey.value = "sea_40std"
   else if (mode === "rail") spacePresetKey.value = "rail_fea"
@@ -1390,6 +1485,12 @@ watch(
     scheduleCalculate()
   },
   { deep: true, flush: "post" },
+)
+
+watch(
+  () => [props.transportMode, props.vehicleType, props.vehicleLoadSpace, props.lockVehicleType],
+  () => selectDefaultPresetForMode(),
+  { deep: true },
 )
 
 watch(activeView, () => {
@@ -1441,7 +1542,7 @@ onUnmounted(() => {
         <button
           type="button"
           class="job-load-planner-tab__button"
-          :disabled="isPreparingPrint"
+          :disabled="isPreparingPrint || loadSpaceBlocked"
           @click="printPlan"
         >
           {{ isPreparingPrint ? "Preparing..." : "Print" }}
@@ -1449,6 +1550,7 @@ onUnmounted(() => {
         <button
           type="button"
           class="job-load-planner-tab__button job-load-planner-tab__button--primary"
+          :disabled="loadSpaceBlocked"
           @click="calculate"
         >
           Calculate Layout
@@ -1475,7 +1577,17 @@ onUnmounted(() => {
             <span class="job-load-planner-tab__mode">{{ modeLabel }}</span>
           </h3>
 
-          <label class="job-load-planner-tab__field job-load-planner-tab__field--full">
+          <div
+            v-if="usesExternalVehicle"
+            class="job-load-planner-tab__vehicle-source"
+            :class="{ 'job-load-planner-tab__vehicle-source--invalid': loadSpaceBlocked }"
+          >
+            <span>Quote Vehicle Type</span>
+            <strong>{{ vehicleLabel }}</strong>
+            <small v-if="loadSpaceBlocked">{{ loadSpaceRequiredMessage }}</small>
+          </div>
+
+          <label v-else class="job-load-planner-tab__field job-load-planner-tab__field--full">
             <span>Vehicle / Container Preset</span>
             <select v-model="spacePresetKey" @change="applySpacePreset">
               <option value="">Manual dimensions</option>
@@ -1490,26 +1602,51 @@ onUnmounted(() => {
           <div class="job-load-planner-tab__grid job-load-planner-tab__grid--three">
             <label class="job-load-planner-tab__field">
               <span>Length cm</span>
-              <input v-model.number="space.l" type="number" min="1" />
+              <input
+                v-model.number="space.l"
+                type="number"
+                min="1"
+                :readonly="usesExternalVehicle && externalLoadSpace !== null"
+              />
             </label>
             <label class="job-load-planner-tab__field">
               <span>Width cm</span>
-              <input v-model.number="space.w" type="number" min="1" />
+              <input
+                v-model.number="space.w"
+                type="number"
+                min="1"
+                :readonly="usesExternalVehicle && externalLoadSpace !== null"
+              />
             </label>
             <label class="job-load-planner-tab__field">
               <span>Height cm</span>
-              <input v-model.number="space.h" type="number" min="1" />
+              <input
+                v-model.number="space.h"
+                type="number"
+                min="1"
+                :readonly="usesExternalVehicle && externalLoadSpace !== null"
+              />
             </label>
           </div>
 
           <div class="job-load-planner-tab__grid">
             <label class="job-load-planner-tab__field">
               <span>Max kg</span>
-              <input v-model.number="space.maxWt" type="number" min="0" />
+              <input
+                v-model.number="space.maxWt"
+                type="number"
+                min="0"
+                :readonly="usesExternalVehicle && externalLoadSpace !== null"
+              />
             </label>
             <label class="job-load-planner-tab__field">
               <span>Pallet Base cm</span>
-              <input v-model.number="space.palH" type="number" min="0" />
+              <input
+                v-model.number="space.palH"
+                type="number"
+                min="0"
+                :readonly="usesExternalVehicle && externalLoadSpace !== null"
+              />
             </label>
           </div>
 

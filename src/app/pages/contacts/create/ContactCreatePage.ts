@@ -1,5 +1,5 @@
-import { computed, onMounted, reactive, ref } from "vue"
-import { useRoute, useRouter } from "vue-router"
+import { computed, onBeforeUnmount, onMounted, reactive, ref } from "vue"
+import { onBeforeRouteLeave, useRoute, useRouter } from "vue-router"
 import { useToast } from "primevue/usetoast"
 import { useContactStore } from "@/app/stores/contact"
 import { useCountryStore } from "@/app/stores/country"
@@ -18,6 +18,13 @@ export function useContactCreatePage() {
 
   const saving = ref(false)
   const loadingContact = ref(false)
+  const leaveDialogVisible = ref(false)
+
+  const cleanFormSnapshot = ref("")
+  const formReady = ref(false)
+  let allowNavigation = false
+  let leaveDecisionPromise: Promise<boolean> | null = null
+  let resolveLeaveDecision: ((allow: boolean) => void) | null = null
 
   const contactId = computed<number | null>(() => {
     const raw = route.params.id
@@ -66,6 +73,46 @@ export function useContactCreatePage() {
   const selectedCountry = ref<Country | null>(null)
   const countrySuggestions = ref<Country[]>([])
   const countrySearching = ref(false)
+
+  function currentFormSnapshot() {
+    const selectedCountryValue = selectedCountry.value as Country | string | null
+
+    return JSON.stringify({
+      contact_type_ids: [...form.contact_type_ids].sort((a, b) => a - b),
+      company_name: form.company_name,
+      account_number: form.account_number,
+      credit_limit: form.credit_limit,
+      currency_preference: form.currency_preference,
+      registration_number: form.registration_number,
+      vat_number: form.vat_number,
+      eori: form.eori,
+      address_line_1: form.address_line_1,
+      address_line_2: form.address_line_2,
+      address_line_3: form.address_line_3,
+      city: form.city,
+      county_state: form.county_state,
+      postal_code: form.postal_code,
+      country_id: form.country_id,
+      selected_country:
+        typeof selectedCountryValue === "string"
+          ? selectedCountryValue
+          : (selectedCountryValue?.id ?? null),
+      phone_country_code: form.phone_country_code,
+      phone: form.phone,
+      email: form.email,
+      website: form.website,
+      address_usage: { ...form.address_usage },
+    })
+  }
+
+  function markFormClean() {
+    cleanFormSnapshot.value = currentFormSnapshot()
+    formReady.value = true
+  }
+
+  const hasUnsavedChanges = computed(
+    () => formReady.value && currentFormSnapshot() !== cleanFormSnapshot.value,
+  )
 
   function resetForm() {
     form.contact_type_ids = []
@@ -141,6 +188,10 @@ export function useContactCreatePage() {
   }
 
   onMounted(async () => {
+    window.addEventListener("beforeunload", handleBeforeUnload)
+
+    if (!isEdit.value) markFormClean()
+
     if (!store.types.length) await store.fetchTypes()
     if (!countryStore.items.length) await countryStore.fetch()
 
@@ -158,11 +209,60 @@ export function useContactCreatePage() {
           detail: "Unable to load this contact for editing.",
           life: 4500,
         })
+        allowNavigation = true
         router.push("/contacts")
+        return
       } finally {
         loadingContact.value = false
       }
+
+      markFormClean()
     }
+  })
+
+  function requestLeaveDecision(): Promise<boolean> {
+    if (leaveDecisionPromise) return leaveDecisionPromise
+
+    leaveDialogVisible.value = true
+    leaveDecisionPromise = new Promise<boolean>(resolve => {
+      resolveLeaveDecision = resolve
+    })
+
+    return leaveDecisionPromise
+  }
+
+  function completeLeaveDecision(allow: boolean) {
+    const resolve = resolveLeaveDecision
+    resolveLeaveDecision = null
+    leaveDecisionPromise = null
+    leaveDialogVisible.value = false
+
+    if (allow) allowNavigation = true
+    resolve?.(allow)
+  }
+
+  function stayOnContact() {
+    completeLeaveDecision(false)
+  }
+
+  function leaveWithoutSaving() {
+    completeLeaveDecision(true)
+  }
+
+  function handleBeforeUnload(event: BeforeUnloadEvent) {
+    if (allowNavigation || !hasUnsavedChanges.value) return
+
+    event.preventDefault()
+    event.returnValue = ""
+  }
+
+  onBeforeRouteLeave(() => {
+    if (allowNavigation || !hasUnsavedChanges.value) return true
+    return requestLeaveDecision()
+  })
+
+  onBeforeUnmount(() => {
+    window.removeEventListener("beforeunload", handleBeforeUnload)
   })
 
   function toggleType(id: number) {
@@ -266,9 +366,7 @@ export function useContactCreatePage() {
   }
 
   function onCancel() {
-    if (confirm("Are you sure you want to cancel? Any unsaved changes will be lost.")) {
-      router.push("/contacts")
-    }
+    router.push("/contacts")
   }
 
   function extractLaravelErrors(err: any): string {
@@ -353,6 +451,8 @@ export function useContactCreatePage() {
         })
       }
 
+      markFormClean()
+      allowNavigation = true
       router.push("/contacts")
     } catch (err: any) {
       toast.add({
@@ -371,6 +471,8 @@ export function useContactCreatePage() {
     form,
     saving,
     loadingContact,
+    leaveDialogVisible,
+    hasUnsavedChanges,
 
     contactId,
     isEdit,
@@ -392,5 +494,7 @@ export function useContactCreatePage() {
     onCancel,
     onSave,
     onCurrencyBlur,
+    stayOnContact,
+    leaveWithoutSaving,
   }
 }

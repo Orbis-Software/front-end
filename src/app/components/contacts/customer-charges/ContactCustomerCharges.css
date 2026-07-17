@@ -420,3 +420,98 @@
     min-width: 0;
   }
 }
+
+/* Contact Details standard palette */
+.contact-details-page .customer-charges .customer-charges__card {
+  border-color: var(--contact-details-border);
+  background: var(--contact-details-surface);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+
+.contact-details-page .customer-charges .customer-charges__header {
+  border-color: var(--contact-details-border);
+  background: var(--contact-details-section-head);
+}
+
+.contact-details-page .customer-charges .customer-charges__body {
+  background: var(--contact-details-shell);
+}
+
+.contact-details-page .customer-charges .customer-charges__header h3,
+.contact-details-page .customer-charges .section-kicker,
+.contact-details-page .customer-charges .content-section__title,
+.contact-details-page .customer-charges .field label,
+.contact-details-page .customer-charges .table-toolbar__title {
+  color: var(--contact-details-text);
+}
+
+.contact-details-page .customer-charges .customer-charges__header p,
+.contact-details-page .customer-charges .sheet-count,
+.contact-details-page .customer-charges .field-note,
+.contact-details-page .customer-charges .table-toolbar__meta,
+.contact-details-page .customer-charges .row-number,
+.contact-details-page .customer-charges .sheet-list-empty,
+.contact-details-page .customer-charges .content-empty {
+  color: var(--contact-details-muted);
+}
+
+.contact-details-page .customer-charges .sheet-panel,
+.contact-details-page .customer-charges .content-section {
+  border-color: var(--contact-details-border);
+  background: var(--contact-details-panel-body);
+}
+
+.contact-details-page .customer-charges .form-control,
+.contact-details-page .customer-charges .customer-charges__calendar .p-inputtext {
+  border-color: var(--contact-details-control-border) !important;
+  border-radius: 8px !important;
+  background: var(--contact-details-control-bg) !important;
+  color: var(--contact-details-text) !important;
+}
+
+.contact-details-page .customer-charges .form-control:hover,
+.contact-details-page .customer-charges .customer-charges__calendar .p-inputtext:hover,
+.contact-details-page .customer-charges .form-control:focus,
+.contact-details-page .customer-charges .customer-charges__calendar:focus-within .p-inputtext {
+  border-color: var(--contact-details-accent) !important;
+  box-shadow: 0 0 0 2px rgba(236, 105, 26, 0.12) !important;
+}
+
+.contact-details-page .customer-charges .sheet-item {
+  border-color: var(--contact-details-control-border);
+  background: var(--contact-details-control-bg);
+  color: var(--contact-details-text);
+}
+
+.contact-details-page .customer-charges .sheet-item:hover {
+  border-color: var(--contact-details-accent);
+  background: var(--contact-details-accent-soft);
+  color: var(--contact-details-accent-hover);
+}
+
+.contact-details-page .customer-charges .sheet-item.active {
+  border-color: var(--contact-details-accent);
+  background: var(--contact-details-accent);
+  color: #fff;
+  box-shadow: none;
+}
+
+.contact-details-page .customer-charges .table-wrap {
+  border-color: var(--contact-details-border);
+  background: var(--contact-details-panel-body);
+}
+
+.contact-details-page .customer-charges .charges-table thead th {
+  border-color: var(--contact-details-border);
+  background: var(--contact-details-section-head);
+  color: var(--contact-details-text);
+}
+
+.contact-details-page .customer-charges .charges-table tbody td {
+  border-color: #d1d1d1;
+  background: var(--contact-details-panel-body);
+}
+
+.contact-details-page .customer-charges .charges-table tbody tr:hover td {
+  background: var(--contact-details-panel-soft);
+}

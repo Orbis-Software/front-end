@@ -1,8 +1,25 @@
 .dashboard-page {
+  --dashboard-accent: #ec691a;
+  --dashboard-accent-hover: #d85d14;
+  --dashboard-accent-soft: #fff7ed;
+  --dashboard-accent-border: #fdba74;
+  --dashboard-text: #1a1a18;
+  --dashboard-muted: #737373;
+  --dashboard-border: #b6b6b6;
+  --dashboard-control-border: #bdbdbd;
+  --dashboard-shell: #d3d3d3;
+  --dashboard-surface: #f8f8f8;
+  --dashboard-section-head: #ececec;
+  --dashboard-panel-body: #dedede;
+  --dashboard-panel-soft: #eeeeee;
+  --dashboard-control-bg: #ffffff;
+
   width: 100%;
   max-width: 1400px; /* ✅ UPDATED from 1160px */
   margin: 0 auto;
   padding: 24px 18px 40px;
+  background: var(--dashboard-shell);
+  color: var(--dashboard-text);
 }
 
 /* PrimeVue cards */
@@ -178,6 +195,35 @@
   color: #737373;
 }
 
+.stat-card__progress-wrap {
+  margin-top: 10px;
+}
+
+.stat-card__progress-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 5px;
+  color: var(--dashboard-muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.stat-progress {
+  height: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #c9c9c9;
+}
+
+.stat-progress__bar {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--dashboard-accent);
+  transition: width 0.2s ease;
+}
+
 /* GRID */
 .dash-grid {
   display: grid;
@@ -263,6 +309,107 @@
   margin-top: 3px;
   font-size: 13px;
   color: #7a7a7a;
+}
+
+/* QUOTE FOLLOW-UP REMINDERS */
+.quote-reminders-section {
+  margin-bottom: 14px;
+}
+
+.quote-reminders-card {
+  min-height: 0;
+}
+
+.quote-reminder-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  padding: 16px;
+}
+
+.quote-reminder {
+  width: 100%;
+  border: 1px solid #d2d2d2;
+  border-left: 4px solid #999;
+  border-radius: 14px;
+  padding: 12px 14px;
+  background: #fff;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.quote-reminder:hover {
+  background: #fafafa;
+  border-color: #bdbdbd;
+}
+
+.quote-reminder--overdue {
+  border-left-color: #c13e3e;
+  background: #fff8f8;
+}
+
+.quote-reminder--today {
+  border-left-color: var(--primary);
+  background: #fffaf6;
+}
+
+.quote-reminder__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: #252525;
+}
+
+.quote-reminder__status {
+  border-radius: 999px;
+  padding: 3px 8px;
+  background: #ededed;
+  color: #626262;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.quote-reminder__customer {
+  margin-top: 5px;
+  color: #555;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.quote-reminder__date,
+.quote-reminder__owner {
+  margin-top: 8px;
+  color: #737373;
+  font-size: 12px;
+}
+
+.quote-reminder__owner {
+  margin-top: 4px;
+}
+
+.quote-reminder-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 92px;
+  padding: 16px;
+  color: #737373;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.quote-reminder-empty .pi {
+  color: #3c8d5a;
+  font-size: 18px;
 }
 
 /* KANBAN */
@@ -597,6 +744,10 @@
   .dash-grid--bottom {
     grid-template-columns: 1fr;
   }
+
+  .quote-reminder-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 900px) {
@@ -650,4 +801,215 @@
   .metric-row {
     grid-template-columns: 1fr;
   }
+
+  .quote-reminder-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Shared Dashboard colour standard */
+.dashboard-page .dash-card {
+  border-color: var(--dashboard-border);
+  border-radius: 14px;
+  background: var(--dashboard-surface);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+
+.dashboard-page .dash-hero {
+  background: var(--dashboard-surface);
+}
+
+.dashboard-page .dash-filters {
+  background: var(--dashboard-panel-body);
+}
+
+.dashboard-page .dash-eyebrow {
+  color: var(--dashboard-accent-hover);
+}
+
+.dashboard-page .dash-title,
+.dashboard-page .stat-card__value,
+.dashboard-page .panel-card__title,
+.dashboard-page .quote-reminder__top,
+.dashboard-page .kanban-lane__title,
+.dashboard-page .kanban-card__ref,
+.dashboard-page .todo-card__title,
+.dashboard-page .metric-pill strong {
+  color: var(--dashboard-text);
+}
+
+.dashboard-page .dash-subtitle,
+.dashboard-page .dash-label,
+.dashboard-page .stat-card__label,
+.dashboard-page .stat-card__sub,
+.dashboard-page .panel-card__sub,
+.dashboard-page .quote-reminder__date,
+.dashboard-page .quote-reminder__owner,
+.dashboard-page .quote-reminder-empty,
+.dashboard-page .kanban-card__customer,
+.dashboard-page .todo-card__meta,
+.dashboard-page .legend-item,
+.dashboard-page .bar-chart__label {
+  color: var(--dashboard-muted);
+}
+
+.dashboard-page .stat-card {
+  border-color: var(--dashboard-border);
+  background: var(--dashboard-section-head);
+}
+
+.dashboard-page .panel-card {
+  border-color: var(--dashboard-border);
+  background: var(--dashboard-surface);
+}
+
+.dashboard-page .panel-card__head {
+  border-color: var(--dashboard-border);
+  background: var(--dashboard-section-head);
+}
+
+.dashboard-page
+  :is(
+    .quote-reminder-list,
+    .quote-reminder-empty,
+    .kanban-grid,
+    .todo-list,
+    .chart-card,
+    .chart-area
+  ) {
+  background: var(--dashboard-panel-body);
+}
+
+.dashboard-page .todo-list {
+  min-height: 205px;
+}
+
+.dashboard-page .dashboard-status,
+.dashboard-page .management-note {
+  border: 1px solid var(--dashboard-border);
+  border-radius: 10px;
+  background: var(--dashboard-section-head);
+  color: var(--dashboard-muted);
+}
+
+.dashboard-page .management-note {
+  margin-bottom: 14px;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.dashboard-page .dashboard-status--error {
+  border-color: #e2b6b6;
+  background: #fff6f6;
+  color: #9f2d2d;
+}
+
+.dashboard-page .p-inputtext,
+.dashboard-page .p-select,
+.dashboard-page .p-dropdown {
+  border-color: var(--dashboard-control-border);
+  border-radius: 8px;
+  background: var(--dashboard-control-bg);
+  color: var(--dashboard-text);
+}
+
+.dashboard-page .p-inputtext:enabled:hover,
+.dashboard-page .p-select:not(.p-disabled):hover,
+.dashboard-page .p-dropdown:not(.p-disabled):hover,
+.dashboard-page .p-inputtext:enabled:focus,
+.dashboard-page .p-select:not(.p-disabled).p-focus,
+.dashboard-page .p-dropdown:not(.p-disabled).p-focus {
+  border-color: var(--dashboard-accent);
+  box-shadow: 0 0 0 2px rgba(236, 105, 26, 0.12);
+}
+
+.dashboard-page .p-button.btn--primary {
+  border-color: var(--dashboard-accent) !important;
+  background: var(--dashboard-accent) !important;
+  color: #fff !important;
+}
+
+.dashboard-page .p-button.btn--primary:hover:not(:disabled) {
+  border-color: var(--dashboard-accent-hover) !important;
+  background: var(--dashboard-accent-hover) !important;
+}
+
+.dashboard-page .p-button.btn--ghost {
+  border-color: var(--dashboard-control-border) !important;
+  background: var(--dashboard-control-bg) !important;
+  color: var(--dashboard-text) !important;
+}
+
+.dashboard-page .p-button.btn--ghost:hover:not(:disabled) {
+  border-color: var(--dashboard-accent) !important;
+  background: var(--dashboard-accent-soft) !important;
+  color: var(--dashboard-accent-hover) !important;
+}
+
+.dashboard-page .quote-reminder,
+.dashboard-page .kanban-card,
+.dashboard-page .todo-card,
+.dashboard-page .metric-pill {
+  border-color: var(--dashboard-control-border);
+  background: var(--dashboard-control-bg);
+}
+
+.dashboard-page .quote-reminder:hover,
+.dashboard-page .kanban-card:hover {
+  border-color: var(--dashboard-accent);
+  background: var(--dashboard-accent-soft);
+}
+
+.dashboard-page .quote-reminder--today {
+  border-left-color: var(--dashboard-accent);
+  background: var(--dashboard-accent-soft);
+}
+
+.dashboard-page .quote-reminder--overdue {
+  border-left-color: #c13e3e;
+  background: #fff8f8;
+}
+
+.dashboard-page .quote-reminder__status {
+  background: var(--dashboard-panel-soft);
+  color: var(--dashboard-muted);
+}
+
+.dashboard-page .quote-reminder__customer,
+.dashboard-page .metric-pill {
+  color: var(--dashboard-text);
+}
+
+.dashboard-page .kanban-lane {
+  border-color: var(--dashboard-border);
+}
+
+.dashboard-page .kanban-lane--planned {
+  background: var(--dashboard-panel-soft);
+}
+
+.dashboard-page .kanban-lane--transit {
+  background: #f3e9df;
+}
+
+.dashboard-page .kanban-lane--delivered {
+  background: #e5efe8;
+}
+
+.dashboard-page .donut-hole {
+  background: var(--dashboard-panel-body);
+}
+
+.dashboard-page .bar-chart__plot {
+  border-color: var(--dashboard-border);
+}
+
+.dashboard-page .bar-chart__gridline {
+  background: #c7c7c7;
+}
+
+.dashboard-page .bar--sales,
+.dashboard-page .legend-dot--orange {
+  background: var(--dashboard-accent);
 }

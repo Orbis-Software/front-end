@@ -365,6 +365,145 @@
   }
 }
 
+/* Contact Details standard palette */
+.contact-details-page .weightCharges {
+  color: var(--contact-details-text);
+}
+
+.contact-details-page .weightCharges__card {
+  border-color: var(--contact-details-border);
+  background: var(--contact-details-surface);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+
+.contact-details-page .weightCharges__top {
+  border-color: var(--contact-details-border);
+  background: var(--contact-details-section-head);
+}
+
+.contact-details-page .weightCharges__body {
+  background: var(--contact-details-shell);
+}
+
+.contact-details-page .weightCharges__title,
+.contact-details-page .wcSectionTitle,
+.contact-details-page .wcValidity__title,
+.contact-details-page .wcPanelHead,
+.contact-details-page .wcBreakCard__head,
+.contact-details-page .wcMetaLabel,
+.contact-details-page .wcTableToolbar__title,
+.contact-details-page .wcChargeTable th.is-group,
+.contact-details-page .wcThMain,
+.contact-details-page .wcNotice {
+  color: var(--contact-details-text);
+}
+
+.contact-details-page .weightCharges__subtitle,
+.contact-details-page .wcTableListEmpty,
+.contact-details-page .wcFieldNote,
+.contact-details-page .wcHelpText,
+.contact-details-page .wcMiniField label,
+.contact-details-page .wcBreakCard__foot,
+.contact-details-page .wcTableToolbar__meta,
+.contact-details-page .wcThSub {
+  color: var(--contact-details-muted);
+}
+
+.contact-details-page .wcCard {
+  border-color: var(--contact-details-border);
+  background: var(--contact-details-panel-body);
+}
+
+.contact-details-page .wcCard--notice {
+  border-color: #fdba74;
+  background: var(--contact-details-accent-soft);
+}
+
+.contact-details-page .wcInput,
+.contact-details-page .wcDateInput,
+.contact-details-page .wcSelect,
+.contact-details-page .wcMiniField input,
+.contact-details-page .wcCellInput,
+.contact-details-page .wcMoneyInput,
+.contact-details-page .wcCalendar .p-inputtext {
+  border-color: var(--contact-details-control-border) !important;
+  border-radius: 8px !important;
+  background: var(--contact-details-control-bg) !important;
+  color: var(--contact-details-text) !important;
+}
+
+.contact-details-page .wcInput:hover,
+.contact-details-page .wcDateInput:hover,
+.contact-details-page .wcSelect:hover,
+.contact-details-page .wcMiniField input:hover,
+.contact-details-page .wcCellInput:hover,
+.contact-details-page .wcMoneyInput:hover,
+.contact-details-page .wcInput:focus,
+.contact-details-page .wcDateInput:focus,
+.contact-details-page .wcSelect:focus,
+.contact-details-page .wcMiniField input:focus,
+.contact-details-page .wcCellInput:focus,
+.contact-details-page .wcMoneyInput:focus-within,
+.contact-details-page .wcCalendar:focus-within .p-inputtext {
+  border-color: var(--contact-details-accent) !important;
+  box-shadow: 0 0 0 2px rgba(236, 105, 26, 0.12) !important;
+}
+
+.contact-details-page .wcTableListItem {
+  border-color: var(--contact-details-control-border);
+  background: var(--contact-details-control-bg);
+  color: var(--contact-details-text);
+}
+
+.contact-details-page .wcTableListItem:hover {
+  border-color: var(--contact-details-accent);
+  background: var(--contact-details-accent-soft);
+  color: var(--contact-details-accent-hover);
+}
+
+.contact-details-page .wcTableListItem--active {
+  border-color: var(--contact-details-accent);
+  background: var(--contact-details-accent);
+  color: #fff;
+  box-shadow: none;
+}
+
+.contact-details-page .wcBreakCard {
+  border-color: var(--contact-details-control-border);
+  background: var(--contact-details-panel-soft);
+}
+
+.contact-details-page .wcCurrencySymbol {
+  border-color: var(--contact-details-control-border);
+  background: var(--contact-details-control-bg);
+}
+
+.contact-details-page .wcTableWrap {
+  border-color: var(--contact-details-border);
+  background: var(--contact-details-panel-body);
+}
+
+.contact-details-page .wcChargeTable thead th {
+  border-color: var(--contact-details-border);
+  background: var(--contact-details-section-head);
+  color: var(--contact-details-text);
+}
+
+.contact-details-page .wcChargeTable td {
+  border-color: #d1d1d1;
+  background: var(--contact-details-panel-body);
+}
+
+.contact-details-page .wcChargeTable tbody tr:hover td {
+  background: var(--contact-details-panel-soft);
+}
+
+.contact-details-page .wcMoneyInput span {
+  border-color: var(--contact-details-control-border);
+  background: var(--contact-details-panel-soft);
+  color: var(--contact-details-muted);
+}
+
 .wcDateWrap {
   display: flex;
   align-items: center;

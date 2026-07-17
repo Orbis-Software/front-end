@@ -138,7 +138,7 @@
         </div>
       </div>
 
-      <div class="grid-4 mt-12">
+      <div class="grid-5 mt-12">
         <div class="field">
           <label class="label">Follow Up Date</label>
           <Calendar
@@ -150,6 +150,20 @@
             showIcon
             showButtonBar
             :manualInput="false"
+          />
+        </div>
+
+        <div class="field">
+          <label class="label">Validity (Days)</label>
+          <InputNumber
+            v-model="form.validity_period"
+            class="control"
+            inputClass="control"
+            :min="1"
+            :minFractionDigits="0"
+            :maxFractionDigits="0"
+            :useGrouping="false"
+            placeholder="e.g. 7"
           />
         </div>
 
@@ -340,7 +354,17 @@
 
         <div v-if="mode === 'road'" class="field">
           <label class="label">Vehicle Type</label>
-          <InputText v-model="form.vehicle_type" class="control" placeholder="FTL / LTL" />
+          <Select
+            v-model="form.vehicle_type"
+            :options="vehicleTypeOptions"
+            optionLabel="label"
+            optionValue="value"
+            class="control"
+            placeholder="Select vehicle type"
+            filter
+            autoFilterFocus
+            showClear
+          />
         </div>
 
         <div v-if="mode === 'rail'" class="field">
@@ -502,6 +526,9 @@
         :plan-ref="loadPlannerReference"
         reference-label="Quote Ref"
         :transport-mode="mode || 'road'"
+        :vehicle-type="form.vehicle_type"
+        :vehicle-load-space="selectedVehicleLoadSpace"
+        :lock-vehicle-type="mode === 'road'"
         empty-message="Add package rows above or add a manual load unit here."
       />
     </section>
@@ -591,7 +618,7 @@
             <tr v-for="(line, index) in buyCostLines" :key="line.id">
               <td>{{ index + 1 }}</td>
               <td>
-                <Select
+                <Dropdown
                   v-model="line.description"
                   :options="chargeDescriptionOptions"
                   optionLabel="label"
@@ -603,7 +630,8 @@
                   editable
                   showClear
                   :loading="chargeDescriptionsLoading"
-                  @change="syncBuyLineToSell(line)"
+                  @change="selectQuoteChargeDescription(line, line.description)"
+                  @filter="syncQuoteChargeDescriptionFilter(line, $event)"
                 />
               </td>
               <td>
@@ -738,12 +766,20 @@
             <tr v-for="(line, index) in sellChargeLines" :key="line.id">
               <td>{{ index + 1 }}</td>
               <td>
-                <Select
+                <Dropdown
                   v-model="line.description"
                   :options="chargeDescriptionOptions"
                   optionLabel="label"
                   optionValue="value"
                   class="table-select wide"
+                  placeholder="Select charge description"
+                  filter
+                  autoFilterFocus
+                  editable
+                  showClear
+                  :loading="chargeDescriptionsLoading"
+                  @change="selectQuoteChargeDescription(line, line.description)"
+                  @filter="syncQuoteChargeDescriptionFilter(line, $event)"
                 />
               </td>
               <td><InputNumber v-model="line.qty" inputClass="table-input" :min="0" /></td>
@@ -840,17 +876,6 @@
               class="control textarea"
               placeholder="Conditions of carriage..."
               autoResize
-            />
-          </div>
-
-          <div class="field">
-            <label class="label">Validity Period</label>
-            <Select
-              v-model="form.validity_period"
-              :options="validityOptions"
-              optionLabel="label"
-              optionValue="value"
-              class="control"
             />
           </div>
 
@@ -1006,6 +1031,7 @@ import Calendar from "primevue/calendar"
 import Textarea from "primevue/textarea"
 import Button from "primevue/button"
 import Select from "primevue/select"
+import Dropdown from "primevue/dropdown"
 import InputNumber from "primevue/inputnumber"
 import InputSwitch from "primevue/inputswitch"
 import Checkbox from "primevue/checkbox"
@@ -1051,6 +1077,8 @@ const {
 
   currencyOptions,
   incotermOptions,
+  vehicleTypeOptions,
+  selectedVehicleLoadSpace,
   containerOptions,
   uomOptions,
   chargeDescriptionOptions,
@@ -1060,7 +1088,6 @@ const {
   hazardousClassOptions,
   packingGroupOptions,
   conditionsOptions,
-  validityOptions,
   taxRateOptions,
   packageTypeOptions,
 
@@ -1100,6 +1127,8 @@ const {
   addSellChargeLine,
   removeBuyCostLine,
   removeSellChargeLine,
+  selectQuoteChargeDescription,
+  syncQuoteChargeDescriptionFilter,
   syncBuyLineToSell,
   toggleBuyLineAddToSell,
   getRowCbm,

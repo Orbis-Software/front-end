@@ -284,6 +284,46 @@
       </template>
     </section>
 
+    <Dialog
+      v-model:visible="leaveDialogVisible"
+      modal
+      :closable="false"
+      :close-on-escape="false"
+      :dismissable-mask="false"
+      header="Leave Contact Form?"
+      class="contact-leave-dialog"
+    >
+      <div class="contact-leave-dialog__body">
+        <span class="contact-leave-dialog__icon">
+          <i class="pi pi-exclamation-triangle" />
+        </span>
+        <div>
+          <p>This contact has not been saved.</p>
+          <small>
+            If you leave this page now, all information entered in the contact form will be deleted
+            and cannot be recovered.
+          </small>
+        </div>
+      </div>
+
+      <template #footer>
+        <Button
+          label="Continue Editing"
+          severity="secondary"
+          text
+          type="button"
+          @click="stayOnContact"
+        />
+        <Button
+          label="Leave Without Saving"
+          severity="danger"
+          outlined
+          type="button"
+          @click="leaveWithoutSaving"
+        />
+      </template>
+    </Dialog>
+
     <footer class="footer">© 2026 Contact Management System. All rights reserved.</footer>
   </div>
 </template>
@@ -291,6 +331,8 @@
 <script setup lang="ts">
 import "./ContactCreatePage.css"
 import AutoComplete from "primevue/autocomplete"
+import Button from "primevue/button"
+import Dialog from "primevue/dialog"
 import { useContactCreatePage } from "./ContactCreatePage"
 
 const {
@@ -298,6 +340,7 @@ const {
   form,
   saving,
   loadingContact,
+  leaveDialogVisible,
   isEdit,
 
   accountNumberPreview,
@@ -317,5 +360,7 @@ const {
   onCancel,
   onSave,
   onCurrencyBlur,
+  stayOnContact,
+  leaveWithoutSaving,
 } = useContactCreatePage()
 </script>

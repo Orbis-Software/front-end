@@ -12,7 +12,6 @@ import InputSwitch from "primevue/inputswitch"
 
 import type { JobDetailsContext } from "../../JobDetailsPage.logic"
 import JobTransportAddressModal from "@/app/components/jobs/details/JobTransportTab/JobTransportAddressModal.vue"
-import JobAddressPickerModal from "@/app/components/jobs/details/JobAddressPickerModal.vue"
 import type { ContactCollectionAddress } from "@/app/types/contact"
 
 const context = inject<JobDetailsContext>("jobDetails")
@@ -26,23 +25,16 @@ const {
   referenceOptions,
   loading,
   originAddressOptions,
-  addressContactOptions,
-  addressContactsLoading,
+  destinationAddressOptions,
   addressModalVisible,
   addressModalTarget,
   addressModalSaving,
-  addressPickerVisible,
-  addressPickerTarget,
-  addressPickerContact,
-  selectedDestinationContactId,
   isConsolidationJob,
   selectedOriginAddress,
   selectedDestinationAddress,
   openAddressModal,
   createAndSelectAddress,
-  onAddressContactFilter,
-  selectAddressContact,
-  chooseAddressSource,
+  selectDestinationAddress,
 } = context
 
 const {
@@ -112,11 +104,6 @@ const cmrPlaceholder = computed(() =>
 const shipmentReferencePlaceholder = computed(() =>
   isRoadMode.value ? cmrPlaceholder.value : "Shipment reference",
 )
-const destinationContactPlaceholder = computed(() => {
-  const selectedLabel = String(selectedDestinationAddress.value?.label ?? "").trim()
-
-  return selectedLabel || "Search contact"
-})
 const declaredValueMode = computed(() => (form.currency ? "currency" : "decimal"))
 const declaredValueCurrency = computed(() => form.currency || "GBP")
 const hazardousEnabled = computed({
@@ -1026,20 +1013,15 @@ const consolidationTransportRows = computed(() => {
 
           <div class="job-overview-tab__address-select">
             <Dropdown
-              v-model="selectedDestinationContactId"
-              :options="addressContactOptions"
+              :model-value="form.destination_contact_collection_address_id"
+              :options="destinationAddressOptions"
               option-label="label"
               option-value="value"
-              :placeholder="destinationContactPlaceholder"
+              placeholder="Select destination"
               show-clear
-              filter
               append-to="body"
-              :loading="addressContactsLoading"
               :disabled="loading"
-              @filter="onAddressContactFilter"
-              @update:model-value="
-                (value: number | null) => selectAddressContact('destination', value)
-              "
+              @update:model-value="selectDestinationAddress"
             />
 
             <Button
@@ -1319,13 +1301,6 @@ const consolidationTransportRows = computed(() => {
       :target="addressModalTarget === 'origin' ? 'collection' : 'delivery'"
       :saving="addressModalSaving"
       @save="createAndSelectAddress"
-    />
-
-    <JobAddressPickerModal
-      v-model:visible="addressPickerVisible"
-      :target="addressPickerTarget"
-      :contact="addressPickerContact"
-      @select="chooseAddressSource"
     />
   </section>
 </template>

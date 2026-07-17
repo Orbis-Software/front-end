@@ -195,7 +195,7 @@ export type BuyCostRow = {
   id: number | string
   type: "buy"
   description: string
-  supplier_id: number | null
+  supplier_id: number | "house_account" | null
   chargeCodeId: number | null
   addToSellCharges?: boolean
   linkedSellChargeId?: number | string | null

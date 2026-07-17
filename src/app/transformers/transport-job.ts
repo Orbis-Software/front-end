@@ -328,6 +328,7 @@ function fetchCharge(raw: any): JobCharge {
     job_id: nullableNumber(raw.job_id) ?? undefined,
     type: raw.type,
     supplier_id: nullableNumber(raw.supplier_id),
+    is_house_account: nullableBoolean(raw.is_house_account ?? raw.isHouseAccount) ?? false,
     charge_code_id: nullableNumber(raw.charge_code_id),
     invoice_id: nullableNumber(raw.invoice_id),
     invoice_status: nullableString(raw.invoice_status),

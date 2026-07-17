@@ -94,6 +94,7 @@
 
 .quote-page .section > .grid-3,
 .quote-page .section > .grid-4,
+.quote-page .section > .grid-5,
 .quote-page .section > .field,
 .quote-page .section > .haz-row,
 .quote-page .section > .summary-tiles,
@@ -106,6 +107,7 @@
 
 .quote-page .section > .step-head + .grid-3,
 .quote-page .section > .step-head + .grid-4,
+.quote-page .section > .step-head + .grid-5,
 .quote-page .section > .step-head + .field,
 .quote-page .section > .step-head + .haz-row,
 .quote-page .section > .step-head + .summary-tiles {
@@ -121,7 +123,8 @@
 }
 
 .quote-page .grid-3,
-.quote-page .grid-4 {
+.quote-page .grid-4,
+.quote-page .grid-5 {
   display: grid;
   gap: 12px;
 }
@@ -132,6 +135,10 @@
 
 .quote-page .grid-4 {
   grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.quote-page .grid-5 {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
 }
 
 .quote-page .field {
@@ -789,7 +796,8 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
-  .quote-page .grid-4 {
+  .quote-page .grid-4,
+  .quote-page .grid-5 {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -801,6 +809,7 @@
 @media (max-width: 900px) {
   .quote-page .grid-3,
   .quote-page .grid-4,
+  .quote-page .grid-5,
   .quote-page .summary-tiles,
   .quote-page .haz-box {
     grid-template-columns: 1fr;

@@ -9,6 +9,7 @@ import { useReferenceDataStore } from "@/app/stores/reference-data"
 import type { CompanyReferenceSequence } from "@/app/types/company"
 import type { Contact } from "@/app/types/contact"
 import type { GlobalReferenceDataRow } from "@/app/types/globalReferenceData"
+import type { ReferenceDataOption } from "@/app/types/referenceData"
 import { useTransportQuoteStore } from "@/app/stores/transportQuote"
 import type { TransportQuote, TransportQuotePayload } from "@/app/types/transportQuote"
 import { getPackageStackOption, setPackageStackOption } from "@/app/utils/packageStacking"
@@ -224,7 +225,7 @@ export function useQuoteCreatePage() {
     packing_group: "",
     conditions_preset: "",
     terms_conditions: "",
-    validity_period: "30",
+    validity_period: 30 as number | null,
     note: "",
     discount: 0,
     tax_rate: 20,
@@ -311,31 +312,28 @@ export function useQuoteCreatePage() {
     }))
   })
 
-  const currencyOptions: SelectOption[] = [
-    { label: "GBP – British Pound", value: "GBP" },
-    { label: "USD – US Dollar", value: "USD" },
-    { label: "EUR – Euro", value: "EUR" },
-    { label: "AED – UAE Dirham", value: "AED" },
-    { label: "AUD – Australian Dollar", value: "AUD" },
-    { label: "SGD – Singapore Dollar", value: "SGD" },
-  ]
+  function referenceOptionsFor(categoryKey: string): SelectOption[] {
+    return (referenceDataStore.getByKey(categoryKey)?.options ?? [])
+      .filter(option => option.is_active !== false)
+      .map(option => cleanReferenceName(option.name))
+      .filter(Boolean)
+      .map(name => ({ label: name, value: name }))
+  }
 
-  const incotermOptions: SelectOption[] = [
-    "EXW",
-    "FCA",
-    "FAS",
-    "FOB",
-    "CFR",
-    "CIF",
-    "CPT",
-    "CIP",
-    "DAP",
-    "DPU",
-    "DDP",
-  ].map(item => ({
-    label: item,
-    value: item,
-  }))
+  const currencyOptions = computed<SelectOption[]>(() => referenceOptionsFor("currency"))
+  const incotermOptions = computed<SelectOption[]>(() => referenceOptionsFor("incoterms"))
+  const vehicleTypeOptions = computed<SelectOption[]>(() => referenceOptionsFor("vehicle_types"))
+
+  const selectedVehicleLoadSpace = computed<Record<string, unknown> | null>(() => {
+    const selectedName = normalizeSearch(form.vehicle_type)
+    if (!selectedName) return null
+
+    const option = referenceDataStore
+      .getByKey("vehicle_types")
+      ?.options.find(item => normalizeSearch(cleanReferenceName(item.name)) === selectedName)
+
+    return (option as ReferenceDataOption | undefined)?.metadata ?? null
+  })
 
   const containerOptions: SelectOption[] = [
     { label: "20' GP", value: "20GP" },
@@ -392,13 +390,6 @@ export function useQuoteCreatePage() {
     { label: "Air Freight Conditions", value: "air" },
     { label: "Sea Freight Conditions", value: "sea" },
     { label: "Hazardous Goods Terms", value: "hazardous" },
-  ]
-
-  const validityOptions: SelectOption[] = [
-    { label: "Valid for 7 days", value: "7" },
-    { label: "Valid for 14 days", value: "14" },
-    { label: "Valid for 30 days", value: "30" },
-    { label: "Valid for 60 days", value: "60" },
   ]
 
   const taxRateOptions: SelectOption<number>[] = [
@@ -546,6 +537,22 @@ export function useQuoteCreatePage() {
     return String(value ?? "")
       .replace(/\*$/, "")
       .trim()
+  }
+
+  function selectQuoteChargeDescription(line: ChargeLine, value: unknown) {
+    line.description = String(value ?? "").trim()
+
+    if (line.type === "buy") syncBuyLineToSell(line)
+  }
+
+  function syncQuoteChargeDescriptionFilter(
+    line: ChargeLine,
+    event: { value?: unknown } | unknown,
+  ) {
+    const value =
+      event && typeof event === "object" && "value" in event ? (event as any).value : event
+
+    selectQuoteChargeDescription(line, value)
   }
 
   function labelWithCode(name: string, code: string): string {
@@ -954,6 +961,7 @@ export function useQuoteCreatePage() {
         form.quote_date = fromApiDate(snapshot.form.quote_date) ?? new Date()
         form.follow_up_date = fromApiDate(snapshot.form.follow_up_date)
         form.valid_until = fromApiDate(snapshot.form.valid_until)
+        form.validity_period = normaliseValidityPeriod(snapshot.form.validity_period)
         form.etd = fromApiDate(snapshot.form.etd)
         form.eta = fromApiDate(snapshot.form.eta)
       }
@@ -1414,7 +1422,7 @@ export function useQuoteCreatePage() {
     form.packing_group = quote.packing_group ?? ""
     form.conditions_preset = quote.conditions_preset ?? ""
     form.terms_conditions = quote.terms_conditions ?? ""
-    form.validity_period = String(quote.validity_period ?? "30")
+    form.validity_period = normaliseValidityPeriod(quote.validity_period)
     form.note = quote.note ?? ""
     form.discount = 0
     form.tax_rate = Number(quote.tax_rate || 0)
@@ -1534,6 +1542,40 @@ export function useQuoteCreatePage() {
     return Number.isNaN(date.getTime()) ? null : date
   }
 
+  function normaliseValidityPeriod(value: unknown): number {
+    const days = Math.trunc(Number(value))
+
+    return Number.isFinite(days) && days >= 1 ? days : 30
+  }
+
+  function addDays(value: Date, days: number): Date {
+    const date = new Date(value)
+    date.setDate(date.getDate() + days)
+
+    return date
+  }
+
+  function syncFollowUpDate(overwrite = true) {
+    if (!overwrite && form.follow_up_date) return
+
+    form.follow_up_date = form.quote_date ? addDays(form.quote_date, 2) : null
+  }
+
+  function syncValidUntil(overwrite = true) {
+    if (!overwrite && form.valid_until) return
+
+    const validityDays = Math.trunc(Number(form.validity_period))
+    const hasValidPeriod = Number.isFinite(validityDays) && validityDays >= 1
+
+    form.valid_until =
+      form.quote_date && hasValidPeriod ? addDays(form.quote_date, validityDays) : null
+  }
+
+  function syncAutomaticQuoteDates(overwrite = true) {
+    syncFollowUpDate(overwrite)
+    syncValidUntil(overwrite)
+  }
+
   function handleBeforeUnload(event: BeforeUnloadEvent) {
     if (!hasQuoteActivity.value || allowNavigation) return
 
@@ -1570,6 +1612,7 @@ export function useQuoteCreatePage() {
     }
 
     const recovered = restoreLocalRecovery()
+    syncAutomaticQuoteDates(false)
     formReady = true
     window.addEventListener("beforeunload", handleBeforeUnload)
 
@@ -1585,7 +1628,17 @@ export function useQuoteCreatePage() {
 
   watch(
     () => form.quote_date,
-    () => refreshQuoteRefPreview(true),
+    () => {
+      refreshQuoteRefPreview(true)
+      if (formReady) syncAutomaticQuoteDates()
+    },
+  )
+
+  watch(
+    () => form.validity_period,
+    () => {
+      if (formReady) syncValidUntil()
+    },
   )
 
   watch(
@@ -1661,6 +1714,8 @@ export function useQuoteCreatePage() {
 
     currencyOptions,
     incotermOptions,
+    vehicleTypeOptions,
+    selectedVehicleLoadSpace,
     containerOptions,
     uomOptions,
     chargeDescriptionOptions,
@@ -1670,7 +1725,6 @@ export function useQuoteCreatePage() {
     hazardousClassOptions,
     packingGroupOptions,
     conditionsOptions,
-    validityOptions,
     taxRateOptions,
     packageTypeOptions,
 
@@ -1710,6 +1764,8 @@ export function useQuoteCreatePage() {
     addSellChargeLine,
     removeBuyCostLine,
     removeSellChargeLine,
+    selectQuoteChargeDescription,
+    syncQuoteChargeDescriptionFilter,
     syncBuyLineToSell,
     toggleBuyLineAddToSell,
     getRowCbm,
