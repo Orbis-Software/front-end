@@ -296,6 +296,7 @@ export interface JobCharge {
   job_id?: number
   type: "buy" | "sell"
   supplier_id?: number | null
+  is_house_account?: boolean
   charge_code_id?: number | null
   invoice_id?: number | null
   invoice_status?: string | null

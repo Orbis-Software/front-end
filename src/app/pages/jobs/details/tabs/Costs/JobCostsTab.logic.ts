@@ -26,6 +26,8 @@ type ChargeBasisTotals = {
   volumeWeight: number
 }
 
+const HOUSE_ACCOUNT_SUPPLIER_VALUE = "house_account"
+
 const fallbackCurrencyOptions: SelectOption[] = [
   { label: "GBP", value: "GBP" },
   { label: "EUR", value: "EUR" },
@@ -294,12 +296,13 @@ export function useJobCostsTab() {
     })),
   )
 
-  const supplierOptions = computed<SelectOption[]>(() =>
-    supplierContacts.value.map(contact => ({
+  const supplierOptions = computed<SelectOption[]>(() => [
+    { label: "House Account", value: HOUSE_ACCOUNT_SUPPLIER_VALUE },
+    ...supplierContacts.value.map(contact => ({
       label: displayContactName(contact),
       value: Number(contact.id),
     })),
-  )
+  ])
 
   const activeWeightChargeTables = computed(() => {
     const now = new Date()
@@ -498,7 +501,7 @@ export function useJobCostsTab() {
 
     const matching = buyRows.value.find(
       buyRow =>
-        numberValue(buyRow.markupPercentage) > 0 &&
+        (buyRow.addToSellCharges || numberValue(buyRow.markupPercentage) > 0) &&
         normalizeDescription(buyRow.description) === description,
     )
 
@@ -558,6 +561,52 @@ export function useJobCostsTab() {
         life: 4500,
       })
     }
+  }
+
+  function updateBuyMarkupFromSellPrice(sellRow: SellChargeRow, notify = true) {
+    const buyRow = buyCostForSellCharge(sellRow)
+
+    if (!buyRow) return
+
+    const sellUnitPrice = sellRow.unitPrice
+
+    if (sellUnitPrice === null || sellUnitPrice === undefined) {
+      buyRow.markupPercentage = 0
+      return
+    }
+
+    const buyUnitCost = numberValue(buyRow.unitCost)
+
+    if (buyUnitCost <= 0) {
+      buyRow.markupPercentage = 0
+      return
+    }
+
+    const sellPriceInBuyCurrency = convertCurrencyAmount(
+      numberValue(sellUnitPrice),
+      sellRow.currency,
+      buyRow.currency,
+    )
+
+    if (sellPriceInBuyCurrency === null) {
+      if (notify) {
+        toast.add({
+          severity: "warn",
+          summary: "Markup not calculated",
+          detail: `Add the rates needed to convert ${currencyCode(sellRow.currency)} to ${currencyCode(buyRow.currency)} in Accounts > Exchange Rates.`,
+          life: 4500,
+        })
+      }
+
+      return
+    }
+
+    const markup = ((sellPriceInBuyCurrency - buyUnitCost) / buyUnitCost) * 100
+
+    buyRow.markupPercentage = roundMoney(Math.max(0, markup))
+    buyRow.addToSellCharges = true
+    buyRow.linkedSellChargeId = sellRow.id
+    sellRow.sourceBuyCostId = buyRow.id
   }
 
   function refreshLinkedMarkupPrices() {
@@ -1026,8 +1075,8 @@ export function useJobCostsTab() {
     return numberValue(row.quantity) * unit
   }
 
-  function lineNetGbp(row: CostRow): number {
-    return lineNet(row) * effectiveExchangeRate(row)
+  function lineNetInSellCurrency(row: CostRow): number {
+    return convertCurrencyAmount(lineNet(row), row.currency, sellCurrency.value) ?? 0
   }
 
   function sellVat(row: SellChargeRow): number {
@@ -1036,10 +1085,19 @@ export function useJobCostsTab() {
     return vatRate > 0 ? lineNet(row) * (vatRate / 100) : 0
   }
 
-  function sellVatGbp(row: SellChargeRow): number {
+  function sellVatInSellCurrency(row: SellChargeRow): number {
     const vatRate = numberValue(row.vatRate)
 
-    return vatRate > 0 ? lineNetGbp(row) * (vatRate / 100) : 0
+    return vatRate > 0 ? lineNetInSellCurrency(row) * (vatRate / 100) : 0
+  }
+
+  function missingSellCurrencyExchangeRate(row: CostRow): boolean {
+    const source = currencyCode(row.currency)
+    const target = sellCurrency.value
+
+    if (source === target) return false
+
+    return exchangeRateForCurrency(source) === null || exchangeRateForCurrency(target) === null
   }
 
   function formatMoney(value: number, currency = "GBP"): string {
@@ -1185,11 +1243,13 @@ export function useJobCostsTab() {
   }
 
   const totals = computed(() => {
-    const totalBuy = buyRows.value.reduce((sum, row) => sum + lineNetGbp(row), 0)
-    const totalSell = sellRows.value.reduce((sum, row) => sum + lineNetGbp(row), 0)
-    const totalVat = sellRows.value.reduce((sum, row) => sum + sellVatGbp(row), 0)
+    const totalBuy = buyRows.value.reduce((sum, row) => sum + lineNetInSellCurrency(row), 0)
+    const totalSell = sellRows.value.reduce((sum, row) => sum + lineNetInSellCurrency(row), 0)
+    const totalVat = sellRows.value.reduce((sum, row) => sum + sellVatInSellCurrency(row), 0)
     const margin = totalSell - totalBuy
-    const missingExchangeRates = [...buyRows.value, ...sellRows.value].filter(missingExchangeRate)
+    const missingExchangeRates = [...buyRows.value, ...sellRows.value].filter(
+      missingSellCurrencyExchangeRate,
+    )
 
     return {
       totalBuy,
@@ -1293,6 +1353,7 @@ export function useJobCostsTab() {
     syncChargeDescriptionFilter,
     updateBuyPricing,
     updateBuyCurrency,
+    updateBuyMarkupFromSellPrice,
     setSellCurrency,
     scheduleMissingChargeDescriptionCheck,
     chargeDescriptionDropdownShown,
@@ -1308,7 +1369,7 @@ export function useJobCostsTab() {
     buyRowSellChargeTooltip,
     printedInvoiceNumber,
     lineNet,
-    lineNetGbp,
+    lineNetInSellCurrency,
     sellVat,
     formatMoney,
     formatRowMoney,

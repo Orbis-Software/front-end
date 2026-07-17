@@ -91,7 +91,6 @@
                   >
                     {{ data.quote_number }}
                   </button>
-                  <div class="quotes-list-page__cell-subtext">#{{ data.id }}</div>
                 </div>
               </template>
             </Column>

@@ -51,6 +51,17 @@ export interface DashboardTodo {
   when: string
 }
 
+export interface DashboardQuoteReminder {
+  id: number
+  ref: string
+  customer: string
+  owner: string
+  follow_up_date: string
+  valid_until: string | null
+  status: string
+  urgency: "overdue" | "today" | "upcoming"
+}
+
 export interface DashboardModeMetric {
   mode: string
   label: string
@@ -71,6 +82,7 @@ export interface DashboardTransportSummary {
   stats: DashboardStats
   kanban: DashboardKanbanLane[]
   todos: DashboardTodo[]
+  quote_reminders: DashboardQuoteReminder[]
   mode_mix: DashboardModeMetric[]
   revenue_by_mode: DashboardModeMetric[]
   performance: DashboardPerformanceMetric[]

@@ -123,6 +123,48 @@
       </Card>
     </section>
 
+    <section v-if="canViewQuotes" class="quote-reminders-section">
+      <Card class="dash-card panel-card quote-reminders-card">
+        <template #content>
+          <div class="panel-card__head">
+            <div>
+              <div class="panel-card__title">Quote Follow-Up Reminders</div>
+              <div class="panel-card__sub">Quotes that are waiting for customer follow-up.</div>
+            </div>
+
+            <Button label="VIEW ALL QUOTES" class="btn btn--ghost btn--small" @click="goQuotes" />
+          </div>
+
+          <div v-if="quoteReminders.length" class="quote-reminder-list">
+            <button
+              v-for="reminder in quoteReminders"
+              :key="reminder.id"
+              type="button"
+              class="quote-reminder"
+              :class="`quote-reminder--${reminder.urgency}`"
+              @click="openQuote(reminder.id)"
+            >
+              <div class="quote-reminder__top">
+                <strong>{{ reminder.ref }}</strong>
+                <span class="quote-reminder__status">{{ reminder.status }}</span>
+              </div>
+              <div class="quote-reminder__customer">{{ reminder.customer }}</div>
+              <div class="quote-reminder__date">
+                {{ reminderLabel(reminder.urgency) }}:
+                <strong>{{ formatDashboardDate(reminder.follow_up_date) }}</strong>
+              </div>
+              <div class="quote-reminder__owner">Owner: {{ reminder.owner }}</div>
+            </button>
+          </div>
+
+          <div v-else class="quote-reminder-empty">
+            <i class="pi pi-check-circle" aria-hidden="true"></i>
+            <span>No active quote follow-ups are scheduled.</span>
+          </div>
+        </template>
+      </Card>
+    </section>
+
     <!-- USER VIEW -->
     <template v-if="!isManagement">
       <section class="dash-grid dash-grid--main">
@@ -579,6 +621,7 @@ const currentStatCards = computed(() => {
 const kanban = computed(() => summary.value?.kanban ?? [])
 const userTodo = computed(() => summary.value?.todos ?? [])
 const managementExceptions = computed(() => summary.value?.todos ?? [])
+const quoteReminders = computed(() => summary.value?.quote_reminders ?? [])
 const modeMix = computed(() => summary.value?.mode_mix ?? [])
 const revenueByMode = computed(() => summary.value?.revenue_by_mode ?? [])
 
@@ -662,6 +705,7 @@ function filterSoftDeletedDashboardData(
       jobs: filterActiveRecords(lane.jobs),
     })),
     todos: filterActiveRecords(data.todos),
+    quote_reminders: filterActiveRecords(data.quote_reminders),
     mode_mix: filterActiveRecords(data.mode_mix),
     revenue_by_mode: filterActiveRecords(data.revenue_by_mode),
     performance: filterActiveRecords(data.performance),
@@ -717,7 +761,7 @@ function donutStyle(
   const total = items.reduce((sum, item) => sum + Number(item[key] ?? 0), 0)
 
   if (!total) {
-    return { background: "#efefef" }
+    return { background: "var(--dashboard-panel-soft)" }
   }
 
   let start = 0
@@ -734,7 +778,7 @@ function donutStyle(
 
 function modeColor(mode: string, fallbackIndex = 0) {
   const colors: Record<string, string> = {
-    air: "var(--primary)",
+    air: "var(--dashboard-accent)",
     road: "#9c9c9c",
     sea: "#595959",
     rail: "#b9b9b9",
@@ -761,6 +805,29 @@ function goQuotes() {
 
 function openJob(id: number) {
   router.push({ name: "tms.jobs.show", params: { id } })
+}
+
+function openQuote(id: number) {
+  router.push({ name: "tms.quotes.show", params: { id } })
+}
+
+function reminderLabel(urgency: "overdue" | "today" | "upcoming") {
+  if (urgency === "overdue") return "Follow-up overdue"
+  if (urgency === "today") return "Follow up today"
+
+  return "Follow up"
+}
+
+function formatDashboardDate(value: string) {
+  const date = new Date(`${value}T00:00:00`)
+
+  return Number.isNaN(date.getTime())
+    ? value
+    : new Intl.DateTimeFormat("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      }).format(date)
 }
 
 function exportView() {

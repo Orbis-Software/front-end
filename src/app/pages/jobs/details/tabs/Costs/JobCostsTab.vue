@@ -11,7 +11,6 @@ const {
   buyRows,
   sellRows,
   totals,
-  jobCurrency,
   sellCurrency,
   currencyOptions,
   vatRateOptions,
@@ -32,6 +31,7 @@ const {
   syncChargeDescriptionFilter,
   updateBuyPricing,
   updateBuyCurrency,
+  updateBuyMarkupFromSellPrice,
   setSellCurrency,
   scheduleMissingChargeDescriptionCheck,
   chargeDescriptionDropdownShown,
@@ -280,6 +280,7 @@ const {
                   :min="0"
                   :min-fraction-digits="2"
                   :max-fraction-digits="2"
+                  @update:model-value="updateBuyMarkupFromSellPrice(row)"
                 />
               </td>
               <td>
@@ -340,25 +341,25 @@ const {
         {{ totals.missingExchangeRates }} cost line{{
           totals.missingExchangeRates === 1 ? "" : "s"
         }}
-        missing exchange rates to {{ jobCurrency }}. Add them in Accounts &gt; Exchange Rates before
-        relying on converted totals.
+        missing exchange rates to {{ sellCurrency }}. Add them in Accounts &gt; Exchange Rates
+        before relying on converted totals.
       </span>
     </div>
 
     <div class="job-costs-tab__summary">
       <div class="job-costs-tab__summary-row">
-        <span>Total Revenue (Net {{ jobCurrency }})</span>
-        <strong>{{ formatMoney(totals.totalSell, jobCurrency) }}</strong>
+        <span>Total Revenue (Net {{ sellCurrency }})</span>
+        <strong>{{ formatMoney(totals.totalSell, sellCurrency) }}</strong>
       </div>
 
       <div class="job-costs-tab__summary-row">
-        <span>Total Cost (Net {{ jobCurrency }})</span>
-        <strong>{{ formatMoney(totals.totalBuy, jobCurrency) }}</strong>
+        <span>Total Cost (Net {{ sellCurrency }})</span>
+        <strong>{{ formatMoney(totals.totalBuy, sellCurrency) }}</strong>
       </div>
 
       <div class="job-costs-tab__summary-row">
-        <span>Gross Margin ({{ jobCurrency }})</span>
-        <strong>{{ formatMoney(totals.margin, jobCurrency) }}</strong>
+        <span>Gross Margin ({{ sellCurrency }})</span>
+        <strong>{{ formatMoney(totals.margin, sellCurrency) }}</strong>
       </div>
 
       <div class="job-costs-tab__summary-row">
@@ -367,16 +368,16 @@ const {
       </div>
 
       <div v-if="totals.hasVat" class="job-costs-tab__summary-row">
-        <span>Total VAT ({{ jobCurrency }})</span>
-        <strong>{{ formatMoney(totals.totalVat, jobCurrency) }}</strong>
+        <span>Total VAT ({{ sellCurrency }})</span>
+        <strong>{{ formatMoney(totals.totalVat, sellCurrency) }}</strong>
       </div>
 
       <div
         v-if="totals.hasVat"
         class="job-costs-tab__summary-row job-costs-tab__summary-row--total"
       >
-        <span>Grand Total (inc. VAT {{ jobCurrency }})</span>
-        <strong>{{ formatMoney(totals.grandTotal, jobCurrency) }}</strong>
+        <span>Grand Total (inc. VAT {{ sellCurrency }})</span>
+        <strong>{{ formatMoney(totals.grandTotal, sellCurrency) }}</strong>
       </div>
     </div>
 

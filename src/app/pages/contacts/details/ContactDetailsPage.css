@@ -1,10 +1,217 @@
 .contact-details-page {
+  --contact-details-accent: #ec691a;
+  --contact-details-accent-hover: #d85d14;
+  --contact-details-accent-soft: #fff7ed;
+  --contact-details-text: #1a1a18;
+  --contact-details-muted: #737373;
+  --contact-details-border: #b6b6b6;
+  --contact-details-control-border: #bdbdbd;
+  --contact-details-shell: #d3d3d3;
+  --contact-details-surface: #f8f8f8;
+  --contact-details-section-head: #ececec;
+  --contact-details-panel-body: #dedede;
+  --contact-details-panel-soft: #eeeeee;
+  --contact-details-control-bg: #ffffff;
+  --contact-details-disabled-bg: #f7f7f7;
+
   display: flex;
   flex-direction: column;
   padding: 1rem;
   min-height: 100%;
   background: var(--bg-page);
   font-family: var(--font-body);
+}
+
+/* Shared Contact Details colour standard. */
+.contact-details-page {
+  background: var(--contact-details-shell);
+  color: var(--contact-details-text);
+}
+
+.contact-details-page .contact-header-card {
+  border-color: var(--contact-details-border);
+  background: var(--contact-details-surface);
+}
+
+.contact-details-page .contact-header-main {
+  background: var(--contact-details-surface);
+}
+
+.contact-details-page .contact-title,
+.contact-details-page .contact-meta__pill {
+  color: var(--contact-details-text);
+}
+
+.contact-details-page .contact-meta,
+.contact-details-page .contact-meta__label {
+  color: var(--contact-details-muted);
+}
+
+.contact-details-page .contact-meta__pill,
+.contact-details-page .contact-meta__item {
+  border-color: var(--contact-details-control-border);
+  background: var(--contact-details-control-bg);
+}
+
+.contact-details-page .contact-action-btn--primary {
+  border-color: var(--contact-details-accent) !important;
+  background: var(--contact-details-accent) !important;
+}
+
+.contact-details-page .contact-action-btn--primary:hover {
+  border-color: var(--contact-details-accent-hover) !important;
+  background: var(--contact-details-accent-hover) !important;
+}
+
+.contact-details-page .contact-details-tabs {
+  border-color: var(--contact-details-border);
+  background: var(--contact-details-section-head);
+}
+
+.contact-details-page .contact-details-tabs__tab {
+  color: var(--contact-details-muted);
+}
+
+.contact-details-page .contact-details-tabs__tab:hover {
+  background: var(--contact-details-panel-soft);
+  color: var(--contact-details-text);
+}
+
+.contact-details-page .contact-details-tabs__tab--active {
+  border-color: var(--contact-details-border);
+  background: var(--contact-details-control-bg);
+  color: var(--contact-details-text);
+}
+
+.contact-details-page .contact-details-tabs__tab--active::before {
+  content: "";
+  position: absolute;
+  inset: 0 10px auto;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--contact-details-accent);
+}
+
+.contact-details-page .contact-details-tabs__count {
+  background: var(--contact-details-panel-soft);
+  color: var(--contact-details-muted);
+}
+
+.contact-details-page .contact-details-tabs__tab--active .contact-details-tabs__count {
+  background: var(--contact-details-accent-soft);
+  color: #9a3412;
+}
+
+.contact-details-page .contact-content-shell {
+  border-color: var(--contact-details-border);
+  background: var(--contact-details-shell);
+}
+
+/* Branches tab */
+.contact-details-page .tabHeader {
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--contact-details-border);
+  border-radius: 10px;
+  background: var(--contact-details-section-head);
+}
+
+.contact-details-page .tabHeader__title,
+.contact-details-page .sectionTitle,
+.contact-details-page .toggleLabel {
+  color: var(--contact-details-text);
+}
+
+.contact-details-page .tabHeader__subtitle,
+.contact-details-page .label {
+  color: var(--contact-details-muted);
+}
+
+.contact-details-page .branchCard,
+.contact-details-page .collectionCard {
+  border-color: var(--contact-details-border);
+  background: var(--contact-details-panel-body);
+}
+
+.contact-details-page .branchCard__top {
+  margin: -14px -14px 12px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--contact-details-border);
+  background: var(--contact-details-section-head);
+}
+
+.contact-details-page .branchNameInput,
+.contact-details-page .input {
+  min-height: 40px;
+  border-color: var(--contact-details-control-border);
+  border-radius: 8px;
+  background: var(--contact-details-control-bg);
+  color: var(--contact-details-text);
+}
+
+.contact-details-page .branchNameInput:hover,
+.contact-details-page .input:hover,
+.contact-details-page .branchNameInput:focus,
+.contact-details-page .input:focus {
+  border-color: var(--contact-details-accent);
+  box-shadow: 0 0 0 2px rgba(236, 105, 26, 0.12);
+}
+
+.contact-details-page .input:disabled {
+  background: var(--contact-details-disabled-bg);
+  color: var(--contact-details-muted);
+}
+
+.contact-details-page .sectionTitle {
+  padding: 10px;
+  border: 1px solid var(--contact-details-border);
+  border-radius: 8px;
+  background: var(--contact-details-section-head);
+}
+
+.contact-details-page .sectionIcon,
+.contact-details-page .branchIcon {
+  border-color: #fdba74;
+  background: var(--contact-details-accent-soft);
+  color: #9a3412;
+}
+
+.contact-details-page .toggleRow {
+  padding: 10px;
+  border: 1px solid var(--contact-details-border);
+  border-radius: 8px;
+  background: var(--contact-details-panel-soft);
+}
+
+.contact-details-page .checkbox {
+  accent-color: var(--contact-details-accent);
+}
+
+.contact-details-page .btn--primary,
+.contact-details-page .p-button.btn--primary {
+  border-color: var(--contact-details-accent) !important;
+  background: var(--contact-details-accent) !important;
+  color: #fff !important;
+}
+
+.contact-details-page .btn--primary:hover,
+.contact-details-page .p-button.btn--primary:hover {
+  border-color: var(--contact-details-accent-hover) !important;
+  background: var(--contact-details-accent-hover) !important;
+}
+
+.contact-details-page .btn--ghost,
+.contact-details-page .p-button.btn--ghost {
+  border-color: var(--contact-details-control-border) !important;
+  background: var(--contact-details-control-bg) !important;
+  color: var(--contact-details-text) !important;
+}
+
+.contact-details-page .btn--ghost:hover,
+.contact-details-page .p-button.btn--ghost:hover {
+  border-color: var(--contact-details-accent) !important;
+  background: var(--contact-details-accent-soft) !important;
+  color: var(--contact-details-accent-hover) !important;
 }
 
 .contact-details-page__loading {
