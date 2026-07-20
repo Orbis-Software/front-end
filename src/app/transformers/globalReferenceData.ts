@@ -28,6 +28,7 @@ export default {
       return collection(data.rows).reduce<GlobalReferenceDataSet>(
         (result, item) => {
           if (
+            item.category === "locations" ||
             item.category === "terminals" ||
             item.category === "airlines" ||
             item.category === "cities"
@@ -38,6 +39,7 @@ export default {
           return result
         },
         {
+          locations: [],
           terminals: [],
           airlines: [],
           cities: [],
@@ -46,6 +48,7 @@ export default {
     }
 
     return {
+      locations: collection(data?.locations),
       terminals: collection(data?.terminals),
       airlines: collection(data?.airlines),
       cities: collection(data?.cities),

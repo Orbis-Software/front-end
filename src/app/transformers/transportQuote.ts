@@ -37,14 +37,22 @@ export function transformTransportQuote(payload: any): TransportQuote {
 
     origin: payload.origin ?? null,
     destination: payload.destination ?? null,
+    origin_address_source_type: payload.origin_address_source_type ?? null,
+    origin_address_source_id: payload.origin_address_source_id ?? null,
+    destination_address_source_type: payload.destination_address_source_type ?? null,
+    destination_address_source_id: payload.destination_address_source_id ?? null,
+    origin_address: payload.origin_address ?? null,
+    destination_address: payload.destination_address ?? null,
     etd: payload.etd ?? null,
     eta: payload.eta ?? null,
 
     commodity: payload.commodity ?? null,
+    insurance_level: payload.insurance_level ?? null,
     vehicle_type: payload.vehicle_type ?? null,
     cargo_class: payload.cargo_class ?? null,
     container_type: payload.container_type ?? null,
     load_type: payload.load_type ?? null,
+    load_planner_enabled: payload.load_planner_enabled !== false,
     goods_description: payload.goods_description ?? null,
 
     is_hazardous: Boolean(payload.is_hazardous),

@@ -263,7 +263,11 @@ export function useConsolidationPage(options: ConsolidationPageOptions = {}) {
   }
 
   function terminalOptions(filter: (row: GlobalReferenceDataRow) => boolean): ReferenceOption[] {
-    return globalReferenceDataStore.data.terminals
+    const sourceRows = globalReferenceDataStore.data.locations.length
+      ? globalReferenceDataStore.data.locations
+      : globalReferenceDataStore.data.terminals
+
+    return sourceRows
       .filter(filter)
       .map(row => {
         const terminalName = firstValue(row, [
@@ -292,13 +296,25 @@ export function useConsolidationPage(options: ConsolidationPageOptions = {}) {
       .filter(option => option.value)
   }
 
-  const airportOptions = computed(() => terminalOptions(row => row.type === "Airport"))
-  const seaportOptions = computed(() => terminalOptions(row => row.type === "Seaport"))
-  const railTerminalOptions = computed(() => terminalOptions(row => row.type === "Rail Freight"))
-  const roadTerminalOptions = computed(() => terminalOptions(row => row.type === "Road Freight"))
+  const airportOptions = computed(() =>
+    terminalOptions(row => row.air === "true" || row.type === "Airport"),
+  )
+  const seaportOptions = computed(() =>
+    terminalOptions(row => row.sea === "true" || row.type === "Seaport"),
+  )
+  const railTerminalOptions = computed(() =>
+    terminalOptions(row => row.rail === "true" || row.type === "Rail Freight"),
+  )
+  const roadTerminalOptions = computed(() =>
+    terminalOptions(row => row.road === "true" || row.type === "Road Freight"),
+  )
 
   const cityOptions = computed<ReferenceOption[]>(() => {
-    return globalReferenceDataStore.data.cities
+    const sourceRows = globalReferenceDataStore.data.locations.length
+      ? globalReferenceDataStore.data.locations
+      : globalReferenceDataStore.data.cities
+
+    return sourceRows
       .map(row => {
         const city = firstValue(row, ["fullName", "full_name", "city", "location", "name"])
         const code = firstValue(row, ["code", "iata", "iataCode", "iata_code", "unlocode"])
@@ -1005,6 +1021,7 @@ export function useConsolidationPage(options: ConsolidationPageOptions = {}) {
 
     await Promise.allSettled([
       referenceDataStore.categories.length ? Promise.resolve() : referenceDataStore.fetchAll(),
+      globalReferenceDataStore.data.locations.length ||
       globalReferenceDataStore.data.terminals.length ||
       globalReferenceDataStore.data.airlines.length ||
       globalReferenceDataStore.data.cities.length

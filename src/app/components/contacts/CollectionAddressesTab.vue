@@ -529,9 +529,9 @@ function displayType(c: CollectionUI) {
               <span class="truncate">{{ displayTitle(c) }}</span>
             </div>
 
-            <span class="badge">
+            <!-- <span class="badge">
               {{ displayRef(c) }}
-            </span>
+            </span> -->
           </div>
 
           <div class="listItem__desc">

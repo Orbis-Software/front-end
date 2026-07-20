@@ -18,6 +18,9 @@ const {
   setTab,
 
   onEditContact,
+  canManageCredit,
+  creditSaving,
+  updateCreditLimit,
 
   addBranch,
   removeBranch,
@@ -82,7 +85,13 @@ const {
         <div v-if="loading" class="contact-details-page__loading">Loading...</div>
 
         <template v-else>
-          <ContactOverviewTab v-if="activeTab === 'overview'" :contact="contact" />
+          <ContactOverviewTab
+            v-if="activeTab === 'overview'"
+            :contact="contact"
+            :can-manage-credit="canManageCredit"
+            :credit-saving="creditSaving"
+            @update-credit="updateCreditLimit"
+          />
 
           <BranchesBillingTab
             v-else-if="activeTab === 'branches'"

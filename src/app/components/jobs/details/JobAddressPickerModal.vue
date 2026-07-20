@@ -69,12 +69,14 @@ const choices = computed<AddressChoice[]>(() => {
     contact_person: branch.contact_person,
     phone: branch.phone,
     email: branch.email,
-    is_collection: true,
-    is_delivery: true,
+    is_collection: branch.is_collection === undefined ? true : Boolean(branch.is_collection),
+    is_delivery: branch.is_delivery === undefined ? true : Boolean(branch.is_delivery),
     special_instructions: null,
   }))
 
-  return [...addresses, ...branches]
+  return [...addresses, ...branches].filter(choice =>
+    props.target === "origin" ? choice.is_collection : choice.is_delivery,
+  )
 })
 
 function addressLine(choice: AddressChoice) {

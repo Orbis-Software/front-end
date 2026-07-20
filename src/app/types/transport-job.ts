@@ -598,6 +598,8 @@ export interface TransportJob {
 
   customer_contact?: Contact | null
   origin_contact_collection_address_id?: number | null
+  origin_address_source_type?: "collection_address" | "branch" | null
+  origin_address_source_id?: number | null
   destination_contact_collection_address_id?: number | null
   destination_address_source_type?: "collection_address" | "branch" | null
   destination_address_source_id?: number | null
@@ -669,6 +671,8 @@ export interface BaseTransportJobCreatePayload {
 
   note?: string | null
   origin_contact_collection_address_id?: number | null
+  origin_address_source_type?: "collection_address" | "branch" | null
+  origin_address_source_id?: number | null
   destination_contact_collection_address_id?: number | null
   destination_address_source_type?: "collection_address" | "branch" | null
   destination_address_source_id?: number | null
@@ -743,6 +747,8 @@ export interface TransportJobUpdatePayload extends Partial<BaseTransportJobCreat
   consignee_email?: string | null
 
   origin_contact_collection_address_id?: number | null
+  origin_address_source_type?: "collection_address" | "branch" | null
+  origin_address_source_id?: number | null
   destination_contact_collection_address_id?: number | null
   collection_date?: string | null
   collection_time?: string | null

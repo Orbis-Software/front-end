@@ -316,6 +316,61 @@
   margin-bottom: 14px;
 }
 
+.credit-alerts-section {
+  margin-bottom: 14px;
+}
+
+.credit-alerts-card {
+  min-height: 0;
+}
+
+.credit-alert-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  padding: 16px;
+}
+
+.credit-alert {
+  display: grid;
+  gap: 5px;
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #e0aa58;
+  border-left: 4px solid #d58b1f;
+  border-radius: 12px;
+  background: #fffaf0;
+  color: #3b3020;
+  text-align: left;
+  cursor: pointer;
+}
+
+.credit-alert--hard-stop {
+  border-color: #dfa3a3;
+  border-left-color: #b91c1c;
+  background: #fff6f6;
+  color: #6f1d1d;
+}
+
+.credit-alert__status {
+  width: fit-content;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgba(213, 139, 31, 0.14);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.credit-alert--hard-stop .credit-alert__status {
+  background: rgba(185, 28, 28, 0.12);
+}
+
+.credit-alert small,
+.credit-alert > span:last-child {
+  opacity: 0.78;
+}
+
 .quote-reminders-card {
   min-height: 0;
 }
@@ -782,6 +837,10 @@
 
   .bar {
     width: 20px;
+  }
+
+  .credit-alert-list {
+    grid-template-columns: 1fr;
   }
 }
 

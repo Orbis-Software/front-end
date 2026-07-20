@@ -1,4 +1,22 @@
 export type QuoteStatus = "draft" | "sent" | "accepted" | "rejected" | "converted" | string
+export type QuoteAddressSourceType = "collection_address" | "branch"
+
+export interface QuoteAddressSource {
+  id: number
+  contact_id: number | null
+  source_type: QuoteAddressSourceType
+  label: string | null
+  address_line_1: string | null
+  address_line_2: string | null
+  address_line_3: string | null
+  city: string | null
+  county_state: string | null
+  postal_code: string | null
+  country_id: number | null
+  country_name?: string | null
+  is_collection: boolean
+  is_delivery: boolean
+}
 
 export interface QuoteTypeSelectorItem {
   key: string
@@ -59,14 +77,22 @@ export interface TransportQuote {
 
   origin: string | null
   destination: string | null
+  origin_address_source_type: QuoteAddressSourceType | null
+  origin_address_source_id: number | null
+  destination_address_source_type: QuoteAddressSourceType | null
+  destination_address_source_id: number | null
+  origin_address?: QuoteAddressSource | null
+  destination_address?: QuoteAddressSource | null
   etd: string | null
   eta: string | null
 
   commodity: string | null
+  insurance_level: string | null
   vehicle_type: string | null
   cargo_class: string | null
   container_type: string | null
   load_type: string | null
+  load_planner_enabled: boolean
   goods_description: string | null
 
   is_hazardous: boolean
@@ -90,6 +116,23 @@ export interface TransportQuote {
     email: string | null
     phone: string | null
     mobile: string | null
+    collection_addresses?: QuoteAddressSource[]
+    branches?: Array<{
+      id: number
+      contact_id: number | null
+      source_type: "branch"
+      label: string | null
+      address_line_1: string | null
+      address_line_2: string | null
+      address_line_3: string | null
+      city: string | null
+      county_state: string | null
+      postal_code: string | null
+      country_id: number | null
+      country_name?: string | null
+      is_collection: boolean
+      is_delivery: boolean
+    }>
   }
 
   creator?: {
@@ -142,14 +185,20 @@ export interface TransportQuotePayload {
 
   origin?: string | null
   destination?: string | null
+  origin_address_source_type?: QuoteAddressSourceType | null
+  origin_address_source_id?: number | null
+  destination_address_source_type?: QuoteAddressSourceType | null
+  destination_address_source_id?: number | null
   etd?: string | null
   eta?: string | null
 
   commodity?: string | null
+  insurance_level?: string | null
   vehicle_type?: string | null
   cargo_class?: string | null
   container_type?: string | null
   load_type?: string | null
+  load_planner_enabled?: boolean
   goods_description?: string | null
 
   is_hazardous?: boolean

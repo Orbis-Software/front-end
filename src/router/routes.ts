@@ -95,11 +95,15 @@ const SystemSettingsAccountSettingsPage = () =>
   import("@/app/pages/settings/systemSettings/accountSettings/SystemSettingsAccountSettingsPage.vue")
 const SystemSettingsAwbManagerPage = () =>
   import("@/app/pages/settings/systemSettings/awbManager/SystemSettingsAwbManagerPage.vue")
+const SystemSettingsTermsConditionsPage = () =>
+  import("@/app/pages/settings/systemSettings/termsConditions/SystemSettingsTermsConditionsPage.vue")
 const UserSettingsPage = () => import("@/app/pages/settings/userSettings/UserSettingsPage.vue")
 const UserSettingsSignaturePage = () =>
   import("@/app/pages/settings/userSettings/signature/UserSettingsSignaturePage.vue")
 const UserSettingsShortcutsPage = () =>
   import("@/app/pages/settings/userSettings/shortcuts/UserSettingsShortcutsPage.vue")
+const UserSettingsGoodsDescriptionsPage = () =>
+  import("@/app/pages/settings/userSettings/goodsDescriptions/UserSettingsGoodsDescriptionsPage.vue")
 
 /* =========================
    WMS Pages
@@ -873,7 +877,13 @@ export const routes: RouteRecordRaw[] = [
             path: "awb-manager",
             name: "settings.system.awb_manager",
             component: SystemSettingsAwbManagerPage,
-            meta: { title: "System Settings • AWB Manager" },
+            meta: { title: "System Settings - AWB Manager" },
+          },
+          {
+            path: "terms-conditions",
+            name: "settings.system.terms_conditions",
+            component: SystemSettingsTermsConditionsPage,
+            meta: { title: "System Settings - Terms & Conditions" },
           },
         ],
       },
@@ -897,6 +907,12 @@ export const routes: RouteRecordRaw[] = [
             name: "settings.user.shortcuts",
             component: UserSettingsShortcutsPage,
             meta: { title: "User Settings - Shortcut" },
+          },
+          {
+            path: "goods-descriptions",
+            name: "settings.user.goods_descriptions",
+            component: UserSettingsGoodsDescriptionsPage,
+            meta: { title: "User Settings - Goods Descriptions" },
           },
         ],
       },

@@ -184,6 +184,7 @@ export function useJobTransportTab() {
     form,
     referenceOptions,
     originAddressOptions,
+    originAddressSelection,
     addressContactOptions,
     addressContactsLoading,
     selectedDestinationContactId,
@@ -192,6 +193,11 @@ export function useJobTransportTab() {
     openAddressModal,
     onAddressContactFilter,
     selectAddressContact,
+    addressPickerVisible,
+    addressPickerTarget,
+    addressPickerContact,
+    chooseAddressSource,
+    selectAddressSource,
   } = jobDetails
 
   const haulierChargeDescriptionOptions = computed(() =>
@@ -237,8 +243,11 @@ export function useJobTransportTab() {
   const globalReferenceRows = computed(() => {
     const rows = [
       ...remoteGlobalReferenceRows.value,
+      ...globalReferenceData.value.locations.map(row => ({
+        row,
+        category: "Delivery Location",
+      })),
       ...globalReferenceData.value.terminals.map(row => ({ row, category: "Terminal" })),
-      ...globalReferenceData.value.airlines.map(row => ({ row, category: "Airline" })),
       ...globalReferenceData.value.cities.map(row => ({ row, category: "City" })),
     ]
 
@@ -506,9 +515,18 @@ export function useJobTransportTab() {
 
     try {
       const response = await globalReferenceDataService.list({
+        category: "locations",
+        mode:
+          mode.value === "road" ||
+          mode.value === "rail" ||
+          mode.value === "sea" ||
+          mode.value === "air"
+            ? mode.value
+            : undefined,
         search: globalReferenceSearchTerm.value.trim() || undefined,
         per_page: GLOBAL_REFERENCE_OPTION_LIMIT,
         page: 1,
+        compact: true,
       })
 
       if (token !== globalReferenceFetchToken) return
@@ -1012,6 +1030,7 @@ export function useJobTransportTab() {
 
   onMounted(async () => {
     const hasReferenceData =
+      globalReferenceData.value.locations.length ||
       globalReferenceData.value.terminals.length ||
       globalReferenceData.value.airlines.length ||
       globalReferenceData.value.cities.length
@@ -1056,11 +1075,15 @@ export function useJobTransportTab() {
     countriesLoading: countryStore.loading,
     referenceOptions,
     originAddressOptions,
+    originAddressSelection,
     addressContactOptions,
     addressContactsLoading,
     selectedDestinationContactId,
     selectedOriginAddress,
     selectedDestinationAddress,
+    addressPickerVisible,
+    addressPickerTarget,
+    addressPickerContact,
     haulierChargeDescriptionOptions,
     contactOptions,
     contactOptionsLoading,
@@ -1079,6 +1102,8 @@ export function useJobTransportTab() {
     openAddressModal,
     onAddressContactFilter,
     selectAddressContact,
+    chooseAddressSource,
+    selectAddressSource,
     setBooleanDetail,
     raiseCollectionOrder,
   }
@@ -1117,6 +1142,7 @@ function uniqueReferenceRows(
 
 function referenceCategoryLabel(category: string | undefined): string {
   if (category === "airlines") return "Airline"
+  if (category === "locations") return "Delivery Location"
   if (category === "cities") return "City"
 
   return "Terminal"

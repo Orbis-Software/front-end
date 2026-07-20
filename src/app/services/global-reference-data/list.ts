@@ -32,8 +32,11 @@ export default async function list(
     filters: {
       types: arrayOfStrings(data.filters?.types),
       countries: arrayOfStrings(data.filters?.countries),
+      country_codes: arrayOfStrings(data.filters?.country_codes),
       regions: arrayOfStrings(data.filters?.regions),
+      states: arrayOfStrings(data.filters?.states),
       statuses: arrayOfStrings(data.filters?.statuses),
+      modes: arrayOfStrings(data.filters?.modes),
     },
   }
 }

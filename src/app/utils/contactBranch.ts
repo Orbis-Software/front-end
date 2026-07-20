@@ -23,6 +23,9 @@ export function buildInitialBranchPayload(contact: ContactLike): Omit<ContactBra
     email: contact.email ?? null,
     phone: contact.phone ?? null,
 
+    is_collection: true,
+    is_delivery: true,
+
     delivery_address_line_1: contact.address_line_1 ?? null,
     delivery_address_line_2: contact.address_line_2 ?? null,
     delivery_address_line_3: contact.address_line_3 ?? contact.address_line_4 ?? null,

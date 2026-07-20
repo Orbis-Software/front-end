@@ -12,6 +12,7 @@ import type { ComputedRef, Ref } from "vue"
 import type { JobPdfDocument } from "@/app/types/transport-job-service"
 import { useJobTransportTab } from "./JobTransportTab.logic"
 import JobPackagesTab from "../Packages/JobPackagesTab.vue"
+import JobAddressPickerModal from "@/app/components/jobs/details/JobAddressPickerModal.vue"
 
 type JobPdfActions = {
   pdfLoading: Ref<JobPdfDocument | null>
@@ -42,6 +43,7 @@ const {
   countriesLoading,
   referenceOptions,
   originAddressOptions,
+  originAddressSelection,
   addressContactOptions,
   addressContactsLoading,
   selectedDestinationContactId,
@@ -65,6 +67,11 @@ const {
   openAddressModal,
   onAddressContactFilter,
   selectAddressContact,
+  addressPickerVisible,
+  addressPickerTarget,
+  addressPickerContact,
+  chooseAddressSource,
+  selectAddressSource,
   setBooleanDetail,
   raiseCollectionOrder,
 } = useJobTransportTab()
@@ -1361,7 +1368,7 @@ const globalReferenceVirtualScrollerOptions = {
             <label class="job-transport-tab__field job-transport-tab__field--span-2">
               <span>Origin Address</span>
               <Dropdown
-                v-model="form.origin_contact_collection_address_id"
+                :model-value="originAddressSelection"
                 :options="originAddressOptions"
                 option-label="label"
                 option-value="value"
@@ -1369,6 +1376,7 @@ const globalReferenceVirtualScrollerOptions = {
                 show-clear
                 append-to="body"
                 class="job-transport-tab__prime-select"
+                @update:model-value="(value: string | null) => selectAddressSource('origin', value)"
               />
             </label>
 
@@ -3438,5 +3446,11 @@ const globalReferenceVirtualScrollerOptions = {
         </label>
       </div>
     </div>
+    <JobAddressPickerModal
+      v-model:visible="addressPickerVisible"
+      :target="addressPickerTarget"
+      :contact="addressPickerContact"
+      @select="chooseAddressSource"
+    />
   </section>
 </template>

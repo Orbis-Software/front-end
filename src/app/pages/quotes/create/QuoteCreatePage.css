@@ -88,8 +88,23 @@
 }
 
 .quote-page .section {
-  padding: 16px;
-  margin-bottom: 14px;
+  padding: 12px;
+  margin-bottom: 10px;
+}
+
+.quote-page .quote-selection-section {
+  padding: 8px;
+  margin-bottom: 8px;
+}
+
+.quote-page .quote-selection-section .step-head {
+  margin-bottom: 6px;
+  padding: 6px 8px;
+  border-radius: 8px;
+}
+
+.quote-page .quote-selection-section .card-btn i {
+  font-size: 11px;
 }
 
 .quote-page .section > .grid-3,
@@ -158,6 +173,18 @@
 
 .quote-page .control {
   width: 100%;
+}
+
+.quote-page .destination-address-control {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.quote-page .destination-address-control .p-inputtext {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .quote-page .textarea {
@@ -291,7 +318,7 @@
 }
 
 .quote-page .quote-table--buy-costs {
-  min-width: 1580px;
+  min-width: 1460px;
 }
 
 .quote-page .quote-table thead tr {
@@ -436,6 +463,19 @@
   font-size: 12px;
 }
 
+.quote-page .quote-section-total + .table-head-row {
+  margin-top: 8px;
+}
+
+.quote-page .quote-load-planner-toggle {
+  display: flex;
+  justify-content: flex-end;
+  padding: 10px 12px;
+  border: 1px solid var(--quote-border);
+  border-radius: 10px;
+  background: var(--quote-section-head);
+}
+
 .quote-page .quote-section-total span {
   color: var(--quote-muted);
   font-weight: 800;
@@ -530,21 +570,39 @@
 }
 
 .quote-page .final-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-width: 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--quote-border);
+}
+
+.quote-page .final-action-buttons {
   display: flex;
   align-items: center;
   justify-content: flex-end;
   gap: 10px;
-  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.quote-page .final-action-buttons .btn {
+  flex: 0 0 auto;
+  min-width: 108px;
+  white-space: nowrap;
 }
 
 .quote-page .quote-draft-status {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  margin-right: auto;
+  flex: 0 0 auto;
   color: #5f6b7a;
   font-size: 12px;
   font-weight: 600;
+  white-space: nowrap;
 }
 
 .quote-page .quote-draft-status--saving,
@@ -833,6 +891,12 @@
   .quote-page .final-actions {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .quote-page .final-action-buttons {
+    display: grid;
+    grid-template-columns: 1fr;
+    width: 100%;
   }
 
   .quote-page .quote-draft-status {

@@ -11,10 +11,12 @@ const {
   selectedRegion,
   selectedStatus,
   selectedCountry,
+  selectedMode,
   typeOptions,
   regionOptions,
   statusOptions,
   countryOptions,
+  modeOptions,
   loading,
   error,
   rows,
@@ -25,11 +27,8 @@ const {
   paginationStart,
   paginationEnd,
   clearFilters,
-  exportCsv,
   sortBy,
   onPageChange,
-  getTypeClass,
-  getStatusClass,
 } = useGlobalReferenceDataPage()
 </script>
 
@@ -44,6 +43,13 @@ const {
       <select v-model="selectedCategory">
         <option v-for="option in categoryOptions" :key="option.value" :value="option.value">
           {{ option.label }} ({{ option.count }})
+        </option>
+      </select>
+
+      <select v-model="selectedMode" :disabled="selectedCategory === 'airlines'">
+        <option value="">All Transport Modes</option>
+        <option v-for="option in modeOptions" :key="option.value" :value="option.value">
+          {{ option.label }}
         </option>
       </select>
 
@@ -76,14 +82,6 @@ const {
       </select>
 
       <button type="button" class="global-reference-page__btn" @click="clearFilters">Clear</button>
-
-      <button
-        type="button"
-        class="global-reference-page__btn global-reference-page__btn--primary"
-        @click="exportCsv"
-      >
-        Export CSV
-      </button>
 
       <div class="global-reference-page__count">
         Showing
@@ -122,22 +120,6 @@ const {
                 v-if="column.key === 'categoryLabel'"
                 class="global-reference-page__category"
                 :class="`global-reference-page__category--${row.category}`"
-              >
-                {{ row[column.key] }}
-              </span>
-
-              <span
-                v-else-if="column.key === 'type'"
-                class="global-reference-page__badge"
-                :class="getTypeClass(String(row[column.key]))"
-              >
-                {{ row[column.key] }}
-              </span>
-
-              <span
-                v-else-if="column.key === 'status'"
-                class="global-reference-page__status"
-                :class="getStatusClass(String(row[column.key]))"
               >
                 {{ row[column.key] }}
               </span>

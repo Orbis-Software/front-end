@@ -15,7 +15,10 @@ export type ManagementUsersTab = {
   name: ManagementUsersTabName
 }
 
-export type UserSettingsTabName = "settings.user.signature" | "settings.user.shortcuts"
+export type UserSettingsTabName =
+  | "settings.user.signature"
+  | "settings.user.shortcuts"
+  | "settings.user.goods_descriptions"
 
 export type UserSettingsTab = {
   label: string
@@ -29,6 +32,7 @@ export type SystemSettingsTabName =
   | "settings.system.master"
   | "settings.system.account_settings"
   | "settings.system.awb_manager"
+  | "settings.system.terms_conditions"
 
 export type SystemSettingsTab = {
   label: string

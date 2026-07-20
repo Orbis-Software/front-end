@@ -36,6 +36,16 @@
           </span>
 
           <Button
+            label="Copy"
+            icon="pi pi-copy"
+            severity="secondary"
+            outlined
+            :loading="copying"
+            :disabled="copying"
+            @click="onCopy"
+          />
+
+          <Button
             v-if="quote.status === 'draft'"
             label="Edit"
             icon="pi pi-pencil"
@@ -90,6 +100,23 @@
         </div>
       </header>
 
+      <nav v-if="showViewTabs" class="quote-details-page__view-tabs">
+        <button
+          type="button"
+          :class="{ 'quote-details-page__view-tab--active': activeView === 'buying' }"
+          @click="activeView = 'buying'"
+        >
+          Buying Costs
+        </button>
+        <button
+          type="button"
+          :class="{ 'quote-details-page__view-tab--active': activeView === 'quotation' }"
+          @click="activeView = 'quotation'"
+        >
+          Quotation
+        </button>
+      </nav>
+
       <section class="quote-details-page__hero">
         <div>
           <h2>{{ quote.customer_name }}</h2>
@@ -138,8 +165,10 @@
         </div>
 
         <div class="quote-details-page__hero-total">
-          <span>Total Incl. Tax</span>
-          <strong>{{ money(quote.totals.incl_tax) }}</strong>
+          <span>{{ buyingCostsView ? `Total Cost (${baseCurrency})` : "Total Incl. Tax" }}</span>
+          <strong>{{
+            buyingCostsView ? baseMoney(quote.totals.cost) : money(quote.totals.incl_tax)
+          }}</strong>
         </div>
       </section>
 
@@ -203,9 +232,9 @@
               <strong>{{ money(quote.totals.sell) }}</strong>
             </div>
 
-            <div v-if="!quote.customer_facing">
-              <span>Subtotal Cost</span>
-              <strong>{{ money(quote.totals.cost) }}</strong>
+            <div v-if="buyingCostsView">
+              <span>Subtotal Cost ({{ baseCurrency }})</span>
+              <strong>{{ baseMoney(quote.totals.cost) }}</strong>
             </div>
 
             <div>
@@ -223,12 +252,12 @@
               <strong>{{ money(quote.totals.incl_tax) }}</strong>
             </div>
 
-            <div v-if="!quote.customer_facing" class="quote-details-page__totals-profit">
+            <div v-if="buyingCostsView" class="quote-details-page__totals-profit">
               <span>Profit</span>
               <strong>{{ money(quote.totals.profit) }}</strong>
             </div>
 
-            <div v-if="!quote.customer_facing" class="quote-details-page__totals-profit">
+            <div v-if="buyingCostsView" class="quote-details-page__totals-profit">
               <span>Profit %</span>
               <strong>{{ quote.totals.profit_percentage.toFixed(2) }}%</strong>
             </div>
@@ -237,6 +266,7 @@
       </div>
 
       <LoadPlannerPanel
+        v-if="quote.load_planner_enabled"
         :packages="loadPlannerPackages"
         :plan-ref="loadPlannerReference"
         reference-label="Quote Ref"
@@ -250,7 +280,7 @@
         </div>
 
         <DataTable
-          :value="quote.charge_lines"
+          :value="visibleChargeLines"
           responsiveLayout="scroll"
           class="quote-details-page__table"
         >
@@ -258,31 +288,35 @@
           <Column field="quantity" header="Qty" />
           <Column field="uom" header="UOM" />
 
-          <Column v-if="!quote.customer_facing" header="Cost">
+          <Column v-if="buyingCostsView" header="Cost">
             <template #body="{ data }">
-              {{ money(data.cost) }}
+              {{ money(data.cost, data.currency) }}
             </template>
           </Column>
 
-          <Column v-if="!quote.customer_facing" header="Markup %">
+          <Column v-if="buyingCostsView" header="Markup %">
             <template #body="{ data }"> {{ data.markup_percent }}% </template>
           </Column>
 
-          <Column v-if="quote.customer_facing" header="Unit Price">
+          <Column v-if="!buyingCostsView" header="Unit Price">
             <template #body="{ data }">
               {{ money(data.unit_price) }}
             </template>
           </Column>
 
-          <Column header="Total Sell">
+          <Column :header="buyingCostsView ? `Total Cost (${baseCurrency})` : 'Total Sell'">
             <template #body="{ data }">
-              <strong>{{ money(data.total_sell) }}</strong>
+              <strong>{{
+                buyingCostsView
+                  ? baseMoney(data.quantity * data.cost * data.exchange_rate)
+                  : money(data.total_sell)
+              }}</strong>
             </template>
           </Column>
         </DataTable>
       </section>
 
-      <section class="quote-details-page__card">
+      <section v-if="!buyingCostsView" class="quote-details-page__card">
         <div class="quote-details-page__card-header">
           <h2>Terms & Conditions</h2>
         </div>
@@ -374,11 +408,17 @@ import { useQuoteDetailsPage } from "./QuoteDetailsPage"
 
 const {
   quote,
+  baseCurrency,
+  activeView,
+  showViewTabs,
+  buyingCostsView,
+  visibleChargeLines,
   loadPlannerPackages,
   loadPlannerReference,
   loading,
   actionProcessing,
   pdfLoading,
+  copying,
   actionDialogVisible,
   selectedAction,
   actionNotes,
@@ -389,6 +429,7 @@ const {
   actionConfirmClass,
   onBack,
   onEdit,
+  onCopy,
   openActionModal,
   closeActionModal,
   confirmAction,
@@ -396,5 +437,6 @@ const {
   prettify,
   statusClass,
   money,
+  baseMoney,
 } = useQuoteDetailsPage()
 </script>

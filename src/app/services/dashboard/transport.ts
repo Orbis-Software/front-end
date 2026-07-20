@@ -77,12 +77,25 @@ export interface DashboardPerformanceMetric {
   target: number
 }
 
+export interface DashboardCreditAlert {
+  customer_id: number
+  customer: string
+  account_number: string | null
+  credit_limit: number
+  credit_used: number
+  available_credit: number
+  hard_stop_limit: number
+  credit_currency: string
+  hard_stopped: boolean
+}
+
 export interface DashboardTransportSummary {
   users: DashboardUser[]
   stats: DashboardStats
   kanban: DashboardKanbanLane[]
   todos: DashboardTodo[]
   quote_reminders: DashboardQuoteReminder[]
+  credit_alerts: DashboardCreditAlert[]
   mode_mix: DashboardModeMetric[]
   revenue_by_mode: DashboardModeMetric[]
   performance: DashboardPerformanceMetric[]

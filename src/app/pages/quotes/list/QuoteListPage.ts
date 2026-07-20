@@ -56,6 +56,7 @@ export function useQuoteListPage() {
   const page = ref(1)
   const rows = ref(10)
   const actionProcessing = ref(false)
+  const copyingQuoteId = ref<number | null>(null)
 
   const actionDialogVisible = ref(false)
   const selectedQuote = ref<QuoteItem | null>(null)
@@ -240,6 +241,34 @@ export function useQuoteListPage() {
     })
   }
 
+  async function onCopy(quote: QuoteItem) {
+    if (copyingQuoteId.value) return
+
+    copyingQuoteId.value = quote.id
+
+    try {
+      const copy = await quoteStore.duplicateQuote(quote.id)
+
+      toast.add({
+        severity: "success",
+        summary: "Quotation Copied",
+        detail: `${quote.quote_number} was copied to ${copy.quote_ref}.`,
+        life: 3000,
+      })
+
+      router.push({ name: "tms.quotes.edit", params: { id: copy.id } })
+    } catch (error: any) {
+      toast.add({
+        severity: "error",
+        summary: "Copy Failed",
+        detail: error?.response?.data?.message ?? "Unable to copy this quotation.",
+        life: 4000,
+      })
+    } finally {
+      copyingQuoteId.value = null
+    }
+  }
+
   function openSentModal(quote: QuoteItem) {
     openActionDialog(quote, "sent")
   }
@@ -409,6 +438,7 @@ export function useQuoteListPage() {
     firstRow,
     loading,
     actionProcessing,
+    copyingQuoteId,
     actionDialogVisible,
     selectedQuote,
     selectedAction,
@@ -422,6 +452,7 @@ export function useQuoteListPage() {
     onNewQuotation,
     onView,
     onEdit,
+    onCopy,
     openSentModal,
     openApprovalModal,
     openDeclineModal,

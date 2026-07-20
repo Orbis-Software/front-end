@@ -18,6 +18,26 @@
   overflow-x: auto;
 }
 
+.expected-arrivals-tab__message {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  background: #f8fafc;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.expected-arrivals-tab__message--error {
+  background: #fff1f2;
+  color: #be123c;
+}
+
+.expected-arrivals-tab__empty {
+  padding: 2rem !important;
+  text-align: center;
+  color: var(--text-muted) !important;
+}
+
 .expected-arrivals-tab__table {
   width: 100%;
   border-collapse: collapse;

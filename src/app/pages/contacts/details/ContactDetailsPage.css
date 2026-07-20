@@ -187,6 +187,115 @@
   accent-color: var(--contact-details-accent);
 }
 
+.branchesWorkspace {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.32fr) minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.branchesWorkspace__list {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--contact-details-border);
+  border-radius: 12px;
+  background: var(--contact-details-section-head);
+}
+
+.branchListItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+  padding: 11px;
+  border: 1px solid var(--contact-details-control-border);
+  border-radius: 10px;
+  background: var(--contact-details-control-bg);
+  color: var(--contact-details-text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.branchListItem--active {
+  border-color: var(--contact-details-accent);
+  box-shadow: 0 0 0 2px rgba(236, 105, 26, 0.12);
+}
+
+.branchListItem__icon {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: var(--contact-details-accent-soft);
+  color: #9a3412;
+  flex: 0 0 auto;
+}
+
+.branchListItem__copy {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.branchListItem__copy strong,
+.branchListItem__copy small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.branchListItem__copy small {
+  color: var(--contact-details-muted);
+}
+
+.branchListItem__flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.branchListItem__flags em {
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: var(--contact-details-panel-soft);
+  color: var(--contact-details-muted);
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 700;
+}
+
+.branchesWorkspace__detail .branchCard {
+  width: 100%;
+}
+
+.branchUsage {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 10px;
+  border: 1px solid var(--contact-details-border);
+  border-radius: 8px;
+  background: var(--contact-details-panel-soft);
+}
+
+.branchUsage__option {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--contact-details-text);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+@media (max-width: 900px) {
+  .branchesWorkspace {
+    grid-template-columns: 1fr;
+  }
+}
+
 .contact-details-page .btn--primary,
 .contact-details-page .p-button.btn--primary {
   border-color: var(--contact-details-accent) !important;

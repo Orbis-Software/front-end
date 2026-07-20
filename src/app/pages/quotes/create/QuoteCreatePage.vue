@@ -14,6 +14,29 @@
           {{ pageStatusLabel }}
         </span>
 
+        <Button
+          class="btn orbis-primary"
+          outlined
+          type="button"
+          icon="pi pi-copy"
+          label="Copy Quote"
+          :loading="copying"
+          :disabled="!canShowForm || saving || copying"
+          @click="onCopyQuote"
+        />
+
+        <Button
+          v-if="canShowForm"
+          class="btn orbis-primary"
+          outlined
+          type="button"
+          icon="pi pi-eye"
+          label="Quote Preview"
+          :loading="previewing"
+          :disabled="saving || previewing"
+          @click="onPreviewQuote"
+        />
+
         <Button class="btn orbis-primary" outlined type="button" @click="onBrowseQuotes">
           <i class="pi pi-folder-open" style="margin-right: 8px" />
           Browse Quotes
@@ -30,22 +53,19 @@
       {{ error }}
     </div>
 
-    <section class="card section">
-      <QuoteStepHeader
-        title="Quote Type"
-        badge="STEP 1"
-        subtitle="Choose what you want to create"
+    <section class="card section quote-selection-section">
+      <QuoteStepHeader title="Quote Type" badge="STEP 1" compact />
+      <QuoteTypeSelector
+        :items="QUOTE_TYPES"
+        :selected="quoteType"
+        compact
+        @select="selectQuoteType"
       />
-      <QuoteTypeSelector :items="QUOTE_TYPES" :selected="quoteType" @select="selectQuoteType" />
     </section>
 
-    <section v-if="quoteType && showModeSelector" class="card section">
-      <QuoteStepHeader
-        :title="`Mode of Transport for ${quoteTypeLabel}`"
-        badge="STEP 2"
-        subtitle="Choose the transport mode"
-      />
-      <ModeSelector :items="availableModes" :selected="mode" @select="selectMode" />
+    <section v-if="quoteType && showModeSelector" class="card section quote-selection-section">
+      <QuoteStepHeader :title="`Mode of Transport for ${quoteTypeLabel}`" badge="STEP 2" compact />
+      <ModeSelector :items="availableModes" :selected="mode" compact @select="selectMode" />
     </section>
 
     <section v-if="canShowForm" class="card section">
@@ -155,15 +175,24 @@
 
         <div class="field">
           <label class="label">Validity (Days)</label>
-          <InputNumber
-            v-model="form.validity_period"
+          <Select
+            :model-value="validityInputValue"
+            :options="validityOptions"
+            optionLabel="label"
+            optionValue="value"
             class="control"
-            inputClass="control"
-            :min="1"
-            :minFractionDigits="0"
-            :maxFractionDigits="0"
-            :useGrouping="false"
-            placeholder="e.g. 7"
+            editable
+            placeholder="Choose or enter days"
+            :pt="{
+              label: {
+                inputmode: 'numeric',
+                pattern: '[0-9]*',
+                onKeydown: onValidityInputKeydown,
+              },
+            }"
+            @focus="onValidityInputFocus"
+            @blur="onValidityInputBlur"
+            @update:model-value="onValidityPeriodChange"
           />
         </div>
 
@@ -202,6 +231,68 @@
             optionValue="value"
             class="control"
             placeholder="Select incoterm"
+          />
+        </div>
+      </div>
+
+      <div class="grid-4 mt-12">
+        <div class="field">
+          <label class="label">Origin Address</label>
+          <Select
+            :model-value="originAddressSelection"
+            :options="originAddressOptions"
+            option-label="label"
+            option-value="value"
+            class="control"
+            placeholder="Select customer branch or collection address"
+            :disabled="!selectedCustomer"
+            filter
+            show-clear
+            @update:model-value="(value: string | null) => updateAddressSource('origin', value)"
+          />
+        </div>
+
+        <div class="field">
+          <label class="label">Destination Address</label>
+          <div class="destination-address-control">
+            <InputText :model-value="destinationAddressSelectionLabel" class="control" readonly />
+            <Button
+              label="Choose"
+              icon="pi pi-map-marker"
+              type="button"
+              outlined
+              :disabled="!selectedCustomer"
+              @click="openDestinationAddressModal"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-4 mt-12">
+        <div class="field">
+          <label class="label">Commodity Type</label>
+          <Select
+            v-model="form.commodity"
+            :options="commodityTypeOptions"
+            optionLabel="label"
+            optionValue="value"
+            class="control"
+            placeholder="Select or enter commodity"
+            editable
+            filter
+          />
+        </div>
+
+        <div class="field">
+          <label class="label">Insurance Level</label>
+          <Select
+            v-model="form.insurance_level"
+            :options="insuranceLevelOptions"
+            optionLabel="label"
+            optionValue="value"
+            class="control"
+            placeholder="Select insurance level"
+            showClear
           />
         </div>
       </div>
@@ -347,11 +438,6 @@
       </div>
 
       <div class="grid-4 mt-16">
-        <div class="field">
-          <label class="label">Commodity</label>
-          <InputText v-model="form.commodity" class="control" placeholder="General cargo" />
-        </div>
-
         <div v-if="mode === 'road'" class="field">
           <label class="label">Vehicle Type</label>
           <Select
@@ -365,6 +451,16 @@
             autoFilterFocus
             showClear
           />
+        </div>
+
+        <div class="field">
+          <label class="label">Load Planner</label>
+          <div class="quote-load-planner-toggle">
+            <label class="toggle-line">
+              <InputSwitch v-model="form.load_planner_enabled" />
+              <strong>{{ form.load_planner_enabled ? "Yes" : "No" }}</strong>
+            </label>
+          </div>
         </div>
 
         <div v-if="mode === 'rail'" class="field">
@@ -405,7 +501,7 @@
               <th class="quote-table__compact-heading">Length</th>
               <th class="quote-table__compact-heading">Width</th>
               <th class="quote-table__compact-heading">Height</th>
-              <th>Gross KG</th>
+              <th>Gross KG / Unit</th>
               <th v-if="mode === 'air'">Vol. Wt (KG)</th>
               <th>CBM</th>
               <th v-if="mode === 'road'">LDM</th>
@@ -521,6 +617,7 @@
       </div>
 
       <LoadPlannerPanel
+        v-if="form.load_planner_enabled"
         class="mt-16"
         :packages="loadPlannerPackages"
         :plan-ref="loadPlannerReference"
@@ -542,9 +639,15 @@
 
       <div class="field">
         <label class="label">Description of Goods</label>
-        <InputText
+        <Dropdown
           v-model="form.goods_description"
+          :options="goodsDescriptionOptions"
+          optionLabel="label"
+          optionValue="value"
           class="control"
+          editable
+          filter
+          showClear
           placeholder="e.g. General Cargo – Electronic Components"
         />
       </div>
@@ -695,7 +798,7 @@
                   optionLabel="value"
                   optionValue="value"
                   class="table-select table-select--currency"
-                  @change="syncBuyLineToSell(line)"
+                  @change="updateChargeExchangeRate(line)"
                 />
               </td>
               <td>
@@ -734,7 +837,7 @@
       </div>
 
       <div class="quote-section-total">
-        <span>Buy Total</span>
+        <span>Buy Total ({{ baseCurrency }})</span>
         <strong>{{ subtotalCostDisplay }}</strong>
       </div>
 
@@ -809,6 +912,7 @@
                   optionLabel="value"
                   optionValue="value"
                   class="table-select table-select--currency"
+                  @change="onSellCurrencyChange(line)"
                 />
               </td>
               <td>
@@ -928,20 +1032,22 @@
               <span>Profit %</span><strong>{{ profitPercentDisplay }}</strong>
             </div>
           </div>
+        </div>
 
-          <div class="final-actions">
-            <span
-              class="quote-draft-status"
-              :class="`quote-draft-status--${autosaveState}`"
-              role="status"
-            >
-              <i
-                class="pi"
-                :class="autosaveState === 'error' ? 'pi-exclamation-triangle' : 'pi-cloud'"
-              />
-              {{ autosaveStatus }}
-            </span>
+        <div class="final-actions">
+          <span
+            class="quote-draft-status"
+            :class="`quote-draft-status--${autosaveState}`"
+            role="status"
+          >
+            <i
+              class="pi"
+              :class="autosaveState === 'error' ? 'pi-exclamation-triangle' : 'pi-cloud'"
+            />
+            {{ autosaveStatus }}
+          </span>
 
+          <div class="final-action-buttons">
             <Button class="btn" outlined type="button" :disabled="saving" @click="onCancel"
               >Cancel</Button
             >
@@ -959,6 +1065,17 @@
             </Button>
 
             <Button
+              class="btn quote-preview"
+              outlined
+              type="button"
+              icon="pi pi-eye"
+              label="Quote Preview"
+              :loading="previewing"
+              :disabled="saving || previewing"
+              @click="onPreviewQuote"
+            />
+
+            <Button
               class="btn orbis-primary"
               type="button"
               :loading="saving"
@@ -972,6 +1089,22 @@
         </div>
       </div>
     </section>
+
+    <DestinationAddressPickerModal
+      v-model:visible="destinationAddressModalVisible"
+      :owner="destinationAddressOwner"
+      :selected-customer-name="selectedCustomer?.name ?? ''"
+      :other-customer-id="selectedDestinationCustomer?.id ?? null"
+      :customer-options="destinationCustomerOptions"
+      :address-options="destinationAddressOptions"
+      :address-value="destinationAddressSelection"
+      :loading-customers="loadingDestinationCustomers"
+      :disabled="!selectedCustomer"
+      @update:owner="onDestinationAddressOwnerChange"
+      @search-customers="query => onDestinationCustomerComplete({ query })"
+      @select-customer="onDestinationCustomerIdChange"
+      @select-address="value => updateAddressSource('destination', value)"
+    />
 
     <Dialog
       v-model:visible="leaveDraftDialogVisible"
@@ -1041,6 +1174,7 @@ import ModeSelector from "@/app/components/jobs/ModeSelector.vue"
 import LoadPlannerPanel from "@/app/components/load-planner/LoadPlannerPanel.vue"
 import QuoteStepHeader from "@/app/components/quotes/create/QuoteStepHeader.vue"
 import QuoteTypeSelector from "@/app/components/quotes/create/QuoteTypeSelector.vue"
+import DestinationAddressPickerModal from "@/app/components/jobs/details/DestinationAddressPickerModal.vue"
 import { useQuoteCreatePage } from "./QuoteCreatePage"
 
 const {
@@ -1052,6 +1186,8 @@ const {
   autosaveState,
   leaveDraftDialogVisible,
   leaveDraftDialogSaving,
+  copying,
+  previewing,
   saving,
   error,
 
@@ -1068,16 +1204,45 @@ const {
   selectedCustomer,
   selectedContactIndex,
   customerSuggestions,
+  loadingDestinationCustomers,
+  destinationCustomerSuggestions,
+  selectedDestinationCustomer,
+  destinationAddressOwner,
+  destinationAddressOwnerOptions,
+  destinationAddressModalVisible,
+  destinationCustomerOptions,
   contactOptions,
   accountNumberPreview,
   originLocationOptions,
   destinationLocationOptions,
+  originAddressOptions,
+  destinationAddressOptions,
+  originAddressSelection,
+  destinationAddressSelection,
+  destinationAddressSelectionLabel,
+  updateAddressSource,
+  onDestinationAddressOwnerChange,
+  openDestinationAddressModal,
+  onDestinationCustomerIdChange,
+  onDestinationCustomerComplete,
+  onDestinationCustomerSelect,
+  onDestinationCustomerClear,
   onGlobalReferenceComplete,
   updateLocationValue,
+  onValidityPeriodChange,
+  onValidityInputKeydown,
+  onValidityInputFocus,
+  onValidityInputBlur,
 
   currencyOptions,
+  baseCurrency,
   incotermOptions,
   vehicleTypeOptions,
+  commodityTypeOptions,
+  insuranceLevelOptions,
+  validityOptions,
+  validityInputValue,
+  goodsDescriptionOptions,
   selectedVehicleLoadSpace,
   containerOptions,
   uomOptions,
@@ -1135,9 +1300,13 @@ const {
   getRowVolumetricWeight,
   getRowLdm,
   getChargeLineTotal,
+  updateChargeExchangeRate,
+  onSellCurrencyChange,
   onConditionsPresetChange,
   onBrowseQuotes,
   onFindQuote,
+  onCopyQuote,
+  onPreviewQuote,
   onSave,
   onSaveDraft,
   saveDraftAndLeave,

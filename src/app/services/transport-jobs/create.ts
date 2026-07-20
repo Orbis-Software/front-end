@@ -49,6 +49,8 @@ function toFormData(payload: TransportJobCreatePayload): FormData {
     "origin_contact_collection_address_id",
     payload.origin_contact_collection_address_id,
   )
+  appendFlatValue(fd, "origin_address_source_type", payload.origin_address_source_type)
+  appendFlatValue(fd, "origin_address_source_id", payload.origin_address_source_id)
   appendFlatValue(
     fd,
     "destination_contact_collection_address_id",

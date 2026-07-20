@@ -1,6 +1,7 @@
 import { computed, onMounted, ref } from "vue"
 import { useRoute, useRouter } from "vue-router"
 import { useToast } from "primevue/usetoast"
+import { useCompanyStore } from "@/app/stores/company"
 import { useTransportQuoteStore } from "@/app/stores/transportQuote"
 import type { TransportQuote } from "@/app/types/transportQuote"
 
@@ -16,6 +17,8 @@ type ChargeLine = {
   unit_price: number
   markup_percent: number
   total_sell: number
+  currency: string
+  exchange_rate: number
 }
 
 type QuoteDetails = {
@@ -46,6 +49,7 @@ type QuoteDetails = {
   packing_group: string
   terms_conditions: string | null
   internal_notes: string | null
+  load_planner_enabled: boolean
   customer_facing: boolean
   charge_lines: ChargeLine[]
   totals: {
@@ -63,13 +67,18 @@ export function useQuoteDetailsPage() {
   const route = useRoute()
   const router = useRouter()
   const toast = useToast()
+  const companyStore = useCompanyStore()
   const quoteStore = useTransportQuoteStore()
+
+  companyStore.hydrateFromAuth()
 
   const actionDialogVisible = ref(false)
   const selectedAction = ref<QuoteAction | null>(null)
   const actionNotes = ref("")
   const actionProcessing = ref(false)
   const pdfLoading = ref(false)
+  const copying = ref(false)
+  const activeView = ref<"buying" | "quotation">("quotation")
 
   const quoteId = computed(() => {
     const id = Number(route.params.id)
@@ -82,6 +91,21 @@ export function useQuoteDetailsPage() {
     if (!quoteStore.selectedQuote) return null
 
     return mapTransportQuoteToDetails(quoteStore.selectedQuote)
+  })
+  const baseCurrency = computed(() =>
+    String(
+      companyStore.item?.settings?.main_currency_code ??
+        companyStore.item?.default_currency_code ??
+        "GBP",
+    ).toUpperCase(),
+  )
+  const showViewTabs = computed(() => Boolean(quote.value && quote.value.status !== "draft"))
+  const buyingCostsView = computed(() => !showViewTabs.value || activeView.value === "buying")
+  const visibleChargeLines = computed(() => {
+    const lines = quote.value?.charge_lines ?? []
+    if (!showViewTabs.value) return lines
+
+    return lines.filter(line => line.type === (buyingCostsView.value ? "buy" : "sell"))
   })
   const loadPlannerPackages = computed(() =>
     (quoteStore.selectedQuote?.dimensions ?? []).map((row, index) => ({
@@ -218,6 +242,25 @@ export function useQuoteDetailsPage() {
       name: "tms.quotes.edit",
       params: { id: quote.value.id },
     })
+  }
+
+  async function onCopy() {
+    if (!quote.value || copying.value) return
+
+    copying.value = true
+    try {
+      const copy = await quoteStore.duplicateQuote(quote.value.id)
+      router.push({ name: "tms.quotes.edit", params: { id: copy.id } })
+    } catch (error: any) {
+      toast.add({
+        severity: "error",
+        summary: "Copy Failed",
+        detail: error?.response?.data?.message ?? "Unable to copy this quotation.",
+        life: 4000,
+      })
+    } finally {
+      copying.value = false
+    }
   }
 
   function openActionModal(action: QuoteAction) {
@@ -367,11 +410,15 @@ export function useQuoteDetailsPage() {
     }
   }
 
-  function money(value: number) {
-    return `${quote.value?.currency ?? "GBP"} ${new Intl.NumberFormat("en-GB", {
+  function money(value: number, currency = quote.value?.currency ?? "GBP") {
+    return `${currency} ${new Intl.NumberFormat("en-GB", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(value || 0)}`
+  }
+
+  function baseMoney(value: number) {
+    return money(value, baseCurrency.value)
   }
 
   function mapTransportQuoteToDetails(item: TransportQuote): QuoteDetails {
@@ -385,9 +432,10 @@ export function useQuoteDetailsPage() {
       profit_total: 0,
       profit_percent: 0,
     }
-    const chargeLines = mapChargeLines(item.charges, customerFacing)
-    const customerSubtotalSell = chargeLines.length
-      ? chargeLines.reduce((sum, line) => sum + Number(line.total_sell || 0), 0)
+    const chargeLines = mapChargeLines(item.charges, false, item.currency ?? "GBP")
+    const sellLines = chargeLines.filter(line => line.type === "sell")
+    const customerSubtotalSell = sellLines.length
+      ? sellLines.reduce((sum, line) => sum + Number(line.total_sell || 0), 0)
       : Number(totals.subtotal_sell || 0)
     const subtotalSell = customerFacing ? customerSubtotalSell : Number(totals.subtotal_sell || 0)
     const taxAmount = customerFacing
@@ -430,6 +478,7 @@ export function useQuoteDetailsPage() {
       packing_group: item.packing_group || "—",
       terms_conditions: item.terms_conditions,
       internal_notes: item.note,
+      load_planner_enabled: item.load_planner_enabled !== false,
       customer_facing: customerFacing,
       charge_lines: chargeLines,
       totals: {
@@ -450,7 +499,11 @@ export function useQuoteDetailsPage() {
     )
   }
 
-  function mapChargeLines(charges: any[], customerFacing: boolean): ChargeLine[] {
+  function mapChargeLines(
+    charges: any[],
+    customerFacing: boolean,
+    quoteCurrency: string,
+  ): ChargeLine[] {
     if (!Array.isArray(charges)) return []
 
     return charges
@@ -473,6 +526,8 @@ export function useQuoteDetailsPage() {
           unit_price: unitPrice,
           markup_percent: markup,
           total_sell: Number(charge.sell_total ?? charge.total_sell ?? totalSell),
+          currency: String(charge.currency ?? quoteCurrency).toUpperCase(),
+          exchange_rate: Number(charge.exchange_rate || 1),
         }
       })
   }
@@ -483,11 +538,17 @@ export function useQuoteDetailsPage() {
 
   return {
     quote,
+    baseCurrency,
+    activeView,
+    showViewTabs,
+    buyingCostsView,
+    visibleChargeLines,
     loadPlannerPackages,
     loadPlannerReference,
     loading,
     actionProcessing,
     pdfLoading,
+    copying,
     actionDialogVisible,
     selectedAction,
     actionNotes,
@@ -498,6 +559,7 @@ export function useQuoteDetailsPage() {
     actionConfirmClass,
     onBack,
     onEdit,
+    onCopy,
     openActionModal,
     closeActionModal,
     confirmAction,
@@ -505,5 +567,6 @@ export function useQuoteDetailsPage() {
     prettify,
     statusClass,
     money,
+    baseMoney,
   }
 }
