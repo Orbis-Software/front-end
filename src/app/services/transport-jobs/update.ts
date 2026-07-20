@@ -107,6 +107,8 @@ function toFormData(payload: TransportJobUpdatePayload): FormData {
     "origin_contact_collection_address_id",
     payload.origin_contact_collection_address_id,
   )
+  appendValue(fd, "origin_address_source_type", payload.origin_address_source_type)
+  appendValue(fd, "origin_address_source_id", payload.origin_address_source_id)
   appendValue(
     fd,
     "destination_contact_collection_address_id",

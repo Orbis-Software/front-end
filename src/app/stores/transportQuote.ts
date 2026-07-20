@@ -140,6 +140,25 @@ export const useTransportQuoteStore = defineStore("transportQuote", {
       }
     },
 
+    async duplicateQuote(id: number) {
+      this.saving = true
+      this.error = null
+
+      try {
+        const quote = await transportQuoteService.duplicate(id)
+
+        this.quotes.unshift(quote)
+        this.selectedQuote = quote
+
+        return quote
+      } catch (error: any) {
+        this.error = error?.response?.data?.message ?? "Failed to copy transport quote."
+        throw error
+      } finally {
+        this.saving = false
+      }
+    },
+
     async convertQuoteToJob(id: number, payload: ConvertQuoteToJobPayload = {}) {
       this.converting = true
       this.error = null

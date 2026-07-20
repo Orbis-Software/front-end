@@ -75,6 +75,33 @@
   flex-wrap: wrap;
 }
 
+.quote-details-page__view-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 6px;
+  border: 1px solid #dfe5ec;
+  border-radius: 12px;
+  background: #f4f6f8;
+}
+
+.quote-details-page__view-tabs button {
+  min-height: 38px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.quote-details-page__view-tabs button.quote-details-page__view-tab--active {
+  background: #fff;
+  color: #22324a;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.12);
+}
+
 .quote-details-page .p-button,
 .quote-details-page__dialog .p-button {
   min-height: 38px;

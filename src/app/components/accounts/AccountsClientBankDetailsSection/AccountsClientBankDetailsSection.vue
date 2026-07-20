@@ -106,7 +106,10 @@ const currencyOptions = computed<SelectOption[]>(() => {
   return [{ label: selected, value: selected }, ...nextOptions]
 })
 const cityOptions = computed<CityOption[]>(() => {
-  const options = globalReferenceData.value.cities
+  const sourceRows = globalReferenceData.value.locations.length
+    ? globalReferenceData.value.locations
+    : globalReferenceData.value.cities
+  const options = sourceRows
     .map(row => {
       const city = firstValue(row, ["fullName", "full_name", "city", "location", "name"])
       const code = firstValue(row, ["code", "iata", "iataCode", "iata_code", "unlocode"])
@@ -244,6 +247,7 @@ async function fetchCurrencyOptions() {
 
 async function fetchGlobalReferenceData() {
   if (
+    !globalReferenceData.value.locations.length &&
     !globalReferenceData.value.terminals.length &&
     !globalReferenceData.value.airlines.length &&
     !globalReferenceData.value.cities.length

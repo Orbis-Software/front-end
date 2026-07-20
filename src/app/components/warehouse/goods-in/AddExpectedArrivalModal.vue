@@ -26,22 +26,13 @@ export type AddExpectedArrivalPayload = {
 
 const props = defineProps<{
   visible: boolean
+  saving?: boolean
 }>()
 
 const emit = defineEmits<{
   (e: "close"): void
   (e: "saved", payload: AddExpectedArrivalPayload): void
 }>()
-
-const customerOptions: Option[] = [
-  { label: "Greenfield Imports", value: "Greenfield Imports" },
-  { label: "NovaTech Solutions", value: "NovaTech Solutions" },
-]
-
-const supplierOptions: Option[] = [
-  { label: "TechSource Ltd", value: "TechSource Ltd" },
-  { label: "Global Imports Co", value: "Global Imports Co" },
-]
 
 const statusOptions: Option[] = [
   { label: "Expected", value: "Expected" },
@@ -122,7 +113,7 @@ function onSave() {
             aria-label="Close"
             @click="onClose"
           >
-            ×
+            &times;
           </button>
         </div>
 
@@ -132,12 +123,9 @@ function onSave() {
               <label class="add-expected-arrival-modal__label">
                 Customer <span class="add-expected-arrival-modal__req">*</span>
               </label>
-              <Dropdown
+              <InputText
                 v-model="form.customer"
-                :options="customerOptions"
-                option-label="label"
-                option-value="value"
-                placeholder="-- Select --"
+                placeholder="Customer name"
                 class="add-expected-arrival-modal__control"
               />
             </div>
@@ -146,12 +134,9 @@ function onSave() {
               <label class="add-expected-arrival-modal__label">
                 Supplier <span class="add-expected-arrival-modal__req">*</span>
               </label>
-              <Dropdown
+              <InputText
                 v-model="form.supplier"
-                :options="supplierOptions"
-                option-label="label"
-                option-value="value"
-                placeholder="-- Select --"
+                placeholder="Supplier name"
                 class="add-expected-arrival-modal__control"
               />
             </div>
@@ -232,8 +217,14 @@ function onSave() {
         </div>
 
         <div class="add-expected-arrival-modal__footer">
-          <Button label="Cancel" severity="secondary" outlined @click="onClose" />
-          <Button label="Save" :disabled="!isValid" @click="onSave" />
+          <Button
+            label="Cancel"
+            severity="secondary"
+            outlined
+            :disabled="saving"
+            @click="onClose"
+          />
+          <Button label="Save" :loading="saving" :disabled="!isValid || saving" @click="onSave" />
         </div>
       </div>
     </template>

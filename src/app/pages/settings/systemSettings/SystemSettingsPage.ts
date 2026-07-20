@@ -14,6 +14,7 @@ export function useSystemSettingsPage() {
       { label: "Email & Notifications", name: "settings.system.email_notifications" },
       { label: "Master Settings", name: "settings.system.master" },
       { label: "Account Settings", name: "settings.system.account_settings" },
+      { label: "T&C's", name: "settings.system.terms_conditions" },
     ]
 
     if (systemSettingsStore.hasEoriNumber) {

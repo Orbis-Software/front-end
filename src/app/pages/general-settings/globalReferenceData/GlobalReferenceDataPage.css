@@ -93,8 +93,7 @@
   grid-template-columns:
     minmax(260px, 1fr)
     minmax(190px, 230px)
-    repeat(4, minmax(130px, 160px))
-    auto
+    repeat(5, minmax(130px, 160px))
     auto
     auto;
   gap: 10px;
@@ -325,6 +324,11 @@
 }
 
 .global-reference-page__category--cities {
+  background: #f0fdf4;
+  color: #15803d;
+}
+
+.global-reference-page__category--locations {
   background: #f0fdf4;
   color: #15803d;
 }

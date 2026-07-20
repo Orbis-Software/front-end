@@ -50,10 +50,13 @@ const selectedCustomerRef = ref<Contact | null>(null)
 const addressModalVisibleRef = ref(false)
 const addressModalTargetRef = ref<AddressTarget>("origin")
 const addressModalSavingRef = ref(false)
+const addressModalContactIdRef = ref<number | null>(null)
+const addressModalCustomerNameRef = ref("")
 const addressPickerVisibleRef = ref(false)
 const addressPickerTargetRef = ref<AddressTarget>("destination")
 const addressPickerContactRef = ref<Contact | null>(null)
 const selectedDestinationContactIdRef = ref<number | null>(null)
+const destinationAddressOwnerRef = ref<"selected_customer" | "other_customer">("selected_customer")
 const initialLoadingRef = ref(false)
 const customerContactsRef = ref<Contact[]>([])
 const destinationContactsRef = ref<Contact[]>([])
@@ -75,22 +78,33 @@ export type JobDetailsContext = {
   load: () => Promise<void>
   originAddressOptions: any
   destinationAddressOptions: any
+  originAddressSelection: any
+  destinationAddressSelection: any
   addressContactOptions: any
   addressContactsLoading: any
   addressModalVisible: any
   addressModalTarget: any
   addressModalSaving: any
+  addressModalCustomerId: typeof addressModalContactIdRef
+  addressModalCustomerName: typeof addressModalCustomerNameRef
   addressPickerVisible: any
   addressPickerTarget: any
   addressPickerContact: any
   selectedDestinationContactId: any
+  destinationAddressOwner: typeof destinationAddressOwnerRef
+  destinationCustomerOptions: any
+  selectedCustomerName: any
   selectedOriginAddress: any
   selectedDestinationAddress: any
   openAddressModal: (target: AddressTarget) => void
   createAndSelectAddress: (payload: JobTransportAddressPayload) => Promise<void>
   selectDestinationAddress: (addressId: number | null) => void
+  selectAddressSource: (target: AddressTarget, value: string | null) => void
   onAddressContactFilter: (event: { value?: string }) => void
   selectAddressContact: (target: AddressTarget, contactId: number | null) => Promise<void>
+  selectDestinationCustomer: (contactId: number | null) => Promise<void>
+  setDestinationAddressOwner: (owner: "selected_customer" | "other_customer") => void
+  setAddressModalCustomer: (contactId: number | null) => Promise<void>
   chooseAddressSource: (choice: AddressChoice) => void
   referenceOptions: {
     serviceTypeOptions: any
@@ -265,14 +279,15 @@ function addressSummary(address: ContactCollectionAddress): string {
     .join(", ")
 }
 
-function addressOption(address: ContactCollectionAddress, ownerName = ""): AddressSelectOption {
-  const label = address.label || address.city || addressSummary(address) || "Unnamed Address"
-  const owner = ownerName || ""
-
+function addressOption(choice: AddressChoice): AddressSelectOption {
   return {
-    label: label || owner || "Unnamed Address",
-    value: Number(address.id),
-    address,
+    label: [choice.sourceType === "branch" ? "Branch" : "Collection / Delivery", choice.label]
+      .filter(Boolean)
+      .join(" — "),
+    value: `${choice.sourceType}:${choice.id}`,
+    sourceType: choice.sourceType,
+    sourceId: choice.id,
+    address: addressChoiceToDisplay(choice) as ContactCollectionAddress,
   }
 }
 
@@ -1241,6 +1256,8 @@ export function useJobDetailsPage() {
     consignee_phone: "",
     consignee_email: "",
     origin_contact_collection_address_id: null,
+    origin_address_source_type: null,
+    origin_address_source_id: null,
     destination_contact_collection_address_id: null,
     destination_address_source_type: null,
     destination_address_source_id: null,
@@ -1414,31 +1431,34 @@ export function useJobDetailsPage() {
     )
   })
 
-  const originAddressOptions = computed<AddressSelectOption[]>(() => {
-    return (selectedCustomer.value?.collection_addresses ?? []).map(address =>
-      addressOption(address),
-    )
+  const selectedCustomerName = computed(() => displayContactName(selectedCustomer.value))
+
+  const selectedCustomerAddressChoices = computed<AddressChoice[]>(() => {
+    const customer = selectedCustomer.value
+    if (!customer) return []
+
+    const ownerName = displayContactName(customer)
+
+    return [
+      ...(customer.branches ?? []).map(branch => branchAddressChoice(branch, ownerName)),
+      ...(customer.collection_addresses ?? []).map(address =>
+        contactAddressChoice(address, ownerName),
+      ),
+    ]
   })
 
-  const destinationAddressOptions = computed<AddressSelectOption[]>(() => {
-    const optionsById = new Map<number, AddressSelectOption>()
+  const originAddressOptions = computed<AddressSelectOption[]>(() =>
+    selectedCustomerAddressChoices.value
+      .filter(choice => choice.sourceType === "branch" || choice.is_collection)
+      .map(addressOption),
+  )
 
-    ;(selectedCustomer.value?.collection_addresses ?? []).forEach(address => {
-      optionsById.set(Number(address.id), addressOption(address))
-    })
-
-    const currentAddress = (job.value as any)?.destination_address
-    const selectedAddressId = Number(form.destination_contact_collection_address_id)
-    if (
-      currentAddress?.id &&
-      selectedAddressId === Number(currentAddress.id) &&
-      !optionsById.has(Number(currentAddress.id))
-    ) {
-      optionsById.set(Number(currentAddress.id), addressOption(currentAddress))
-    }
-
-    return Array.from(optionsById.values())
-  })
+  const originAddressSelection = computed(() =>
+    addressSourceValue(form.origin_address_source_type, form.origin_address_source_id),
+  )
+  const destinationAddressSelection = computed(() =>
+    addressSourceValue(form.destination_address_source_type, form.destination_address_source_id),
+  )
 
   const addressContactOptions = computed<CustomerOption[]>(() => {
     const contactsById = new Map<number, Contact>()
@@ -1486,6 +1506,10 @@ export function useJobDetailsPage() {
     return options
   })
 
+  const destinationCustomerOptions = computed(() =>
+    addressContactOptions.value.filter(option => Number(option.value) !== Number(form.customer_id)),
+  )
+
   const addressChoices = computed<AddressChoice[]>(() => {
     const choices: AddressChoice[] = []
 
@@ -1530,12 +1554,60 @@ export function useJobDetailsPage() {
       }
     }
 
+    appendLoadedChoice((job.value as any)?.origin_address, form.origin_address_source_type)
     appendLoadedChoice(
       (job.value as any)?.destination_address,
       form.destination_address_source_type,
     )
 
     return choices
+  })
+
+  const selectedDestinationCustomer = computed<Contact | null>(() => {
+    const customerId = Number(
+      selectedDestinationContactIdRef.value ??
+        (destinationAddressOwnerRef.value === "selected_customer" ? form.customer_id : null),
+    )
+
+    if (!Number.isFinite(customerId) || customerId <= 0) return null
+    if (Number(selectedCustomer.value?.id) === customerId) return selectedCustomer.value
+    if (Number(addressPickerContactRef.value?.id) === customerId) {
+      return addressPickerContactRef.value
+    }
+
+    return destinationContactsRef.value.find(contact => Number(contact.id) === customerId) ?? null
+  })
+
+  const destinationAddressOptions = computed<AddressSelectOption[]>(() => {
+    const customer = selectedDestinationCustomer.value
+    const ownerName = customer ? displayContactName(customer) : ""
+    const choices = customer
+      ? [
+          ...(customer.branches ?? []).map(branch => branchAddressChoice(branch, ownerName)),
+          ...(customer.collection_addresses ?? []).map(address =>
+            contactAddressChoice(address, ownerName),
+          ),
+        ]
+      : []
+    const loadedChoice = addressChoices.value.find(choice => {
+      return (
+        choice.sourceType === form.destination_address_source_type &&
+        choice.id === Number(form.destination_address_source_id)
+      )
+    })
+
+    if (
+      loadedChoice &&
+      !choices.some(
+        choice => choice.sourceType === loadedChoice.sourceType && choice.id === loadedChoice.id,
+      )
+    ) {
+      choices.push(loadedChoice)
+    }
+
+    return choices
+      .filter(choice => choice.sourceType === "branch" || choice.is_delivery)
+      .map(addressOption)
   })
 
   function findAddressChoice(sourceType: AddressSourceType | null, sourceId: number | null) {
@@ -1548,41 +1620,17 @@ export function useJobDetailsPage() {
     )
   }
 
-  const selectedOriginAddress = computed<ContactCollectionAddress | null>(() => {
-    if (!form.origin_contact_collection_address_id) return null
+  const selectedOriginAddress = computed<ContactCollectionAddress | null>(() =>
+    addressChoiceToDisplay(
+      findAddressChoice(form.origin_address_source_type, form.origin_address_source_id),
+    ),
+  )
 
-    const addressId = Number(form.origin_contact_collection_address_id)
-    const loadedOriginAddress = (job.value as any)?.origin_address
-
-    return (
-      selectedCustomer.value?.collection_addresses?.find(
-        address => Number(address.id) === addressId,
-      ) ??
-      (loadedOriginAddress?.id && Number(loadedOriginAddress.id) === addressId
-        ? loadedOriginAddress
-        : null)
-    )
-  })
-
-  const selectedDestinationAddress = computed<ContactCollectionAddress | null>(() => {
-    if (form.destination_address_source_type === "collection_address") {
-      const addressId = Number(form.destination_address_source_id)
-      const loadedDestinationAddress = (job.value as any)?.destination_address
-
-      return (
-        selectedCustomer.value?.collection_addresses?.find(
-          address => Number(address.id) === addressId,
-        ) ??
-        (loadedDestinationAddress?.id && Number(loadedDestinationAddress.id) === addressId
-          ? loadedDestinationAddress
-          : null)
-      )
-    }
-
-    return addressChoiceToDisplay(
+  const selectedDestinationAddress = computed<ContactCollectionAddress | null>(() =>
+    addressChoiceToDisplay(
       findAddressChoice(form.destination_address_source_type, form.destination_address_source_id),
-    )
-  })
+    ),
+  )
 
   function referenceOptionsFor(categoryKey: string, fallback: SelectOption[] = []): SelectOption[] {
     const category = referenceDataStore.getByKey(categoryKey)
@@ -1905,6 +1953,15 @@ export function useJobDetailsPage() {
       extra.origin_contact_collection_address_id === ""
         ? null
         : Number(extra.origin_contact_collection_address_id)
+    form.origin_address_source_type =
+      extra.origin_address_source_type ??
+      (form.origin_contact_collection_address_id ? "collection_address" : null)
+    form.origin_address_source_id =
+      extra.origin_address_source_id === null ||
+      extra.origin_address_source_id === undefined ||
+      extra.origin_address_source_id === ""
+        ? form.origin_contact_collection_address_id
+        : Number(extra.origin_address_source_id)
     form.destination_contact_collection_address_id =
       extra.destination_contact_collection_address_id === null ||
       extra.destination_contact_collection_address_id === undefined ||
@@ -1921,6 +1978,11 @@ export function useJobDetailsPage() {
         ? form.destination_contact_collection_address_id
         : Number(extra.destination_address_source_id)
     selectedDestinationContactIdRef.value = extra.destination_address?.contact_id ?? null
+    destinationAddressOwnerRef.value =
+      selectedDestinationContactIdRef.value &&
+      Number(selectedDestinationContactIdRef.value) !== Number(form.customer_id)
+        ? "other_customer"
+        : "selected_customer"
     form.collection_date = parseDate(extra.collection_date)
     form.collection_time = extra.collection_time ?? ""
     form.latest_collection_time = extra.latest_collection_time ?? ""
@@ -2094,6 +2156,8 @@ export function useJobDetailsPage() {
       consignee_phone: form.consignee_phone || null,
       consignee_email: form.consignee_email || null,
       origin_contact_collection_address_id: form.origin_contact_collection_address_id,
+      origin_address_source_type: form.origin_address_source_type,
+      origin_address_source_id: form.origin_address_source_id,
       destination_contact_collection_address_id: form.destination_contact_collection_address_id,
       destination_address_source_type: form.destination_address_source_type,
       destination_address_source_id: form.destination_address_source_id,
@@ -2320,28 +2384,124 @@ export function useJobDetailsPage() {
   }
 
   function openAddressModal(target: AddressTarget) {
+    const owner =
+      target === "destination" ? selectedDestinationCustomer.value : selectedCustomer.value
+    const contactId =
+      target === "destination"
+        ? Number(selectedDestinationContactIdRef.value ?? form.customer_id)
+        : Number(form.customer_id)
+    const contactOption = addressContactOptions.value.find(
+      option => Number(option.value) === contactId,
+    )
+
     addressModalTargetRef.value = target
+    addressModalContactIdRef.value = Number.isFinite(contactId) && contactId > 0 ? contactId : null
+    addressModalCustomerNameRef.value = displayContactName(owner) || contactOption?.label || ""
     addressModalVisibleRef.value = true
+  }
+
+  async function setAddressModalCustomer(contactId: number | null) {
+    const normalizedId = contactId ? Number(contactId) : null
+
+    addressModalContactIdRef.value = normalizedId
+
+    if (!normalizedId) {
+      addressModalCustomerNameRef.value = ""
+      return
+    }
+
+    const option = addressContactOptions.value.find(item => Number(item.value) === normalizedId)
+    const cached =
+      normalizedId === Number(selectedCustomer.value?.id)
+        ? selectedCustomer.value
+        : destinationContactsRef.value.find(contact => Number(contact.id) === normalizedId)
+    const customer = cached ?? (await (contactStore as any).find(normalizedId))
+
+    addressModalCustomerNameRef.value = displayContactName(customer) || option?.label || ""
+    destinationContactsRef.value = [
+      customer,
+      ...destinationContactsRef.value.filter(contact => Number(contact.id) !== normalizedId),
+    ]
+  }
+
+  function clearDestinationAddressSelection() {
+    form.destination_contact_collection_address_id = null
+    form.destination_address_source_type = null
+    form.destination_address_source_id = null
+  }
+
+  async function selectDestinationCustomer(contactId: number | null) {
+    const normalizedId = contactId ? Number(contactId) : null
+    const customerChanged = Number(selectedDestinationContactIdRef.value) !== Number(normalizedId)
+
+    selectedDestinationContactIdRef.value = normalizedId
+
+    if (customerChanged) clearDestinationAddressSelection()
+
+    if (!normalizedId) {
+      addressPickerContactRef.value = null
+      return
+    }
+
+    destinationAddressOwnerRef.value =
+      normalizedId === Number(form.customer_id) ? "selected_customer" : "other_customer"
+
+    const cached =
+      normalizedId === Number(selectedCustomer.value?.id)
+        ? selectedCustomer.value
+        : destinationContactsRef.value.find(contact => Number(contact.id) === normalizedId)
+    const loaded = cached ?? (await (contactStore as any).find(normalizedId))
+
+    addressPickerContactRef.value = loaded
+    destinationContactsRef.value = [
+      loaded,
+      ...destinationContactsRef.value.filter(contact => Number(contact.id) !== normalizedId),
+    ]
+  }
+
+  function setDestinationAddressOwner(owner: "selected_customer" | "other_customer") {
+    if (
+      destinationAddressOwnerRef.value === owner &&
+      (owner !== "selected_customer" ||
+        Number(selectedDestinationContactIdRef.value) === Number(form.customer_id))
+    ) {
+      return
+    }
+
+    destinationAddressOwnerRef.value = owner
+
+    if (owner === "selected_customer") {
+      void selectDestinationCustomer(form.customer_id ? Number(form.customer_id) : null)
+      return
+    }
+
+    selectedDestinationContactIdRef.value = null
+    addressPickerContactRef.value = null
+    clearDestinationAddressSelection()
   }
 
   async function selectAddressContact(target: AddressTarget, contactId: number | null) {
     if (target !== "destination") return
 
-    selectedDestinationContactIdRef.value = contactId
+    await selectDestinationCustomer(contactId)
+    if (!contactId || !addressPickerContactRef.value) return
 
-    if (!contactId) return
-
-    const loaded = await (contactStore as any).find(Number(contactId))
-    addressPickerContactRef.value = loaded
-    destinationContactsRef.value = [
-      loaded,
-      ...destinationContactsRef.value.filter(contact => Number(contact.id) !== Number(contactId)),
-    ]
     addressPickerTargetRef.value = target
     addressPickerVisibleRef.value = true
   }
 
   function chooseAddressSource(choice: AddressChoice) {
+    if (addressPickerTargetRef.value === "origin") {
+      form.origin_address_source_type = choice.sourceType
+      form.origin_address_source_id = choice.id
+      form.origin_contact_collection_address_id =
+        choice.sourceType === "collection_address" ? choice.id : null
+      addressPickerVisibleRef.value = false
+      scheduleAutosaveFromCurrentState()
+
+      return
+    }
+
     form.destination_address_source_type = choice.sourceType
     form.destination_address_source_id = choice.id
     form.destination_contact_collection_address_id =
@@ -2349,6 +2509,33 @@ export function useJobDetailsPage() {
     selectedDestinationContactIdRef.value = choice.contact_id
 
     addressPickerVisibleRef.value = false
+    scheduleAutosaveFromCurrentState()
+  }
+
+  function addressSourceValue(sourceType: AddressSourceType | null, sourceId: number | null) {
+    return sourceType && sourceId ? `${sourceType}:${sourceId}` : null
+  }
+
+  function selectAddressSource(target: AddressTarget, value: string | null) {
+    const options =
+      target === "origin" ? originAddressOptions.value : destinationAddressOptions.value
+    const option = options.find(item => item.value === value)
+
+    if (target === "origin") {
+      form.origin_address_source_type = option?.sourceType ?? null
+      form.origin_address_source_id = option?.sourceId ?? null
+      form.origin_contact_collection_address_id =
+        option?.sourceType === "collection_address" ? option.sourceId : null
+    } else {
+      form.destination_address_source_type = option?.sourceType ?? null
+      form.destination_address_source_id = option?.sourceId ?? null
+      form.destination_contact_collection_address_id =
+        option?.sourceType === "collection_address" ? option.sourceId : null
+      if (option && !selectedDestinationContactIdRef.value) {
+        selectedDestinationContactIdRef.value = Number(form.customer_id)
+      }
+    }
+
     scheduleAutosaveFromCurrentState()
   }
 
@@ -2364,16 +2551,26 @@ export function useJobDetailsPage() {
   }
 
   async function createAndSelectAddress(payload: JobTransportAddressPayload) {
-    if (!form.customer_id) return
+    const addressContactId = Number(addressModalContactIdRef.value ?? form.customer_id)
+    if (!Number.isFinite(addressContactId) || addressContactId <= 0) return
 
     addressModalSavingRef.value = true
 
     try {
       const updatedContact = await (contactStore as any).createCollectionAddress(
-        Number(form.customer_id),
+        addressContactId,
         payload,
       )
-      selectedCustomerRef.value = updatedContact
+
+      if (addressContactId === Number(form.customer_id)) {
+        selectedCustomerRef.value = updatedContact
+        customerContactsRef.value = [
+          updatedContact,
+          ...customerContactsRef.value.filter(contact => Number(contact.id) !== addressContactId),
+        ]
+      }
+
+      addressPickerContactRef.value = updatedContact
       destinationContactsRef.value = [
         updatedContact,
         ...destinationContactsRef.value.filter(contact => {
@@ -2387,10 +2584,15 @@ export function useJobDetailsPage() {
       if (created?.id) {
         if (addressModalTargetRef.value === "origin") {
           form.origin_contact_collection_address_id = Number(created.id)
+          form.origin_address_source_type = "collection_address"
+          form.origin_address_source_id = Number(created.id)
         } else {
           form.destination_contact_collection_address_id = Number(created.id)
           form.destination_address_source_type = "collection_address"
           form.destination_address_source_id = Number(created.id)
+          selectedDestinationContactIdRef.value = addressContactId
+          destinationAddressOwnerRef.value =
+            addressContactId === Number(form.customer_id) ? "selected_customer" : "other_customer"
         }
       }
 
@@ -2411,10 +2613,13 @@ export function useJobDetailsPage() {
       form.account_number = customer?.account_number ?? ""
 
       form.origin_contact_collection_address_id = null
+      form.origin_address_source_type = null
+      form.origin_address_source_id = null
       form.destination_contact_collection_address_id = null
       form.destination_address_source_type = null
       form.destination_address_source_id = null
       selectedDestinationContactIdRef.value = null
+      destinationAddressOwnerRef.value = "selected_customer"
 
       await loadSelectedCustomer(id ? Number(id) : null)
     },
@@ -2463,22 +2668,33 @@ export function useJobDetailsPage() {
     load,
     originAddressOptions,
     destinationAddressOptions,
+    originAddressSelection,
+    destinationAddressSelection,
     addressContactOptions,
     addressContactsLoading: addressContactsLoadingRef,
     addressModalVisible: addressModalVisibleRef,
     addressModalTarget: addressModalTargetRef,
     addressModalSaving: addressModalSavingRef,
+    addressModalCustomerId: addressModalContactIdRef,
+    addressModalCustomerName: addressModalCustomerNameRef,
     addressPickerVisible: addressPickerVisibleRef,
     addressPickerTarget: addressPickerTargetRef,
     addressPickerContact: addressPickerContactRef,
     selectedDestinationContactId: selectedDestinationContactIdRef,
+    destinationAddressOwner: destinationAddressOwnerRef,
+    destinationCustomerOptions,
+    selectedCustomerName,
     selectedOriginAddress,
     selectedDestinationAddress,
     openAddressModal,
     createAndSelectAddress,
     selectDestinationAddress,
+    selectAddressSource,
     onAddressContactFilter,
     selectAddressContact,
+    selectDestinationCustomer,
+    setDestinationAddressOwner,
+    setAddressModalCustomer,
     chooseAddressSource,
     referenceOptions,
   }
@@ -2552,6 +2768,8 @@ export function useJobDetailsPage() {
     customerOptionsLoading: customerOptionsLoadingRef,
     originAddressOptions,
     destinationAddressOptions,
+    originAddressSelection,
+    destinationAddressSelection,
     addressContactOptions,
     addressContactsLoading: addressContactsLoadingRef,
     modeOptions,
@@ -2564,10 +2782,15 @@ export function useJobDetailsPage() {
     addressModalVisible: addressModalVisibleRef,
     addressModalTarget: addressModalTargetRef,
     addressModalSaving: addressModalSavingRef,
+    addressModalCustomerId: addressModalContactIdRef,
+    addressModalCustomerName: addressModalCustomerNameRef,
     addressPickerVisible: addressPickerVisibleRef,
     addressPickerTarget: addressPickerTargetRef,
     addressPickerContact: addressPickerContactRef,
     selectedDestinationContactId: selectedDestinationContactIdRef,
+    destinationAddressOwner: destinationAddressOwnerRef,
+    destinationCustomerOptions,
+    selectedCustomerName,
     selectedOriginAddress,
     selectedDestinationAddress,
 
@@ -2576,9 +2799,13 @@ export function useJobDetailsPage() {
     openAddressModal,
     createAndSelectAddress,
     selectDestinationAddress,
+    selectAddressSource,
     onCustomerFilter,
     onAddressContactFilter,
     selectAddressContact,
+    selectDestinationCustomer,
+    setDestinationAddressOwner,
+    setAddressModalCustomer,
     chooseAddressSource,
   }
 }

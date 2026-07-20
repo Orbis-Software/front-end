@@ -6,12 +6,17 @@ import { useChargeCodeStore } from "@/app/stores/charge-codes"
 import { useContactStore } from "@/app/stores/contact"
 import { useGlobalReferenceDataStore } from "@/app/stores/global-reference-data"
 import { useReferenceDataStore } from "@/app/stores/reference-data"
+import { useExchangeRateStore } from "@/app/stores/exchange-rates"
 import type { CompanyReferenceSequence } from "@/app/types/company"
-import type { Contact } from "@/app/types/contact"
+import type { Contact, ContactBranch, ContactCollectionAddress } from "@/app/types/contact"
 import type { GlobalReferenceDataRow } from "@/app/types/globalReferenceData"
 import type { ReferenceDataOption } from "@/app/types/referenceData"
 import { useTransportQuoteStore } from "@/app/stores/transportQuote"
-import type { TransportQuote, TransportQuotePayload } from "@/app/types/transportQuote"
+import type {
+  QuoteAddressSourceType,
+  TransportQuote,
+  TransportQuotePayload,
+} from "@/app/types/transportQuote"
 import { getPackageStackOption, setPackageStackOption } from "@/app/utils/packageStacking"
 import { buildReferenceNumber } from "@/app/utils/reference-sequence"
 import { useToast } from "primevue/usetoast"
@@ -40,7 +45,16 @@ type CustomerOption = {
   name: string
   account_number: string
   contacts: CustomerContact[]
+  branches: ContactBranch[]
+  collection_addresses: ContactCollectionAddress[]
 }
+
+type QuoteAddressOption = SelectOption<string> & {
+  sourceType: QuoteAddressSourceType
+  sourceId: number
+}
+
+type DestinationAddressOwner = "selected_customer" | "other_customer"
 
 type DimensionRow = {
   id: number
@@ -74,7 +88,7 @@ type ChargeLine = {
   source_buy_line_id?: number | null
 }
 
-const CONDITIONS: Record<string, string> = {
+const FALLBACK_CONDITIONS: Record<string, string> = {
   standard:
     "1. All rates quoted are subject to space and equipment availability.\n2. Rates are valid for the period stated and subject to change without notice thereafter.\n3. All charges are exclusive of applicable taxes unless otherwise stated.\n4. Claims for loss or damage must be submitted within 14 days of delivery.",
   air: "1. Air freight rates are based on chargeable weight.\n2. Rates do not include customs duties, taxes or government levies.\n3. Transit times are estimated and not guaranteed.\n4. Fuel and security surcharges are subject to change.",
@@ -95,12 +109,18 @@ export function useQuoteCreatePage() {
   const contactStore = useContactStore()
   const globalReferenceDataStore = useGlobalReferenceDataStore()
   const referenceDataStore = useReferenceDataStore()
+  const exchangeRateStore = useExchangeRateStore()
   const { data: globalReferenceData } = storeToRefs(globalReferenceDataStore)
   const toast = useToast()
 
   const loadingCustomers = ref(false)
   const customerSuggestions = ref<CustomerOption[]>([])
   const selectedCustomer = ref<CustomerOption | null>(null)
+  const loadingDestinationCustomers = ref(false)
+  const destinationCustomerSuggestions = ref<CustomerOption[]>([])
+  const selectedDestinationCustomer = ref<CustomerOption | null>(null)
+  const destinationAddressOwner = ref<DestinationAddressOwner>("selected_customer")
+  const destinationAddressModalVisible = ref(false)
   const selectedContactIndex = ref<number | null>(null)
   const localError = ref<string | null>(null)
   const globalReferenceSearchTerm = ref("")
@@ -132,6 +152,10 @@ export function useQuoteCreatePage() {
   const lastDraftSavedAt = ref<Date | null>(null)
   const leaveDraftDialogVisible = ref(false)
   const leaveDraftDialogSaving = ref(false)
+  const copying = ref(false)
+  const previewing = ref(false)
+  const sellingCurrencyToBaseRate = ref(1)
+  let sellingCurrencyRateToken = 0
   const saving = computed(() => quoteStore.saving || quoteStore.loading)
   const error = computed(() => localError.value || quoteStore.error)
 
@@ -211,13 +235,19 @@ export function useQuoteCreatePage() {
     incoterm: "DAP",
     origin: "",
     destination: "",
+    origin_address_source_type: null as QuoteAddressSourceType | null,
+    origin_address_source_id: null as number | null,
+    destination_address_source_type: null as QuoteAddressSourceType | null,
+    destination_address_source_id: null as number | null,
     etd: null as Date | null,
     eta: null as Date | null,
     commodity: "",
+    insurance_level: "",
     vehicle_type: "",
     cargo_class: "",
     container_type: "",
     load_type: "",
+    load_planner_enabled: true,
     goods_description: "",
     is_hazardous: false,
     hazardous_class: "",
@@ -230,6 +260,8 @@ export function useQuoteCreatePage() {
     discount: 0,
     tax_rate: 20,
   })
+  const validityInputValue = ref<number | string | null>(form.validity_period)
+  const validityInputFocused = ref(false)
 
   const dimensionRows = ref<DimensionRow[]>([])
   const buyCostLines = ref<ChargeLine[]>([])
@@ -265,8 +297,11 @@ export function useQuoteCreatePage() {
   const globalReferenceRows = computed(() => {
     const rows = [
       ...remoteGlobalReferenceRows.value,
+      ...globalReferenceData.value.locations.map(row => ({
+        row,
+        category: "Delivery Location",
+      })),
       ...globalReferenceData.value.terminals.map(row => ({ row, category: "Terminal" })),
-      ...globalReferenceData.value.airlines.map(row => ({ row, category: "Airline" })),
       ...globalReferenceData.value.cities.map(row => ({ row, category: "City" })),
     ]
 
@@ -298,6 +333,116 @@ export function useQuoteCreatePage() {
     () => visibleGlobalReferenceOptions.value,
   )
 
+  const destinationAddressOwnerOptions: SelectOption<DestinationAddressOwner>[] = [
+    { label: "Selected customer", value: "selected_customer" },
+    { label: "Other customer", value: "other_customer" },
+  ]
+  const destinationAddressCustomer = computed(() =>
+    destinationAddressOwner.value === "other_customer"
+      ? selectedDestinationCustomer.value
+      : selectedCustomer.value,
+  )
+  const originAddressOptions = computed<QuoteAddressOption[]>(() =>
+    customerAddressOptions(selectedCustomer.value, "origin"),
+  )
+  const destinationAddressOptions = computed<QuoteAddressOption[]>(() =>
+    customerAddressOptions(destinationAddressCustomer.value, "destination"),
+  )
+  const destinationCustomerOptions = computed(() => {
+    const customers = [
+      selectedDestinationCustomer.value,
+      ...destinationCustomerSuggestions.value,
+    ].filter((customer): customer is CustomerOption => Boolean(customer))
+    const unique = new Map<number, CustomerOption>()
+
+    customers.forEach(customer => unique.set(Number(customer.id), customer))
+
+    return Array.from(unique.values()).map(customer => ({
+      label: customer.name,
+      value: Number(customer.id),
+    }))
+  })
+  const originAddressSelection = computed(() =>
+    addressSourceValue(form.origin_address_source_type, form.origin_address_source_id),
+  )
+  const destinationAddressSelection = computed(() =>
+    addressSourceValue(form.destination_address_source_type, form.destination_address_source_id),
+  )
+  const destinationAddressSelectionLabel = computed(() => {
+    return (
+      destinationAddressOptions.value.find(
+        option => option.value === destinationAddressSelection.value,
+      )?.label ?? "No destination address selected"
+    )
+  })
+
+  function customerAddressOptions(
+    customer: CustomerOption | null,
+    target: LocationField,
+  ): QuoteAddressOption[] {
+    if (!customer || typeof customer !== "object") return []
+
+    const collectionAddresses = (
+      Array.isArray(customer.collection_addresses) ? customer.collection_addresses : []
+    )
+      .filter(address =>
+        target === "origin" ? Boolean(address.is_collection) : Boolean(address.is_delivery),
+      )
+      .map(address =>
+        addressOption("collection_address", address.id, address.label, [
+          address.address_line_1,
+          address.address_line_2,
+          address.city,
+          address.postal_code,
+        ]),
+      )
+    const branches = (Array.isArray(customer.branches) ? customer.branches : []).map(branch =>
+      addressOption("branch", branch.id, branch.name, [
+        branch.delivery_address_line_1,
+        branch.delivery_address_line_2,
+        branch.delivery_city,
+        branch.delivery_postal_code,
+      ]),
+    )
+
+    return [...branches, ...collectionAddresses]
+  }
+
+  function addressOption(
+    sourceType: QuoteAddressSourceType,
+    sourceId: number,
+    name: string | null | undefined,
+    parts: Array<string | null | undefined>,
+  ): QuoteAddressOption {
+    const address = parts.filter(Boolean).join(", ")
+    const sourceLabel = sourceType === "branch" ? "Branch" : "Saved address"
+
+    return {
+      label: [name || sourceLabel, address].filter(Boolean).join(" — "),
+      value: `${sourceType}:${sourceId}`,
+      sourceType,
+      sourceId: Number(sourceId),
+    }
+  }
+
+  function addressSourceValue(
+    sourceType: QuoteAddressSourceType | null,
+    sourceId: number | null,
+  ): string | null {
+    return sourceType && sourceId ? `${sourceType}:${sourceId}` : null
+  }
+
+  function updateAddressSource(target: LocationField, value: string | null) {
+    const option = (
+      target === "origin" ? originAddressOptions.value : destinationAddressOptions.value
+    ).find(item => item.value === value)
+    const typeKey = `${target}_address_source_type` as const
+    const idKey = `${target}_address_source_id` as const
+
+    form[typeKey] = option?.sourceType ?? null
+    form[idKey] = option?.sourceId ?? null
+  }
+
   const contactOptions = computed<SelectOption<number>[]>(() => {
     if (!selectedCustomer.value) return []
 
@@ -320,9 +465,45 @@ export function useQuoteCreatePage() {
       .map(name => ({ label: name, value: name }))
   }
 
-  const currencyOptions = computed<SelectOption[]>(() => referenceOptionsFor("currency"))
+  const baseCurrency = computed(() =>
+    String(
+      companyStore.item?.settings?.main_currency_code ??
+        companyStore.item?.default_currency_code ??
+        "GBP",
+    ).toUpperCase(),
+  )
+  const currencyOptions = computed<SelectOption[]>(() => {
+    const configured = [baseCurrency.value, ...(companyStore.item?.additional_currencies ?? [])]
+      .map(value =>
+        String(value || "")
+          .trim()
+          .toUpperCase(),
+      )
+      .filter(Boolean)
+    const values = configured.length
+      ? [...new Set(configured)]
+      : referenceOptionsFor("currency").map(option => String(option.value).toUpperCase())
+
+    return values.map(value => ({ label: value, value }))
+  })
   const incotermOptions = computed<SelectOption[]>(() => referenceOptionsFor("incoterms"))
   const vehicleTypeOptions = computed<SelectOption[]>(() => referenceOptionsFor("vehicle_types"))
+  const commodityTypeOptions = computed<SelectOption[]>(() =>
+    referenceOptionsFor("commodity_types"),
+  )
+  const insuranceLevelOptions: SelectOption[] = [
+    { label: "Standard Conditions", value: "Standard Conditions" },
+    { label: "Enhanced Cover", value: "Enhanced Cover" },
+    { label: "Full Declared Value", value: "Full Declared Value" },
+    { label: "Customer's Own Insurance", value: "Customer's Own Insurance" },
+  ]
+  const validityOptions: SelectOption<number>[] = [7, 15, 30].map(value => ({
+    label: `${value} days`,
+    value,
+  }))
+  const goodsDescriptionOptions = computed<SelectOption[]>(() =>
+    referenceOptionsFor("quote_goods_descriptions"),
+  )
 
   const selectedVehicleLoadSpace = computed<Record<string, unknown> | null>(() => {
     const selectedName = normalizeSearch(form.vehicle_type)
@@ -385,12 +566,22 @@ export function useQuoteCreatePage() {
     { label: "PG III", value: "PG III" },
   ]
 
-  const conditionsOptions: SelectOption[] = [
-    { label: "Standard Freight Terms", value: "standard" },
-    { label: "Air Freight Conditions", value: "air" },
-    { label: "Sea Freight Conditions", value: "sea" },
-    { label: "Hazardous Goods Terms", value: "hazardous" },
-  ]
+  const conditionsOptions = computed<SelectOption[]>(() => {
+    const configured = referenceDataStore.getByKey("quote_terms_conditions")?.options ?? []
+
+    if (configured.length) {
+      return configured
+        .filter(option => option.is_active !== false)
+        .map(option => ({ label: option.name, value: option.name }))
+    }
+
+    return [
+      { label: "Standard Freight Terms", value: "standard" },
+      { label: "Air Freight Conditions", value: "air" },
+      { label: "Sea Freight Conditions", value: "sea" },
+      { label: "Hazardous Goods Terms", value: "hazardous" },
+    ]
+  })
 
   const taxRateOptions: SelectOption<number>[] = [
     { label: "0% – Zero Rate", value: 0 },
@@ -517,9 +708,12 @@ export function useQuoteCreatePage() {
 
     try {
       const response = await globalReferenceDataStore.list({
+        category: "locations",
+        mode: mode.value || undefined,
         search: globalReferenceSearchTerm.value.trim() || undefined,
         per_page: GLOBAL_REFERENCE_OPTION_LIMIT,
         page: 1,
+        compact: true,
       })
 
       if (token !== globalReferenceFetchToken) return
@@ -610,16 +804,28 @@ export function useQuoteCreatePage() {
   const subtotalCost = computed(() =>
     buyCostLines.value.reduce((total, line) => total + getChargeLineTotal(line), 0),
   )
+  const subtotalCostInSellCurrency = computed(() => {
+    if (form.currency === baseCurrency.value) return subtotalCost.value
+    if (sellingCurrencyToBaseRate.value <= 0) return null
+
+    return subtotalCost.value / sellingCurrencyToBaseRate.value
+  })
   const totalExclTax = computed(() => Math.max(subtotalSell.value, 0))
   const taxAmount = computed(() => totalExclTax.value * (Number(form.tax_rate || 0) / 100))
   const totalInclTax = computed(() => totalExclTax.value + taxAmount.value)
-  const profitTotal = computed(() => totalExclTax.value - subtotalCost.value)
+  const profitTotal = computed(() =>
+    subtotalCostInSellCurrency.value === null
+      ? 0
+      : totalExclTax.value - subtotalCostInSellCurrency.value,
+  )
   const profitPercent = computed(() =>
-    totalExclTax.value <= 0 ? 0 : (profitTotal.value / totalExclTax.value) * 100,
+    totalExclTax.value <= 0 || subtotalCostInSellCurrency.value === null
+      ? 0
+      : (profitTotal.value / totalExclTax.value) * 100,
   )
 
   const subtotalSellDisplay = computed(() => money(subtotalSell.value))
-  const subtotalCostDisplay = computed(() => money(subtotalCost.value))
+  const subtotalCostDisplay = computed(() => money(subtotalCost.value, baseCurrency.value))
   const totalExclTaxDisplay = computed(() => money(totalExclTax.value))
   const taxAmountDisplay = computed(() => money(taxAmount.value))
   const totalInclTaxDisplay = computed(() => money(totalInclTax.value))
@@ -640,6 +846,8 @@ export function useQuoteCreatePage() {
     if (!isTransportMode(value)) return
 
     mode.value = value
+    remoteGlobalReferenceRows.value = []
+    void fetchGlobalReferenceOptions()
 
     if (!dimensionRows.value.length) addDimensionRow()
     if (!buyCostLines.value.length) addBuyCostLine("Freight Charge")
@@ -662,10 +870,15 @@ export function useQuoteCreatePage() {
     await fetchCustomers(event.query)
   }
 
+  async function onDestinationCustomerComplete(event: { query: string }) {
+    await fetchDestinationCustomers(event.query)
+  }
+
   function onCustomerSelect(event: { value: CustomerOption }) {
     selectedCustomer.value = event.value
     form.customer_id = event.value.id
     selectedContactIndex.value = event.value.contacts.length ? 0 : null
+    clearAddressSources()
   }
 
   function onCustomerClear() {
@@ -675,6 +888,63 @@ export function useQuoteCreatePage() {
     form.contact_name = ""
     form.contact_email = ""
     form.contact_phone = ""
+    clearAddressSources()
+  }
+
+  function onDestinationAddressOwnerChange(value: DestinationAddressOwner) {
+    destinationAddressOwner.value = value
+    selectedDestinationCustomer.value = null
+    destinationCustomerSuggestions.value = []
+    clearDestinationAddressSource()
+  }
+
+  function openDestinationAddressModal() {
+    destinationAddressModalVisible.value = true
+
+    if (
+      destinationAddressOwner.value === "other_customer" &&
+      !destinationCustomerSuggestions.value.length
+    ) {
+      void fetchDestinationCustomers("")
+    }
+  }
+
+  function onDestinationCustomerIdChange(customerId: number | null) {
+    if (!customerId) {
+      onDestinationCustomerClear()
+      return
+    }
+
+    const customer = [
+      selectedDestinationCustomer.value,
+      ...destinationCustomerSuggestions.value,
+    ].find(option => Number(option?.id) === Number(customerId))
+
+    if (customer) onDestinationCustomerSelect({ value: customer })
+  }
+
+  function onDestinationCustomerSelect(event: { value: CustomerOption }) {
+    selectedDestinationCustomer.value = event.value
+    clearDestinationAddressSource()
+  }
+
+  function onDestinationCustomerClear() {
+    selectedDestinationCustomer.value = null
+    clearDestinationAddressSource()
+  }
+
+  function clearDestinationAddressSource() {
+    form.destination_address_source_type = null
+    form.destination_address_source_id = null
+  }
+
+  function clearAddressSources() {
+    form.origin_address_source_type = null
+    form.origin_address_source_id = null
+    clearDestinationAddressSource()
+    destinationAddressOwner.value = "selected_customer"
+    selectedDestinationCustomer.value = null
+    destinationCustomerSuggestions.value = []
   }
 
   watch(selectedContactIndex, index => {
@@ -736,7 +1006,7 @@ export function useQuoteCreatePage() {
       qty: 1,
       uom: "Per Shipment",
       unit_cost: 0,
-      currency: form.currency || "GBP",
+      currency: baseCurrency.value,
       exchange_rate: 1,
       supplier_id: null,
       markup_percent: 0,
@@ -819,8 +1089,8 @@ export function useQuoteCreatePage() {
         qty: Number(line.qty || 0),
         uom: line.uom,
         unit_price: 0,
-        currency: line.currency || form.currency || "GBP",
-        exchange_rate: Number(line.exchange_rate || 1),
+        currency: form.currency || baseCurrency.value,
+        exchange_rate: 1,
         vat_rate: 0,
         source_buy_line_id: line.id,
       }
@@ -833,9 +1103,10 @@ export function useQuoteCreatePage() {
     sellLine.description = line.description
     sellLine.qty = Number(line.qty || 0)
     sellLine.uom = line.uom
-    sellLine.unit_price = Math.round(unitCost * (1 + markup / 100) * 100) / 100
-    sellLine.currency = line.currency || form.currency || "GBP"
-    sellLine.exchange_rate = Number(line.exchange_rate || 1)
+    sellLine.unit_price =
+      Math.round(unitCost * Number(line.exchange_rate || 1) * (1 + markup / 100) * 100) / 100
+    sellLine.currency = form.currency || baseCurrency.value
+    sellLine.exchange_rate = 1
     sellLine.source_buy_line_id = line.id
     line.linked_sell_line_id = sellLine.id
   }
@@ -883,6 +1154,82 @@ export function useQuoteCreatePage() {
     return Number(line.qty || 0) * Number(amount || 0) * Number(line.exchange_rate || 1)
   }
 
+  async function updateChargeExchangeRate(line: ChargeLine, notify = true) {
+    const source = String(line.currency || "").toUpperCase()
+    const target = line.type === "buy" ? baseCurrency.value : String(form.currency).toUpperCase()
+
+    if (!source || source === target) {
+      line.exchange_rate = 1
+      syncBuyLineToSell(line)
+      return
+    }
+
+    try {
+      const rate = await exchangeRateStore.fetchEffective({
+        base: source,
+        quote: target,
+        date: toApiDate(form.quote_date) ?? new Date().toISOString().slice(0, 10),
+      })
+
+      line.exchange_rate = Number(rate?.rate || 0)
+      syncBuyLineToSell(line)
+    } catch {
+      line.exchange_rate = 0
+      if (notify) {
+        toast.add({
+          severity: "warn",
+          summary: "Missing Exchange Rate",
+          detail: `Add the ${source} to ${target} rate in Accounts > Exchange Rates before using this cost.`,
+          life: 4500,
+        })
+      }
+    }
+  }
+
+  async function updateSellingCurrencyExchangeRate(notify = true) {
+    const source = String(form.currency || baseCurrency.value).toUpperCase()
+    const target = baseCurrency.value
+    const token = ++sellingCurrencyRateToken
+
+    if (source === target) {
+      sellingCurrencyToBaseRate.value = 1
+      return
+    }
+
+    try {
+      const rate = await exchangeRateStore.fetchEffective({
+        base: source,
+        quote: target,
+        date: toApiDate(form.quote_date) ?? new Date().toISOString().slice(0, 10),
+      })
+
+      if (token === sellingCurrencyRateToken) {
+        sellingCurrencyToBaseRate.value = Number(rate?.rate || 0)
+      }
+    } catch {
+      if (token !== sellingCurrencyRateToken) return
+
+      sellingCurrencyToBaseRate.value = 0
+      if (notify) {
+        toast.add({
+          severity: "warn",
+          summary: "Missing Exchange Rate",
+          detail: `Add the ${source} to ${target} rate in Accounts > Exchange Rates before using this selling currency.`,
+          life: 4500,
+        })
+      }
+    }
+  }
+
+  function onSellCurrencyChange(line: ChargeLine) {
+    const currency = String(line.currency || form.currency || baseCurrency.value).toUpperCase()
+    form.currency = currency
+    sellChargeLines.value.forEach(item => {
+      item.currency = currency
+      item.exchange_rate = 1
+    })
+  }
+
   function refreshQuoteRefPreview(force = false) {
     if (isEditMode.value) return
 
@@ -900,7 +1247,15 @@ export function useQuoteCreatePage() {
   }
 
   function onConditionsPresetChange() {
-    form.terms_conditions = CONDITIONS[form.conditions_preset] ?? ""
+    const configured = referenceDataStore
+      .getByKey("quote_terms_conditions")
+      ?.options.find(option => option.name === form.conditions_preset)
+    const content = configured?.metadata?.content
+
+    form.terms_conditions =
+      (typeof content === "string" ? content : null) ??
+      FALLBACK_CONDITIONS[form.conditions_preset] ??
+      ""
   }
 
   function recoveryKey(id = activeDraftId.value ?? quoteId.value): string {
@@ -928,6 +1283,8 @@ export function useQuoteCreatePage() {
           mode: mode.value,
           form: formSnapshot,
           selected_customer: selectedCustomer.value,
+          destination_address_owner: destinationAddressOwner.value,
+          selected_destination_customer: selectedDestinationCustomer.value,
           selected_contact_index: selectedContactIndex.value,
           dimensions: dimensionRows.value,
           buy_costs: buyCostLines.value,
@@ -967,6 +1324,11 @@ export function useQuoteCreatePage() {
       }
 
       selectedCustomer.value = snapshot.selected_customer ?? null
+      destinationAddressOwner.value =
+        snapshot.destination_address_owner === "other_customer"
+          ? "other_customer"
+          : "selected_customer"
+      selectedDestinationCustomer.value = snapshot.selected_destination_customer ?? null
       selectedContactIndex.value = snapshot.selected_contact_index ?? null
       dimensionRows.value = Array.isArray(snapshot.dimensions) ? snapshot.dimensions : []
       buyCostLines.value = Array.isArray(snapshot.buy_costs) ? snapshot.buy_costs : []
@@ -1128,6 +1490,66 @@ export function useQuoteCreatePage() {
     router.push({ name: "tms.quotes.index" })
   }
 
+  async function onCopyQuote() {
+    if (copying.value) return
+
+    copying.value = true
+
+    try {
+      let id = activeDraftId.value ?? quoteId.value
+
+      if (!id) {
+        const savedQuote = await saveDraft({ updateRoute: true })
+        if (!savedQuote) return
+        id = savedQuote.id
+      }
+
+      const copy = await quoteStore.duplicateQuote(id)
+      allowNavigation = true
+      await router.push({ name: "tms.quotes.edit", params: { id: copy.id } })
+      toast.add({
+        severity: "success",
+        summary: "Quotation Copied",
+        detail: `New draft ${copy.quote_ref} is ready to edit.`,
+        life: 3000,
+      })
+    } catch (error: any) {
+      toast.add({
+        severity: "error",
+        summary: "Copy Failed",
+        detail: error?.response?.data?.message ?? "Unable to copy this quotation.",
+        life: 4000,
+      })
+    } finally {
+      copying.value = false
+    }
+  }
+
+  async function onPreviewQuote() {
+    if (previewing.value) return
+
+    previewing.value = true
+
+    try {
+      const quote = await saveDraft({ updateRoute: true })
+      if (!quote) return
+
+      const blob = await quoteStore.quotePdf(quote.id)
+      const url = URL.createObjectURL(blob)
+      window.open(url, "_blank", "noopener,noreferrer")
+      window.setTimeout(() => URL.revokeObjectURL(url), 60000)
+    } catch (error: any) {
+      toast.add({
+        severity: "error",
+        summary: "Preview Failed",
+        detail: error?.response?.data?.message ?? "Unable to generate the quotation preview.",
+        life: 4000,
+      })
+    } finally {
+      previewing.value = false
+    }
+  }
+
   async function onSave() {
     if (!validateDraftRequired(true)) return
 
@@ -1229,14 +1651,20 @@ export function useQuoteCreatePage() {
 
       origin: form.origin || null,
       destination: form.destination || null,
+      origin_address_source_type: form.origin_address_source_type,
+      origin_address_source_id: form.origin_address_source_id,
+      destination_address_source_type: form.destination_address_source_type,
+      destination_address_source_id: form.destination_address_source_id,
       etd: toApiDate(form.etd),
       eta: toApiDate(form.eta),
 
       commodity: form.commodity || null,
+      insurance_level: form.insurance_level || null,
       vehicle_type: form.vehicle_type || null,
       cargo_class: form.cargo_class || null,
       container_type: form.container_type || null,
       load_type: form.load_type || null,
+      load_planner_enabled: Boolean(form.load_planner_enabled),
       goods_description: form.goods_description || null,
 
       is_hazardous: Boolean(form.is_hazardous),
@@ -1312,6 +1740,29 @@ export function useQuoteCreatePage() {
     }
   }
 
+  async function fetchDestinationCustomers(query = "") {
+    loadingDestinationCustomers.value = true
+
+    try {
+      const response = await contactStore.query({
+        q: query || undefined,
+        per_page: 20,
+        include_addresses: true,
+      })
+      const rows = response.data ?? []
+
+      destinationCustomerSuggestions.value = Array.isArray(rows)
+        ? rows
+            .map(mapContactToCustomerOption)
+            .filter(customer => customer.id !== selectedCustomer.value?.id)
+        : []
+    } catch {
+      destinationCustomerSuggestions.value = []
+    } finally {
+      loadingDestinationCustomers.value = false
+    }
+  }
+
   async function fetchSuppliers() {
     suppliersLoading.value = true
 
@@ -1379,6 +1830,10 @@ export function useQuoteCreatePage() {
       name: companyName,
       account_number: item.account_number ?? "",
       contacts,
+      branches: Array.isArray(item.branches) ? item.branches : [],
+      collection_addresses: Array.isArray(item.collection_addresses)
+        ? item.collection_addresses
+        : [],
     }
   }
 
@@ -1386,7 +1841,94 @@ export function useQuoteCreatePage() {
     const quote = await quoteStore.fetchQuote(id)
 
     fillFormFromQuote(quote)
+    await restoreDestinationCustomerForQuote(quote)
     return quote
+  }
+
+  async function restoreDestinationCustomerForQuote(quote: TransportQuote) {
+    const address = quote.destination_address
+    const destinationContactId = Number(address?.contact_id || 0)
+
+    if (!destinationContactId || destinationContactId === selectedCustomer.value?.id) {
+      destinationAddressOwner.value = "selected_customer"
+      selectedDestinationCustomer.value = null
+      return
+    }
+
+    destinationAddressOwner.value = "other_customer"
+
+    try {
+      selectedDestinationCustomer.value = mapContactToCustomerOption(
+        await contactStore.find(destinationContactId),
+      )
+    } catch {
+      selectedDestinationCustomer.value = address
+        ? customerOptionFromDestinationAddress(address)
+        : null
+    }
+  }
+
+  function customerOptionFromDestinationAddress(
+    address: NonNullable<TransportQuote["destination_address"]>,
+  ): CustomerOption {
+    const contactId = Number(address.contact_id || 0)
+    const commonAddress = {
+      id: Number(address.id),
+      contact_id: contactId,
+      is_collection: Boolean(address.is_collection),
+      is_delivery: Boolean(address.is_delivery),
+    }
+
+    return {
+      id: contactId,
+      name: address.label || "Destination customer",
+      account_number: "",
+      contacts: [],
+      branches:
+        address.source_type === "branch"
+          ? [
+              {
+                ...commonAddress,
+                name: address.label,
+                contact_person: null,
+                email: null,
+                phone: null,
+                delivery_address_line_1: address.address_line_1,
+                delivery_address_line_2: address.address_line_2,
+                delivery_address_line_3: address.address_line_3,
+                delivery_city: address.city,
+                delivery_county_state: address.county_state,
+                delivery_postal_code: address.postal_code,
+                delivery_country_id: address.country_id,
+                billing_same_as_delivery: true,
+                billing_address_line_1: address.address_line_1,
+                billing_address_line_2: address.address_line_2,
+                billing_address_line_3: address.address_line_3,
+                billing_city: address.city,
+                billing_county_state: address.county_state,
+                billing_postal_code: address.postal_code,
+                billing_country_id: address.country_id,
+              },
+            ]
+          : [],
+      collection_addresses:
+        address.source_type === "collection_address"
+          ? [
+              {
+                ...commonAddress,
+                label: address.label,
+                address_line_1: address.address_line_1,
+                address_line_2: address.address_line_2,
+                address_line_3: address.address_line_3,
+                city: address.city,
+                county_state: address.county_state,
+                postal_code: address.postal_code,
+                country_id: address.country_id,
+                country_name: address.country_name,
+              },
+            ]
+          : [],
+    }
   }
 
   function fillFormFromQuote(quote: TransportQuote) {
@@ -1408,13 +1950,19 @@ export function useQuoteCreatePage() {
     form.incoterm = quote.incoterm ?? "DAP"
     form.origin = quote.origin ?? ""
     form.destination = quote.destination ?? ""
+    form.origin_address_source_type = quote.origin_address_source_type ?? null
+    form.origin_address_source_id = quote.origin_address_source_id ?? null
+    form.destination_address_source_type = quote.destination_address_source_type ?? null
+    form.destination_address_source_id = quote.destination_address_source_id ?? null
     form.etd = fromApiDate(quote.etd)
     form.eta = fromApiDate(quote.eta)
     form.commodity = quote.commodity ?? ""
+    form.insurance_level = quote.insurance_level ?? ""
     form.vehicle_type = quote.vehicle_type ?? ""
     form.cargo_class = quote.cargo_class ?? ""
     form.container_type = quote.container_type ?? ""
     form.load_type = quote.load_type ?? ""
+    form.load_planner_enabled = quote.load_planner_enabled !== false
     form.goods_description = quote.goods_description ?? ""
     form.is_hazardous = Boolean(quote.is_hazardous)
     form.hazardous_class = quote.hazardous_class ?? ""
@@ -1444,6 +1992,35 @@ export function useQuoteCreatePage() {
             location: "Saved quote contact",
           },
         ],
+        branches: (quote.customer_contact.branches ?? []).map(branch => ({
+          id: Number(branch.id),
+          contact_id: branch.contact_id,
+          name: branch.label,
+          contact_person: null,
+          email: null,
+          phone: null,
+          is_collection: branch.is_collection === undefined ? true : Boolean(branch.is_collection),
+          is_delivery: branch.is_delivery === undefined ? true : Boolean(branch.is_delivery),
+          delivery_address_line_1: branch.address_line_1,
+          delivery_address_line_2: branch.address_line_2,
+          delivery_address_line_3: branch.address_line_3,
+          delivery_city: branch.city,
+          delivery_county_state: branch.county_state,
+          delivery_postal_code: branch.postal_code,
+          delivery_country_id: branch.country_id,
+          billing_same_as_delivery: true,
+          billing_address_line_1: branch.address_line_1,
+          billing_address_line_2: branch.address_line_2,
+          billing_address_line_3: branch.address_line_3,
+          billing_city: branch.city,
+          billing_county_state: branch.county_state,
+          billing_postal_code: branch.postal_code,
+          billing_country_id: branch.country_id,
+        })),
+        collection_addresses: (quote.customer_contact.collection_addresses ?? []).map(address => ({
+          ...address,
+          label: address.label ?? null,
+        })),
       }
 
       selectedContactIndex.value = 0
@@ -1485,6 +2062,11 @@ export function useQuoteCreatePage() {
       buyCostLines.value = rawCharges.map((line: any) => mapChargeLine(line, "buy"))
     }
 
+    sellChargeLines.value.forEach(line => {
+      line.currency = form.currency || baseCurrency.value
+      line.exchange_rate = 1
+    })
+
     restoreBuySellLinks()
 
     if (!dimensionRows.value.length) addDimensionRow()
@@ -1517,8 +2099,8 @@ export function useQuoteCreatePage() {
     }
   }
 
-  function money(value: number) {
-    return `${form.currency} ${new Intl.NumberFormat("en-GB", {
+  function money(value: number, currency = form.currency) {
+    return `${currency} ${new Intl.NumberFormat("en-GB", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(value || 0)}`
@@ -1546,6 +2128,70 @@ export function useQuoteCreatePage() {
     const days = Math.trunc(Number(value))
 
     return Number.isFinite(days) && days >= 1 ? days : 30
+  }
+
+  function onValidityPeriodChange(value: unknown) {
+    const input = String(value ?? "").trim()
+
+    if (!input) {
+      validityInputValue.value = null
+      form.validity_period = null
+      return
+    }
+
+    const numericPrefix = input.match(/^\d+/)?.[0]
+    const days = numericPrefix ? Math.trunc(Number(numericPrefix)) : Number.NaN
+
+    validityInputValue.value = typeof value === "number" ? value : (numericPrefix ?? null)
+    form.validity_period = Number.isFinite(days) && days >= 1 ? days : null
+  }
+
+  function onValidityInputFocus() {
+    validityInputFocused.value = true
+    validityInputValue.value = form.validity_period ? String(form.validity_period) : ""
+  }
+
+  function onValidityInputBlur() {
+    validityInputFocused.value = false
+    formatValidityInputValue(form.validity_period)
+  }
+
+  function formatValidityInputValue(value: unknown) {
+    const days = Math.trunc(Number(value))
+
+    if (!Number.isFinite(days) || days < 1) {
+      validityInputValue.value = null
+      return
+    }
+
+    validityInputValue.value = [7, 15, 30].includes(days) ? days : `${days} days`
+  }
+
+  function onValidityInputKeydown(event: KeyboardEvent) {
+    const permittedKeys = [
+      "Backspace",
+      "Delete",
+      "Tab",
+      "Enter",
+      "Escape",
+      "ArrowLeft",
+      "ArrowRight",
+      "ArrowUp",
+      "ArrowDown",
+      "Home",
+      "End",
+    ]
+
+    if (
+      /^\d$/.test(event.key) ||
+      permittedKeys.includes(event.key) ||
+      event.ctrlKey ||
+      event.metaKey
+    ) {
+      return
+    }
+
+    event.preventDefault()
   }
 
   function addDays(value: Date, days: number): Date {
@@ -1605,6 +2251,14 @@ export function useQuoteCreatePage() {
       activeDraftId.value = quote.id
       lastDraftSavedAt.value = quote.updated_at ? new Date(quote.updated_at) : null
     } else {
+      form.currency = baseCurrency.value
+      const defaultTerms = referenceDataStore
+        .getByKey("quote_terms_conditions")
+        ?.options.find(option => option.is_default)
+      if (defaultTerms) {
+        form.conditions_preset = defaultTerms.name
+        onConditionsPresetChange()
+      }
       refreshQuoteRefPreview(true)
       addDimensionRow()
       addBuyCostLine("Freight Charge")
@@ -1613,6 +2267,10 @@ export function useQuoteCreatePage() {
 
     const recovered = restoreLocalRecovery()
     syncAutomaticQuoteDates(false)
+    await Promise.all([
+      ...buyCostLines.value.map(line => updateChargeExchangeRate(line, false)),
+      updateSellingCurrencyExchangeRate(false),
+    ])
     formReady = true
     window.addEventListener("beforeunload", handleBeforeUnload)
 
@@ -1631,13 +2289,32 @@ export function useQuoteCreatePage() {
     () => {
       refreshQuoteRefPreview(true)
       if (formReady) syncAutomaticQuoteDates()
+      if (formReady) {
+        void Promise.all([
+          ...buyCostLines.value.map(line => updateChargeExchangeRate(line, false)),
+          updateSellingCurrencyExchangeRate(false),
+        ])
+      }
+    },
+  )
+
+  watch(
+    () => form.currency,
+    currency => {
+      const normalized = String(currency || baseCurrency.value).toUpperCase()
+      sellChargeLines.value.forEach(line => {
+        line.currency = normalized
+        line.exchange_rate = 1
+      })
+      if (formReady) void updateSellingCurrencyExchangeRate()
     },
   )
 
   watch(
     () => form.validity_period,
-    () => {
+    value => {
       if (formReady) syncValidUntil()
+      if (!validityInputFocused.value) formatValidityInputValue(value)
     },
   )
 
@@ -1689,6 +2366,8 @@ export function useQuoteCreatePage() {
     autosaveState,
     leaveDraftDialogVisible,
     leaveDraftDialogSaving,
+    copying,
+    previewing,
     saving,
     error,
 
@@ -1705,16 +2384,45 @@ export function useQuoteCreatePage() {
     selectedCustomer,
     selectedContactIndex,
     customerSuggestions,
+    loadingDestinationCustomers,
+    destinationCustomerSuggestions,
+    selectedDestinationCustomer,
+    destinationAddressOwner,
+    destinationAddressOwnerOptions,
+    destinationAddressModalVisible,
+    destinationCustomerOptions,
     contactOptions,
     accountNumberPreview,
     originLocationOptions,
     destinationLocationOptions,
+    originAddressOptions,
+    destinationAddressOptions,
+    originAddressSelection,
+    destinationAddressSelection,
+    destinationAddressSelectionLabel,
+    updateAddressSource,
+    onDestinationAddressOwnerChange,
+    openDestinationAddressModal,
+    onDestinationCustomerIdChange,
+    onDestinationCustomerComplete,
+    onDestinationCustomerSelect,
+    onDestinationCustomerClear,
     onGlobalReferenceComplete,
     updateLocationValue,
+    onValidityPeriodChange,
+    onValidityInputKeydown,
+    onValidityInputFocus,
+    onValidityInputBlur,
 
     currencyOptions,
+    baseCurrency,
     incotermOptions,
     vehicleTypeOptions,
+    commodityTypeOptions,
+    insuranceLevelOptions,
+    validityOptions,
+    validityInputValue,
+    goodsDescriptionOptions,
     selectedVehicleLoadSpace,
     containerOptions,
     uomOptions,
@@ -1772,9 +2480,13 @@ export function useQuoteCreatePage() {
     getRowVolumetricWeight,
     getRowLdm,
     getChargeLineTotal,
+    updateChargeExchangeRate,
+    onSellCurrencyChange,
     onConditionsPresetChange,
     onBrowseQuotes,
     onFindQuote,
+    onCopyQuote,
+    onPreviewQuote,
     onSave,
     onSaveDraft,
     saveDraftAndLeave,
@@ -1817,6 +2529,7 @@ function uniqueReferenceRows(
 
 function referenceCategoryLabel(category: string | undefined): string {
   if (category === "airlines") return "Airline"
+  if (category === "locations") return "Delivery Location"
   if (category === "cities") return "City"
 
   return "Terminal"

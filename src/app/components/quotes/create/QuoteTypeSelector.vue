@@ -1,11 +1,11 @@
 <template>
-  <div class="cards">
+  <div class="cards" :class="{ compact }">
     <button
       v-for="item in items"
       :key="item.key"
       type="button"
       class="card-btn"
-      :class="{ active: selected === item.key }"
+      :class="{ active: selected === item.key, compact }"
       @click="$emit('select', item.key)"
     >
       <div class="top">
@@ -13,7 +13,9 @@
         <i class="pi pi-angle-right" />
       </div>
 
-      <div class="sub">{{ item.subtitle }}</div>
+      <div class="sub" :class="{ 'sub--hidden': compact }" :aria-hidden="compact">
+        {{ item.subtitle }}
+      </div>
     </button>
   </div>
 </template>
@@ -24,6 +26,7 @@ import type { QuoteTypeSelectorItem } from "@/app/types/transportQuote"
 defineProps<{
   items: QuoteTypeSelectorItem[]
   selected: string | null
+  compact?: boolean
 }>()
 
 defineEmits<{
@@ -79,6 +82,10 @@ defineEmits<{
   font-size: 12px;
   color: #666;
   line-height: 1.4;
+}
+
+.sub--hidden {
+  visibility: hidden;
 }
 
 @media (max-width: 1400px) {

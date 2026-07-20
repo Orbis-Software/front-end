@@ -4,6 +4,7 @@ import { useConfirm } from "primevue/useconfirm"
 import { useToast } from "primevue/usetoast"
 
 import type { ContactBranch, ContactCollectionAddress } from "@/app/types/contact"
+import { useAuthStore } from "@/app/stores/auth"
 import { useContactStore } from "@/app/stores/contact"
 import { buildInitialBranchPayload, hasContactAddress } from "@/app/utils/contactBranch"
 
@@ -21,6 +22,9 @@ function blankBranch(): Omit<ContactBranch, "id"> {
     contact_person: null,
     email: null,
     phone: null,
+
+    is_collection: true,
+    is_delivery: true,
 
     delivery_address_line_1: null,
     delivery_address_line_2: null,
@@ -78,11 +82,22 @@ export function useContactDetailsPage() {
   const toast = useToast()
 
   const contactStore = useContactStore()
+  const auth = useAuthStore()
 
   const contact = computed(() => contactStore.current)
   const loading = computed(() => contactStore.currentLoading)
 
   const busy = ref(false)
+  const creditSaving = ref(false)
+
+  const canManageCredit = computed(() => {
+    return (
+      auth.isAdmin ||
+      auth.isDev ||
+      auth.hasRole("company-manager") ||
+      auth.hasPermission("mgmt.accounts.invoices.manage")
+    )
+  })
 
   const activeTab = ref<ContactDetailsTab>("overview")
 
@@ -122,6 +137,31 @@ export function useContactDetailsPage() {
       name: "crm.contacts.edit",
       params: { id: contact.value.id },
     })
+  }
+
+  async function updateCreditLimit(value: number) {
+    if (!contact.value || !canManageCredit.value) return
+
+    creditSaving.value = true
+    try {
+      await contactStore.update(contact.value.id, { credit_limit: value })
+      await load()
+      toast.add({
+        severity: "success",
+        summary: "Credit limit updated",
+        detail: "Available credit and hard-stop figures have been recalculated.",
+        life: 2500,
+      })
+    } catch (e) {
+      toast.add({
+        severity: "error",
+        summary: "Unable to update credit limit",
+        detail: errMsg(e),
+        life: 4000,
+      })
+    } finally {
+      creditSaving.value = false
+    }
   }
 
   async function saveBranch(branchId: number, patch: Partial<ContactBranch>) {
@@ -341,6 +381,9 @@ export function useContactDetailsPage() {
     setTab,
 
     onEditContact,
+    canManageCredit,
+    creditSaving,
+    updateCreditLimit,
 
     addBranch,
     removeBranch,

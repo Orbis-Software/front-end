@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import "./JobOverviewTab.css"
-import { computed, inject } from "vue"
+import { computed, inject, ref } from "vue"
 
 import Dropdown from "primevue/dropdown"
 import InputText from "primevue/inputtext"
@@ -12,6 +12,7 @@ import InputSwitch from "primevue/inputswitch"
 
 import type { JobDetailsContext } from "../../JobDetailsPage.logic"
 import JobTransportAddressModal from "@/app/components/jobs/details/JobTransportTab/JobTransportAddressModal.vue"
+import DestinationAddressPickerModal from "@/app/components/jobs/details/DestinationAddressPickerModal.vue"
 import type { ContactCollectionAddress } from "@/app/types/contact"
 
 const context = inject<JobDetailsContext>("jobDetails")
@@ -26,16 +27,57 @@ const {
   loading,
   originAddressOptions,
   destinationAddressOptions,
+  addressContactOptions,
+  originAddressSelection,
+  destinationAddressSelection,
   addressModalVisible,
   addressModalTarget,
   addressModalSaving,
+  addressModalCustomerId,
+  addressModalCustomerName,
   isConsolidationJob,
   selectedOriginAddress,
   selectedDestinationAddress,
+  selectedDestinationContactId,
+  destinationAddressOwner,
+  destinationCustomerOptions,
+  selectedCustomerName,
+  addressContactsLoading,
   openAddressModal,
   createAndSelectAddress,
-  selectDestinationAddress,
+  selectAddressSource,
+  onAddressContactFilter,
+  selectDestinationCustomer,
+  setDestinationAddressOwner,
+  setAddressModalCustomer,
 } = context
+
+const destinationAddressModalVisible = ref(false)
+const destinationAddressSelectionLabel = computed(() => {
+  return (
+    destinationAddressOptions.value.find(
+      (option: { value: string; label: string }) =>
+        option.value === destinationAddressSelection.value,
+    )?.label ?? "No destination address selected"
+  )
+})
+
+function openDestinationAddressModal() {
+  destinationAddressModalVisible.value = true
+
+  if (
+    destinationAddressOwner.value === "selected_customer" &&
+    !selectedDestinationContactId.value &&
+    form.customer_id
+  ) {
+    void selectDestinationCustomer(Number(form.customer_id))
+  } else if (
+    destinationAddressOwner.value === "other_customer" &&
+    selectedDestinationContactId.value
+  ) {
+    void selectDestinationCustomer(Number(selectedDestinationContactId.value))
+  }
+}
 
 const {
   serviceTypeOptions,
@@ -988,7 +1030,7 @@ const consolidationTransportRows = computed(() => {
 
           <div class="job-overview-tab__address-select">
             <Dropdown
-              v-model="form.origin_contact_collection_address_id"
+              :model-value="originAddressSelection"
               :options="originAddressOptions"
               option-label="label"
               option-value="value"
@@ -996,12 +1038,17 @@ const consolidationTransportRows = computed(() => {
               show-clear
               append-to="body"
               :disabled="loading"
+              @update:model-value="(value: string | null) => selectAddressSource('origin', value)"
             />
 
             <Button
               icon="pi pi-plus"
               label="NEW"
-              :disabled="loading || !form.customer_id"
+              :disabled="
+                loading ||
+                !form.customer_id ||
+                (destinationAddressOwner === 'other_customer' && !selectedDestinationContactId)
+              "
               type="button"
               @click="openAddressModal('origin')"
             />
@@ -1011,17 +1058,17 @@ const consolidationTransportRows = computed(() => {
         <div class="job-overview-tab__field">
           <span>Destination Address</span>
 
-          <div class="job-overview-tab__address-select">
-            <Dropdown
-              :model-value="form.destination_contact_collection_address_id"
-              :options="destinationAddressOptions"
-              option-label="label"
-              option-value="value"
-              placeholder="Select destination"
-              show-clear
-              append-to="body"
-              :disabled="loading"
-              @update:model-value="selectDestinationAddress"
+          <div
+            class="job-overview-tab__address-select job-overview-tab__address-select--destination"
+          >
+            <InputText :model-value="destinationAddressSelectionLabel" readonly />
+
+            <Button
+              icon="pi pi-map-marker"
+              label="CHOOSE"
+              :disabled="loading || !form.customer_id"
+              type="button"
+              @click="openDestinationAddressModal"
             />
 
             <Button
@@ -1296,10 +1343,34 @@ const consolidationTransportRows = computed(() => {
       </div>
     </div>
 
+    <DestinationAddressPickerModal
+      v-model:visible="destinationAddressModalVisible"
+      :owner="destinationAddressOwner"
+      :selected-customer-name="selectedCustomerName"
+      :other-customer-id="
+        destinationAddressOwner === 'other_customer' ? selectedDestinationContactId : null
+      "
+      :customer-options="destinationCustomerOptions"
+      :address-options="destinationAddressOptions"
+      :address-value="destinationAddressSelection"
+      :loading-customers="addressContactsLoading"
+      :disabled="loading || !form.customer_id"
+      @update:owner="setDestinationAddressOwner"
+      @search-customers="query => onAddressContactFilter({ value: query })"
+      @select-customer="selectDestinationCustomer"
+      @select-address="value => selectAddressSource('destination', value)"
+    />
+
     <JobTransportAddressModal
       v-model:visible="addressModalVisible"
       :target="addressModalTarget === 'origin' ? 'collection' : 'delivery'"
       :saving="addressModalSaving"
+      :customer-id="addressModalCustomerId"
+      :customer-name="addressModalCustomerName"
+      :customer-options="addressContactOptions"
+      :customer-loading="addressContactsLoading"
+      @search-customers="query => onAddressContactFilter({ value: query })"
+      @select-customer="setAddressModalCustomer"
       @save="createAndSelectAddress"
     />
   </section>

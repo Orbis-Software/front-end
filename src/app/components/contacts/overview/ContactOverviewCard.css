@@ -354,6 +354,81 @@
   font-weight: 700;
 }
 
+.credit-limit-editor {
+  display: grid;
+  grid-template-columns: auto minmax(100px, 140px) auto;
+  gap: 7px;
+  align-items: center;
+}
+
+.credit-limit-editor label {
+  color: var(--contact-details-muted, #6b7280);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.credit-limit-editor input,
+.credit-limit-editor button {
+  min-height: 34px;
+  border: 1px solid var(--contact-details-control-border, #d1d5db);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.credit-limit-editor input {
+  width: 100%;
+  padding: 6px 8px;
+}
+
+.credit-limit-editor button {
+  padding: 6px 10px;
+  background: var(--contact-details-accent, #ec691a);
+  border-color: var(--contact-details-accent, #ec691a);
+  color: #fff;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.credit-limit-editor button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.overview-assignments {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  padding: 0 14px 14px;
+}
+
+.overview-assignments > div {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid var(--contact-details-control-border, #d1d5db);
+  border-radius: 10px;
+  background: var(--contact-details-control-bg, #fff);
+}
+
+.overview-assignments span {
+  color: var(--contact-details-muted, #6b7280);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.overview-assignments strong {
+  color: var(--contact-details-text, #111827);
+  font-size: 13px;
+}
+
+@media (max-width: 720px) {
+  .credit-limit-editor,
+  .overview-assignments {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Contact Details standard palette */
 .contact-details-page .contact-overview__hero {
   border-color: var(--contact-details-border);

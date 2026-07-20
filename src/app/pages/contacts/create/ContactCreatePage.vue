@@ -42,6 +42,46 @@
           </div>
         </div>
 
+        <!-- ACCOUNT MANAGER -->
+        <div class="divider"></div>
+
+        <div class="section">
+          <div class="section-head">
+            <i class="pi pi-id-card"></i>
+            <h2>Account Manager</h2>
+          </div>
+
+          <div class="cols-2 grid">
+            <div class="field">
+              <label>Account Manager</label>
+              <select v-model="form.account_manager_id">
+                <option :value="null">Not assigned</option>
+                <option
+                  v-for="employee in employeeStore.items"
+                  :key="employee.id"
+                  :value="employee.id"
+                >
+                  {{ employee.name }} ({{ employee.email }})
+                </option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label>Account Support</label>
+              <select v-model="form.account_support_id">
+                <option :value="null">Not assigned</option>
+                <option
+                  v-for="employee in employeeStore.items"
+                  :key="employee.id"
+                  :value="employee.id"
+                >
+                  {{ employee.name }} ({{ employee.email }})
+                </option>
+              </select>
+            </div>
+          </div>
+        </div>
+
         <!-- COMPANY DETAILS -->
         <div class="divider"></div>
 
@@ -68,8 +108,19 @@
 
             <div class="field">
               <label>Credit Limit</label>
-              <input v-model="creditLimitText" type="text" placeholder="Enter credit limit" />
-              <div class="hint">(Management approval required)</div>
+              <input
+                v-model="creditLimitText"
+                type="text"
+                placeholder="Enter credit limit"
+                :disabled="isEdit && !canManageCredit"
+              />
+              <div class="hint">
+                {{
+                  canManageCredit
+                    ? "Management credit control"
+                    : "Management access required to edit"
+                }}
+              </div>
             </div>
 
             <div class="field">
@@ -337,6 +388,7 @@ import { useContactCreatePage } from "./ContactCreatePage"
 
 const {
   store,
+  employeeStore,
   form,
   saving,
   loadingContact,
@@ -345,6 +397,7 @@ const {
 
   accountNumberPreview,
   creditLimitText,
+  canManageCredit,
 
   selectedCountry,
   countrySuggestions,

@@ -23,14 +23,13 @@ type CategoryOption = {
 
 const columns: Column[] = [
   { label: "Category", key: "categoryLabel" },
-  { label: "Type", key: "type" },
+  { label: "Code", key: "codes" },
+  { label: "Location / Name", key: "primaryName" },
   { label: "Country", key: "country" },
-  { label: "Name", key: "primaryName" },
-  { label: "Location", key: "place" },
-  { label: "Region", key: "region" },
-  { label: "Status", key: "status" },
-  { label: "Function", key: "function" },
-  { label: "Codes", key: "codes" },
+  { label: "State / Region", key: "place" },
+  { label: "Modes", key: "modes" },
+  { label: "Timezone", key: "timezoneDisplay" },
+  { label: "Coordinates", key: "coordinates" },
 ]
 
 export function useGlobalReferenceDataPage() {
@@ -40,6 +39,7 @@ export function useGlobalReferenceDataPage() {
   const selectedRegion = ref("")
   const selectedStatus = ref("")
   const selectedCountry = ref("")
+  const selectedMode = ref("")
   const sortKey = ref("")
   const sortDirection = ref<1 | -1>(1)
 
@@ -53,8 +53,11 @@ export function useGlobalReferenceDataPage() {
   const serverFilters = ref<GlobalReferenceDataListResponse["filters"]>({
     types: [],
     countries: [],
+    country_codes: [],
     regions: [],
+    states: [],
     statuses: [],
+    modes: [],
   })
   let fetchTimer: number | null = null
   let fetchToken = 0
@@ -66,19 +69,14 @@ export function useGlobalReferenceDataPage() {
       count: counts.value.all ?? totalRecords.value,
     },
     {
-      label: "Transport Terminals",
-      value: "terminals",
-      count: counts.value.terminals ?? 0,
+      label: "Delivery Locations",
+      value: "locations",
+      count: counts.value.locations ?? 0,
     },
     {
       label: "Air Cargo Airlines",
       value: "airlines",
       count: counts.value.airlines ?? 0,
-    },
-    {
-      label: "Road Delivery Cities",
-      value: "cities",
-      count: counts.value.cities ?? 0,
     },
   ])
 
@@ -98,6 +96,15 @@ export function useGlobalReferenceDataPage() {
   const regionOptions = computed(() => serverFilters.value.regions)
   const statusOptions = computed(() => serverFilters.value.statuses)
   const countryOptions = computed(() => serverFilters.value.countries)
+  const modeOptions = computed(() =>
+    (serverFilters.value.modes.length
+      ? serverFilters.value.modes
+      : ["road", "rail", "sea", "air"]
+    ).map(value => ({
+      label: value.charAt(0).toUpperCase() + value.slice(1),
+      value,
+    })),
+  )
 
   async function fetchRows(delay = 0) {
     if (fetchTimer) {
@@ -119,6 +126,10 @@ export function useGlobalReferenceDataPage() {
         category: selectedCategory.value || undefined,
         type: selectedType.value || undefined,
         country: selectedCountry.value || undefined,
+        mode:
+          selectedCategory.value === "airlines"
+            ? undefined
+            : ((selectedMode.value || undefined) as any),
         region: selectedRegion.value || undefined,
         status: selectedStatus.value || undefined,
         search: search.value.trim() || undefined,
@@ -152,6 +163,7 @@ export function useGlobalReferenceDataPage() {
     selectedRegion.value = ""
     selectedStatus.value = ""
     selectedCountry.value = ""
+    selectedMode.value = ""
     sortKey.value = ""
     sortDirection.value = 1
     first.value = 0
@@ -177,46 +189,16 @@ export function useGlobalReferenceDataPage() {
     fetchRows()
   }
 
-  function exportCsv() {
-    const headerRow = columns.map(column => column.label)
-    const dataRows = rows.value.map(row => columns.map(column => row[column.key] ?? ""))
-
-    const csv = [headerRow, ...dataRows]
-      .map(row => row.map(value => `"${escapeCsvValue(value)}"`).join(","))
-      .join("\n")
-
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement("a")
-
-    link.href = url
-    link.download = "TMS_global_reference_data.csv"
-    link.click()
-
-    URL.revokeObjectURL(url)
-  }
-
-  function getTypeClass(type: string) {
-    if (type === "Airport") return "global-reference-page__badge--airport"
-    if (type === "Seaport") return "global-reference-page__badge--seaport"
-    if (type === "Rail Freight") return "global-reference-page__badge--rail"
-    if (type === "Air Cargo") return "global-reference-page__badge--air"
-
-    return "global-reference-page__badge--road"
-  }
-
-  function getStatusClass(status: string) {
-    if (status === "Active") return "global-reference-page__status--active"
-    if (status === "Inactive") return "global-reference-page__status--inactive"
-    if (status === "Under Construction") {
-      return "global-reference-page__status--construction"
-    }
-
-    return "global-reference-page__status--planned"
-  }
-
   watch(
-    [selectedCategory, search, selectedType, selectedRegion, selectedStatus, selectedCountry],
+    [
+      selectedCategory,
+      search,
+      selectedType,
+      selectedRegion,
+      selectedStatus,
+      selectedCountry,
+      selectedMode,
+    ],
     ([, newSearch], [, oldSearch]) => {
       first.value = 0
       fetchRows(newSearch !== oldSearch ? 300 : 0)
@@ -228,6 +210,10 @@ export function useGlobalReferenceDataPage() {
     selectedRegion.value = ""
     selectedStatus.value = ""
     selectedCountry.value = ""
+
+    if (selectedCategory.value === "airlines") {
+      selectedMode.value = ""
+    }
   })
 
   watch(totalRecords, total => {
@@ -246,10 +232,12 @@ export function useGlobalReferenceDataPage() {
     selectedRegion,
     selectedStatus,
     selectedCountry,
+    selectedMode,
     typeOptions,
     regionOptions,
     statusOptions,
     countryOptions,
+    modeOptions,
     loading,
     error,
     rows,
@@ -260,15 +248,32 @@ export function useGlobalReferenceDataPage() {
     paginationStart,
     paginationEnd,
     clearFilters,
-    exportCsv,
     sortBy,
     onPageChange,
-    getTypeClass,
-    getStatusClass,
   }
 }
 
 function normalizeRow(row: ReferenceRow, category: GlobalReferenceDataTabValue): ReferenceRow {
+  if (category === "locations") {
+    return {
+      ...blankRow(),
+      ...row,
+      category,
+      categoryLabel: "Delivery Location",
+      primaryName: row.fullName || row.city || row.location || row.code || "",
+      place: [row.state, row.region].filter(Boolean).join(" / "),
+      code: row.code || "",
+      codes: compactCodes([
+        ["LOC", row.code],
+        ["CC", row.countryCode],
+      ]),
+      modes: modeLabels(row),
+      timezoneDisplay: [row.timezone, row.gmtOffset ? `GMT ${row.gmtOffset}` : ""]
+        .filter(Boolean)
+        .join(" / "),
+    }
+  }
+
   if (category === "terminals") {
     return {
       ...blankRow(),
@@ -296,6 +301,8 @@ function normalizeRow(row: ReferenceRow, category: GlobalReferenceDataTabValue):
       primaryName: row.name || "",
       place: row.fleet || "",
       function: row.function || "Air Cargo",
+      modes: "Air",
+      timezoneDisplay: "",
       code: row.code || row.iata || row.icao || "",
       codes: compactCodes([
         ["IATA", row.iata],
@@ -313,11 +320,13 @@ function normalizeRow(row: ReferenceRow, category: GlobalReferenceDataTabValue):
     primaryName: row.fullName || row.city || "",
     place: row.state || "",
     codes: compactCodes([["Code", row.code]]),
+    modes: row.function || "Road",
+    timezoneDisplay: "",
   }
 }
 
 function normalizeCategory(value: string | undefined): GlobalReferenceDataTabValue {
-  if (value === "airlines" || value === "cities") return value
+  if (value === "locations" || value === "airlines" || value === "cities") return value
 
   return "terminals"
 }
@@ -339,6 +348,8 @@ function blankRow(): ReferenceRow {
     awb: "",
     codes: "",
     coordinates: "",
+    modes: "",
+    timezoneDisplay: "",
   }
 }
 
@@ -349,6 +360,14 @@ function compactCodes(entries: Array<[string, string | undefined]>) {
     .join(" / ")
 }
 
-function escapeCsvValue(value: string) {
-  return String(value).replace(/"/g, '""')
+function modeLabels(row: ReferenceRow): string {
+  return [
+    ["Road", row.road],
+    ["Rail", row.rail],
+    ["Sea", row.sea],
+    ["Air", row.air],
+  ]
+    .filter(([, enabled]) => enabled === "true" || enabled === "1")
+    .map(([label]) => label)
+    .join(" / ")
 }

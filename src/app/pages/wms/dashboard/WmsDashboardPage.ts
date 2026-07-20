@@ -1,4 +1,6 @@
-import { computed } from "vue"
+import { computed, onMounted, ref } from "vue"
+import expectedArrivalsService from "@/app/services/wms-expected-arrivals"
+import type { WmsExpectedArrival } from "@/app/types/wms-expected-arrival"
 
 type Tone = "default" | "warn" | "ok"
 
@@ -9,157 +11,95 @@ type StatCard = {
   tone?: Tone
 }
 
-type ActivityItem = {
-  dot: string
-  text: string
-  time: string
-}
-
-type PendingAction = {
-  count: number
-  label: string
-  to: string
-  tone?: Tone
-}
+type ActivityItem = { dot: string; text: string; time: string }
+type PendingAction = { count: number; label: string; to: string; tone?: Tone }
 
 export function useWmsDashboardPage() {
-  const dashboardDate = computed(() => {
-    return new Date().toLocaleDateString("en-GB", {
+  const expectedArrivals = ref<WmsExpectedArrival[]>([])
+  const receivedConsignments = ref<WmsExpectedArrival[]>([])
+
+  const dashboardDate = computed(() =>
+    new Date().toLocaleDateString("en-GB", {
       weekday: "long",
       day: "numeric",
       month: "long",
-    })
-  })
+    }),
+  )
 
-  /**
-   * Temporary mock data based on the WMS HTML reference.
-   * We can later replace this with a Pinia store / API response.
-   */
-  const consignments = [
-    { status: "In Storage", customerId: "c1", weight: 320 },
-    { status: "In Storage", customerId: "c1", weight: 180 },
-    { status: "Allocated", customerId: "c2", weight: 540 },
-  ]
-
-  const expectedArrivals = [
-    { status: "Expected", estDate: "2026-04-20" },
-    { status: "Expected", estDate: "2026-04-25" },
-  ]
-
-  const shipments = [{ status: "Building" }, { status: "Ready" }, { status: "Dispatched" }]
-
-  const stock = [
-    { qty: 250, minQty: 20, status: "Active" },
-    { qty: 500, minQty: 50, status: "Active" },
-    { qty: 8, minQty: 30, status: "Active" },
-  ]
-
-  const recentActivity = computed<ActivityItem[]>(() => [
-    {
+  const recentActivity = computed<ActivityItem[]>(() =>
+    receivedConsignments.value.slice(0, 5).map(arrival => ({
       dot: "#2E7D32",
-      text: "Consignment CON-A1B2C3 received from TechSource Ltd for Greenfield Imports",
-      time: "Today 09:14",
-    },
-    {
-      dot: "#2E7D32",
-      text: "Consignment CON-D4E5F6 received from Global Imports Co for Greenfield Imports",
-      time: "20 Mar 16:30",
-    },
-    {
-      dot: "#1565C0",
-      text: "Consignment CON-G7H8I9 received from TechSource Ltd for NovaTech Solutions",
-      time: "18 Mar 11:02",
-    },
-  ])
+      text: `${arrival.wms_reference} received${arrival.supplier_name ? ` from ${arrival.supplier_name}` : ""} for ${arrival.customer_name}`,
+      time: arrival.received_at
+        ? new Date(arrival.received_at).toLocaleString("en-GB", {
+            day: "2-digit",
+            month: "short",
+            hour: "2-digit",
+            minute: "2-digit",
+          })
+        : "Received",
+    })),
+  )
 
   const statCards = computed<StatCard[]>(() => {
-    const inStorage = consignments.filter(item => item.status === "In Storage").length
-    const allocated = consignments.filter(item => item.status === "Allocated").length
-    const activeShipments = shipments.filter(item => item.status !== "Dispatched").length
-    const ready = shipments.filter(item => item.status === "Ready").length
-    const customerCount = new Set(consignments.map(item => item.customerId)).size
-    const totalWeight = consignments.reduce((sum, item) => sum + item.weight, 0)
-    const expectedCount = expectedArrivals.filter(item => item.status === "Expected").length
-    const overdueCount = expectedArrivals.filter(item => {
-      return item.status === "Expected" && new Date(item.estDate) <= new Date()
-    }).length
-    const lowStock = stock.filter(
-      item => item.qty <= item.minQty && item.status !== "Discontinued",
-    ).length
+    const customerCount = new Set(receivedConsignments.value.map(item => item.customer_name)).size
+    const totalWeight = receivedConsignments.value.reduce(
+      (sum, item) => sum + Number(item.received_weight_kg ?? 0),
+      0,
+    )
+    const overdueCount = expectedArrivals.value.filter(isDueOrOverdue).length
 
     return [
       {
         label: "Consignments Stored",
-        value: String(inStorage + allocated),
+        value: String(receivedConsignments.value.length),
         subtext: `${customerCount} customer${customerCount !== 1 ? "s" : ""} / ${totalWeight.toFixed(0)} kg`,
       },
       {
         label: "Expected Arrivals",
-        value: String(expectedCount),
+        value: String(expectedArrivals.value.length),
         subtext: `${overdueCount} due today or overdue`,
-        tone: "warn",
+        tone: overdueCount > 0 ? "warn" : "ok",
       },
-      {
-        label: "Active Shipments",
-        value: String(activeShipments),
-        subtext: ready > 0 ? `${ready} ready to dispatch` : "No shipments ready",
-        tone: ready > 0 ? "warn" : "ok",
-      },
+      { label: "Active Shipments", value: "0", subtext: "No shipments ready", tone: "ok" },
       {
         label: "Stock Catalogue",
-        value: `${stock.length} SKUs`,
-        subtext: lowStock > 0 ? `${lowStock} low stock alerts` : "All stock OK",
-        tone: lowStock > 0 ? "warn" : "ok",
+        value: "0 SKUs",
+        subtext: "No stock catalogue entries",
+        tone: "ok",
       },
     ]
   })
 
   const pendingActions = computed<PendingAction[]>(() => {
-    const overdueCount = expectedArrivals.filter(item => {
-      return item.status === "Expected" && new Date(item.estDate) <= new Date()
-    }).length
-
-    const readyCount = shipments.filter(item => item.status === "Ready").length
-
-    const lowStockCount = stock.filter(item => {
-      return item.qty <= item.minQty && item.status !== "Discontinued"
-    }).length
-
-    const actions: PendingAction[] = []
-
-    if (overdueCount > 0) {
-      actions.push({
-        count: overdueCount,
-        label: `arrival${overdueCount !== 1 ? "s" : ""} due today/overdue`,
-        to: "/warehouse/goods-in/expected-arrivals",
-        tone: "warn",
-      })
-    }
-
-    if (readyCount > 0) {
-      actions.push({
-        count: readyCount,
-        label: `shipment${readyCount !== 1 ? "s" : ""} ready to dispatch`,
-        to: "/warehouse/consolidation/active-shipments",
-      })
-    }
-
-    if (lowStockCount > 0) {
-      actions.push({
-        count: lowStockCount,
-        label: `product${lowStockCount !== 1 ? "s" : ""} low on stock`,
-        to: "/inventory/stock/low-stock",
-        tone: "warn",
-      })
-    }
-
-    return actions
+    const overdueCount = expectedArrivals.value.filter(isDueOrOverdue).length
+    return overdueCount > 0
+      ? [
+          {
+            count: overdueCount,
+            label: `arrival${overdueCount !== 1 ? "s" : ""} due today/overdue`,
+            to: "/warehouse/goods-in/expected-arrivals",
+            tone: "warn",
+          },
+        ]
+      : []
   })
 
-  return {
-    dashboardDate,
-    statCards,
-    recentActivity,
-    pendingActions,
-  }
+  onMounted(async () => {
+    const [expected, received] = await Promise.all([
+      expectedArrivalsService.list({ per_page: 100, status: "open" }),
+      expectedArrivalsService.list({ per_page: 100, status: "booked_in" }),
+    ])
+    expectedArrivals.value = expected.data
+    receivedConsignments.value = received.data
+  })
+
+  return { dashboardDate, statCards, recentActivity, pendingActions }
+}
+
+function isDueOrOverdue(arrival: WmsExpectedArrival): boolean {
+  if (!arrival.expected_date) return false
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  return new Date(`${arrival.expected_date}T00:00:00`) <= today
 }

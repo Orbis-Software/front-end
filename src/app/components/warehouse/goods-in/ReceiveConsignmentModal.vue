@@ -6,6 +6,7 @@ import Textarea from "primevue/textarea"
 import InputNumber from "primevue/inputnumber"
 import Dropdown from "primevue/dropdown"
 import Button from "primevue/button"
+import type { WmsExpectedArrival } from "@/app/types/wms-expected-arrival"
 
 type Option = {
   label: string
@@ -37,22 +38,14 @@ export type ReceiveConsignmentPayload = {
 
 const props = defineProps<{
   visible: boolean
+  arrival?: WmsExpectedArrival | null
+  saving?: boolean
 }>()
 
 const emit = defineEmits<{
   (e: "close"): void
   (e: "saved", payload: ReceiveConsignmentPayload): void
 }>()
-
-const customerOptions: Option[] = [
-  { label: "Greenfield Imports", value: "Greenfield Imports" },
-  { label: "NovaTech Solutions", value: "NovaTech Solutions" },
-]
-
-const supplierOptions: Option[] = [
-  { label: "TechSource Ltd", value: "TechSource Ltd" },
-  { label: "Global Imports Co", value: "Global Imports Co" },
-]
 
 const goodsTypeOptions: Option[] = [
   { label: "Electronics", value: "Electronics" },
@@ -75,29 +68,40 @@ const unitOptions: Option[] = [
   { label: "Rolls", value: "Rolls" },
 ]
 
-const locationOptions: Option[] = [
-  { label: "A01-L1", value: "A01-L1" },
-  { label: "A01-L3", value: "A01-L3" },
-  { label: "A02-L1", value: "A02-L1" },
-]
-
 function createInitialForm() {
+  const arrival = props.arrival
+  const firstLine = arrival?.lines?.[0]
+
   return {
-    customer: "",
-    supplier: "",
-    reference: "",
-    description: "",
+    customer: arrival?.customer_name ?? "",
+    supplier: arrival?.supplier_name ?? "",
+    reference: arrival?.customer_reference ?? arrival?.external_reference ?? "",
+    description: arrival?.description ?? "",
     goodsType: "",
-    packagingType: "",
-    qty: null as number | null,
-    unit: "",
-    weight: null as number | null,
-    cbm: null as number | null,
+    packagingType: firstLine?.package_type ?? "",
+    qty: arrival?.estimated_quantity ?? null,
+    unit: firstLine?.package_type ?? "",
+    weight: sumLineValue(arrival, "weight_kg"),
+    cbm: sumLineValue(arrival, "volume_cbm"),
     location: "",
-    receivedBy: "Ian H",
-    notes: "",
-    lines: [] as BreakdownLine[],
+    receivedBy: "",
+    notes: arrival?.notes ?? "",
+    lines:
+      arrival?.lines?.map(line => ({
+        description: line.description ?? arrival.description ?? "",
+        qty: line.quantity,
+        unit: line.package_type ?? "",
+      })) ?? ([] as BreakdownLine[]),
   }
+}
+
+function sumLineValue(
+  arrival: WmsExpectedArrival | null | undefined,
+  key: "weight_kg" | "volume_cbm",
+): number | null {
+  const values = arrival?.lines?.map(line => Number(line[key] ?? 0)) ?? []
+  const total = values.reduce((sum, value) => sum + value, 0)
+  return total > 0 ? total : null
 }
 
 const form = reactive(createInitialForm())
@@ -116,7 +120,7 @@ watch(
 )
 
 const isValid = computed(() => {
-  return !!(form.customer && form.supplier && form.description.trim() && form.qty && form.qty > 0)
+  return !!(form.customer && form.description.trim() && form.qty && form.qty > 0)
 })
 
 function addLine() {
@@ -197,12 +201,10 @@ function onSave() {
                 <label class="receive-consignment-modal__label">
                   Customer <span class="receive-consignment-modal__req">*</span>
                 </label>
-                <Dropdown
+                <InputText
                   v-model="form.customer"
-                  :options="customerOptions"
-                  option-label="label"
-                  option-value="value"
-                  placeholder="-- Select --"
+                  :disabled="!!arrival"
+                  placeholder="Customer name"
                   class="receive-consignment-modal__control"
                 />
               </div>
@@ -211,12 +213,10 @@ function onSave() {
                 <label class="receive-consignment-modal__label">
                   Supplier <span class="receive-consignment-modal__req">*</span>
                 </label>
-                <Dropdown
+                <InputText
                   v-model="form.supplier"
-                  :options="supplierOptions"
-                  option-label="label"
-                  option-value="value"
-                  placeholder="-- Select --"
+                  :disabled="!!arrival"
+                  placeholder="Supplier name"
                   class="receive-consignment-modal__control"
                 />
               </div>
@@ -324,12 +324,9 @@ function onSave() {
 
               <div class="receive-consignment-modal__field">
                 <label class="receive-consignment-modal__label">Storage Location</label>
-                <Dropdown
+                <InputText
                   v-model="form.location"
-                  :options="locationOptions"
-                  option-label="label"
-                  option-value="value"
-                  placeholder="-- Select --"
+                  placeholder="Storage location"
                   class="receive-consignment-modal__control"
                 />
               </div>
@@ -424,8 +421,19 @@ function onSave() {
         </div>
 
         <div class="receive-consignment-modal__footer">
-          <Button label="Cancel" severity="secondary" outlined @click="onClose" />
-          <Button label="Receive Consignment" :disabled="!isValid" @click="onSave" />
+          <Button
+            label="Cancel"
+            severity="secondary"
+            outlined
+            :disabled="saving"
+            @click="onClose"
+          />
+          <Button
+            label="Receive Consignment"
+            :loading="saving"
+            :disabled="!isValid || saving"
+            @click="onSave"
+          />
         </div>
       </div>
     </template>

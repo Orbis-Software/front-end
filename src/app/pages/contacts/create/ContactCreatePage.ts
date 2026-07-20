@@ -3,6 +3,8 @@ import { onBeforeRouteLeave, useRoute, useRouter } from "vue-router"
 import { useToast } from "primevue/usetoast"
 import { useContactStore } from "@/app/stores/contact"
 import { useCountryStore } from "@/app/stores/country"
+import { useEmployeeStore } from "@/app/stores/employee"
+import { useAuthStore } from "@/app/stores/auth"
 import { buildInitialBranchPayload } from "@/app/utils/contactBranch"
 import type { Country } from "@/app/types/country"
 import type { ContactCreatePayload } from "@/app/types/contact"
@@ -15,6 +17,8 @@ export function useContactCreatePage() {
   const toast = useToast()
   const store = useContactStore()
   const countryStore = useCountryStore()
+  const employeeStore = useEmployeeStore()
+  const auth = useAuthStore()
 
   const saving = ref(false)
   const loadingContact = ref(false)
@@ -39,6 +43,8 @@ export function useContactCreatePage() {
 
     company_name: "",
     account_number: null as string | null,
+    account_manager_id: null as number | null,
+    account_support_id: null as number | null,
 
     credit_limit: null as number | null,
     currency_preference: "",
@@ -81,6 +87,8 @@ export function useContactCreatePage() {
       contact_type_ids: [...form.contact_type_ids].sort((a, b) => a - b),
       company_name: form.company_name,
       account_number: form.account_number,
+      account_manager_id: form.account_manager_id,
+      account_support_id: form.account_support_id,
       credit_limit: form.credit_limit,
       currency_preference: form.currency_preference,
       registration_number: form.registration_number,
@@ -119,6 +127,8 @@ export function useContactCreatePage() {
 
     form.company_name = ""
     form.account_number = null
+    form.account_manager_id = null
+    form.account_support_id = null
 
     form.credit_limit = null
     form.currency_preference = ""
@@ -154,6 +164,8 @@ export function useContactCreatePage() {
 
     form.company_name = c.company_name ?? ""
     form.account_number = c.account_number ?? null
+    form.account_manager_id = c.account_manager_id ?? null
+    form.account_support_id = c.account_support_id ?? null
 
     form.credit_limit = c.credit_limit ?? null
     form.currency_preference = c.currency_preference ?? ""
@@ -194,6 +206,18 @@ export function useContactCreatePage() {
 
     if (!store.types.length) await store.fetchTypes()
     if (!countryStore.items.length) await countryStore.fetch()
+    if (!employeeStore.items.length) {
+      try {
+        await employeeStore.fetch({ per_page: 200 })
+      } catch {
+        toast.add({
+          severity: "warn",
+          summary: "Employees unavailable",
+          detail: "The contact can still be edited, but account assignments could not be loaded.",
+          life: 4500,
+        })
+      }
+    }
 
     // ✅ load existing contact for edit
     if (isEdit.value && contactId.value) {
@@ -276,6 +300,15 @@ export function useContactCreatePage() {
   }
 
   const accountNumberPreview = computed(() => form.account_number ?? "")
+
+  const canManageCredit = computed(() => {
+    return (
+      auth.isAdmin ||
+      auth.isDev ||
+      auth.hasRole("company-manager") ||
+      auth.hasPermission("mgmt.accounts.invoices.manage")
+    )
+  })
 
   const creditLimitText = computed({
     get() {
@@ -400,6 +433,8 @@ export function useContactCreatePage() {
 
       company_name: form.company_name?.trim() ?? null,
       account_number: form.account_number,
+      account_manager_id: form.account_manager_id,
+      account_support_id: form.account_support_id,
 
       credit_limit: form.credit_limit,
       currency_preference: form.currency_preference?.trim() || null,
@@ -468,6 +503,7 @@ export function useContactCreatePage() {
 
   return {
     store,
+    employeeStore,
     form,
     saving,
     loadingContact,
@@ -479,6 +515,7 @@ export function useContactCreatePage() {
 
     accountNumberPreview,
     creditLimitText,
+    canManageCredit,
 
     selectedCountry,
     countrySuggestions,

@@ -3,7 +3,19 @@ import transformer from "@/app/transformers/globalReferenceData"
 import type { GlobalReferenceDataSet } from "@/app/types/globalReferenceData"
 
 export default async function getAll(): Promise<GlobalReferenceDataSet> {
-  const response = await http.get("/global-reference-data")
+  const [locationsResponse, airlinesResponse] = await Promise.all([
+    http.get("/global-reference-data", {
+      params: { category: "locations", page: 1, per_page: 100 },
+    }),
+    http.get("/global-reference-data", {
+      params: { category: "airlines", page: 1, per_page: 100 },
+    }),
+  ])
 
-  return transformer.dataset(response.data?.data ?? {})
+  const rows = [
+    ...(locationsResponse.data?.data?.rows ?? []),
+    ...(airlinesResponse.data?.data?.rows ?? []),
+  ]
+
+  return transformer.dataset({ rows })
 }

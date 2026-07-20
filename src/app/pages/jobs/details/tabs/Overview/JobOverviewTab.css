@@ -232,6 +232,17 @@
   align-items: center;
 }
 
+.job-overview-tab__address-select--destination {
+  grid-template-columns: minmax(0, 1fr) auto auto;
+}
+
+.job-overview-tab__address-select .p-inputtext {
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .job-overview-tab__address-select .p-dropdown {
   width: 100%;
 }

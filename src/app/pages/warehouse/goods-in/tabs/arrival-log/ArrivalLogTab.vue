@@ -11,9 +11,12 @@ const {
   selectedSupplier,
   customerOptions,
   supplierOptions,
-  rows,
+  loading,
+  error,
   filteredRows,
   onSearchInput,
+  weightLabel,
+  receivedDate,
 } = useArrivalLogTab()
 </script>
 
@@ -49,7 +52,10 @@ const {
       />
     </div>
 
-    <div class="arrival-log-tab__table-wrap">
+    <p v-if="error" class="arrival-log-tab__empty">{{ error }}</p>
+    <p v-if="loading" class="arrival-log-tab__empty">Loading received consignments…</p>
+
+    <div v-else class="arrival-log-tab__table-wrap">
       <table class="arrival-log-tab__table">
         <thead>
           <tr>
@@ -68,22 +74,22 @@ const {
 
         <tbody>
           <tr v-for="row in filteredRows" :key="row.id">
-            <td class="arrival-log-tab__mono">{{ row.id }}</td>
-            <td>{{ row.customer }}</td>
-            <td>{{ row.supplier }}</td>
+            <td class="arrival-log-tab__mono">{{ row.wms_reference }}</td>
+            <td>{{ row.customer_name }}</td>
+            <td>{{ row.supplier_name || "-" }}</td>
             <td>{{ row.description }}</td>
-            <td>{{ row.qty }}</td>
-            <td>{{ row.weight }}</td>
-            <td>{{ row.location }}</td>
+            <td>{{ row.received_quantity }}</td>
+            <td>{{ weightLabel(row) }}</td>
+            <td>{{ row.storage_location || "-" }}</td>
             <td>
               <span class="arrival-log-tab__status arrival-log-tab__status--stored">
                 In Storage
               </span>
             </td>
-            <td>{{ row.date }}</td>
+            <td>{{ receivedDate(row) }}</td>
             <td class="arrival-log-tab__actions">
-              <Button label="View" severity="secondary" size="small" outlined />
-              <Button label="Receipt" size="small" />
+              <Button label="View" severity="secondary" size="small" outlined disabled />
+              <Button label="Receipt" size="small" disabled />
             </td>
           </tr>
 

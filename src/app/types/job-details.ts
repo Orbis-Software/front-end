@@ -38,7 +38,9 @@ export type AddressTarget = "origin" | "destination"
 
 export type AddressSelectOption = {
   label: string
-  value: number
+  value: string
+  sourceType: AddressSourceType
+  sourceId: number
   address: ContactCollectionAddress
 }
 
@@ -104,6 +106,8 @@ export type JobDetailsForm = {
   consignee_email: string
 
   origin_contact_collection_address_id: number | null
+  origin_address_source_type: AddressSourceType | null
+  origin_address_source_id: number | null
   destination_contact_collection_address_id: number | null
   destination_address_source_type: AddressSourceType | null
   destination_address_source_id: number | null

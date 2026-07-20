@@ -5,6 +5,7 @@ import update from "./update"
 import remove from "./remove"
 import convertToJob from "./convertToJob"
 import pdf from "./pdf"
+import duplicate from "./duplicate"
 
 export default {
   list,
@@ -14,4 +15,5 @@ export default {
   remove,
   convertToJob,
   pdf,
+  duplicate,
 }

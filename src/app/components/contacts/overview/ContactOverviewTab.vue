@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import "./ContactOverviewCard.css"
-import { computed } from "vue"
+import { computed, ref, watch } from "vue"
 
 interface ContactOverview {
   id?: number
@@ -16,6 +16,14 @@ interface ContactOverview {
   payment_terms?: string | null
   credit_limit?: number | string | null
   total_sales?: number | string | null
+  credit_used?: number | string | null
+  available_credit?: number | string | null
+  hard_stop_limit?: number | string | null
+  at_credit_limit?: boolean
+  hard_stopped?: boolean
+  credit_currency?: string | null
+  account_manager?: { id: number; name: string; email: string } | null
+  account_support?: { id: number; name: string; email: string } | null
 
   branches?: Array<unknown>
   collection_addresses?: Array<unknown>
@@ -30,6 +38,12 @@ interface ContactOverview {
 
 const props = defineProps<{
   contact: ContactOverview
+  canManageCredit?: boolean
+  creditSaving?: boolean
+}>()
+
+const emit = defineEmits<{
+  (e: "update-credit", value: number): void
 }>()
 
 function toNumber(value: number | string | null | undefined, fallback = 0): number {
@@ -57,11 +71,19 @@ const activeContact = computed<ContactOverview>(() => {
 
 const creditLimitNumber = computed(() => toNumber(activeContact.value.credit_limit, 0))
 const totalSalesNumber = computed(() => toNumber(activeContact.value.total_sales, 0))
+const creditUsedNumber = computed(() => toNumber(activeContact.value.credit_used, 0))
 const daysOverdueNumber = computed(() => toNumber(activeContact.value.days_overdue, 0))
 const overagePercentageNumber = computed(() => toNumber(activeContact.value.overage_percentage, 0))
 
 const availableCreditNumber = computed(() => {
-  return creditLimitNumber.value - totalSalesNumber.value
+  if (
+    activeContact.value.available_credit !== null &&
+    activeContact.value.available_credit !== undefined
+  ) {
+    return toNumber(activeContact.value.available_credit, 0)
+  }
+
+  return creditLimitNumber.value - creditUsedNumber.value
 })
 
 const overageAmountNumber = computed(() => {
@@ -69,7 +91,10 @@ const overageAmountNumber = computed(() => {
 })
 
 const maximumBookableAmountNumber = computed(() => {
-  return availableCreditNumber.value + overageAmountNumber.value
+  return toNumber(
+    activeContact.value.hard_stop_limit,
+    creditLimitNumber.value + overageAmountNumber.value,
+  )
 })
 
 const isLowAvailableCredit = computed(() => {
@@ -77,7 +102,7 @@ const isLowAvailableCredit = computed(() => {
 })
 
 const isCreditLimitExceeded = computed(() => {
-  return availableCreditNumber.value < 0
+  return Boolean(activeContact.value.at_credit_limit) || availableCreditNumber.value <= 0
 })
 
 const isPaymentOverdue = computed(() => {
@@ -85,7 +110,7 @@ const isPaymentOverdue = computed(() => {
 })
 
 const isOnStop = computed(() => {
-  return isCreditLimitExceeded.value || isPaymentOverdue.value
+  return Boolean(activeContact.value.hard_stopped)
 })
 
 const accountStatusLabel = computed(() => {
@@ -102,6 +127,7 @@ const accountStatusTone = computed(() => {
 
 const formattedCreditLimit = computed(() => formatMoney(activeContact.value.credit_limit))
 const formattedTotalSales = computed(() => formatMoney(activeContact.value.total_sales, "0.00"))
+const formattedCreditUsed = computed(() => formatMoney(creditUsedNumber.value, "0.00"))
 const formattedAvailableCredit = computed(() => formatMoney(availableCreditNumber.value, "0.00"))
 const formattedOverageAmount = computed(() => formatMoney(overageAmountNumber.value, "0.00"))
 const formattedMaximumBookableAmount = computed(() =>
@@ -176,6 +202,18 @@ const infoRows = computed(() => [
   },
 ])
 
+const creditDraft = ref(creditLimitNumber.value.toFixed(2))
+
+watch(creditLimitNumber, value => {
+  creditDraft.value = value.toFixed(2)
+})
+
+function submitCreditLimit() {
+  const value = Number(creditDraft.value)
+  if (!Number.isFinite(value) || value < 0 || value === creditLimitNumber.value) return
+  emit("update-credit", value)
+}
+
 function canBookJob(jobValue: number | string | null | undefined): boolean {
   const amount = toNumber(jobValue, 0)
   return amount <= maximumBookableAmountNumber.value
@@ -232,7 +270,8 @@ defineExpose({
           </strong>
 
           <div class="contact-overview__mini-subtext">
-            Credit Limit £{{ formattedCreditLimit }} · Sales £{{ formattedTotalSales }}
+            Credit Limit {{ activeContact.credit_currency || "GBP" }} {{ formattedCreditLimit }} ·
+            Outstanding {{ activeContact.credit_currency || "GBP" }} {{ formattedCreditUsed }}
           </div>
         </div>
       </div>
@@ -244,6 +283,22 @@ defineExpose({
           <div>
             <div class="overview-panel__eyebrow">Details</div>
             <h3 class="overview-panel__title">Customer Information</h3>
+          </div>
+
+          <div v-if="canManageCredit" class="credit-limit-editor">
+            <label for="contact-credit-limit">Credit limit</label>
+            <input
+              id="contact-credit-limit"
+              v-model="creditDraft"
+              type="number"
+              min="0"
+              step="0.01"
+              :disabled="creditSaving"
+              @keydown.enter.prevent="submitCreditLimit"
+            />
+            <button type="button" :disabled="creditSaving" @click="submitCreditLimit">
+              {{ creditSaving ? "Saving..." : "Update" }}
+            </button>
           </div>
         </div>
 
@@ -282,6 +337,17 @@ defineExpose({
             <span class="overview-stat__label">{{ stat.label }}</span>
             <strong class="overview-stat__value"> {{ stat.prefix || "" }}{{ stat.value }} </strong>
           </article>
+        </div>
+
+        <div class="overview-assignments">
+          <div>
+            <span>Account Manager</span>
+            <strong>{{ activeContact.account_manager?.name || "Not assigned" }}</strong>
+          </div>
+          <div>
+            <span>Account Support</span>
+            <strong>{{ activeContact.account_support?.name || "Not assigned" }}</strong>
+          </div>
         </div>
       </section>
     </div>

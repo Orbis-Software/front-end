@@ -189,6 +189,25 @@ async function printTransportPreview() {
       v-model:visible="showAddressModal"
       :target="addressTarget"
       :saving="savingAddress"
+      :customer-id="selectedContact?.id ? Number(selectedContact.id) : null"
+      :customer-name="
+        selectedContact
+          ? selectedContact.company_name || selectedContact.email || `Contact ${selectedContact.id}`
+          : ''
+      "
+      :customer-options="
+        selectedContact?.id
+          ? [
+              {
+                label:
+                  selectedContact.company_name ||
+                  selectedContact.email ||
+                  `Contact ${selectedContact.id}`,
+                value: Number(selectedContact.id),
+              },
+            ]
+          : []
+      "
       @save="saveAddress"
     />
 

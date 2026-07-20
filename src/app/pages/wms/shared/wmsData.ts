@@ -620,3 +620,12 @@ export const wmsAdminLists = reactive<Record<string, WmsAdminConfig>>({
     ],
   },
 })
+
+// The original screens shipped with visual-only fixture rows. Keep the table
+// definitions while starting every WMS list empty until it is backed by an API.
+Object.values(wmsTables).forEach(table => {
+  table.rows = []
+})
+Object.values(wmsAdminLists).forEach(list => {
+  list.rows = []
+})

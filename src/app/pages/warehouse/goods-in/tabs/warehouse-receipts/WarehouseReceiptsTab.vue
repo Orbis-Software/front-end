@@ -1,29 +1,18 @@
 <script setup lang="ts">
 import "./WarehouseReceiptsTab.css"
 import Button from "primevue/button"
-import WarehouseReceiptModal from "@/app/components/warehouse/goods-in/WarehouseReceiptModal.vue"
-
 import { useWarehouseReceiptsTab } from "./WarehouseReceiptsTab"
 
-const {
-  rows,
-  warehouseReceiptOpen,
-  onOpenWarehouseReceipt,
-  onCloseWarehouseReceipt,
-  onSavedWarehouseReceipt,
-} = useWarehouseReceiptsTab()
+const { rows, loading, error, receivedDate } = useWarehouseReceiptsTab()
 </script>
 
 <template>
   <section class="warehouse-receipts-tab">
-    <div class="warehouse-receipts-tab__toolbar">
-      <div class="warehouse-receipts-tab__spacer" />
-      <Button label="+ Warehouse Receipt" @click="onOpenWarehouseReceipt" />
-    </div>
+    <p v-if="error" class="warehouse-receipts-tab__empty">{{ error }}</p>
+    <p v-if="loading" class="warehouse-receipts-tab__empty">Loading warehouse receipts…</p>
 
-    <div v-if="!rows.length" class="warehouse-receipts-tab__empty">
-      No warehouse receipts yet. Open a consignment in the Arrival Log and click
-      <strong>Receipt</strong> to create one.
+    <div v-else-if="!rows.length" class="warehouse-receipts-tab__empty">
+      No warehouse receipts yet. Receive a Collection Order from Expected Arrivals to create one.
     </div>
 
     <div v-else class="warehouse-receipts-tab__table-wrap">
@@ -45,33 +34,25 @@ const {
         <tbody>
           <tr v-for="row in rows" :key="row.id">
             <td class="warehouse-receipts-tab__mono warehouse-receipts-tab__strong">
-              {{ row.wrNumber }}
+              {{ row.receipt_reference }}
             </td>
-            <td class="warehouse-receipts-tab__mono">{{ row.jobRef }}</td>
-            <td>{{ row.customer }}</td>
-            <td>{{ row.supplier }}</td>
-            <td>{{ row.date }}</td>
-            <td>{{ row.pieces }}</td>
-            <td>{{ row.grossWeight }}</td>
+            <td class="warehouse-receipts-tab__mono">
+              {{ row.job_number || row.external_reference || "-" }}
+            </td>
+            <td>{{ row.customer_name }}</td>
+            <td>{{ row.supplier_name || "-" }}</td>
+            <td>{{ receivedDate(row) }}</td>
+            <td>{{ row.received_quantity }}</td>
             <td>
-              <span v-if="row.attachments > 0" class="warehouse-receipts-tab__attachments">
-                📎 {{ row.attachments }} file<span v-if="row.attachments !== 1">s</span>
-              </span>
-              <span v-else class="warehouse-receipts-tab__muted">None</span>
+              {{ row.received_weight_kg ? Number(row.received_weight_kg).toLocaleString() : "-" }}
             </td>
+            <td><span class="warehouse-receipts-tab__muted">None</span></td>
             <td class="warehouse-receipts-tab__actions">
-              <Button icon="pi pi-pencil" size="small" text @click="onOpenWarehouseReceipt" />
-              <Button label="Print" size="small" outlined />
+              <Button label="Print" size="small" outlined disabled />
             </td>
           </tr>
         </tbody>
       </table>
     </div>
-
-    <WarehouseReceiptModal
-      :visible="warehouseReceiptOpen"
-      @close="onCloseWarehouseReceipt"
-      @saved="onSavedWarehouseReceipt"
-    />
   </section>
 </template>

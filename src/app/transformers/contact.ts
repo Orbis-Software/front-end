@@ -22,6 +22,9 @@ function normalizeBranch(raw: any): ContactBranch {
     email: raw.email ?? null,
     phone: raw.phone ?? null,
 
+    is_collection: raw.is_collection === undefined ? true : Boolean(raw.is_collection),
+    is_delivery: raw.is_delivery === undefined ? true : Boolean(raw.is_delivery),
+
     delivery_address_line_1: raw.delivery_address_line_1 ?? null,
     delivery_address_line_2: raw.delivery_address_line_2 ?? null,
     delivery_address_line_3: raw.delivery_address_line_3 ?? null,
@@ -108,6 +111,22 @@ const contactTransformer = {
       // Company / identity
       company_name: raw.company_name ?? null,
       account_number: raw.account_number ?? null,
+      account_manager_id: toNumberOrNull(raw.account_manager_id),
+      account_support_id: toNumberOrNull(raw.account_support_id),
+      account_manager: raw.account_manager
+        ? {
+            id: Number(raw.account_manager.id),
+            name: raw.account_manager.name ?? "",
+            email: raw.account_manager.email ?? "",
+          }
+        : null,
+      account_support: raw.account_support
+        ? {
+            id: Number(raw.account_support.id),
+            name: raw.account_support.name ?? "",
+            email: raw.account_support.email ?? "",
+          }
+        : null,
 
       // Registration
       registration_number: raw.registration_number ?? null,
@@ -137,6 +156,18 @@ const contactTransformer = {
           : Number(raw.credit_limit),
 
       currency_preference: raw.currency_preference ?? null,
+      credit_used: Number(raw.credit_used ?? 0),
+      available_credit: Number(raw.available_credit ?? 0),
+      total_sales: Number(raw.total_sales ?? 0),
+      hard_stop_limit: Number(raw.hard_stop_limit ?? 0),
+      overage_percentage: Number(raw.overage_percentage ?? 10),
+      at_credit_limit: Boolean(raw.at_credit_limit),
+      hard_stopped: Boolean(raw.hard_stopped),
+      days_overdue: Number(raw.days_overdue ?? 0),
+      credit_currency: raw.credit_currency ?? raw.currency_preference ?? "GBP",
+      total_jobs: Number(raw.total_jobs ?? 0),
+      total_quotes: Number(raw.total_quotes ?? 0),
+      total_invoices: Number(raw.total_invoices ?? 0),
 
       // ✅ address usage flags (MVP columns)
       is_delivery: Boolean(raw.is_delivery),

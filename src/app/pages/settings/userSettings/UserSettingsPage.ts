@@ -8,6 +8,7 @@ export function useUserSettingsPage() {
   const tabs = computed<UserSettingsTab[]>(() => [
     { label: "Signature", name: "settings.user.signature" },
     { label: "Shortcut", name: "settings.user.shortcuts" },
+    { label: "Goods Descriptions", name: "settings.user.goods_descriptions" },
   ])
 
   const currentRouteName = computed(() => String(route.name ?? ""))

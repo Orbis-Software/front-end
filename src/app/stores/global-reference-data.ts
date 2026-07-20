@@ -13,6 +13,7 @@ type State = {
 
 function emptyData(): GlobalReferenceDataSet {
   return {
+    locations: [],
     terminals: [],
     airlines: [],
     cities: [],

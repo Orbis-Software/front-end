@@ -81,7 +81,7 @@
               </div>
             </template>
 
-            <Column header="Quotation" style="width: 240px">
+            <Column header="Quotation Ref" style="width: 210px">
               <template #body="{ data }">
                 <div class="quotes-list-page__quote-cell">
                   <button
@@ -95,16 +95,15 @@
               </template>
             </Column>
 
-            <Column header="Customer" style="width: 260px">
+            <Column header="Customer" style="min-width: 320px">
               <template #body="{ data }">
                 <div class="quotes-list-page__customer-cell">
                   <div class="quotes-list-page__customer-name">{{ data.customer_name }}</div>
-                  <div class="quotes-list-page__cell-subtext">{{ data.account_number }}</div>
                 </div>
               </template>
             </Column>
 
-            <Column header="Type" style="width: 160px">
+            <Column header="Type" style="width: 110px">
               <template #body="{ data }">
                 <span class="quotes-list-page__info-chip">
                   {{ prettify(data.quote_type) }}
@@ -112,7 +111,7 @@
               </template>
             </Column>
 
-            <Column header="Mode" style="width: 160px">
+            <Column header="Mode" style="width: 100px">
               <template #body="{ data }">
                 <span class="quotes-list-page__info-chip">
                   {{ prettify(data.mode_of_transport) }}
@@ -120,7 +119,7 @@
               </template>
             </Column>
 
-            <Column header="Status" style="width: 160px">
+            <Column header="Status" style="width: 110px">
               <template #body="{ data }">
                 <span class="quotes-list-page__info-chip" :class="statusClass(data.status)">
                   {{ prettify(data.status) }}
@@ -147,6 +146,16 @@
             <Column header="Actions" style="width: 280px">
               <template #body="{ data }">
                 <div class="quotes-list-page__row-actions">
+                  <Button
+                    text
+                    class="quotes-list-page__copy-btn"
+                    icon="pi pi-copy"
+                    label="Copy"
+                    :loading="copyingQuoteId === data.id"
+                    :disabled="Boolean(copyingQuoteId)"
+                    @click="onCopy(data)"
+                  />
+
                   <template v-if="data.status === 'draft'">
                     <Button
                       text
@@ -300,6 +309,7 @@ const {
   firstRow,
   loading,
   actionProcessing,
+  copyingQuoteId,
   actionDialogVisible,
   selectedQuote,
   selectedAction,
@@ -313,6 +323,7 @@ const {
   onNewQuotation,
   onView,
   onEdit,
+  onCopy,
   openSentModal,
   openApprovalModal,
   openDeclineModal,

@@ -29,6 +29,9 @@ function snapshotFromBranch(b: ContactBranch): Partial<ContactBranch> {
     email: b.email,
     phone: b.phone,
 
+    is_collection: b.is_collection,
+    is_delivery: b.is_delivery,
+
     delivery_address_line_1: b.delivery_address_line_1,
     delivery_address_line_2: b.delivery_address_line_2,
     delivery_address_line_3: b.delivery_address_line_3,
@@ -165,6 +168,27 @@ const sameAsDelivery = computed({
         placeholder="+44..."
         @blur="emitIfChanged(['phone'])"
       />
+    </div>
+
+    <div class="branchUsage">
+      <label class="branchUsage__option">
+        <input
+          v-model="branch.is_collection"
+          type="checkbox"
+          class="checkbox"
+          @change="emitIfChanged(['is_collection'])"
+        />
+        <span>Use for collections</span>
+      </label>
+      <label class="branchUsage__option">
+        <input
+          v-model="branch.is_delivery"
+          type="checkbox"
+          class="checkbox"
+          @change="emitIfChanged(['is_delivery'])"
+        />
+        <span>Use for deliveries</span>
+      </label>
     </div>
 
     <div class="sectionTitle">

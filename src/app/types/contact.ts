@@ -1,5 +1,11 @@
 import type { ContactType } from "@/app/types/contact-type"
 
+export interface ContactEmployeeAssignment {
+  id: number
+  name: string
+  email: string
+}
+
 export interface Contact {
   id: number
   company_id: number | null
@@ -10,6 +16,10 @@ export interface Contact {
   // Company / identity
   company_name?: string | null
   account_number?: string | null
+  account_manager_id?: number | null
+  account_support_id?: number | null
+  account_manager?: ContactEmployeeAssignment | null
+  account_support?: ContactEmployeeAssignment | null
 
   // Registration
   registration_number?: string | null
@@ -35,6 +45,18 @@ export interface Contact {
   // Finance
   credit_limit?: number | null
   currency_preference?: string | null
+  credit_used?: number
+  available_credit?: number
+  total_sales?: number
+  hard_stop_limit?: number
+  overage_percentage?: number
+  at_credit_limit?: boolean
+  hard_stopped?: boolean
+  days_overdue?: number
+  credit_currency?: string
+  total_jobs?: number
+  total_quotes?: number
+  total_invoices?: number
 
   // Address usage flags (MVP)
   is_delivery?: boolean
@@ -62,6 +84,8 @@ export interface ContactCreatePayload {
   // Company / identity
   company_name?: string | null
   account_number?: string | null
+  account_manager_id?: number | null
+  account_support_id?: number | null
 
   // Registration
   registration_number?: string | null
@@ -107,6 +131,9 @@ export interface ContactBranch {
   contact_person: string | null
   email: string | null
   phone: string | null
+
+  is_collection: boolean
+  is_delivery: boolean
 
   delivery_address_line_1: string | null
   delivery_address_line_2: string | null

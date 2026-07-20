@@ -9,6 +9,8 @@ const {
   tabs,
   isActive,
   receiveConsignmentOpen,
+  receiving,
+  error,
   onOpenReceiveConsignment,
   onCloseReceiveConsignment,
   onSavedReceiveConsignment,
@@ -36,6 +38,7 @@ const {
     </header>
 
     <div class="warehouse-goods-in-page__card">
+      <p v-if="error" class="warehouse-goods-in-page__error">{{ error }}</p>
       <nav class="warehouse-goods-in-page__tabs">
         <RouterLink
           v-for="tab in tabs"
@@ -55,6 +58,7 @@ const {
 
     <ReceiveConsignmentModal
       :visible="receiveConsignmentOpen"
+      :saving="receiving"
       @close="onCloseReceiveConsignment"
       @saved="onSavedReceiveConsignment"
     />

@@ -165,6 +165,42 @@
       </Card>
     </section>
 
+    <section v-if="isManagement && creditAlerts.length" class="credit-alerts-section">
+      <Card class="dash-card panel-card credit-alerts-card">
+        <template #content>
+          <div class="panel-card__head">
+            <div>
+              <div class="panel-card__title">Customer Credit Limits</div>
+              <div class="panel-card__sub">
+                Customers at their credit limit or the 110% hard stop.
+              </div>
+            </div>
+          </div>
+
+          <div class="credit-alert-list">
+            <button
+              v-for="alert in creditAlerts"
+              :key="alert.customer_id"
+              type="button"
+              class="credit-alert"
+              :class="{ 'credit-alert--hard-stop': alert.hard_stopped }"
+              @click="openContact(alert.customer_id)"
+            >
+              <span class="credit-alert__status">
+                {{ alert.hard_stopped ? "HARD STOP" : "CREDIT LIMIT" }}
+              </span>
+              <strong>{{ alert.customer }}</strong>
+              <small>{{ alert.account_number || "No account number" }}</small>
+              <span>
+                Outstanding {{ formatCredit(alert.credit_used, alert.credit_currency) }} / limit
+                {{ formatCredit(alert.credit_limit, alert.credit_currency) }}
+              </span>
+            </button>
+          </div>
+        </template>
+      </Card>
+    </section>
+
     <!-- USER VIEW -->
     <template v-if="!isManagement">
       <section class="dash-grid dash-grid--main">
@@ -622,6 +658,7 @@ const kanban = computed(() => summary.value?.kanban ?? [])
 const userTodo = computed(() => summary.value?.todos ?? [])
 const managementExceptions = computed(() => summary.value?.todos ?? [])
 const quoteReminders = computed(() => summary.value?.quote_reminders ?? [])
+const creditAlerts = computed(() => summary.value?.credit_alerts ?? [])
 const modeMix = computed(() => summary.value?.mode_mix ?? [])
 const revenueByMode = computed(() => summary.value?.revenue_by_mode ?? [])
 
@@ -706,6 +743,7 @@ function filterSoftDeletedDashboardData(
     })),
     todos: filterActiveRecords(data.todos),
     quote_reminders: filterActiveRecords(data.quote_reminders),
+    credit_alerts: filterActiveRecords(data.credit_alerts),
     mode_mix: filterActiveRecords(data.mode_mix),
     revenue_by_mode: filterActiveRecords(data.revenue_by_mode),
     performance: filterActiveRecords(data.performance),
@@ -744,6 +782,14 @@ function money(value: number) {
   return new Intl.NumberFormat("en-GB", {
     style: "currency",
     currency: "GBP",
+    maximumFractionDigits: 0,
+  }).format(value)
+}
+
+function formatCredit(value: number, currency = "GBP") {
+  return new Intl.NumberFormat("en-GB", {
+    style: "currency",
+    currency,
     maximumFractionDigits: 0,
   }).format(value)
 }
@@ -809,6 +855,10 @@ function openJob(id: number) {
 
 function openQuote(id: number) {
   router.push({ name: "tms.quotes.show", params: { id } })
+}
+
+function openContact(id: number) {
+  router.push({ name: "crm.contacts.show", params: { id } })
 }
 
 function reminderLabel(urgency: "overdue" | "today" | "upcoming") {
