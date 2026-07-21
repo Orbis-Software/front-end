@@ -1,9 +1,4 @@
 <script setup lang="ts">
-import Button from "primevue/button"
-import Checkbox from "primevue/checkbox"
-import Dialog from "primevue/dialog"
-import Dropdown from "primevue/dropdown"
-import ToggleSwitch from "primevue/toggleswitch"
 import "./SystemSettingsAccountSettingsPage.css"
 import { useSystemSettingsAccountSettingsPage } from "./SystemSettingsAccountSettingsPage"
 

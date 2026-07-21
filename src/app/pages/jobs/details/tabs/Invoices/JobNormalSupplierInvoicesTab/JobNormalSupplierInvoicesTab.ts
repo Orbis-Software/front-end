@@ -10,7 +10,7 @@ import { useInvoiceGenerationStore } from "@/app/stores/invoice-generation"
 import type { AccountSetting, AccountingSystem } from "@/app/types/account-setting"
 import type { ChargeCode } from "@/app/types/charge-code"
 import type { Contact } from "@/app/types/contact"
-import type { JobDetailsContext } from "../../../JobDetailsPage.logic"
+import type { JobDetailsContext } from "@/app/types/job-details"
 import type { InvoiceEmailRecipientOption } from "@/app/types/invoice-email"
 import { isValidInvoiceEmail } from "@/app/utils/invoice-email"
 

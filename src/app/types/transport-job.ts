@@ -772,16 +772,3 @@ export interface TransportJobUpdatePayload extends Partial<BaseTransportJobCreat
   charges?: JobCharge[] | null
   consolidation_details?: JobConsolidationDetails | null
 }
-
-export interface PaginationMeta {
-  current_page: number
-  per_page: number
-  total: number
-  last_page: number
-}
-
-export interface PaginatedResponse<T> {
-  data: T[]
-  meta?: PaginationMeta
-  links?: any
-}

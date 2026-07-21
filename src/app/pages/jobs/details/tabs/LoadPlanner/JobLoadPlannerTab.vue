@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import { useJobLoadPlannerTab } from "./JobLoadPlannerTab.logic"
 import "./JobLoadPlannerTab.css"
-import Dialog from "primevue/dialog"
-
 const {
   activeView,
   isPreparingPrint,

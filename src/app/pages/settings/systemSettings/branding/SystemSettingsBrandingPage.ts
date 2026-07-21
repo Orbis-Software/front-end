@@ -12,20 +12,14 @@ import type {
   BrandingHeaderStyle,
   BrandingPdfLayout as PdfLayout,
 } from "@/app/types/company-branding-settings"
-import type { SignatureFieldKey, SignatureStyle } from "@/app/types/user-signature"
+import type {
+  SignatureFieldKey,
+  SignatureStyle,
+  UserSignatureForm as BrandingSignature,
+} from "@/app/types/user-signature"
 import { useToast } from "primevue/usetoast"
 
 type BrandingTab = "logo-assets" | "header" | "colours" | "documents"
-
-type BrandingSignature = {
-  name: string
-  title: string
-  phone: string
-  email: string
-  body: string
-  imagePreview: string | null
-  styles: Record<SignatureFieldKey, SignatureStyle>
-}
 
 const fallbackLogo = "/orbis-logo.png"
 const defaultSignatureStyle: SignatureStyle = {

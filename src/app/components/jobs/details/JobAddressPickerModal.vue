@@ -1,7 +1,5 @@
 <script setup lang="ts">
 import { computed } from "vue"
-import Button from "primevue/button"
-import Dialog from "primevue/dialog"
 import type { AddressChoice, AddressTarget } from "@/app/types/job-details"
 import type { Contact } from "@/app/types/contact"
 

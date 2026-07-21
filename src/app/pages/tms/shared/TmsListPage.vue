@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import "./TmsListPage.css"
 import { computed, ref } from "vue"
-import Button from "primevue/button"
 import { tmsTables } from "./tmsData"
 
 const props = defineProps<{

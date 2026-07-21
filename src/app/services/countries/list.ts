@@ -1,12 +1,7 @@
 import http from "@/api/http"
 import countryTransformer from "@/app/transformers/country"
-import type { Country, PaginatedResponse } from "@/app/types/country"
-
-export interface ListCountriesParams {
-  page?: number
-  per_page?: number
-  q?: string
-}
+import type { Country, ListCountriesParams } from "@/app/types/country"
+import type { PaginatedResponse } from "@/app/types/pagination"
 
 export default async function listCountries(
   params: ListCountriesParams = {},

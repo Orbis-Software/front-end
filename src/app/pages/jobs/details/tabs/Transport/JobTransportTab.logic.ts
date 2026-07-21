@@ -16,6 +16,10 @@ import type { Country } from "@/app/types/country"
 import type { useJobDetailsPage } from "../../JobDetailsPage.logic"
 import type {
   BuyCostRow,
+  JobTransportContactOption as ContactOption,
+  JobTransportCountryOption as CountryOption,
+  JobTransportMultiDropStop as MultiDropStop,
+  JobTransportReferenceOption as ReferenceOption,
   JobTransportTabMode as TransportMode,
   MultiModalLeg,
   MultiModalLegMode,
@@ -23,35 +27,6 @@ import type {
 } from "@/app/types/job-details"
 
 let legId = 1
-
-type ReferenceOption = {
-  label: string
-  value: string
-  subLabel?: string
-  searchText: string
-}
-
-type ContactOption = {
-  label: string
-  value: number
-  subLabel?: string
-  contact: Contact
-}
-
-type CountryOption = {
-  label: string
-  value: string
-  subLabel: string
-  searchText: string
-}
-
-type MultiDropStop = {
-  id: number
-  company_location: string
-  city_postcode: string
-  date: string
-  stop_type: string
-}
 
 const GLOBAL_REFERENCE_OPTION_LIMIT = 150
 const HAULIER_COST_ROW_ID = "haulier-buy-rate"

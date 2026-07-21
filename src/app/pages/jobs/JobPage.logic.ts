@@ -14,16 +14,11 @@ import type {
   TransportJobCreatePayload,
 } from "@/app/types/transport-job"
 import type { CompanyReferenceSequence } from "@/app/types/company"
+import type { JobSelectorCardItem } from "@/app/types/job-details"
 
 import { buildReferenceNumber } from "@/app/utils/reference-sequence"
 
-export type CardItem<K extends string> = {
-  key: K
-  title: string
-  subtitle: string
-}
-
-export const JOB_TYPES: CardItem<JobType>[] = [
+export const JOB_TYPES: JobSelectorCardItem<JobType>[] = [
   { key: "import", title: "Import", subtitle: "Create an Import job" },
   { key: "export", title: "Export", subtitle: "Create an Export job" },
   { key: "domestic", title: "Domestic", subtitle: "Create a Domestic job" },
@@ -33,7 +28,7 @@ export const JOB_TYPES: CardItem<JobType>[] = [
   { key: "consolidation", title: "Consolidation", subtitle: "Create a Consolidation job" },
 ]
 
-export const MODES: CardItem<TransportMode>[] = [
+export const MODES: JobSelectorCardItem<TransportMode>[] = [
   { key: "air", title: "Air", subtitle: "Choose Air" },
   { key: "rail", title: "Rail", subtitle: "Choose Rail" },
   { key: "road", title: "Road", subtitle: "Choose Road" },
@@ -59,7 +54,7 @@ export function useJobCreatePage() {
     return jobType.value === "multi_modal"
   })
 
-  const availableModes = computed<CardItem<TransportMode>[]>(() => {
+  const availableModes = computed<JobSelectorCardItem<TransportMode>[]>(() => {
     if (isNoModeJobType.value) return []
     return MODES
   })

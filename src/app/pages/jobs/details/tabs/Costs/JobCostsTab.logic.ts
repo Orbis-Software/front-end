@@ -7,24 +7,14 @@ import { useExchangeRateStore } from "@/app/stores/exchange-rates"
 import { useTaxCodeStore } from "@/app/stores/tax-codes"
 import type { ChargeCode } from "@/app/types/charge-code"
 import type { Contact } from "@/app/types/contact"
-import type { JobDetailsContext } from "../../JobDetailsPage.logic"
-import type { BuyCostRow, SellChargeRow } from "@/app/types/job-details"
-
-type SelectOption = {
-  label: string
-  value: string | number | null
-  rate?: number
-  calculationType?: "percentage" | "withholding_tax"
-  backCalculatedRate?: number | null
-}
-
-type CostRow = BuyCostRow | SellChargeRow
-type ChargeBasisTotals = {
-  qty: number
-  gross: number
-  volume: number
-  volumeWeight: number
-}
+import type {
+  BuyCostRow,
+  JobChargeBasisTotals as ChargeBasisTotals,
+  JobCostRow as CostRow,
+  JobCostSelectOption as SelectOption,
+  JobDetailsContext,
+  SellChargeRow,
+} from "@/app/types/job-details"
 
 const HOUSE_ACCOUNT_SUPPLIER_VALUE = "house_account"
 

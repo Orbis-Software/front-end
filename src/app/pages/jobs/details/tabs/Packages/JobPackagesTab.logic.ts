@@ -3,7 +3,7 @@ import { computed, inject } from "vue"
 import { useReferenceDataStore } from "@/app/stores/reference-data"
 import { getPackageStackOption, setPackageStackOption } from "@/app/utils/packageStacking"
 
-import type { JobDetailsContext } from "../../JobDetailsPage.logic"
+import type { JobDetailsContext } from "@/app/types/job-details"
 import type { PackageRow } from "@/app/types/job-details"
 
 function createRow(defaultPackageType: string | null = "Pallet"): PackageRow {

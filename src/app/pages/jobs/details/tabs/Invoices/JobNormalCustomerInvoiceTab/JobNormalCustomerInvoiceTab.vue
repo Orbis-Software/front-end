@@ -1,8 +1,5 @@
 <script setup lang="ts">
 import "./JobNormalCustomerInvoiceTab.css"
-import Button from "primevue/button"
-import Dialog from "primevue/dialog"
-import InputText from "primevue/inputtext"
 // Customer invoices still use the shared email dialog. Supplier invoice email stays
 // inside the four-step Supplier Bill modal.
 import InvoiceEmailDialog from "../InvoiceEmailDialog/InvoiceEmailDialog.vue"

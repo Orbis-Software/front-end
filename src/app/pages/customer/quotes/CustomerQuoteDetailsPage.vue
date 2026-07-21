@@ -3,12 +3,6 @@ import "./CustomerQuoteDetailsPage.css"
 
 import { computed, onMounted, ref } from "vue"
 import { useRoute, useRouter } from "vue-router"
-import Button from "primevue/button"
-import Column from "primevue/column"
-import DataTable from "primevue/datatable"
-import Dialog from "primevue/dialog"
-import InputText from "primevue/inputtext"
-import Toast from "primevue/toast"
 import { useToast } from "primevue/usetoast"
 import LoadPlannerPanel from "@/app/components/load-planner/LoadPlannerPanel.vue"
 import { useTransportQuoteStore } from "@/app/stores/transportQuote"
@@ -390,11 +384,12 @@ onMounted(() => {
         </p>
       </section>
 
-      <section class="customer-quote-details__card">
+      <section v-if="quote.load_planner_enabled" class="customer-quote-details__card">
         <LoadPlannerPanel
           :packages="loadPlannerPackages"
           :plan-ref="loadPlannerReference"
-          :adr-default="quote.is_hazardous"
+          reference-label="Quote Ref"
+          :transport-mode="quote.mode_of_transport || 'road'"
         />
       </section>
 

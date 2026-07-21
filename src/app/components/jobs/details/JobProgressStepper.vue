@@ -1,14 +1,6 @@
 <script setup lang="ts">
 import "./JobProgressStepper.css"
-
-export type JobProgressStep = {
-  key: string
-  number: number
-  title: string
-  subtitle?: string
-  done?: boolean
-  active?: boolean
-}
+import type { JobProgressStep } from "@/app/types/job-details"
 
 defineProps<{
   steps: JobProgressStep[]

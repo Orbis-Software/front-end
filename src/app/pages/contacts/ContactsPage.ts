@@ -3,6 +3,7 @@ import { useConfirm } from "primevue/useconfirm"
 import { useToast } from "primevue/usetoast"
 import { useRouter } from "vue-router"
 import { useContactStore } from "@/app/stores/contact"
+import type { DataTablePageEvent } from "primevue/datatable"
 
 function debounce<T extends (...args: any[]) => void>(fn: T, wait = 350) {
   let t: number | undefined
@@ -11,13 +12,6 @@ function debounce<T extends (...args: any[]) => void>(fn: T, wait = 350) {
     if (t) window.clearTimeout(t)
     t = window.setTimeout(() => fn(...args), wait)
   }
-}
-
-type DataTablePageEvent = {
-  first: number
-  rows: number
-  page: number
-  pageCount: number
 }
 
 export function useContactsPage() {

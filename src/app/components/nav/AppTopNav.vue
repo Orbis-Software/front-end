@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { computed } from "vue"
 import { RouterLink, useRoute, useRouter } from "vue-router"
-import type { AppArea } from "@/app/stores/ui"
+import type { AppArea, NavItem } from "@/app/types/navigation"
 import { useAuthStore } from "@/app/stores/auth"
 import { useUiStore } from "@/app/stores/ui"
-import { useTopNavItems, type NavItem } from "./topNavItems"
+import { useTopNavItems } from "./topNavItems"
 
 type Props = {
   area: AppArea

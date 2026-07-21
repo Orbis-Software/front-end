@@ -2,34 +2,13 @@ import { computed, onMounted, ref } from "vue"
 import { useRouter } from "vue-router"
 import { useToast } from "primevue/usetoast"
 import { useTransportQuoteStore } from "@/app/stores/transportQuote"
-import type { TransportQuote } from "@/app/types/transportQuote"
-
-type QuoteTab = "all" | "pending" | "accepted" | "declined" | "converted"
-type QuoteStatusColor = "amber" | "green" | "red" | "gray"
-
-type CustomerQuote = {
-  id: number
-  reference: string
-  route: string
-  mode: string
-  cargo: string
-  weight: string
-  cbm: string
-  amount: string | null
-  status: string
-  statusKey: QuoteTab
-  statusColor: QuoteStatusColor
-  submitted: string
-  validUntil: string
-  canApprove: boolean
-  canDecline: boolean
-}
-
-type QuoteTabItem = {
-  label: string
-  value: QuoteTab
-  count: number
-}
+import type {
+  CustomerQuote,
+  CustomerQuoteStatusColor as QuoteStatusColor,
+  CustomerQuoteTab as QuoteTab,
+  CustomerQuoteTabItem as QuoteTabItem,
+  TransportQuote,
+} from "@/app/types/transportQuote"
 
 export function useCustomerQuotesPage() {
   const router = useRouter()

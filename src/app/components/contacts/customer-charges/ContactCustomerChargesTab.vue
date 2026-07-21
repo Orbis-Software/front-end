@@ -4,34 +4,19 @@ import "./ContactCustomerCharges.css"
 import { computed, onMounted, onUnmounted, ref, watch } from "vue"
 import { useRoute } from "vue-router"
 
-import Button from "primevue/button"
-import Calendar from "primevue/calendar"
-import Toast from "primevue/toast"
 import { useToast } from "primevue/usetoast"
 
 import { useChargeCodeStore } from "@/app/stores/charge-codes"
 import { useContactStore } from "@/app/stores/contact"
-import type { ContactChargeTable, ContactChargeTablePayload } from "@/app/types/contact"
-
-type CurrencyCode = "GBP" | "USD" | "EUR"
-type TransportMode = "Road" | "Air" | "Sea"
-type UOM = "Per Shipment" | "Per KG" | "Each"
-
-type ChargeLine = {
-  id: number
-  description: string
-  uom: UOM
-  rate: number | null
-  transport_mode: TransportMode
-}
-
-type ChargeSheet = {
-  id: number
-  name: string
-  currency: CurrencyCode
-  valid_until: string | null
-  lines: ChargeLine[]
-}
+import type {
+  ContactChargeTable,
+  ContactChargeTablePayload,
+  ContactCustomerChargeCurrency as CurrencyCode,
+  ContactCustomerChargeLine as ChargeLine,
+  ContactCustomerChargeSheet as ChargeSheet,
+  ContactCustomerChargeTransportMode as TransportMode,
+  ContactCustomerChargeUnit as UOM,
+} from "@/app/types/contact"
 
 const route = useRoute()
 const toast = useToast()

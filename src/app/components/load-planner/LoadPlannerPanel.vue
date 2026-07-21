@@ -1,108 +1,18 @@
 <script setup lang="ts">
 import * as THREE from "three"
 import { computed, nextTick, onMounted, onUnmounted, reactive, ref, watch } from "vue"
+import type {
+  LoadMode,
+  LoadPlannerSourcePackage,
+  LoadSpaceDefinition,
+  LoadUnit,
+  LoadUnitType,
+  Orbit3D,
+  PlacedUnit,
+  PlannerLayout,
+  SpacePreset,
+} from "@/app/types/load-planner"
 import "./LoadPlannerPanel.css"
-
-type LoadMode = "road" | "rail" | "sea"
-type LoadUnitType = "pallet" | "carton" | "crate" | "drum" | "bag" | "ibc" | "roll" | "other"
-
-type SpacePreset = {
-  l: number
-  w: number
-  h: number
-  maxWt: number
-  mode: LoadMode
-  label: string
-}
-
-type LoadSpaceDefinition = {
-  l: number
-  w: number
-  h: number
-  maxWt: number
-  palH: number
-  presetKey?: string
-}
-
-type LoadUnit = {
-  id: string
-  sourceId?: string | number
-  type: LoadUnitType
-  desc: string
-  l: number
-  w: number
-  h: number
-  wt: number
-  qty: number
-  stackable: boolean
-  adr: boolean
-  color: string
-}
-
-type LoadPlannerSourcePackage = {
-  id?: string | number
-  sourceId?: string | number
-  type?: string
-  packageType?: string
-  package_type?: string
-  desc?: string
-  description?: string
-  l?: number | string
-  length?: number | string
-  lengthCm?: number | string
-  length_cm?: number | string
-  w?: number | string
-  width?: number | string
-  widthCm?: number | string
-  width_cm?: number | string
-  h?: number | string
-  height?: number | string
-  heightCm?: number | string
-  height_cm?: number | string
-  wt?: number | string
-  weight?: number | string
-  weightKg?: number | string
-  grossWeight?: number | string
-  gross_weight?: number | string
-  grossWeightKg?: number | string
-  qty?: number | string
-  quantity?: number | string
-  pieces?: number | string
-  stackable?: boolean
-  adr?: boolean
-  color?: string
-}
-
-type PlacedUnit = LoadUnit & {
-  unitKey: string
-  x: number
-  y: number
-  z: number
-  l: number
-  w: number
-  h: number
-  stacked?: boolean
-}
-
-type PlannerLayout = {
-  allPlaced: PlacedUnit[]
-  unplacedAll: PlacedUnit[]
-  tLen: number
-  tWid: number
-  tHei: number
-  palH: number
-}
-
-type Orbit3D = {
-  target: THREE.Vector3
-  dragging: boolean
-  rightDrag: boolean
-  lastX: number
-  lastY: number
-  theta: number
-  phi: number
-  radius: number
-}
 
 const props = withDefaults(
   defineProps<{

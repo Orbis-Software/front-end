@@ -46,3 +46,19 @@ export type WarehouseConsolidationTab = PageTab
 export type InventoryStockTab = PageTab
 export type InventoryReportsTab = PageTab
 export type WmsAdminTab = PageTab
+
+export type AccountsTab =
+  | "overview"
+  | "invoicing"
+  | "supplier-payments"
+  | "reporting"
+  | "credit-control"
+  | "exchange-rates"
+  | "charge-codes"
+  | "tax-codes"
+  | "client-bank-details"
+
+export type AccountsTabItem = {
+  id: AccountsTab
+  label: string
+}

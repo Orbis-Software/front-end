@@ -308,11 +308,6 @@
 <script setup lang="ts">
 import "./SystemAccessPage.css"
 
-import Button from "primevue/button"
-import DataTable from "primevue/datatable"
-import Column from "primevue/column"
-import InputText from "primevue/inputtext"
-
 import { onMounted } from "vue"
 import { useSystemAccessPage } from "./SystemAccessPage.logic"
 

@@ -2,7 +2,7 @@ import { computed, ref } from "vue"
 import { useRoute } from "vue-router"
 import type { WarehouseGoodsInTab } from "@/app/types/page-tabs"
 import expectedArrivalsService from "@/app/services/wms-expected-arrivals"
-import type { ReceiveConsignmentPayload } from "@/app/components/warehouse/goods-in/ReceiveConsignmentModal.vue"
+import type { ReceiveConsignmentPayload } from "@/app/types/warehouse-goods-in"
 
 export function useWarehouseGoodsInPage() {
   const route = useRoute()

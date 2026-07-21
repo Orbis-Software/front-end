@@ -1,13 +1,13 @@
 <script setup lang="ts">
-export type MainTab = "overview" | "branches" | "collections" | "weight_break" | "customer"
+import type { ContactDetailsTab } from "@/app/types/contact"
 
 defineProps<{
-  active: MainTab
-  counts?: Partial<Record<MainTab, number>>
+  active: ContactDetailsTab
+  counts?: Partial<Record<ContactDetailsTab, number>>
 }>()
 
 const emit = defineEmits<{
-  (e: "change", tab: MainTab): void
+  (e: "change", tab: ContactDetailsTab): void
 }>()
 </script>
 

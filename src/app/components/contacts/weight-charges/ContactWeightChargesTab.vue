@@ -4,66 +4,25 @@ import "./ContactWeightCharges.css"
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue"
 import { useRoute } from "vue-router"
 
-import Button from "primevue/button"
-import Calendar from "primevue/calendar"
 import { useConfirm } from "primevue/useconfirm"
 import { useToast } from "primevue/usetoast"
 
 import { useContactStore } from "@/app/stores/contact"
 import { useReferenceDataStore } from "@/app/stores/reference-data"
 import type {
+  ContactChargeAutosaveChange as AutosaveChange,
+  ContactChargeAutosaveSnapshot as AutosaveSnapshot,
   ContactChargeBreakPayload,
+  ContactChargeMeasurementType as MeasurementType,
+  ContactChargeRowMigrationResult as ChargeRowMigrationResult,
   ContactChargeRowPayload,
+  ContactChargeSelectOption as SelectOption,
   ContactChargeTable,
+  ContactChargeTableListItem as ChargeTableListItem,
   ContactChargeTablePayload,
+  ContactWeightBreak as WeightBreak,
+  ContactWeightChargeRow as ChargeRow,
 } from "@/app/types/contact"
-
-type SelectOption = {
-  label: string
-  value: string
-}
-
-type WeightBreak = {
-  id: number
-  label: string
-  min: number | string
-  max: number | string
-  unit?: string
-}
-
-type ChargeRow = {
-  id: number
-  description: string
-  values: Array<number | string>
-}
-
-type ChargeRowMigrationResult = {
-  rows: ChargeRow[]
-  changed: boolean
-  messages: string[]
-}
-
-type ChargeTableListItem = {
-  id: number
-  name: string
-}
-
-type AutosaveSnapshot = {
-  activeTableId: number | null
-  tableTitle: string
-  currency: string
-  valid_until: string | null
-  measurementType: MeasurementType
-  weightUnit: string
-  volumeUnit: string
-  weightBreaks: WeightBreak[]
-  charges: ChargeRow[]
-}
-
-type AutosaveChange = {
-  key: string
-  message: string
-}
 
 const route = useRoute()
 const confirm = useConfirm()
@@ -86,8 +45,6 @@ const fallbackVolumeUnitOptions: SelectOption[] = [
   { label: "m3", value: "m3" },
   { label: "ft3", value: "ft3" },
 ]
-type MeasurementType = "weight" | "volume"
-
 const contactId = computed<number | null>(() => {
   const id = Number(route.params.id)
   return Number.isFinite(id) && id > 0 ? id : null

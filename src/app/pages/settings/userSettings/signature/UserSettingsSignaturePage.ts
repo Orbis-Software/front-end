@@ -5,17 +5,8 @@ import type {
   SignatureFieldKey,
   SignatureStyle,
   UserSignature as StoredUserSignature,
+  UserSignatureForm,
 } from "@/app/types/user-signature"
-
-type UserSignatureForm = {
-  name: string
-  title: string
-  phone: string
-  email: string
-  body: string
-  imagePreview: string | null
-  styles: Record<SignatureFieldKey, SignatureStyle>
-}
 
 const defaultSignatureStyle: SignatureStyle = {
   fontFamily: "Arial, sans-serif",

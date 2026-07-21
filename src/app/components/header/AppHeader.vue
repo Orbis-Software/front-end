@@ -5,8 +5,8 @@ import UserDropdown from "@/app/components/nav/UserDropdown.vue"
 import { useAuthStore } from "@/app/stores/auth"
 import { useNotificationStore } from "@/app/stores/notification"
 import { useUiStore } from "@/app/stores/ui"
-import type { AppArea } from "@/app/stores/ui"
-import { useTopNavItems, type NavItem } from "@/app/components/nav/topNavItems"
+import type { AppArea, NavItem } from "@/app/types/navigation"
+import { useTopNavItems } from "@/app/components/nav/topNavItems"
 import type { AppNotification } from "@/app/types/app-notification"
 
 type Props = {

@@ -1,3 +1,5 @@
+import type { TableListFilters } from "@/app/types/pagination"
+
 export type ChargeCode = {
   id: number
   companyId: number | null
@@ -22,16 +24,11 @@ export type ChargeCodePayload = {
   isActive?: boolean
 }
 
-export type ChargeCodeFilters = {
-  search?: string
+export type ChargeCodeFilters = TableListFilters & {
   classification?: string
   purchaseNominal?: string
   salesNominal?: string
   isCustoms?: string
-  sort?: string
-  direction?: "asc" | "desc"
-  page?: number
-  perPage?: number
 }
 
 export type ChargeCodeFilterOptions = {

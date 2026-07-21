@@ -1,11 +1,6 @@
 <script setup lang="ts">
 import "./AccountsChargeCodesSection.css"
 
-import Button from "primevue/button"
-import Dialog from "primevue/dialog"
-import Dropdown from "primevue/dropdown"
-import InputText from "primevue/inputtext"
-import InputSwitch from "primevue/inputswitch"
 import { useAccountsChargeCodesSection } from "./AccountsChargeCodesSection"
 
 const {

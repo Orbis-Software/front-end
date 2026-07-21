@@ -150,7 +150,8 @@
 import { computed, reactive, ref, watch } from "vue"
 import { useRouter, useRoute } from "vue-router"
 import { useAuthStore } from "@/app/stores/auth"
-import { SIDEBAR_GROUPS, type SidebarGroup, type SidebarLeaf, type SidebarSubmenu } from "./routes"
+import { SIDEBAR_GROUPS } from "./routes"
+import type { SidebarGroup, SidebarLeaf, SidebarSubmenu } from "@/app/types/navigation"
 import "./AppSidebar.css"
 
 type Props = {

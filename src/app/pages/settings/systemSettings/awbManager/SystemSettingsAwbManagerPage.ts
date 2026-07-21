@@ -3,7 +3,15 @@ import { useRouter } from "vue-router"
 import { storeToRefs } from "pinia"
 import { useSystemSettingsStore } from "@/app/stores/system-settings"
 import { useAwbManagerStore } from "@/app/stores/awb-manager"
-import type { AwbAirline, AwbStatus } from "@/app/types/awb-manager"
+import type {
+  AssignAwbForm as AssignForm,
+  AwbAirline,
+  AwbAirlineForm as AirlineForm,
+  AwbStatus,
+  BulkAwbForm,
+  RangeAwbForm,
+  SingleAwbForm,
+} from "@/app/types/awb-manager"
 
 type ToastType = "success" | "error" | "info"
 type AwbTab = "single" | "range" | "bulk"
@@ -12,39 +20,6 @@ interface ToastItem {
   id: string
   type: ToastType
   message: string
-}
-
-interface AirlineForm {
-  id: number | null
-  name: string
-  code: string
-  prefix: string
-  contract: string
-  notes: string
-}
-
-interface SingleAwbForm {
-  number: string
-  status: "available" | "reserved"
-  notes: string
-}
-
-interface RangeAwbForm {
-  from: string
-  to: string
-}
-
-interface BulkAwbForm {
-  text: string
-}
-
-interface AssignForm {
-  airlineId: number | null
-  awbId: number | null
-  awbDisplay: string
-  jobNumber: string
-  dateUsed: string
-  notes: string
 }
 
 function genId() {

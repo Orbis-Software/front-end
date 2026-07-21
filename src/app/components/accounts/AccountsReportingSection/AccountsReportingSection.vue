@@ -2,11 +2,6 @@
 import "./AccountsReportingSection.css"
 
 import { computed, onMounted, ref, watch } from "vue"
-import Button from "primevue/button"
-import Calendar from "primevue/calendar"
-import Dropdown from "primevue/dropdown"
-import InputText from "primevue/inputtext"
-
 import { useAccountsSummaryStore } from "@/app/stores/accounts-summary"
 import { downloadCsv } from "@/app/utils/download-csv"
 

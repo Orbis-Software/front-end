@@ -1,13 +1,10 @@
 <script setup lang="ts">
 import "./JobDocumentsTab.css"
 import { computed, inject, ref } from "vue"
-import Button from "primevue/button"
-import Dialog from "primevue/dialog"
-import InputText from "primevue/inputtext"
 import { useToast } from "primevue/usetoast"
 import { useTransportJobStore } from "@/app/stores/transport-job"
 import type { JobPdfDocument } from "@/app/types/transport-job-service"
-import type { JobDetailsContext } from "../../JobDetailsPage.logic"
+import type { JobDetailsContext } from "@/app/types/job-details"
 
 type DocumentRow = {
   id: string

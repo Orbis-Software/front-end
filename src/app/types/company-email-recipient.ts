@@ -22,3 +22,14 @@ export type CompanyEmailRecipientPayload = {
   notification_types?: string[]
   is_active?: boolean
 }
+
+export type NotificationProfile = {
+  key: string
+  label: string
+  types: string[]
+}
+
+export type CompanyEmailRecipientListResponse = {
+  data: CompanyEmailRecipient[]
+  notification_types: CompanyNotificationType[]
+}

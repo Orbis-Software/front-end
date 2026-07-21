@@ -1,3 +1,5 @@
+import type { TablePaginationMeta } from "@/app/types/pagination"
+
 export type AccountsInvoiceStatus =
   | "approved"
   | "draft"
@@ -53,12 +55,4 @@ export type AccountsInvoiceFilters = {
   perPage?: number
 }
 
-export type AccountsInvoiceMeta = {
-  total: number
-  filtered: number
-  currentPage: number
-  lastPage: number
-  perPage: number
-  from: number | null
-  to: number | null
-}
+export type AccountsInvoiceMeta = TablePaginationMeta

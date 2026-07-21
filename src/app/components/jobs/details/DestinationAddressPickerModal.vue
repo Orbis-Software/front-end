@@ -1,20 +1,10 @@
 <script setup lang="ts">
 import { computed } from "vue"
-import Button from "primevue/button"
-import Dialog from "primevue/dialog"
-import Dropdown from "primevue/dropdown"
-
-type DestinationAddressOwner = "selected_customer" | "other_customer"
-
-type DestinationCustomerOption = {
-  label: string
-  value: number
-}
-
-type DestinationAddressOption = {
-  label: string
-  value: string
-}
+import type {
+  JobDestinationAddressOption as DestinationAddressOption,
+  JobDestinationAddressOwner as DestinationAddressOwner,
+  JobDestinationCustomerOption as DestinationCustomerOption,
+} from "@/app/types/job-details"
 
 const props = withDefaults(
   defineProps<{

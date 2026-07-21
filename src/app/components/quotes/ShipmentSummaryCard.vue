@@ -42,16 +42,7 @@
 </template>
 
 <script setup lang="ts">
-import Button from "primevue/button"
-
-export type ShipmentSummary = {
-  nop: number
-  actualWeight: string | number
-  chargeableWeight: string | number
-  cube: string | number
-  weightUnit?: string // kg
-  cubeUnit?: string // m³
-}
+import type { ShipmentSummary } from "@/app/types/transportQuote"
 
 withDefaults(
   defineProps<{

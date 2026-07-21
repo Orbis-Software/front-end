@@ -1,16 +1,11 @@
 import http from "@/api/http"
 import type {
   CompanyEmailRecipient,
+  CompanyEmailRecipientListResponse,
   CompanyEmailRecipientPayload,
-  CompanyNotificationType,
 } from "@/app/types/company-email-recipient"
 
-type ListResponse = {
-  data: CompanyEmailRecipient[]
-  notification_types: CompanyNotificationType[]
-}
-
-async function list(): Promise<ListResponse> {
+async function list(): Promise<CompanyEmailRecipientListResponse> {
   const response = await http.get("/company-email-recipients")
 
   return response.data

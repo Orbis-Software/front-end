@@ -1,3 +1,5 @@
+import type { EmployeeListParams } from "@/app/types/employee"
+
 export type EmployeeAccessRow = {
   id: number
   name: string
@@ -16,8 +18,18 @@ export type EmployeeAccessDetails = {
   effective_permissions: string[]
 }
 
-export type EmployeeAccessListParams = {
-  search?: string
-  per_page?: number
-  page?: number
+export type EmployeeAccessListParams = EmployeeListParams
+
+export type PermissionRow = {
+  key: string
+  label: string
+  permission: string
+  title: string
+  action: string
+}
+
+export type PermissionGroup = {
+  id: string
+  label: string
+  items: PermissionRow[]
 }

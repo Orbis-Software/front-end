@@ -1,6 +1,7 @@
 import { defineStore } from "pinia"
 import { ref } from "vue"
-import type { Country, PaginatedResponse } from "@/app/types/country"
+import type { Country } from "@/app/types/country"
+import type { PaginatedResponse } from "@/app/types/pagination"
 import listCountries from "@/app/services/countries/list"
 
 export const useCountryStore = defineStore("country", () => {

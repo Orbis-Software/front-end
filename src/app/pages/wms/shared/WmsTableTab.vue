@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import "./WmsListTable.css"
 import { computed, ref } from "vue"
-import Button from "primevue/button"
 import { wmsTables } from "./wmsData"
 import type { WmsRow } from "@/app/types/wms"
 

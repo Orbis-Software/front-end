@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import { computed, reactive } from "vue"
 import type { ContactBranch } from "@/app/types/contact"
-import Button from "primevue/button"
-
 const props = defineProps<{
   branch: ContactBranch
 }>()

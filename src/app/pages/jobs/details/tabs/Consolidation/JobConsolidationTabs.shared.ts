@@ -1,6 +1,6 @@
 import { inject } from "vue"
 
-import type { JobDetailsContext } from "../../JobDetailsPage.logic"
+import type { JobDetailsContext } from "@/app/types/job-details"
 import type {
   JobConsolidationChargeLine,
   JobConsolidationCollectionOrder,

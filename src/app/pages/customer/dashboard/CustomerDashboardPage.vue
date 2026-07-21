@@ -3,14 +3,7 @@ import { computed } from "vue"
 import { useRouter } from "vue-router"
 import { useAuthStore } from "@/app/stores/auth"
 import type { TransportJob, TransportMode } from "@/app/types/transport-job"
-
-type DashboardStat = {
-  label: string
-  value: string | number
-  note: string
-  icon: string
-  tone: "orange" | "gray" | "dark" | "light"
-}
+import type { CustomerDashboardStat as DashboardStat } from "@/app/types/customer"
 
 const router = useRouter()
 const auth = useAuthStore()

@@ -286,15 +286,6 @@
 <script setup lang="ts">
 import "./QuoteListPage.css"
 
-import InputText from "primevue/inputtext"
-import Button from "primevue/button"
-import Dropdown from "primevue/dropdown"
-import DataTable from "primevue/datatable"
-import Column from "primevue/column"
-import Dialog from "primevue/dialog"
-import Toast from "primevue/toast"
-import Textarea from "primevue/textarea"
-
 import { useQuoteListPage } from "./QuoteListPage"
 
 const {

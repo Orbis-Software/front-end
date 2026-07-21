@@ -1,8 +1,4 @@
 <script setup lang="ts">
-import Calendar from "primevue/calendar"
-import Dropdown from "primevue/dropdown"
-import InputText from "primevue/inputtext"
-import Textarea from "primevue/textarea"
 import type { ConsolidationPageContext } from "@/app/components/consolidations/ConsolidationPageContext"
 
 const { context } = defineProps<{ context: ConsolidationPageContext }>()

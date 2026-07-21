@@ -1,11 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from "vue"
 import "./JobPackagesTab.css"
-import Button from "primevue/button"
-import Checkbox from "primevue/checkbox"
-import Dialog from "primevue/dialog"
-import Dropdown from "primevue/dropdown"
-import InputNumber from "primevue/inputnumber"
 import { useJobPackagesTab } from "./JobPackagesTab.logic"
 import type { PackageRow } from "@/app/types/job-details"
 

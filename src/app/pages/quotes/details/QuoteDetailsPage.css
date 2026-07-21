@@ -77,29 +77,62 @@
 
 .quote-details-page__view-tabs {
   display: flex;
-  gap: 4px;
-  padding: 6px;
-  border: 1px solid #dfe5ec;
-  border-radius: 12px;
-  background: #f4f6f8;
+  align-items: flex-end;
+  justify-content: flex-start;
+  gap: 2px;
+  padding: 0 8px;
+  border-top: 1px solid var(--quote-details-border);
+  border-bottom: 1px solid var(--quote-details-border);
+  background: #cfcfcf;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
 }
 
-.quote-details-page__view-tabs button {
-  min-height: 38px;
-  padding: 0 18px;
-  border: 0;
-  border-radius: 9px;
+.quote-details-page__view-tab {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  min-height: 44px;
+  height: 44px;
+  margin-top: 8px;
+  padding: 0 16px;
+  border: 1px solid transparent;
+  border-bottom: 0;
+  border-radius: 10px 10px 0 0;
   background: transparent;
-  color: #64748b;
+  color: #5c5c5c;
+  font-family: var(--font-body);
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
   cursor: pointer;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
 }
 
-.quote-details-page__view-tabs button.quote-details-page__view-tab--active {
-  background: #fff;
-  color: #22324a;
-  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.12);
+.quote-details-page__view-tab:hover {
+  background: rgba(255, 255, 255, 0.45);
+  color: #222;
+}
+
+.quote-details-page__view-tab:focus-visible {
+  outline: 2px solid var(--quote-details-accent);
+  outline-offset: -3px;
+}
+
+.quote-details-page__view-tab--active {
+  position: relative;
+  top: 1px;
+  z-index: 2;
+  border-color: var(--quote-details-border);
+  background: var(--quote-details-surface);
+  color: #141414;
 }
 
 .quote-details-page .p-button,

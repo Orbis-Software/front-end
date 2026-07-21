@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import "./ExpectedArrivalsTab.css"
-import Button from "primevue/button"
 import AddExpectedArrivalModal from "@/app/components/warehouse/goods-in/AddExpectedArrivalModal.vue"
 import ReceiveConsignmentModal from "@/app/components/warehouse/goods-in/ReceiveConsignmentModal.vue"
 

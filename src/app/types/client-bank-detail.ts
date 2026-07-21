@@ -1,3 +1,5 @@
+import type { TableListFilters, TablePaginationMeta } from "@/app/types/pagination"
+
 export type ClientBankDetailContact = {
   id: number
   companyName: string
@@ -51,21 +53,8 @@ export type ClientBankDetailPayload = {
   isActive?: boolean
 }
 
-export type ClientBankDetailFilters = {
-  search?: string
+export type ClientBankDetailFilters = TableListFilters & {
   contactId?: number | null
-  sort?: string
-  direction?: "asc" | "desc"
-  page?: number
-  perPage?: number
 }
 
-export type ClientBankDetailMeta = {
-  total: number
-  filtered: number
-  currentPage: number
-  lastPage: number
-  perPage: number
-  from: number | null
-  to: number | null
-}
+export type ClientBankDetailMeta = TablePaginationMeta

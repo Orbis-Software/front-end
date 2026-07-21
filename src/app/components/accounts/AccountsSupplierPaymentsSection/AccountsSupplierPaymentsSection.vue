@@ -4,11 +4,6 @@ import "./AccountsSupplierPaymentsSection.css"
 import { computed, onMounted, ref, watch } from "vue"
 import type { PageState } from "primevue/paginator"
 import { storeToRefs } from "pinia"
-import Button from "primevue/button"
-import Dropdown from "primevue/dropdown"
-import InputText from "primevue/inputtext"
-import Paginator from "primevue/paginator"
-
 import { useAccountsSummaryStore } from "@/app/stores/accounts-summary"
 import { downloadCsv } from "@/app/utils/download-csv"
 

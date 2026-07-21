@@ -1,8 +1,7 @@
 import { defineStore } from "pinia"
 import { computed, ref } from "vue"
 import { useAuthStore } from "@/app/stores/auth"
-
-export type AppArea = "tms" | "wms" | "management"
+import type { AppArea } from "@/app/types/navigation"
 
 export const useUiStore = defineStore("ui", () => {
   const auth = useAuthStore()

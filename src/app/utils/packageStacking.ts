@@ -1,9 +1,4 @@
-export type PackageStackOption = "stackable" | "non_stack" | "top_loadable"
-
-export type PackageStackFields = {
-  stackable: boolean
-  atTheTop: boolean
-}
+import type { PackageStackFields, PackageStackOption } from "@/app/types/package-stacking"
 
 export function getPackageStackOption(row: PackageStackFields): PackageStackOption {
   if (row.atTheTop) return "top_loadable"

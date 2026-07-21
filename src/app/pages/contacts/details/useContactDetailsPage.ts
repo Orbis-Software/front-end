@@ -3,17 +3,14 @@ import { useRoute, useRouter } from "vue-router"
 import { useConfirm } from "primevue/useconfirm"
 import { useToast } from "primevue/usetoast"
 
-import type { ContactBranch, ContactCollectionAddress } from "@/app/types/contact"
+import type {
+  ContactBranch,
+  ContactCollectionAddress,
+  ContactDetailsTab,
+} from "@/app/types/contact"
 import { useAuthStore } from "@/app/stores/auth"
 import { useContactStore } from "@/app/stores/contact"
 import { buildInitialBranchPayload, hasContactAddress } from "@/app/utils/contactBranch"
-
-export type ContactDetailsTab =
-  | "overview"
-  | "branches"
-  | "collections"
-  | "weight_break"
-  | "customer"
 
 function blankBranch(): Omit<ContactBranch, "id"> {
   return {

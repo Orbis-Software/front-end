@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import "@/app/pages/wms/shared/WmsListTable.css"
 import { computed, reactive, ref } from "vue"
-import Button from "primevue/button"
 import { wmsAdminLists } from "@/app/pages/wms/shared/wmsData"
 import type { WmsRow } from "@/app/types/wms"
 

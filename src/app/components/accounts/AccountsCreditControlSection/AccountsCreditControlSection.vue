@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import "./AccountsCreditControlSection.css"
 
-import Button from "primevue/button"
-
 import { useAccountsCreditControlSection } from "./AccountsCreditControlSection"
 
 const {

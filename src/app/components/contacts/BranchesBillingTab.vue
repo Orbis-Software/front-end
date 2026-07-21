@@ -2,8 +2,6 @@
 import { computed, ref, watch } from "vue"
 import type { ContactBranch } from "@/app/types/contact"
 import BranchCard from "@/app/components/contacts/BranchCard.vue"
-import Button from "primevue/button"
-
 const props = defineProps<{ branches: ContactBranch[] }>()
 
 const emit = defineEmits<{

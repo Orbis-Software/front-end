@@ -1,31 +1,15 @@
 <script setup lang="ts">
 import "../CustomerPortalListPage.css"
 import { computed, ref } from "vue"
-import Button from "primevue/button"
 import http from "@/api/http"
 import { useAuthStore } from "@/app/stores/auth"
 import type { JobFile } from "@/app/types/job-file"
 import type { JobInvoiceSummary, TransportJob } from "@/app/types/transport-job"
+import type { CustomerDocumentRow, CustomerDocumentType } from "@/app/types/customer"
 
 const activeTab = ref("all")
 const search = ref("")
 const auth = useAuthStore()
-
-type CustomerDocumentType = "invoice" | "pod" | "quote" | "report" | "document"
-
-interface CustomerDocumentRow {
-  id: string
-  name: string
-  reference: string
-  type: CustomerDocumentType
-  typeLabel: string
-  fileType: string
-  size: string
-  date: string | null
-  sortDate: number
-  url: string | null
-  invoiceId: number | null
-}
 
 const jobs = computed(() => auth.customer?.transport_jobs ?? [])
 

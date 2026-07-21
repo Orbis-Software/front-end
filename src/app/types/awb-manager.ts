@@ -148,3 +148,36 @@ export interface AssignAwbPayload {
   date_used: string
   notes?: string | null
 }
+
+export interface AwbAirlineForm {
+  id: number | null
+  name: string
+  code: string
+  prefix: string
+  contract: string
+  notes: string
+}
+
+export interface SingleAwbForm {
+  number: string
+  status: "available" | "reserved"
+  notes: string
+}
+
+export interface RangeAwbForm {
+  from: string
+  to: string
+}
+
+export interface BulkAwbForm {
+  text: string
+}
+
+export interface AssignAwbForm {
+  airlineId: number | null
+  awbId: number | null
+  awbDisplay: string
+  jobNumber: string
+  dateUsed: string
+  notes: string
+}

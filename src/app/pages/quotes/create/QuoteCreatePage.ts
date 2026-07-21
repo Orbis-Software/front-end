@@ -8,85 +8,28 @@ import { useGlobalReferenceDataStore } from "@/app/stores/global-reference-data"
 import { useReferenceDataStore } from "@/app/stores/reference-data"
 import { useExchangeRateStore } from "@/app/stores/exchange-rates"
 import type { CompanyReferenceSequence } from "@/app/types/company"
-import type { Contact, ContactBranch, ContactCollectionAddress } from "@/app/types/contact"
+import type { Contact } from "@/app/types/contact"
 import type { GlobalReferenceDataRow } from "@/app/types/globalReferenceData"
 import type { ReferenceDataOption } from "@/app/types/referenceData"
 import { useTransportQuoteStore } from "@/app/stores/transportQuote"
 import type {
+  QuoteAddressOption,
   QuoteAddressSourceType,
+  QuoteChargeLine as ChargeLine,
+  QuoteCreateTransportMode as TransportMode,
+  QuoteCreateType as QuoteType,
+  QuoteCustomerContact as CustomerContact,
+  QuoteCustomerOption as CustomerOption,
+  QuoteDestinationAddressOwner as DestinationAddressOwner,
+  QuoteDimensionRow as DimensionRow,
+  QuoteLocationField as LocationField,
+  QuoteSelectOption as SelectOption,
   TransportQuote,
   TransportQuotePayload,
 } from "@/app/types/transportQuote"
 import { getPackageStackOption, setPackageStackOption } from "@/app/utils/packageStacking"
 import { buildReferenceNumber } from "@/app/utils/reference-sequence"
 import { useToast } from "primevue/usetoast"
-
-type QuoteType = "import" | "export" | "domestic" | "cross_trade" | "multi_modal"
-type TransportMode = "air" | "road" | "rail" | "sea"
-type LocationField = "origin" | "destination"
-
-type SelectOption<T = string> = {
-  label: string
-  value: T
-  icon?: string
-  subLabel?: string
-  searchText?: string
-}
-
-type CustomerContact = {
-  name: string
-  email: string
-  phone: string
-  location: string
-}
-
-type CustomerOption = {
-  id: number
-  name: string
-  account_number: string
-  contacts: CustomerContact[]
-  branches: ContactBranch[]
-  collection_addresses: ContactCollectionAddress[]
-}
-
-type QuoteAddressOption = SelectOption<string> & {
-  sourceType: QuoteAddressSourceType
-  sourceId: number
-}
-
-type DestinationAddressOwner = "selected_customer" | "other_customer"
-
-type DimensionRow = {
-  id: number
-  package_type: string
-  pieces: number
-  length: number
-  width: number
-  height: number
-  stackable: boolean
-  atTheTop: boolean
-  weight: number
-  adr: boolean
-  container_type: string
-}
-
-type ChargeLine = {
-  id: number
-  type: "buy" | "sell"
-  description: string
-  qty: number
-  uom: string
-  unit_cost?: number
-  unit_price?: number
-  currency: string
-  exchange_rate: number
-  vat_rate?: number
-  supplier_id?: number | null
-  markup_percent?: number
-  add_to_sell?: boolean
-  linked_sell_line_id?: number | null
-  source_buy_line_id?: number | null
-}
 
 const FALLBACK_CONDITIONS: Record<string, string> = {
   standard:
@@ -764,7 +707,7 @@ export function useQuoteCreatePage() {
     dimensionRows.value.reduce((total, row) => total + Number(row.pieces || 0), 0),
   )
   const totalActualWeight = computed(() =>
-    dimensionRows.value.reduce((total, row) => total + Number(row.weight || 0), 0),
+    dimensionRows.value.reduce((total, row) => total + getRowActualWeight(row), 0),
   )
   const totalVolumetricWeight = computed(() =>
     dimensionRows.value.reduce((total, row) => total + getRowVolumetricWeight(row), 0),
@@ -992,9 +935,13 @@ export function useQuoteCreatePage() {
     return getRowCbm(row) * 167
   }
 
+  function getRowActualWeight(row: DimensionRow) {
+    return Number(row.weight || 0) * Number(row.pieces || 0)
+  }
+
   function getRowLdm(row: DimensionRow) {
     return (
-      (Number(row.length || 0) * Number(row.width || 0) * Number(row.pieces || 0)) / 10000 / 0.24
+      (Number(row.length || 0) * Number(row.width || 0) * Number(row.pieces || 0)) / 10000 / 2.4
     )
   }
 
@@ -1099,16 +1046,33 @@ export function useQuoteCreatePage() {
 
     const unitCost = Number(line.unit_cost || 0)
     const markup = Math.max(0, Number(line.markup_percent || 0))
+    const sellingCurrency = String(form.currency || baseCurrency.value).toUpperCase()
+    const companyBaseCurrency = String(baseCurrency.value).toUpperCase()
+    const buyToBaseRate = Number(line.exchange_rate || 0)
+    const sellToBaseRate =
+      sellingCurrency === companyBaseCurrency ? 1 : Number(sellingCurrencyToBaseRate.value || 0)
 
     sellLine.description = line.description
     sellLine.qty = Number(line.qty || 0)
     sellLine.uom = line.uom
-    sellLine.unit_price =
-      Math.round(unitCost * Number(line.exchange_rate || 1) * (1 + markup / 100) * 100) / 100
-    sellLine.currency = form.currency || baseCurrency.value
+    sellLine.currency = sellingCurrency
     sellLine.exchange_rate = 1
     sellLine.source_buy_line_id = line.id
     line.linked_sell_line_id = sellLine.id
+
+    if (buyToBaseRate <= 0 || sellToBaseRate <= 0) {
+      sellLine.unit_price = 0
+      return
+    }
+
+    const markedUpBaseUnitCost = unitCost * buyToBaseRate * (1 + markup / 100)
+    sellLine.unit_price = Math.round((markedUpBaseUnitCost / sellToBaseRate) * 100) / 100
+  }
+
+  function syncAllBuyLinesToSell() {
+    buyCostLines.value.forEach(line => {
+      if (line.add_to_sell) syncBuyLineToSell(line)
+    })
   }
 
   function toggleBuyLineAddToSell(line: ChargeLine, checked: boolean) {
@@ -1193,6 +1157,7 @@ export function useQuoteCreatePage() {
 
     if (source === target) {
       sellingCurrencyToBaseRate.value = 1
+      syncAllBuyLinesToSell()
       return
     }
 
@@ -1205,6 +1170,7 @@ export function useQuoteCreatePage() {
 
       if (token === sellingCurrencyRateToken) {
         sellingCurrencyToBaseRate.value = Number(rate?.rate || 0)
+        syncAllBuyLinesToSell()
       }
     } catch {
       if (token !== sellingCurrencyRateToken) return

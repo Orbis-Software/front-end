@@ -1,24 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from "vue"
-import Button from "primevue/button"
-
-export type JobDocFileType = "pdf" | "doc" | "xls" | "img" | "other"
-
-export type JobUploadedDocument = {
-  id: number | string
-  name: string
-  size_label?: string | null // "2.4 MB"
-  uploaded_at_label?: string | null // "03/02/2026"
-  uploaded_by?: string | null
-  type?: JobDocFileType
-}
-
-export type JobExportDoc = {
-  key: string
-  title: string
-  icon?: string // primeicon class
-  status?: "ready" | "generate" // ready => Download (green), generate => Generate (orange)
-}
+import type { JobDocFileType, JobExportDoc, JobUploadedDocument } from "@/app/types/job-details"
 
 const props = defineProps<{
   disabled?: boolean

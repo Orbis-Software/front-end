@@ -3,29 +3,15 @@ import { useRouter } from "vue-router"
 import { useTransportJobStore } from "@/app/stores/transport-job"
 import { useAuthStore } from "@/app/stores/auth"
 import type { JobType, TransportMode } from "@/app/types/transport-job"
-
-export type JobTypeKey =
-  | "all"
-  | "import"
-  | "export"
-  | "domestic"
-  | "courier"
-  | "multi_modal"
-  | "consolidation"
-
-export type ModeKey = "all" | "air" | "sea" | "road" | "rail"
-
-type Option<T> = {
-  label: string
-  value: T
-}
+import type { JobListModeFilter, JobListTypeFilter } from "@/app/types/job-details"
+import type { SelectOption } from "@/app/types/select-option"
 
 export function useJobsListPage() {
   const router = useRouter()
   const store = useTransportJobStore()
   const auth = useAuthStore()
 
-  const jobTypeOptions: Option<JobTypeKey>[] = [
+  const jobTypeOptions: SelectOption<JobListTypeFilter>[] = [
     { label: "All", value: "all" },
     { label: "Import", value: "import" },
     { label: "Export", value: "export" },
@@ -35,7 +21,7 @@ export function useJobsListPage() {
     { label: "Consolidation", value: "consolidation" },
   ]
 
-  const modeOptions: Option<ModeKey>[] = [
+  const modeOptions: SelectOption<JobListModeFilter>[] = [
     { label: "All", value: "all" },
     { label: "Air", value: "air" },
     { label: "Sea", value: "sea" },
@@ -43,8 +29,8 @@ export function useJobsListPage() {
     { label: "Rail", value: "rail" },
   ]
 
-  const jobTypeFilter = ref<JobTypeKey>("all")
-  const modeFilter = ref<ModeKey>("all")
+  const jobTypeFilter = ref<JobListTypeFilter>("all")
+  const modeFilter = ref<JobListModeFilter>("all")
   const searchText = ref("")
   const showAllJobs = ref(false)
 

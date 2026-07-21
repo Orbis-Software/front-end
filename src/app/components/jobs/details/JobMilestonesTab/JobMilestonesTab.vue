@@ -1,16 +1,5 @@
 <script setup lang="ts">
-import Button from "primevue/button"
-
-export type JobMilestoneStatus = "done" | "active" | "pending"
-
-export type JobMilestone = {
-  id: string
-  title: string
-  subtitle?: string | null
-  status: JobMilestoneStatus
-  start_date?: string | null // "dd/mm/yyyy"
-  end_date?: string | null // "dd/mm/yyyy"
-}
+import type { JobMilestone, JobMilestoneStatus } from "@/app/types/job-details"
 
 const props = defineProps<{
   disabled?: boolean

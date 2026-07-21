@@ -1,3 +1,5 @@
+import type { TextStyle } from "@/app/types/text-style"
+
 export type BrandingDocumentFormat = "PDF" | "Email"
 export type BrandingDocumentTone = "Formal" | "Operational" | "Customer Friendly"
 export type BrandingPdfLayout = "Standard" | "Compact" | "Detailed"
@@ -10,11 +12,7 @@ export type BrandingHeaderFieldKey =
   | "address"
   | "message"
 
-export type BrandingHeaderStyle = {
-  fontFamily: string
-  fontSize: string
-  color: string
-}
+export type BrandingHeaderStyle = TextStyle
 
 export type BrandingHeaderSettings = {
   companyName: string

@@ -1,10 +1,7 @@
 import http from "@/api/http"
 import contactChargeTableTransformer from "@/app/transformers/contact-charge-table"
-import type {
-  ContactChargeTable,
-  ContactChargeTableListParams,
-  PaginatedResponse,
-} from "@/app/types/contact"
+import type { ContactChargeTable, ContactChargeTableListParams } from "@/app/types/contact"
+import type { PaginatedResponse } from "@/app/types/pagination"
 
 export default async function listContactChargeTables(
   contactId: number,

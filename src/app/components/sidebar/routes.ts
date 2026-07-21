@@ -1,24 +1,4 @@
-export type SidebarLeaf = {
-  type: "leaf"
-  label: string
-  to: string
-  icon?: string
-  disabled?: boolean
-}
-
-export type SidebarSubmenu = {
-  type: "submenu"
-  label: string
-  icon?: string
-  key: string
-  children: SidebarLeaf[]
-}
-
-export type SidebarGroup = {
-  key: string
-  label: string
-  items: (SidebarLeaf | SidebarSubmenu)[]
-}
+import type { SidebarGroup } from "@/app/types/navigation"
 
 export const SIDEBAR_GROUPS: SidebarGroup[] = [
   {

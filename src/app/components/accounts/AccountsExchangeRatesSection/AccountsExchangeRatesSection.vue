@@ -2,22 +2,11 @@
 import "./AccountsExchangeRatesSection.css"
 
 import { computed, onMounted, reactive, ref } from "vue"
-import Button from "primevue/button"
-import Calendar from "primevue/calendar"
-import Dialog from "primevue/dialog"
-import Dropdown from "primevue/dropdown"
-import InputText from "primevue/inputtext"
-import Paginator from "primevue/paginator"
-
 import { downloadCsv, parseCsvFile } from "@/app/composables/useAccountsDemo"
 import { useExchangeRateStore } from "@/app/stores/exchange-rates"
 import { useReferenceDataStore } from "@/app/stores/reference-data"
 import type { ExchangeRate } from "@/app/types/exchange-rate"
-
-type SelectOption = {
-  label: string
-  value: string
-}
+import type { SelectOption } from "@/app/types/select-option"
 
 const exchangeRateStore = useExchangeRateStore()
 const referenceDataStore = useReferenceDataStore()

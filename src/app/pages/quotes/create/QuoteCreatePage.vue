@@ -806,8 +806,8 @@
                   v-model="line.exchange_rate"
                   inputClass="table-input"
                   mode="decimal"
-                  :minFractionDigits="4"
-                  :maxFractionDigits="4"
+                  :minFractionDigits="6"
+                  :maxFractionDigits="6"
                   :min="0"
                   @update:modelValue="syncBuyLineToSell(line)"
                 />
@@ -920,8 +920,8 @@
                   v-model="line.exchange_rate"
                   inputClass="table-input"
                   mode="decimal"
-                  :minFractionDigits="4"
-                  :maxFractionDigits="4"
+                  :minFractionDigits="6"
+                  :maxFractionDigits="6"
                   :min="0"
                 />
               </td>
@@ -1157,18 +1157,6 @@
 
 <script setup lang="ts">
 import "./QuoteCreatePage.css"
-
-import AutoComplete from "primevue/autocomplete"
-import InputText from "primevue/inputtext"
-import Calendar from "primevue/calendar"
-import Textarea from "primevue/textarea"
-import Button from "primevue/button"
-import Select from "primevue/select"
-import Dropdown from "primevue/dropdown"
-import InputNumber from "primevue/inputnumber"
-import InputSwitch from "primevue/inputswitch"
-import Checkbox from "primevue/checkbox"
-import Dialog from "primevue/dialog"
 
 import ModeSelector from "@/app/components/jobs/ModeSelector.vue"
 import LoadPlannerPanel from "@/app/components/load-planner/LoadPlannerPanel.vue"
