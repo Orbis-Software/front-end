@@ -1,7 +1,7 @@
 import { computed, inject, onMounted, ref } from "vue"
 import { useToast } from "primevue/usetoast"
 
-import type { JobDetailsContext } from "../../../JobDetailsPage.logic"
+import type { JobDetailsContext } from "@/app/types/job-details"
 import contactsService from "@/app/services/contacts"
 import { useAuthStore } from "@/app/stores/auth"
 import { useTransportJobStore } from "@/app/stores/transport-job"

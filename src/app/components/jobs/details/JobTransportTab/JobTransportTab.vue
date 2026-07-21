@@ -2,17 +2,11 @@
 import { nextTick, ref } from "vue"
 import { useTransportJobStore } from "@/app/stores/transport-job"
 
-import Button from "primevue/button"
-import Dropdown from "primevue/dropdown"
-import InputText from "primevue/inputtext"
-import Calendar from "primevue/calendar"
-import InputSwitch from "primevue/inputswitch"
-import Textarea from "primevue/textarea"
-import InputNumber from "primevue/inputnumber"
-
-import JobTransportAddressModal, {
-  type JobTransportAddressPayload,
-} from "./JobTransportAddressModal.vue"
+import JobTransportAddressModal from "./JobTransportAddressModal.vue"
+import type {
+  JobTransportAddressPayload,
+  JobTransportAddressTarget as AddressTarget,
+} from "@/app/types/job-details"
 
 import {
   orderTypeOptions,
@@ -24,7 +18,6 @@ import {
   useJobTransportTab,
 } from "./useJobTransportTab"
 
-type AddressTarget = "collection" | "delivery"
 type OrderSection = "collection" | "transport"
 
 const props = defineProps<{ form: any; disabled?: boolean }>()

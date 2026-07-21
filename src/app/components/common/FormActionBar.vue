@@ -39,8 +39,6 @@
 </template>
 
 <script setup lang="ts">
-import Button from "primevue/button"
-
 withDefaults(
   defineProps<{
     cancelLabel?: string

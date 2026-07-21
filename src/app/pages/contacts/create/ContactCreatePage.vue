@@ -381,9 +381,6 @@
 
 <script setup lang="ts">
 import "./ContactCreatePage.css"
-import AutoComplete from "primevue/autocomplete"
-import Button from "primevue/button"
-import Dialog from "primevue/dialog"
 import { useContactCreatePage } from "./ContactCreatePage"
 
 const {

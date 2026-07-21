@@ -38,6 +38,10 @@ import Checkbox from "primevue/checkbox"
 import Textarea from "primevue/textarea"
 import FileUpload from "primevue/fileupload"
 import AutoComplete from "primevue/autocomplete"
+import InputSwitch from "primevue/inputswitch"
+import MultiSelect from "primevue/multiselect"
+import Paginator from "primevue/paginator"
+import ToggleSwitch from "primevue/toggleswitch"
 
 import "@fontsource/inter/latin-400.css"
 import "@fontsource/ibm-plex-sans/latin-500.css"
@@ -87,5 +91,9 @@ app.component("ProgressSpinner", ProgressSpinner)
 app.component("Toast", Toast)
 app.component("Textarea", Textarea)
 app.component("FileUpload", FileUpload)
+app.component("InputSwitch", InputSwitch)
+app.component("MultiSelect", MultiSelect)
+app.component("Paginator", Paginator)
+app.component("ToggleSwitch", ToggleSwitch)
 
 app.mount("#app")

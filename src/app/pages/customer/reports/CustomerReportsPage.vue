@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import "../CustomerPortalListPage.css"
 import { ref } from "vue"
-import Button from "primevue/button"
 import { modeBreakdown, reportStats } from "./CustomerReportsPage"
 
 const activeTab = ref("overview")

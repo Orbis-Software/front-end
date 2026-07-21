@@ -1,10 +1,5 @@
 <script setup lang="ts">
 import "./JobCostsTab.css"
-import Button from "primevue/button"
-import Checkbox from "primevue/checkbox"
-import Dialog from "primevue/dialog"
-import Dropdown from "primevue/dropdown"
-import InputNumber from "primevue/inputnumber"
 import { useJobCostsTab } from "./JobCostsTab.logic"
 
 const {

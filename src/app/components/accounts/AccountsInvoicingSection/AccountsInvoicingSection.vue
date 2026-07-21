@@ -1,11 +1,6 @@
 <script setup lang="ts">
 import "./AccountsInvoicingSection.css"
 
-import Button from "primevue/button"
-import Dropdown from "primevue/dropdown"
-import InputText from "primevue/inputtext"
-import Paginator from "primevue/paginator"
-
 import { useAccountsInvoicingSection } from "./AccountsInvoicingSection"
 
 const {

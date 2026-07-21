@@ -1,10 +1,5 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue"
-import Button from "primevue/button"
-import Dialog from "primevue/dialog"
-import InputText from "primevue/inputtext"
-import InputNumber from "primevue/inputnumber"
-import Checkbox from "primevue/checkbox"
 import { useGeneralSettingsTab } from "./useGeneralSettingsTab"
 import type { ReferenceDataCategory, ReferenceDataOption } from "@/app/types/referenceData"
 

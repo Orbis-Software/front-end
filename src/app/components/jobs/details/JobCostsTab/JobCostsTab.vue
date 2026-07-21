@@ -1,9 +1,5 @@
 <script setup lang="ts">
 import { computed, reactive } from "vue"
-import Button from "primevue/button"
-import Dropdown from "primevue/dropdown"
-import InputText from "primevue/inputtext"
-
 type CurrencyCode = "GBP" | "USD" | "EUR"
 
 type CostLine = {

@@ -2,12 +2,6 @@
 import "./AccountsTaxCodesSection.css"
 
 import { computed, onMounted, reactive, ref } from "vue"
-import Button from "primevue/button"
-import Dialog from "primevue/dialog"
-import Dropdown from "primevue/dropdown"
-import InputText from "primevue/inputtext"
-import Paginator from "primevue/paginator"
-
 import { useTaxCodeStore } from "@/app/stores/tax-codes"
 import type { TaxCode } from "@/app/types/tax-code"
 

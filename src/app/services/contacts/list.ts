@@ -1,15 +1,7 @@
 import http from "@/api/http"
 import contactTransformer from "@/app/transformers/contact"
-import type { Contact, PaginatedResponse } from "@/app/types/contact"
-
-export interface ListContactsParams {
-  page?: number
-  per_page?: number
-  contact_type_id?: number
-  status?: string
-  include_addresses?: boolean | number
-  q?: string
-}
+import type { Contact, ListContactsParams } from "@/app/types/contact"
+import type { PaginatedResponse } from "@/app/types/pagination"
 
 export default async function listContacts(
   params: ListContactsParams = {},

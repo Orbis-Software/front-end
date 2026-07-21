@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import "./WarehouseGoodsInPage.css"
 import { RouterLink, RouterView } from "vue-router"
-import Button from "primevue/button"
 import { useWarehouseGoodsInPage } from "./WarehouseGoodsInPage"
 import ReceiveConsignmentModal from "@/app/components/warehouse/goods-in/ReceiveConsignmentModal.vue"
 

@@ -2,16 +2,8 @@
 import "./JobDetailsPage.css"
 import { computed, provide, ref, watch } from "vue"
 import { RouterLink, RouterView, useRouter } from "vue-router"
-import ConfirmDialog from "primevue/confirmdialog"
 import { useConfirm } from "primevue/useconfirm"
 import { useToast } from "primevue/usetoast"
-
-import Button from "primevue/button"
-import Dialog from "primevue/dialog"
-import Dropdown from "primevue/dropdown"
-import InputText from "primevue/inputtext"
-import Calendar from "primevue/calendar"
-import Textarea from "primevue/textarea"
 
 import JobProgressStepper from "@/app/components/jobs/details/JobProgressStepper.vue"
 import { useTransportJobStore } from "@/app/stores/transport-job"

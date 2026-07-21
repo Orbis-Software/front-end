@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import "../CustomerPortalListPage.css"
 import { ref } from "vue"
-import Button from "primevue/button"
 import { stockItems, stockMovementHistory } from "./CustomerStockPage"
 
 const activeTab = ref("on-hand")

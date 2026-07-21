@@ -1,24 +1,10 @@
 <script setup lang="ts">
 import "./JobTransportTab.css"
-import Button from "primevue/button"
-import Calendar from "primevue/calendar"
-import Dropdown from "primevue/dropdown"
-import InputNumber from "primevue/inputnumber"
-import InputSwitch from "primevue/inputswitch"
-import InputText from "primevue/inputtext"
-import Textarea from "primevue/textarea"
 import { computed, inject } from "vue"
-import type { ComputedRef, Ref } from "vue"
-import type { JobPdfDocument } from "@/app/types/transport-job-service"
+import type { JobPdfActions } from "@/app/types/job-details"
 import { useJobTransportTab } from "./JobTransportTab.logic"
 import JobPackagesTab from "../Packages/JobPackagesTab.vue"
 import JobAddressPickerModal from "@/app/components/jobs/details/JobAddressPickerModal.vue"
-
-type JobPdfActions = {
-  pdfLoading: Ref<JobPdfDocument | null>
-  isPdfLoading: ComputedRef<boolean>
-  loadPdf: (document: JobPdfDocument) => Promise<void>
-}
 
 const {
   form,

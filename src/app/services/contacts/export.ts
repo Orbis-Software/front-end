@@ -1,10 +1,5 @@
 import http from "@/api/http"
-
-export interface ExportContactsParams {
-  q?: string
-  contact_type_id?: number | null
-  status?: string
-}
+import type { ExportContactsParams } from "@/app/types/contact"
 
 export default async function exportContacts(params: ExportContactsParams = {}): Promise<Blob> {
   const cleanParams = Object.fromEntries(

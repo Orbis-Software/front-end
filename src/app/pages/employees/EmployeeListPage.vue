@@ -163,14 +163,6 @@
 <script setup lang="ts">
 import "./EmployeeListPage.css"
 
-import Button from "primevue/button"
-import DataTable from "primevue/datatable"
-import Column from "primevue/column"
-import Dialog from "primevue/dialog"
-import InputText from "primevue/inputtext"
-import MultiSelect from "primevue/multiselect"
-import Tag from "primevue/tag"
-
 import { onMounted } from "vue"
 import { useEmployeeListPage } from "./EmployeeListPage.logic"
 

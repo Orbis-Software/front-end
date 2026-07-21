@@ -1,14 +1,5 @@
 <script setup lang="ts">
 import "./JobNormalSupplierInvoicesTab.css"
-import Button from "primevue/button"
-import Calendar from "primevue/calendar"
-import Checkbox from "primevue/checkbox"
-import Dialog from "primevue/dialog"
-import Dropdown from "primevue/dropdown"
-import InputNumber from "primevue/inputnumber"
-import InputText from "primevue/inputtext"
-import MultiSelect from "primevue/multiselect"
-import Textarea from "primevue/textarea"
 import { useJobNormalSupplierInvoicesTab } from "./JobNormalSupplierInvoicesTab"
 
 const {

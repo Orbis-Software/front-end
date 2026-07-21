@@ -1,41 +1,14 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from "vue"
 
-import Button from "primevue/button"
-import InputText from "primevue/inputtext"
-import Textarea from "primevue/textarea"
-import Dialog from "primevue/dialog"
-import Checkbox from "primevue/checkbox"
-import AutoComplete from "primevue/autocomplete"
-import Dropdown from "primevue/dropdown"
-
 import { useCountryStore } from "@/app/stores/country"
 import type { Country } from "@/app/types/country"
 import { useToast } from "primevue/usetoast"
-
-type AddressTarget = "collection" | "delivery"
-
-type CustomerOption = {
-  label: string
-  value: number
-}
-
-export type JobTransportAddressPayload = {
-  label: string | null
-  address_line_1: string | null
-  address_line_2: string | null
-  address_line_3: string | null
-  city: string | null
-  county_state: string | null
-  postal_code: string | null
-  country_id: number | null
-  contact_person: string | null
-  phone: string | null
-  email: string | null
-  special_instructions: string | null
-  is_collection: boolean
-  is_delivery: boolean
-}
+import type {
+  JobTransportAddressPayload,
+  JobTransportAddressTarget as AddressTarget,
+  JobTransportCustomerOption as CustomerOption,
+} from "@/app/types/job-details"
 
 type AddressForm = {
   label: string

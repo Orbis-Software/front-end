@@ -19,14 +19,10 @@
 </template>
 
 <script setup lang="ts">
-type CardItem = {
-  key: string
-  title: string
-  subtitle: string
-}
+import type { JobSelectorCardItem } from "@/app/types/job-details"
 
 defineProps<{
-  items: CardItem[]
+  items: JobSelectorCardItem[]
   selected: string | null
 }>()
 

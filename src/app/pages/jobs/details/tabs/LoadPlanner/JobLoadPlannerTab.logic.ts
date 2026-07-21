@@ -2,74 +2,17 @@ import * as THREE from "three"
 import { useReferenceDataStore } from "@/app/stores/reference-data"
 import { computed, inject, nextTick, onMounted, onUnmounted, reactive, ref, watch } from "vue"
 import { useRoute, useRouter } from "vue-router"
-import type { JobDetailsContext } from "../../JobDetailsPage.logic"
-
-type LoadMode = "road" | "rail" | "sea"
-type LoadUnitType = "pallet" | "carton" | "crate" | "drum" | "bag" | "ibc" | "roll" | "other"
-
-type SpacePreset = {
-  l: number
-  w: number
-  h: number
-  maxWt: number
-  mode: LoadMode
-  label: string
-}
-
-type LoadSpaceDefinition = {
-  l: number
-  w: number
-  h: number
-  maxWt: number
-  palH?: number
-  presetKey?: string
-}
-
-type LoadUnit = {
-  id: string
-  sourceId?: string | number
-  type: LoadUnitType
-  desc: string
-  l: number
-  w: number
-  h: number
-  wt: number
-  qty: number
-  stackable: boolean
-  adr: boolean
-  color: string
-}
-
-type PlacedUnit = LoadUnit & {
-  unitKey: string
-  x: number
-  y: number
-  z: number
-  l: number
-  w: number
-  h: number
-  stacked?: boolean
-}
-
-type PlannerLayout = {
-  allPlaced: PlacedUnit[]
-  unplacedAll: PlacedUnit[]
-  tLen: number
-  tWid: number
-  tHei: number
-  palH: number
-}
-
-type Orbit3D = {
-  target: THREE.Vector3
-  dragging: boolean
-  rightDrag: boolean
-  lastX: number
-  lastY: number
-  theta: number
-  phi: number
-  radius: number
-}
+import type { JobDetailsContext } from "@/app/types/job-details"
+import type {
+  LoadMode,
+  LoadSpaceDefinition,
+  LoadUnit,
+  LoadUnitType,
+  Orbit3D,
+  PlacedUnit,
+  PlannerLayout,
+  SpacePreset,
+} from "@/app/types/load-planner"
 
 export function useJobLoadPlannerTab() {
   const context = inject<JobDetailsContext>("jobDetails")

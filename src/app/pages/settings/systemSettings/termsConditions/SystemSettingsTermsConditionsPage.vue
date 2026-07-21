@@ -1,9 +1,5 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue"
-import Button from "primevue/button"
-import Dialog from "primevue/dialog"
-import InputText from "primevue/inputtext"
-import Textarea from "primevue/textarea"
 import { useReferenceDataStore } from "@/app/stores/reference-data"
 import type { ReferenceDataOption } from "@/app/types/referenceData"
 import "./SystemSettingsTermsConditionsPage.css"

@@ -12,27 +12,17 @@ import type {
   EmailJobInvoicePayload,
   JobPdfDocument,
   JobPdfOptions,
+  ListTransportJobsParams,
   PassSupplierInvoicePayload,
 } from "@/app/types/transport-job-service"
 import type {
   TransportJob,
-  PaginatedResponse,
   TransportJobCreatePayload,
   TransportJobUpdatePayload,
   TransportMode,
   JobType,
 } from "@/app/types/transport-job"
-
-export type TransportJobFetchParams = {
-  page?: number
-  per_page?: number
-  q?: string
-  job_type?: JobType
-  mode_of_transport?: TransportMode
-  created_by?: number
-  customer_id?: number
-  status?: string
-}
+import type { PaginatedResponse } from "@/app/types/pagination"
 
 export const useTransportJobStore = defineStore("transportJob", () => {
   const items = ref<TransportJob[]>([])
@@ -50,7 +40,7 @@ export const useTransportJobStore = defineStore("transportJob", () => {
   const q = ref<string>("")
   const createdBy = ref<number | null>(null)
 
-  function buildParams(overrides: TransportJobFetchParams = {}): TransportJobFetchParams {
+  function buildParams(overrides: ListTransportJobsParams = {}): ListTransportJobsParams {
     return {
       page: overrides.page ?? page.value,
       per_page: overrides.per_page ?? perPage.value,
@@ -63,7 +53,7 @@ export const useTransportJobStore = defineStore("transportJob", () => {
     }
   }
 
-  async function fetch(overrides: TransportJobFetchParams = {}) {
+  async function fetch(overrides: ListTransportJobsParams = {}) {
     loading.value = true
 
     try {

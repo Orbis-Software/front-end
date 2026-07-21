@@ -1,3 +1,5 @@
+import type { TableListFilters, TablePaginationMeta } from "@/app/types/pagination"
+
 export type TaxCode = {
   id: number
   country: string
@@ -21,20 +23,6 @@ export type TaxCodePayload = {
   isActive?: boolean
 }
 
-export type TaxCodeFilters = {
-  search?: string
-  sort?: string
-  direction?: "asc" | "desc"
-  page?: number
-  perPage?: number
-}
+export type TaxCodeFilters = TableListFilters
 
-export type TaxCodeMeta = {
-  total: number
-  filtered: number
-  currentPage: number
-  lastPage: number
-  perPage: number
-  from: number | null
-  to: number | null
-}
+export type TaxCodeMeta = TablePaginationMeta

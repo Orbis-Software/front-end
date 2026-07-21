@@ -1,6 +1,7 @@
 export type CompanyStatus = "active" | "inactive"
 
 export type AddressType = "trading" | "registered" | "operational"
+export type CompanySettingsAddressType = Extract<AddressType, "registered" | "operational">
 
 export type CompanyAddress = {
   type: AddressType
@@ -48,6 +49,16 @@ export type CompanyReferenceSequence = {
   next_number: number
   next_number_formatted: string
 
+  use_system: boolean
+}
+
+export type CompanyReferenceForm = {
+  type: CompanyReferenceType
+  title: string
+  prefix: string
+  year_digits: number | null
+  start_number: string
+  min_width: number
   use_system: boolean
 }
 

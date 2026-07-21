@@ -1,40 +1,11 @@
 <script setup lang="ts">
 import { computed, reactive, watch } from "vue"
-import Dialog from "primevue/dialog"
-import InputText from "primevue/inputtext"
-import Textarea from "primevue/textarea"
-import InputNumber from "primevue/inputnumber"
-import Dropdown from "primevue/dropdown"
-import Button from "primevue/button"
 import type { WmsExpectedArrival } from "@/app/types/wms-expected-arrival"
-
-type Option = {
-  label: string
-  value: string
-}
-
-type BreakdownLine = {
-  description: string
-  qty: number | null
-  unit: string
-}
-
-export type ReceiveConsignmentPayload = {
-  customer: string
-  supplier: string
-  reference: string
-  description: string
-  goodsType: string
-  packagingType: string
-  qty: number | null
-  unit: string
-  weight: number | null
-  cbm: number | null
-  location: string
-  receivedBy: string
-  notes: string
-  lines: BreakdownLine[]
-}
+import type {
+  ReceiveConsignmentLine,
+  ReceiveConsignmentPayload,
+  WarehouseGoodsOption,
+} from "@/app/types/warehouse-goods-in"
 
 const props = defineProps<{
   visible: boolean
@@ -47,21 +18,21 @@ const emit = defineEmits<{
   (e: "saved", payload: ReceiveConsignmentPayload): void
 }>()
 
-const goodsTypeOptions: Option[] = [
+const goodsTypeOptions: WarehouseGoodsOption[] = [
   { label: "Electronics", value: "Electronics" },
   { label: "Textiles", value: "Textiles" },
   { label: "Food & Beverage", value: "Food & Beverage" },
   { label: "Chemicals", value: "Chemicals" },
 ]
 
-const packagingTypeOptions: Option[] = [
+const packagingTypeOptions: WarehouseGoodsOption[] = [
   { label: "Pallets", value: "Pallets" },
   { label: "Cartons", value: "Cartons" },
   { label: "Pieces", value: "Pieces" },
   { label: "Rolls", value: "Rolls" },
 ]
 
-const unitOptions: Option[] = [
+const unitOptions: WarehouseGoodsOption[] = [
   { label: "Pallets", value: "Pallets" },
   { label: "Cartons", value: "Cartons" },
   { label: "Pieces", value: "Pieces" },
@@ -91,7 +62,7 @@ function createInitialForm() {
         description: line.description ?? arrival.description ?? "",
         qty: line.quantity,
         unit: line.package_type ?? "",
-      })) ?? ([] as BreakdownLine[]),
+      })) ?? ([] as ReceiveConsignmentLine[]),
   }
 }
 

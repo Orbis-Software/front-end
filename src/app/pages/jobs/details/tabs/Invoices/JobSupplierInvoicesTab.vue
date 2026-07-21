@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, inject } from "vue"
 
-import type { JobDetailsContext } from "../../JobDetailsPage.logic"
+import type { JobDetailsContext } from "@/app/types/job-details"
 import JobConsolidationSupplierInvoicesTab from "../Consolidation/JobConsolidationSupplierInvoicesTab.vue"
 import JobNormalSupplierInvoicesTab from "./JobNormalSupplierInvoicesTab.vue"
 

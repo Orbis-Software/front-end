@@ -1,5 +1,11 @@
 import type { Company } from "@/app/types/company"
 
+export interface UserSummary {
+  id: number
+  name: string
+  email: string
+}
+
 /**
  * ============
  * User

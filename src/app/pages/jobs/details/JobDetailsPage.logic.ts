@@ -12,10 +12,15 @@ import type {
   AddressSelectOption,
   AddressSourceType,
   AddressTarget,
+  JobAddressCustomerOption,
+  JobDestinationAddressOwner,
+  JobDetailsContext,
   JobDetailsForm,
-  JobStatusStageDetails,
+  JobDetailsSaveOptions,
+  JobSelectOption as SelectOption,
+  JobStatusStageForm as JobStatusStageDetails,
   JobDetailsTab,
-  SelectOption,
+  JobTransportAddressPayload,
 } from "@/app/types/job-details"
 
 import {
@@ -42,7 +47,6 @@ import {
   type TransportJobUpdatePayload,
   type TransportMode,
 } from "@/app/types/transport-job"
-import type { JobTransportAddressPayload } from "@/app/components/jobs/details/JobTransportTab/JobTransportAddressModal.vue"
 
 const jobRef = ref<TransportJob | null>(null)
 const savingRef = ref(false)
@@ -56,7 +60,7 @@ const addressPickerVisibleRef = ref(false)
 const addressPickerTargetRef = ref<AddressTarget>("destination")
 const addressPickerContactRef = ref<Contact | null>(null)
 const selectedDestinationContactIdRef = ref<number | null>(null)
-const destinationAddressOwnerRef = ref<"selected_customer" | "other_customer">("selected_customer")
+const destinationAddressOwnerRef = ref<JobDestinationAddressOwner>("selected_customer")
 const initialLoadingRef = ref(false)
 const customerContactsRef = ref<Contact[]>([])
 const destinationContactsRef = ref<Contact[]>([])
@@ -67,69 +71,6 @@ let addressContactSearchTimer: ReturnType<typeof setTimeout> | null = null
 
 const AUTOSAVE_IDLE_DELAY_MS = 30000
 const AUTOSAVE_ACTIVE_FIELD_RETRY_MS = 5000
-
-export type JobDetailsContext = {
-  job: typeof jobRef
-  form: JobDetailsForm
-  loading: any
-  isConsolidationJob: any
-  saving: typeof savingRef
-  save: (options?: SaveOptions) => Promise<void>
-  load: () => Promise<void>
-  originAddressOptions: any
-  destinationAddressOptions: any
-  originAddressSelection: any
-  destinationAddressSelection: any
-  addressContactOptions: any
-  addressContactsLoading: any
-  addressModalVisible: any
-  addressModalTarget: any
-  addressModalSaving: any
-  addressModalCustomerId: typeof addressModalContactIdRef
-  addressModalCustomerName: typeof addressModalCustomerNameRef
-  addressPickerVisible: any
-  addressPickerTarget: any
-  addressPickerContact: any
-  selectedDestinationContactId: any
-  destinationAddressOwner: typeof destinationAddressOwnerRef
-  destinationCustomerOptions: any
-  selectedCustomerName: any
-  selectedOriginAddress: any
-  selectedDestinationAddress: any
-  openAddressModal: (target: AddressTarget) => void
-  createAndSelectAddress: (payload: JobTransportAddressPayload) => Promise<void>
-  selectDestinationAddress: (addressId: number | null) => void
-  selectAddressSource: (target: AddressTarget, value: string | null) => void
-  onAddressContactFilter: (event: { value?: string }) => void
-  selectAddressContact: (target: AddressTarget, contactId: number | null) => Promise<void>
-  selectDestinationCustomer: (contactId: number | null) => Promise<void>
-  setDestinationAddressOwner: (owner: "selected_customer" | "other_customer") => void
-  setAddressModalCustomer: (contactId: number | null) => Promise<void>
-  chooseAddressSource: (choice: AddressChoice) => void
-  referenceOptions: {
-    serviceTypeOptions: any
-    incotermOptions: any
-    currencyOptions: any
-    commodityTypeOptions: any
-    insuranceLevelOptions: any
-    dangerousGoodsOptions: any
-    roadLocalCollectionTypeOptions: any
-    roadServiceLevelOptions: any
-    roadLoadTypeOptions: any
-    roadServiceTypeOptions: any
-    vehicleTypeOptions: any
-    palletTypeOptions: any
-    podMethodOptions: any
-    temperatureRequirementOptions: any
-  }
-}
-
-type SaveOptions = {
-  successSummary?: string
-  successDetail?: string
-  successLife?: number
-  silent?: boolean
-}
 
 const payloadLabelMap: Record<string, string> = {
   customer_id: "Customer",
@@ -1385,13 +1326,7 @@ export function useJobDetailsPage() {
     tab => !consolidationOnlyBaseExclusions.has(tab.key),
   )
 
-  type CustomerOption = {
-    label: string
-    value: number
-    account_number: string
-  }
-
-  const customerOptions = computed<CustomerOption[]>(() => {
+  const customerOptions = computed<JobAddressCustomerOption[]>(() => {
     const contactsById = new Map<number, Contact>()
 
     customerContactsRef.value.forEach(contact => {
@@ -1460,7 +1395,7 @@ export function useJobDetailsPage() {
     addressSourceValue(form.destination_address_source_type, form.destination_address_source_id),
   )
 
-  const addressContactOptions = computed<CustomerOption[]>(() => {
+  const addressContactOptions = computed<JobAddressCustomerOption[]>(() => {
     const contactsById = new Map<number, Contact>()
 
     destinationContactsRef.value.forEach(contact => {
@@ -2190,7 +2125,7 @@ export function useJobDetailsPage() {
     return stableStringify(buildUpdatePayload())
   }
 
-  async function save(options: SaveOptions = {}) {
+  async function save(options: JobDetailsSaveOptions = {}) {
     if (!jobId.value) return
 
     const payload = buildUpdatePayload()
@@ -2459,7 +2394,7 @@ export function useJobDetailsPage() {
     ]
   }
 
-  function setDestinationAddressOwner(owner: "selected_customer" | "other_customer") {
+  function setDestinationAddressOwner(owner: JobDestinationAddressOwner) {
     if (
       destinationAddressOwnerRef.value === owner &&
       (owner !== "selected_customer" ||
@@ -2606,7 +2541,7 @@ export function useJobDetailsPage() {
   watch(
     () => form.customer_id,
     async id => {
-      const customer = customerOptions.value.find((item: CustomerOption) => {
+      const customer = customerOptions.value.find((item: JobAddressCustomerOption) => {
         return item.value === Number(id)
       })
 

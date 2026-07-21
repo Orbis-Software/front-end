@@ -1,15 +1,8 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue"
-import Button from "primevue/button"
-import Calendar from "primevue/calendar"
-import InputSwitch from "primevue/inputswitch"
-import AutoComplete from "primevue/autocomplete"
-
 import { useCountryStore } from "@/app/stores/country"
 import type { Country } from "@/app/types/country"
 import type { ContactCollectionAddress } from "@/app/types/contact"
-
-type CollectionUI = ContactCollectionAddress
 
 const props = withDefaults(
   defineProps<{
@@ -32,7 +25,7 @@ const emit = defineEmits<{
 /* =========================
    LIST/SELECTION
 ========================= */
-const localRows = ref<CollectionUI[]>(cloneAddressArray(props.items ?? []))
+const localRows = ref<ContactCollectionAddress[]>(cloneAddressArray(props.items ?? []))
 const rows = computed(() => localRows.value)
 
 const selectedIndex = ref(0)
@@ -260,11 +253,11 @@ watch(
    SAVE
 ========================= */
 
-function cloneAddressArray(items: ContactCollectionAddress[]): CollectionUI[] {
+function cloneAddressArray(items: ContactCollectionAddress[]): ContactCollectionAddress[] {
   return (items ?? []).map(cloneAddress)
 }
 
-function cloneAddress(row: ContactCollectionAddress): CollectionUI {
+function cloneAddress(row: ContactCollectionAddress): ContactCollectionAddress {
   return {
     id: Number(row.id),
     contact_id: row.contact_id ?? null,
@@ -459,11 +452,11 @@ onBeforeUnmount(() => {
    DISPLAY HELPERS
 ========================= */
 
-function displayTitle(c: CollectionUI) {
+function displayTitle(c: ContactCollectionAddress) {
   return c.label?.trim() || "New address"
 }
 
-function displayLine(c: CollectionUI) {
+function displayLine(c: ContactCollectionAddress) {
   const parts = [
     c.address_line_1,
     c.address_line_2,
@@ -475,11 +468,11 @@ function displayLine(c: CollectionUI) {
   return parts.join(", ")
 }
 
-function displayRef(c: CollectionUI) {
+function displayRef(c: ContactCollectionAddress) {
   return c.reference_code?.trim() || (c.id ? `#${c.id}` : "New")
 }
 
-function displayType(c: CollectionUI) {
+function displayType(c: ContactCollectionAddress) {
   const isC = Boolean(c.is_collection)
   const isD = Boolean(c.is_delivery)
   if (isC && isD) return "Collection + Delivery"

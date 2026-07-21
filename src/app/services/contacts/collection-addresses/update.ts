@@ -1,13 +1,11 @@
 import http from "@/api/http"
 import contactTransformer from "@/app/transformers/contact"
-import type { Contact, ContactCollectionAddress } from "@/app/types/contact"
-
-type Payload = Partial<Omit<ContactCollectionAddress, "id">>
+import type { Contact, ContactCollectionAddressPayload } from "@/app/types/contact"
 
 export default async function updateCollectionAddress(
   contactId: number,
   addressId: number,
-  payload: Payload,
+  payload: ContactCollectionAddressPayload,
 ): Promise<Contact> {
   const response = await http.patch(
     `/contacts/${contactId}/collection-addresses/${addressId}`,

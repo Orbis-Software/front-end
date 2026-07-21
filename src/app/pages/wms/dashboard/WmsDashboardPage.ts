@@ -1,18 +1,11 @@
 import { computed, onMounted, ref } from "vue"
 import expectedArrivalsService from "@/app/services/wms-expected-arrivals"
 import type { WmsExpectedArrival } from "@/app/types/wms-expected-arrival"
-
-type Tone = "default" | "warn" | "ok"
-
-type StatCard = {
-  label: string
-  value: string
-  subtext: string
-  tone?: Tone
-}
-
-type ActivityItem = { dot: string; text: string; time: string }
-type PendingAction = { count: number; label: string; to: string; tone?: Tone }
+import type {
+  WmsDashboardActivityItem as ActivityItem,
+  WmsDashboardPendingAction as PendingAction,
+  WmsDashboardStatCard as StatCard,
+} from "@/app/types/wms"
 
 export function useWmsDashboardPage() {
   const expectedArrivals = ref<WmsExpectedArrival[]>([])

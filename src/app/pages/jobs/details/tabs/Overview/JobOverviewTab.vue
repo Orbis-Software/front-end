@@ -2,15 +2,7 @@
 import "./JobOverviewTab.css"
 import { computed, inject, ref } from "vue"
 
-import Dropdown from "primevue/dropdown"
-import InputText from "primevue/inputtext"
-import InputNumber from "primevue/inputnumber"
-import Textarea from "primevue/textarea"
-import Button from "primevue/button"
-import Calendar from "primevue/calendar"
-import InputSwitch from "primevue/inputswitch"
-
-import type { JobDetailsContext } from "../../JobDetailsPage.logic"
+import type { JobDetailsContext } from "@/app/types/job-details"
 import JobTransportAddressModal from "@/app/components/jobs/details/JobTransportTab/JobTransportAddressModal.vue"
 import DestinationAddressPickerModal from "@/app/components/jobs/details/DestinationAddressPickerModal.vue"
 import type { ContactCollectionAddress } from "@/app/types/contact"

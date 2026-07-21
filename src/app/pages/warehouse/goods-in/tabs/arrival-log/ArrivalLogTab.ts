@@ -1,8 +1,7 @@
 import { computed, onBeforeUnmount, onMounted, ref } from "vue"
 import expectedArrivalsService from "@/app/services/wms-expected-arrivals"
 import type { WmsExpectedArrival } from "@/app/types/wms-expected-arrival"
-
-type Option = { label: string; value: string }
+import type { SelectOption } from "@/app/types/select-option"
 
 export function useArrivalLogTab() {
   const search = ref("")
@@ -12,7 +11,7 @@ export function useArrivalLogTab() {
   const loading = ref(false)
   const error = ref("")
 
-  const customerOptions = computed<Option[]>(() => [
+  const customerOptions = computed<SelectOption[]>(() => [
     { label: "All Customers", value: "" },
     ...Array.from(new Set(rows.value.map(row => row.customer_name))).map(value => ({
       label: value,
@@ -20,7 +19,7 @@ export function useArrivalLogTab() {
     })),
   ])
 
-  const supplierOptions = computed<Option[]>(() => [
+  const supplierOptions = computed<SelectOption[]>(() => [
     { label: "All Suppliers", value: "" },
     ...Array.from(
       new Set(rows.value.map(row => row.supplier_name).filter(Boolean) as string[]),

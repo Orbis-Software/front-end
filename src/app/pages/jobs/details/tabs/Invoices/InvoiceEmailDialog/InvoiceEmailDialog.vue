@@ -1,10 +1,4 @@
 <script setup lang="ts">
-import Button from "primevue/button"
-import Dialog from "primevue/dialog"
-import InputText from "primevue/inputtext"
-import MultiSelect from "primevue/multiselect"
-import Textarea from "primevue/textarea"
-
 import type { InvoiceEmailDialogProps } from "@/app/types/invoice-email"
 import { useInvoiceEmailDialog } from "./InvoiceEmailDialog"
 import "./InvoiceEmailDialog.css"

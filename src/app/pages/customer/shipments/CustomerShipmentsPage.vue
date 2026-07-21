@@ -2,8 +2,6 @@
 import "../CustomerPortalListPage.css"
 import { computed, ref, watch } from "vue"
 import { useRoute, useRouter } from "vue-router"
-import Button from "primevue/button"
-import Dialog from "primevue/dialog"
 import { useAuthStore } from "@/app/stores/auth"
 import type { JobInvoiceSummary, TransportJob, TransportMode } from "@/app/types/transport-job"
 

@@ -1,11 +1,4 @@
 <script setup lang="ts">
-import Button from "primevue/button"
-import Checkbox from "primevue/checkbox"
-import Dialog from "primevue/dialog"
-import Dropdown from "primevue/dropdown"
-import InputNumber from "primevue/inputnumber"
-import InputText from "primevue/inputtext"
-import Textarea from "primevue/textarea"
 import type { ConsolidationPageContext } from "@/app/components/consolidations/ConsolidationPageContext"
 
 const { context } = defineProps<{ context: ConsolidationPageContext }>()

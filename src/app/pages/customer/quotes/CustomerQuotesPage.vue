@@ -1,7 +1,5 @@
 <script setup lang="ts">
 import "../CustomerPortalListPage.css"
-import Button from "primevue/button"
-import Toast from "primevue/toast"
 import { useCustomerQuotesPage } from "./CustomerQuotesPage"
 
 const {

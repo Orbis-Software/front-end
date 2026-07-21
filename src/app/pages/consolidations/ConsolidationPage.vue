@@ -93,8 +93,6 @@
 <script setup lang="ts">
 import "./ConsolidationPage.css"
 
-import Button from "primevue/button"
-
 import ConsolidationDialogs from "@/app/components/consolidations/ConsolidationDialogs.vue"
 import ConsolidationCollectionsTab from "@/app/components/consolidations/tabs/ConsolidationCollectionsTab.vue"
 import ConsolidationCustomerInvoiceTab from "@/app/components/consolidations/tabs/ConsolidationCustomerInvoiceTab.vue"

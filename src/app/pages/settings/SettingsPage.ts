@@ -2,11 +2,14 @@
 import { computed, onMounted, reactive, ref, watch } from "vue"
 import { useCompanyStore } from "@/app/stores/company"
 import { useAuthStore } from "@/app/stores/auth"
-import type { Company, CompanyAddress, CompanyStatus } from "@/app/types/company"
+import type {
+  Company,
+  CompanyAddress,
+  CompanySettingsAddressType,
+  CompanyStatus,
+} from "@/app/types/company"
 
-type AddressType = "registered" | "operational"
-
-function getAddress(company: Company, type: AddressType): CompanyAddress | null {
+function getAddress(company: Company, type: CompanySettingsAddressType): CompanyAddress | null {
   return company.addresses?.find(a => a.type === type) ?? null
 }
 

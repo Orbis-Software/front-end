@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import "./WarehouseReceiptsTab.css"
-import Button from "primevue/button"
 import { useWarehouseReceiptsTab } from "./WarehouseReceiptsTab"
 
 const { rows, loading, error, receivedDate } = useWarehouseReceiptsTab()

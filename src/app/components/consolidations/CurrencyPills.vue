@@ -14,7 +14,7 @@
 </template>
 
 <script setup lang="ts">
-type Currency = "GBP" | "USD" | "EUR"
+import type { Currency } from "@/app/types/consolidation"
 
 const props = defineProps<{
   modelValue: Currency

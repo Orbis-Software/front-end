@@ -51,6 +51,5 @@
 </template>
 
 <script setup lang="ts">
-import Button from "primevue/button"
 defineEmits<{ (e: "action", key: string): void }>()
 </script>

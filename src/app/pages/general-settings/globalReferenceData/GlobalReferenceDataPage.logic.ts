@@ -1,110 +1,104 @@
-import { computed, onMounted, ref, watch } from "vue"
+import { computed, onMounted, reactive, ref, watch } from "vue"
 import type { PageState } from "primevue/paginator"
 import globalReferenceDataService from "@/app/services/global-reference-data"
 import type {
+  DeliveryLocationPayload,
+  DeliveryLocationUpdate,
+  GlobalReferenceCountryOption,
+  GlobalReferenceDataColumn,
   GlobalReferenceDataListResponse,
   GlobalReferenceDataRow,
-  GlobalReferenceDataTabValue,
 } from "@/app/types/globalReferenceData"
 
-type CategoryValue = GlobalReferenceDataTabValue | ""
-type ReferenceRow = GlobalReferenceDataRow
+export type DeliveryLocationMode = "road" | "rail" | "sea" | "air"
 
-type Column = {
-  label: string
-  key: string
-}
-
-type CategoryOption = {
-  label: string
-  value: CategoryValue
-  count: number
-}
-
-const columns: Column[] = [
-  { label: "Category", key: "categoryLabel" },
-  { label: "Code", key: "codes" },
-  { label: "Location / Name", key: "primaryName" },
+const columns: GlobalReferenceDataColumn[] = [
+  { label: "City", key: "city" },
   { label: "Country", key: "country" },
-  { label: "State / Region", key: "place" },
-  { label: "Modes", key: "modes" },
-  { label: "Timezone", key: "timezoneDisplay" },
-  { label: "Coordinates", key: "coordinates" },
+  { label: "Country Code", key: "country_code" },
+  { label: "Location Code", key: "code" },
+  { label: "State", key: "state" },
+  { label: "Region", key: "region" },
+  { label: "Modes", key: "modeCount" },
+  { label: "Latitude", key: "latitude" },
+  { label: "Longitude", key: "longitude" },
+  { label: "Timezone", key: "timezone" },
 ]
 
-export function useGlobalReferenceDataPage() {
-  const selectedCategory = ref<CategoryValue>("")
-  const search = ref("")
-  const selectedType = ref("")
-  const selectedRegion = ref("")
-  const selectedStatus = ref("")
-  const selectedCountry = ref("")
-  const selectedMode = ref("")
-  const sortKey = ref("")
-  const sortDirection = ref<1 | -1>(1)
+const modes: Array<{ label: string; value: DeliveryLocationMode }> = [
+  { label: "Road", value: "road" },
+  { label: "Rail", value: "rail" },
+  { label: "Sea", value: "sea" },
+  { label: "Air", value: "air" },
+]
 
+const emptyFilters: GlobalReferenceDataListResponse["filters"] = {
+  types: [],
+  countries: [],
+  country_options: [],
+  country_codes: [],
+  regions: [],
+  states: [],
+  statuses: [],
+  modes: [],
+}
+
+function blankLocation(): DeliveryLocationPayload {
+  return {
+    city: "",
+    country: "",
+    country_code: "",
+    code: "",
+    state: "",
+    region: "",
+    latitude: null,
+    longitude: null,
+    timezone: "",
+    road: true,
+    rail: false,
+    sea: false,
+    air: false,
+  }
+}
+
+export function useGlobalReferenceDataPage() {
+  const search = ref("")
+  const selectedCountry = ref("")
+  const selectedModes = ref<DeliveryLocationMode[]>([])
+  const sortKey = ref("country")
+  const sortDirection = ref<1 | -1>(1)
   const first = ref(0)
-  const perPage = ref(25)
+  const perPage = ref(100)
   const loading = ref(false)
+  const saving = ref(false)
+  const adding = ref(false)
   const error = ref<string | null>(null)
-  const serverRows = ref<ReferenceRow[]>([])
+  const success = ref<string | null>(null)
+  const serverRows = ref<GlobalReferenceDataRow[]>([])
   const totalRecords = ref(0)
-  const counts = ref<Record<string, number>>({})
-  const serverFilters = ref<GlobalReferenceDataListResponse["filters"]>({
-    types: [],
-    countries: [],
-    country_codes: [],
-    regions: [],
-    states: [],
-    statuses: [],
-    modes: [],
-  })
+  const unfilteredTotal = ref(0)
+  const countriesTotal = ref(0)
+  const generatedDate = ref("")
+  const serverFilters = ref<GlobalReferenceDataListResponse["filters"]>({ ...emptyFilters })
+  const pendingUpdates = ref<Record<string, DeliveryLocationUpdate>>({})
+  const addDialogVisible = ref(false)
+  const newLocation = reactive<DeliveryLocationPayload>(blankLocation())
   let fetchTimer: number | null = null
   let fetchToken = 0
 
-  const categoryOptions = computed<CategoryOption[]>(() => [
-    {
-      label: "All Reference Data",
-      value: "",
-      count: counts.value.all ?? totalRecords.value,
-    },
-    {
-      label: "Delivery Locations",
-      value: "locations",
-      count: counts.value.locations ?? 0,
-    },
-    {
-      label: "Air Cargo Airlines",
-      value: "airlines",
-      count: counts.value.airlines ?? 0,
-    },
-  ])
-
-  const rows = computed<ReferenceRow[]>(() => serverRows.value)
-
-  const paginationStart = computed(() => {
-    if (!totalRecords.value) return 0
-
-    return first.value + 1
-  })
-
-  const paginationEnd = computed(() => {
-    return Math.min(first.value + perPage.value, totalRecords.value)
-  })
-
-  const typeOptions = computed(() => serverFilters.value.types)
-  const regionOptions = computed(() => serverFilters.value.regions)
-  const statusOptions = computed(() => serverFilters.value.statuses)
-  const countryOptions = computed(() => serverFilters.value.countries)
-  const modeOptions = computed(() =>
-    (serverFilters.value.modes.length
-      ? serverFilters.value.modes
-      : ["road", "rail", "sea", "air"]
-    ).map(value => ({
-      label: value.charAt(0).toUpperCase() + value.slice(1),
-      value,
-    })),
+  const rows = computed(() => serverRows.value)
+  const countryOptions = computed<GlobalReferenceCountryOption[]>(
+    () => serverFilters.value.country_options,
   )
+  const hasChanges = computed(() => Object.keys(pendingUpdates.value).length > 0)
+  const paginationStart = computed(() => (totalRecords.value ? first.value + 1 : 0))
+  const paginationEnd = computed(() => Math.min(first.value + perPage.value, totalRecords.value))
+  const formattedGeneratedDate = computed(() => {
+    if (!generatedDate.value) return "—"
+
+    const [year, month, day] = generatedDate.value.split("-")
+    return year && month && day ? `${day}/${month}/${year}` : generatedDate.value
+  })
 
   async function fetchRows(delay = 0) {
     if (fetchTimer) {
@@ -123,17 +117,11 @@ export function useGlobalReferenceDataPage() {
 
     try {
       const result = await globalReferenceDataService.list({
-        category: selectedCategory.value || undefined,
-        type: selectedType.value || undefined,
+        category: "locations",
         country: selectedCountry.value || undefined,
-        mode:
-          selectedCategory.value === "airlines"
-            ? undefined
-            : ((selectedMode.value || undefined) as any),
-        region: selectedRegion.value || undefined,
-        status: selectedStatus.value || undefined,
+        modes: selectedModes.value.length ? selectedModes.value : undefined,
         search: search.value.trim() || undefined,
-        sort: sortKey.value || undefined,
+        sort: sortKey.value,
         direction: sortDirection.value === -1 ? "desc" : "asc",
         page: Math.floor(first.value / perPage.value) + 1,
         per_page: perPage.value,
@@ -141,30 +129,26 @@ export function useGlobalReferenceDataPage() {
 
       if (token !== fetchToken) return
 
-      serverRows.value = result.rows.map(row => normalizeRow(row, normalizeCategory(row.category)))
+      serverRows.value = result.rows.map(row => ({ ...row }))
       totalRecords.value = result.meta.total
-      counts.value = result.counts
+      unfilteredTotal.value = result.meta.unfiltered_total
+      countriesTotal.value = result.meta.countries_total
+      generatedDate.value = result.meta.generated_date
       serverFilters.value = result.filters
     } catch (err: any) {
-      console.error("Unable to load global reference data", err)
+      console.error("Unable to load delivery locations", err)
       error.value =
-        err?.response?.data?.message || err?.message || "Failed to load global reference data."
+        err?.response?.data?.message || err?.message || "Failed to load delivery locations."
     } finally {
-      if (token === fetchToken) {
-        loading.value = false
-      }
+      if (token === fetchToken) loading.value = false
     }
   }
 
   function clearFilters() {
-    selectedCategory.value = ""
     search.value = ""
-    selectedType.value = ""
-    selectedRegion.value = ""
-    selectedStatus.value = ""
     selectedCountry.value = ""
-    selectedMode.value = ""
-    sortKey.value = ""
+    selectedModes.value = []
+    sortKey.value = "country"
     sortDirection.value = 1
     first.value = 0
   }
@@ -172,13 +156,11 @@ export function useGlobalReferenceDataPage() {
   function sortBy(key: string) {
     if (sortKey.value === key) {
       sortDirection.value = sortDirection.value === 1 ? -1 : 1
-      first.value = 0
-      fetchRows()
-      return
+    } else {
+      sortKey.value = key
+      sortDirection.value = 1
     }
 
-    sortKey.value = key
-    sortDirection.value = 1
     first.value = 0
     fetchRows()
   }
@@ -189,185 +171,166 @@ export function useGlobalReferenceDataPage() {
     fetchRows()
   }
 
+  function editLocation(row: GlobalReferenceDataRow, field: "code" | "state", value: string) {
+    const id = Number(row.id)
+    if (!id) return
+
+    row[field] =
+      field === "code"
+        ? value
+            .toUpperCase()
+            .replace(/[^A-Z0-9]/g, "")
+            .slice(0, 3)
+        : value
+    pendingUpdates.value[id] = {
+      id,
+      code: row.code || "",
+      state: row.state || "",
+    }
+    success.value = null
+  }
+
+  async function saveChanges() {
+    const updates = Object.values(pendingUpdates.value)
+    if (!updates.length || saving.value) return
+
+    saving.value = true
+    error.value = null
+    success.value = null
+
+    try {
+      await globalReferenceDataService.saveLocations(updates)
+      pendingUpdates.value = {}
+      success.value = `${updates.length} location ${updates.length === 1 ? "change" : "changes"} saved.`
+      await fetchRows()
+    } catch (err: any) {
+      error.value = err?.response?.data?.message || err?.message || "Unable to save changes."
+    } finally {
+      saving.value = false
+    }
+  }
+
+  function openAddDialog() {
+    Object.assign(newLocation, blankLocation())
+    addDialogVisible.value = true
+    error.value = null
+    success.value = null
+  }
+
+  function onNewLocationCountryChange() {
+    const option = countryOptions.value.find(item => item.name === newLocation.country)
+    newLocation.country_code = option?.code ?? ""
+    newLocation.region = option?.region ?? ""
+  }
+
+  async function addLocation() {
+    if (
+      !newLocation.city.trim() ||
+      !newLocation.country ||
+      !newLocation.country_code ||
+      adding.value
+    ) {
+      error.value = "City and country are required."
+      return
+    }
+
+    adding.value = true
+    error.value = null
+
+    try {
+      await globalReferenceDataService.createLocation({
+        ...newLocation,
+        city: newLocation.city.trim(),
+        code: newLocation.code?.trim().toUpperCase(),
+        state: newLocation.state?.trim(),
+        region: newLocation.region?.trim(),
+        timezone: newLocation.timezone?.trim(),
+      })
+      addDialogVisible.value = false
+      success.value = `${newLocation.city.trim()} was added to delivery locations.`
+      first.value = 0
+      await fetchRows()
+    } catch (err: any) {
+      const validationErrors = err?.response?.data?.errors
+      error.value = validationErrors
+        ? Object.values(validationErrors).flat().join(" ")
+        : err?.response?.data?.message || err?.message || "Unable to add the location."
+    } finally {
+      adding.value = false
+    }
+  }
+
+  function isEnabled(row: GlobalReferenceDataRow, mode: DeliveryLocationMode): boolean {
+    return row[mode] === "true" || row[mode] === "1"
+  }
+
+  function coordinate(value: string | undefined): string {
+    if (!value) return "—"
+    const numeric = Number(value)
+    return Number.isFinite(numeric) ? numeric.toFixed(4) : value
+  }
+
+  function timezoneDisplay(row: GlobalReferenceDataRow): string {
+    if (!row.timezone) return "—"
+    if (!row.gmtOffset) return row.timezone
+
+    const offset = row.gmtOffset.toUpperCase().startsWith("GMT")
+      ? row.gmtOffset
+      : `GMT${row.gmtOffset}`
+    return `${row.timezone} (${offset})`
+  }
+
   watch(
-    [
-      selectedCategory,
-      search,
-      selectedType,
-      selectedRegion,
-      selectedStatus,
-      selectedCountry,
-      selectedMode,
-    ],
-    ([, newSearch], [, oldSearch]) => {
+    [search, selectedCountry, selectedModes],
+    ([newSearch], [oldSearch]) => {
       first.value = 0
       fetchRows(newSearch !== oldSearch ? 300 : 0)
     },
+    { deep: true },
   )
 
-  watch(selectedCategory, () => {
-    selectedType.value = ""
-    selectedRegion.value = ""
-    selectedStatus.value = ""
-    selectedCountry.value = ""
-
-    if (selectedCategory.value === "airlines") {
-      selectedMode.value = ""
-    }
-  })
-
   watch(totalRecords, total => {
-    if (first.value >= total) {
-      first.value = 0
-    }
+    if (first.value >= total) first.value = 0
   })
 
   onMounted(fetchRows)
 
   return {
-    categoryOptions,
-    selectedCategory,
-    search,
-    selectedType,
-    selectedRegion,
-    selectedStatus,
-    selectedCountry,
-    selectedMode,
-    typeOptions,
-    regionOptions,
-    statusOptions,
-    countryOptions,
-    modeOptions,
-    loading,
-    error,
-    rows,
     columns,
+    modes,
+    search,
+    selectedCountry,
+    selectedModes,
+    sortKey,
+    sortDirection,
     first,
     perPage,
+    loading,
+    saving,
+    adding,
+    error,
+    success,
+    rows,
     totalRecords,
+    unfilteredTotal,
+    countriesTotal,
+    formattedGeneratedDate,
+    countryOptions,
+    hasChanges,
     paginationStart,
     paginationEnd,
+    addDialogVisible,
+    newLocation,
     clearFilters,
     sortBy,
     onPageChange,
+    editLocation,
+    saveChanges,
+    openAddDialog,
+    onNewLocationCountryChange,
+    addLocation,
+    isEnabled,
+    coordinate,
+    timezoneDisplay,
   }
-}
-
-function normalizeRow(row: ReferenceRow, category: GlobalReferenceDataTabValue): ReferenceRow {
-  if (category === "locations") {
-    return {
-      ...blankRow(),
-      ...row,
-      category,
-      categoryLabel: "Delivery Location",
-      primaryName: row.fullName || row.city || row.location || row.code || "",
-      place: [row.state, row.region].filter(Boolean).join(" / "),
-      code: row.code || "",
-      codes: compactCodes([
-        ["LOC", row.code],
-        ["CC", row.countryCode],
-      ]),
-      modes: modeLabels(row),
-      timezoneDisplay: [row.timezone, row.gmtOffset ? `GMT ${row.gmtOffset}` : ""]
-        .filter(Boolean)
-        .join(" / "),
-    }
-  }
-
-  if (category === "terminals") {
-    return {
-      ...blankRow(),
-      ...row,
-      category,
-      categoryLabel: "Terminal",
-      primaryName: row.terminalName || row.name || "",
-      place: row.location || "",
-      code: row.code || row.iata || "",
-      codes: compactCodes([
-        ["Code", row.code],
-        ["IATA", row.iata],
-        ["ICAO", row.icao],
-      ]),
-    }
-  }
-
-  if (category === "airlines") {
-    return {
-      ...blankRow(),
-      ...row,
-      category,
-      categoryLabel: "Airline",
-      type: row.type || "Air Cargo",
-      primaryName: row.name || "",
-      place: row.fleet || "",
-      function: row.function || "Air Cargo",
-      modes: "Air",
-      timezoneDisplay: "",
-      code: row.code || row.iata || row.icao || "",
-      codes: compactCodes([
-        ["IATA", row.iata],
-        ["ICAO", row.icao],
-        ["AWB", row.awb],
-      ]),
-    }
-  }
-
-  return {
-    ...blankRow(),
-    ...row,
-    category,
-    categoryLabel: "City",
-    primaryName: row.fullName || row.city || "",
-    place: row.state || "",
-    codes: compactCodes([["Code", row.code]]),
-    modes: row.function || "Road",
-    timezoneDisplay: "",
-  }
-}
-
-function normalizeCategory(value: string | undefined): GlobalReferenceDataTabValue {
-  if (value === "locations" || value === "airlines" || value === "cities") return value
-
-  return "terminals"
-}
-
-function blankRow(): ReferenceRow {
-  return {
-    category: "",
-    categoryLabel: "",
-    type: "",
-    country: "",
-    primaryName: "",
-    place: "",
-    region: "",
-    status: "",
-    function: "",
-    code: "",
-    iata: "",
-    icao: "",
-    awb: "",
-    codes: "",
-    coordinates: "",
-    modes: "",
-    timezoneDisplay: "",
-  }
-}
-
-function compactCodes(entries: Array<[string, string | undefined]>) {
-  return entries
-    .filter(([, value]) => Boolean(value))
-    .map(([label, value]) => `${label}: ${value}`)
-    .join(" / ")
-}
-
-function modeLabels(row: ReferenceRow): string {
-  return [
-    ["Road", row.road],
-    ["Rail", row.rail],
-    ["Sea", row.sea],
-    ["Air", row.air],
-  ]
-    .filter(([, enabled]) => enabled === "true" || enabled === "1")
-    .map(([label]) => label)
-    .join(" / ")
 }

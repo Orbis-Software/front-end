@@ -22,94 +22,19 @@ import type {
 } from "@/app/types/transport-job"
 import { buildReferenceNumber } from "@/app/utils/reference-sequence"
 import { getPackageStackOption, setPackageStackOption } from "@/app/utils/packageStacking"
-
-type TabId =
-  | "overview"
-  | "orders"
-  | "collections"
-  | "load-planner"
-  | "invoices"
-  | "custinv"
-  | "goodsin"
-type Currency = "GBP" | "USD" | "EUR"
-type TransportKey =
-  | "bookingRef"
-  | "carrier"
-  | "originPort"
-  | "destinationPort"
-  | "finalDestination"
-  | "etd"
-  | "eta"
-type OverviewDateKey = "jobDate" | "shipDate"
-
-type SelectOption = {
-  label: string
-  value: string
-}
-
-type ReferenceOption = SelectOption & {
-  subLabel?: string
-  searchText: string
-}
-
-type PackageLine = {
-  id: number
-  packageType: string
-  stackable: boolean
-  atTheTop: boolean
-  qty: number
-  length: number
-  width: number
-  height: number
-  netWeight: number
-  grossWeight: number
-  adr: boolean
-}
-
-type SupplierItem = {
-  id: number
-  packageType: string
-  collie: number
-  length: number
-  width: number
-  height: number
-  stackable: boolean
-  atTheTop: boolean
-  net: number
-  gross: number
-  adr: "Yes" | "No"
-}
-
-type SupplierInvoice = {
-  id: number
-  supplierName: string
-  customerPoRef: string
-  supplierInvoiceNumber: string
-  invoiceDate: string
-  currency: Currency
-  invoiceValue: number
-  collectionRef: string
-  label: string
-  items: SupplierItem[]
-}
-
-type InvoiceChargeLine = {
-  id: number
-  description: string
-  qty: number
-  unit: string
-  rate: number
-  sourceType?: "domestic" | "export" | "manual"
-  sourceId?: number | string
-}
-
-type ConsolidationPageOptions = {
-  initialDetails?: JobConsolidationDetails | null
-  onDetailsChange?: (details: JobConsolidationDetails) => void
-  jobNumber?: string | null
-  jobDate?: string | Date | null
-  mode?: TransportMode | string | null
-}
+import type {
+  ConsolidationPageOptions,
+  ConsolidationInvoiceChargeLine as InvoiceChargeLine,
+  ConsolidationPackageLine as PackageLine,
+  ConsolidationReferenceOption as ReferenceOption,
+  ConsolidationSelectOption as SelectOption,
+  ConsolidationSupplierInvoice as SupplierInvoice,
+  ConsolidationSupplierItem as SupplierItem,
+  Currency,
+  OverviewDateKey,
+  TabId,
+  TransportKey,
+} from "@/app/types/consolidation"
 
 export function useConsolidationPage(options: ConsolidationPageOptions = {}) {
   const router = useRouter()

@@ -1,35 +1,10 @@
 <script setup lang="ts">
 import { computed, reactive, watch } from "vue"
-import Dialog from "primevue/dialog"
-import InputText from "primevue/inputtext"
-import InputNumber from "primevue/inputnumber"
-import Dropdown from "primevue/dropdown"
-import Calendar from "primevue/calendar"
-import Button from "primevue/button"
-import Textarea from "primevue/textarea"
-
-type Option = {
-  label: string
-  value: string
-}
-
-type ReceiptLine = {
-  description: string
-  qty: number | null
-  unit: string
-}
-
-export type WarehouseReceiptPayload = {
-  receiptNumber: string
-  jobReference: string
-  receivedDate: Date | null
-  customer: string
-  supplier: string
-  location: string
-  receivedBy: string
-  notes: string
-  lines: ReceiptLine[]
-}
+import type {
+  WarehouseGoodsOption,
+  WarehouseReceiptLine,
+  WarehouseReceiptPayload,
+} from "@/app/types/warehouse-goods-in"
 
 const props = defineProps<{
   visible: boolean
@@ -40,24 +15,24 @@ const emit = defineEmits<{
   (e: "saved", payload: WarehouseReceiptPayload): void
 }>()
 
-const customerOptions: Option[] = [
+const customerOptions: WarehouseGoodsOption[] = [
   { label: "Greenfield Imports", value: "Greenfield Imports" },
   { label: "NovaTech Solutions", value: "NovaTech Solutions" },
 ]
 
-const supplierOptions: Option[] = [
+const supplierOptions: WarehouseGoodsOption[] = [
   { label: "TechSource Ltd", value: "TechSource Ltd" },
   { label: "Global Imports Co", value: "Global Imports Co" },
 ]
 
-const unitOptions: Option[] = [
+const unitOptions: WarehouseGoodsOption[] = [
   { label: "Pallets", value: "Pallets" },
   { label: "Cartons", value: "Cartons" },
   { label: "Pieces", value: "Pieces" },
   { label: "Rolls", value: "Rolls" },
 ]
 
-const locationOptions: Option[] = [
+const locationOptions: WarehouseGoodsOption[] = [
   { label: "A01-L1", value: "A01-L1" },
   { label: "A01-L3", value: "A01-L3" },
   { label: "A02-L1", value: "A02-L1" },
@@ -89,7 +64,7 @@ function createInitialForm() {
         qty: null,
         unit: "",
       },
-    ] as ReceiptLine[],
+    ] as WarehouseReceiptLine[],
   }
 }
 

@@ -1,6 +1,8 @@
 import { onMounted, ref } from "vue"
-import type { AddExpectedArrivalPayload } from "@/app/components/warehouse/goods-in/AddExpectedArrivalModal.vue"
-import type { ReceiveConsignmentPayload } from "@/app/components/warehouse/goods-in/ReceiveConsignmentModal.vue"
+import type {
+  AddExpectedArrivalPayload,
+  ReceiveConsignmentPayload,
+} from "@/app/types/warehouse-goods-in"
 import expectedArrivalsService from "@/app/services/wms-expected-arrivals"
 import type { WmsExpectedArrival, WmsExpectedArrivalStatus } from "@/app/types/wms-expected-arrival"
 

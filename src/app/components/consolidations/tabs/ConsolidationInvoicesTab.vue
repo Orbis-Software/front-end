@@ -1,8 +1,4 @@
 <script setup lang="ts">
-import Button from "primevue/button"
-import Dropdown from "primevue/dropdown"
-import InputNumber from "primevue/inputnumber"
-import InputText from "primevue/inputtext"
 import type { ConsolidationPageContext } from "@/app/components/consolidations/ConsolidationPageContext"
 
 const { context } = defineProps<{ context: ConsolidationPageContext }>()

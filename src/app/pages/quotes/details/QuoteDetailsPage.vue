@@ -100,17 +100,28 @@
         </div>
       </header>
 
-      <nav v-if="showViewTabs" class="quote-details-page__view-tabs">
+      <nav
+        v-if="showViewTabs"
+        class="quote-details-page__view-tabs"
+        role="tablist"
+        aria-label="Quotation view"
+      >
         <button
           type="button"
+          class="quote-details-page__view-tab"
           :class="{ 'quote-details-page__view-tab--active': activeView === 'buying' }"
+          role="tab"
+          :aria-selected="activeView === 'buying'"
           @click="activeView = 'buying'"
         >
           Buying Costs
         </button>
         <button
           type="button"
+          class="quote-details-page__view-tab"
           :class="{ 'quote-details-page__view-tab--active': activeView === 'quotation' }"
+          role="tab"
+          :aria-selected="activeView === 'quotation'"
           @click="activeView = 'quotation'"
         >
           Quotation
@@ -266,7 +277,7 @@
       </div>
 
       <LoadPlannerPanel
-        v-if="quote.load_planner_enabled"
+        v-if="quote.load_planner_enabled && (!showViewTabs || !buyingCostsView)"
         :packages="loadPlannerPackages"
         :plan-ref="loadPlannerReference"
         reference-label="Quote Ref"
@@ -395,13 +406,6 @@
 
 <script setup lang="ts">
 import "./QuoteDetailsPage.css"
-
-import Button from "primevue/button"
-import Column from "primevue/column"
-import DataTable from "primevue/datatable"
-import Dialog from "primevue/dialog"
-import Textarea from "primevue/textarea"
-import Toast from "primevue/toast"
 
 import LoadPlannerPanel from "@/app/components/load-planner/LoadPlannerPanel.vue"
 import { useQuoteDetailsPage } from "./QuoteDetailsPage"

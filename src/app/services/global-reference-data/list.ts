@@ -20,6 +20,9 @@ export default async function list(
       per_page: Number(data.meta?.per_page ?? params.per_page ?? 25),
       to: data.meta?.to === null ? null : Number(data.meta?.to ?? 0),
       total: Number(data.meta?.total ?? 0),
+      unfiltered_total: Number(data.meta?.unfiltered_total ?? data.meta?.total ?? 0),
+      countries_total: Number(data.meta?.countries_total ?? 0),
+      generated_date: String(data.meta?.generated_date ?? ""),
     },
     counts: Object.entries(data.counts ?? {}).reduce<Record<string, number>>(
       (result, [key, value]) => {
@@ -32,6 +35,13 @@ export default async function list(
     filters: {
       types: arrayOfStrings(data.filters?.types),
       countries: arrayOfStrings(data.filters?.countries),
+      country_options: Array.isArray(data.filters?.country_options)
+        ? data.filters.country_options.map((option: any) => ({
+            name: String(option?.name ?? ""),
+            code: String(option?.code ?? ""),
+            region: String(option?.region ?? ""),
+          }))
+        : [],
       country_codes: arrayOfStrings(data.filters?.country_codes),
       regions: arrayOfStrings(data.filters?.regions),
       states: arrayOfStrings(data.filters?.states),

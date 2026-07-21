@@ -1,7 +1,6 @@
-export type TmsColumn = {
-  key: string
-  label: string
-}
+import type { TableColumn } from "@/app/types/table"
+
+export type TmsColumn = TableColumn
 
 export type TmsRow = Record<string, string | number>
 

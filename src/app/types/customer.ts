@@ -68,3 +68,27 @@ export interface CustomerAccount {
   created_at: string
   updated_at: string
 }
+
+export type CustomerDocumentType = "invoice" | "pod" | "quote" | "report" | "document"
+
+export interface CustomerDocumentRow {
+  id: string
+  name: string
+  reference: string
+  type: CustomerDocumentType
+  typeLabel: string
+  fileType: string
+  size: string
+  date: string | null
+  sortDate: number
+  url: string | null
+  invoiceId: number | null
+}
+
+export type CustomerDashboardStat = {
+  label: string
+  value: string | number
+  note: string
+  icon: string
+  tone: "orange" | "gray" | "dark" | "light"
+}

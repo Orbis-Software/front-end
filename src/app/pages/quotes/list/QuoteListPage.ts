@@ -2,30 +2,14 @@ import { computed, onMounted, ref, watch } from "vue"
 import { useRouter } from "vue-router"
 import { useToast } from "primevue/usetoast"
 import { useTransportQuoteStore } from "@/app/stores/transportQuote"
-import type { TransportQuote } from "@/app/types/transportQuote"
-
-export type QuoteStatusKey = "all" | "draft" | "sent" | "accepted" | "rejected" | "converted"
-export type ModeKey = "all" | "air" | "sea" | "road" | "rail"
-export type QuoteAction = "sent" | "approve" | "decline" | "convert" | "delete"
-
-type Option<T> = {
-  label: string
-  value: T
-}
-
-type QuoteItem = {
-  id: number
-  quote_number: string
-  customer_name: string
-  account_number: string
-  quote_type: string
-  mode_of_transport: string
-  status: string
-  valid_until: string | null
-  currency: string
-  amount: number
-  action_notes?: string
-}
+import type {
+  QuoteListAction as QuoteAction,
+  QuoteListItem as QuoteItem,
+  QuoteModeFilter as ModeKey,
+  QuoteSelectOption as Option,
+  QuoteStatusFilter as QuoteStatusKey,
+  TransportQuote,
+} from "@/app/types/transportQuote"
 
 export function useQuoteListPage() {
   const router = useRouter()

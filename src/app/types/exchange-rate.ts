@@ -1,3 +1,5 @@
+import type { TableListFilters, TablePaginationMeta } from "@/app/types/pagination"
+
 export type ExchangeRate = {
   id: number
   base: string
@@ -20,13 +22,7 @@ export type ExchangeRatePayload = {
   isActive?: boolean
 }
 
-export type ExchangeRateFilters = {
-  search?: string
-  sort?: string
-  direction?: "asc" | "desc"
-  page?: number
-  perPage?: number
-}
+export type ExchangeRateFilters = TableListFilters
 
 export type EffectiveExchangeRateParams = {
   base: string
@@ -34,12 +30,4 @@ export type EffectiveExchangeRateParams = {
   date: string
 }
 
-export type ExchangeRateMeta = {
-  total: number
-  filtered: number
-  currentPage: number
-  lastPage: number
-  perPage: number
-  from: number | null
-  to: number | null
-}
+export type ExchangeRateMeta = TablePaginationMeta

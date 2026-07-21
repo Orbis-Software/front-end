@@ -2,8 +2,6 @@
 import "./AccountsPage.css"
 
 import { computed, ref } from "vue"
-import Button from "primevue/button"
-
 import AccountsOverviewSection from "@/app/components/accounts/AccountsOverviewSection/AccountsOverviewSection.vue"
 import AccountsInvoicingSection from "@/app/components/accounts/AccountsInvoicingSection/AccountsInvoicingSection.vue"
 import AccountsSupplierPaymentsSection from "@/app/components/accounts/AccountsSupplierPaymentsSection/AccountsSupplierPaymentsSection.vue"
@@ -13,26 +11,11 @@ import AccountsExchangeRatesSection from "@/app/components/accounts/AccountsExch
 import AccountsChargeCodesSection from "@/app/components/accounts/AccountsChargeCodesSection/AccountsChargeCodesSection.vue"
 import AccountsTaxCodesSection from "@/app/components/accounts/AccountsTaxCodesSection/AccountsTaxCodesSection.vue"
 import AccountsClientBankDetailsSection from "@/app/components/accounts/AccountsClientBankDetailsSection/AccountsClientBankDetailsSection.vue"
-
-export type AccountsTab =
-  | "overview"
-  | "invoicing"
-  | "supplier-payments"
-  | "reporting"
-  | "credit-control"
-  | "exchange-rates"
-  | "charge-codes"
-  | "tax-codes"
-  | "client-bank-details"
-
-type TabItem = {
-  id: AccountsTab
-  label: string
-}
+import type { AccountsTab, AccountsTabItem } from "@/app/types/page-tabs"
 
 const activeTab = ref<AccountsTab>("overview")
 
-const tabs: TabItem[] = [
+const tabs: AccountsTabItem[] = [
   { id: "overview", label: "Overview" },
   { id: "invoicing", label: "Invoicing" },
   { id: "supplier-payments", label: "Supplier Payments" },

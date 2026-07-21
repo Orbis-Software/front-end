@@ -1,70 +1,15 @@
 import { computed, ref, watch, onMounted } from "vue"
 import { useContactStore } from "@/app/stores/contact"
 import { useCompanyStore } from "@/app/stores/company"
-
-export type Option = { label: string; value: string | null }
-
-export type DimensionRow = {
-  packaging: string | null
-  qty: number
-  length_cm: number
-  width_cm: number
-  height_cm: number
-  gross_kg: number
-  ldm: number
-}
-
-export type ExistingOrder = {
-  id: string
-  carrier: string
-  pickup: string
-  ref: string
-  type: string
-  customer?: string
-  status: "Confirmed" | "Draft" | "Sent"
-}
-
-export type OrderFormState = {
-  type: string
-  collection_address: number | null
-  delivery_address: number | null
-  order_reference: string
-  customer_ref: string
-  collection_ref: string
-  carrier: string
-  pickup_date: Date | null
-  pickup_time: string
-  delivery_date: Date | null
-  delivery_time: string
-  hazardous: boolean
-  hazardous_class: string | null
-  goods_description: string
-  dimensions: DimensionRow[]
-}
-
-export type Totals = {
-  qty: number
-  gross: number
-  cube: number
-  vol: number
-  ldm: number
-}
-
-export type ChargeDisplayRow = {
-  id: string
-  source: "weight_break" | "customer_flat"
-  table_name: string
-  description: string
-  basis: string
-  amount: number
-}
-
-export type ChargeDisplaySummary = {
-  weight_table_name: string | null
-  customer_table_name: string | null
-  rows: ChargeDisplayRow[]
-  total: number
-}
+import type {
+  ExistingTransportOrder as ExistingOrder,
+  JobTransportChargeDisplayRow as ChargeDisplayRow,
+  JobTransportChargeDisplaySummary as ChargeDisplaySummary,
+  JobTransportDimensionRow as DimensionRow,
+  JobTransportOption as Option,
+  JobTransportOrderFormState as OrderFormState,
+  JobTransportTotals as Totals,
+} from "@/app/types/job-details"
 
 const CARRIER_TYPE_IDS = [3, 4, 5, 6]
 

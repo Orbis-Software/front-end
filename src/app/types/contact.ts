@@ -1,10 +1,30 @@
 import type { ContactType } from "@/app/types/contact-type"
+import type { SelectOption } from "@/app/types/select-option"
+import type { UserSummary } from "@/app/types/user"
 
-export interface ContactEmployeeAssignment {
-  id: number
-  name: string
-  email: string
+export type ContactDetailsTab =
+  | "overview"
+  | "branches"
+  | "collections"
+  | "weight_break"
+  | "customer"
+
+export interface ListContactsParams {
+  page?: number
+  per_page?: number
+  contact_type_id?: number
+  status?: string
+  include_addresses?: boolean | number
+  q?: string
 }
+
+export interface ExportContactsParams {
+  q?: string
+  contact_type_id?: number | null
+  status?: string
+}
+
+export type ContactEmployeeAssignment = UserSummary
 
 export interface Contact {
   id: number
@@ -186,18 +206,8 @@ export interface ContactCollectionAddress {
 
 export interface ContactUpdatePayload extends Partial<ContactCreatePayload> {}
 
-export interface PaginationMeta {
-  current_page: number
-  per_page: number
-  total: number
-  last_page: number
-}
-
-export interface PaginatedResponse<T> {
-  data: T[]
-  meta?: PaginationMeta
-  links?: any
-}
+export type ContactBranchPayload = Partial<Omit<ContactBranch, "id">>
+export type ContactCollectionAddressPayload = Partial<Omit<ContactCollectionAddress, "id">>
 
 export interface ContactChargeBreak {
   id: number
@@ -310,4 +320,105 @@ export interface ContactChargeTableListParams {
   applies_to?: string
   is_active?: boolean | string
   q?: string
+}
+
+export type ContactChargeSelectOption = SelectOption
+
+export type ContactChargeMeasurementType = "weight" | "volume"
+
+export type ContactWeightBreak = {
+  id: number
+  label: string
+  min: number | string
+  max: number | string
+  unit?: string
+}
+
+export type ContactWeightChargeRow = {
+  id: number
+  description: string
+  values: Array<number | string>
+}
+
+export type ContactChargeRowMigrationResult = {
+  rows: ContactWeightChargeRow[]
+  changed: boolean
+  messages: string[]
+}
+
+export type ContactChargeTableListItem = {
+  id: number
+  name: string
+}
+
+export type ContactChargeAutosaveSnapshot = {
+  activeTableId: number | null
+  tableTitle: string
+  currency: string
+  valid_until: string | null
+  measurementType: ContactChargeMeasurementType
+  weightUnit: string
+  volumeUnit: string
+  weightBreaks: ContactWeightBreak[]
+  charges: ContactWeightChargeRow[]
+}
+
+export type ContactChargeAutosaveChange = {
+  key: string
+  message: string
+}
+
+export type ContactCustomerChargeCurrency = "GBP" | "USD" | "EUR"
+export type ContactCustomerChargeTransportMode = "Road" | "Air" | "Sea"
+export type ContactCustomerChargeUnit = "Per Shipment" | "Per KG" | "Each"
+
+export type ContactCustomerChargeLine = {
+  id: number
+  description: string
+  uom: ContactCustomerChargeUnit
+  rate: number | null
+  transport_mode: ContactCustomerChargeTransportMode
+}
+
+export type ContactCustomerChargeSheet = {
+  id: number
+  name: string
+  currency: ContactCustomerChargeCurrency
+  valid_until: string | null
+  lines: ContactCustomerChargeLine[]
+}
+
+export type ContactCalculationCurrency = "GBP" | "USD" | "EUR" | "PHP" | string
+
+export type ContactNormalizedChargeBreak = {
+  id: number
+  label: string
+  min: number
+  max: number | null
+  unit: string
+  sortOrder: number
+}
+
+export type ContactNormalizedChargeRowValue = {
+  id: number
+  chargeBreakId: number
+  amount: number
+}
+
+export type ContactNormalizedChargeRow = {
+  id: number
+  description: string
+  chargeBasis: string
+  sortOrder: number
+  values: ContactNormalizedChargeRowValue[]
+}
+
+export type ContactChargeCalculationRow = {
+  description: string
+  weightBreak: string
+  rate: number
+  rateText: string
+  weightUnit: string
+  charge: number
+  basisText: string
 }

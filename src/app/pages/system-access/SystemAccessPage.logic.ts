@@ -1,7 +1,9 @@
 import { computed, ref, watch } from "vue"
 import { useToast } from "primevue/usetoast"
 import { useSystemAccessStore } from "@/app/stores/systemAccess"
-import { useTopNavItems, type NavItem } from "@/app/components/nav/topNavItems"
+import { useTopNavItems } from "@/app/components/nav/topNavItems"
+import type { NavItem } from "@/app/types/navigation"
+import type { PermissionGroup, PermissionRow } from "@/app/types/systemAccess"
 
 function debounce<T extends (...args: any[]) => void>(fn: T, wait = 300) {
   let t: number | undefined
@@ -9,20 +11,6 @@ function debounce<T extends (...args: any[]) => void>(fn: T, wait = 300) {
     if (t) window.clearTimeout(t)
     t = window.setTimeout(() => fn(...args), wait)
   }
-}
-
-type PermRow = {
-  key: string
-  label: string
-  permission: string
-  title: string
-  action: string
-}
-
-type PermGroup = {
-  id: string
-  label: string
-  items: PermRow[]
 }
 
 function unique(arr: string[]) {
@@ -50,8 +38,8 @@ function collectPermissionsFromItem(item: NavItem): string[] {
   return unique(perms)
 }
 
-function flattenNavToPermRows(items: NavItem[]): PermRow[] {
-  const rows: PermRow[] = []
+function flattenNavToPermRows(items: NavItem[]): PermissionRow[] {
+  const rows: PermissionRow[] = []
 
   items.forEach((node: NavItem) => {
     const perms = collectPermissionsFromItem(node)
@@ -151,14 +139,14 @@ export function useSystemAccessPage() {
 
   const nav = useTopNavItems()
 
-  const permissionGroups = computed<PermGroup[]>(() => {
+  const permissionGroups = computed<PermissionGroup[]>(() => {
     const effective = new Set(store.selected?.effective_permissions ?? [])
     const direct = new Set(store.selected?.direct_permissions ?? [])
     const roleOnlyPermissions = new Set(
       Array.from(effective).filter(permission => !direct.has(permission)),
     )
 
-    const buildGroup = (id: string, label: string, items: NavItem[]): PermGroup => {
+    const buildGroup = (id: string, label: string, items: NavItem[]): PermissionGroup => {
       const rows = flattenNavToPermRows(items)
 
       const filtered = rows.filter(row => !roleOnlyPermissions.has(row.permission))
@@ -170,7 +158,7 @@ export function useSystemAccessPage() {
       }
     }
 
-    const groups: PermGroup[] = [
+    const groups: PermissionGroup[] = [
       buildGroup("tms", "TMS", nav.tms),
       buildGroup("wms", "WMS", nav.wms),
       buildGroup("mgmt", "Management", nav.management),
@@ -191,7 +179,7 @@ export function useSystemAccessPage() {
     return (store.permissions ?? []).filter(permission => !allMapped.value.has(permission))
   })
 
-  const filteredPermissionGroups = computed<PermGroup[]>(() => {
+  const filteredPermissionGroups = computed<PermissionGroup[]>(() => {
     const query = permissionQuery.value.trim().toLowerCase()
     if (!query) return permissionGroups.value
 
@@ -230,23 +218,23 @@ export function useSystemAccessPage() {
     return (permsDraft.value ?? []).includes(permission)
   }
 
-  function selectAllGroup(group: PermGroup) {
+  function selectAllGroup(group: PermissionGroup) {
     const set = new Set(permsDraft.value ?? [])
     group.items.forEach(item => set.add(item.permission))
     permsDraft.value = Array.from(set)
   }
 
-  function clearAllGroup(group: PermGroup) {
+  function clearAllGroup(group: PermissionGroup) {
     const remove = new Set(group.items.map(item => item.permission))
     permsDraft.value = (permsDraft.value ?? []).filter(permission => !remove.has(permission))
   }
 
-  function countSelectedInGroup(group: PermGroup) {
+  function countSelectedInGroup(group: PermissionGroup) {
     const selected = new Set(permsDraft.value ?? [])
     return group.items.reduce((count, item) => count + (selected.has(item.permission) ? 1 : 0), 0)
   }
 
-  function countTotalInGroup(group: PermGroup) {
+  function countTotalInGroup(group: PermissionGroup) {
     return group.items.length
   }
 

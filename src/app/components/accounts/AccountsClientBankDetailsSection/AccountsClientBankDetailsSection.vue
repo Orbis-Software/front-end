@@ -3,11 +3,6 @@ import "./AccountsClientBankDetailsSection.css"
 
 import { computed, onMounted, reactive, ref } from "vue"
 import { storeToRefs } from "pinia"
-import Button from "primevue/button"
-import Dialog from "primevue/dialog"
-import Dropdown from "primevue/dropdown"
-import InputText from "primevue/inputtext"
-import Paginator from "primevue/paginator"
 import { useToast } from "primevue/usetoast"
 
 import { useClientBankDetailStore } from "@/app/stores/client-bank-details"
@@ -17,22 +12,14 @@ import { useReferenceDataStore } from "@/app/stores/reference-data"
 import type { ClientBankDetail, ClientBankDetailPayload } from "@/app/types/client-bank-detail"
 import type { Contact } from "@/app/types/contact"
 import type { GlobalReferenceDataRow } from "@/app/types/globalReferenceData"
+import type { SelectOption } from "@/app/types/select-option"
 
-type SelectOption = {
-  label: string
-  value: string
-}
-
-type ContactOption = {
-  label: string
-  value: number
+type ContactOption = SelectOption<number> & {
   subLabel: string
   searchText: string
 }
 
-type CityOption = {
-  label: string
-  value: string
+type CityOption = SelectOption & {
   subLabel: string
   searchText: string
 }

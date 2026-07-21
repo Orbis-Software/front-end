@@ -1,21 +1,12 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from "vue"
-import Button from "primevue/button"
-import Checkbox from "primevue/checkbox"
-import Column from "primevue/column"
-import ConfirmDialog from "primevue/confirmdialog"
-import DataTable from "primevue/datatable"
-import Dialog from "primevue/dialog"
-import Dropdown from "primevue/dropdown"
-import InputText from "primevue/inputtext"
-import Paginator from "primevue/paginator"
-import Toast from "primevue/toast"
 import { useConfirm } from "primevue/useconfirm"
 import { useToast } from "primevue/usetoast"
 import companyEmailRecipientsService from "@/app/services/company-email-recipients"
 import type {
   CompanyEmailRecipient,
   CompanyNotificationType,
+  NotificationProfile,
 } from "@/app/types/company-email-recipient"
 import type { PageState } from "primevue/paginator"
 import "./SystemSettingsEmailNotificationsPage.css"
@@ -23,12 +14,6 @@ import "./SystemSettingsEmailNotificationsPage.css"
 type SourceFilter = "all" | "employee" | "custom"
 type StatusFilter = "all" | "active" | "inactive"
 type BulkAction = "activate" | "deactivate" | "add_notification" | "remove_notification"
-
-type NotificationProfile = {
-  key: string
-  label: string
-  types: string[]
-}
 
 const toast = useToast()
 const confirm = useConfirm()

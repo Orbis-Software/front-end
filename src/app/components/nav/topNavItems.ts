@@ -1,13 +1,4 @@
-export type NavItem = {
-  id: string
-  label: string
-  to?: string
-  permission?: string
-  anyPermissions?: string[]
-  roles?: string[]
-  devOnly?: boolean
-  adminOnly?: boolean
-}
+import type { NavItem } from "@/app/types/navigation"
 
 export function useTopNavItems(): {
   tms: NavItem[]

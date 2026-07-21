@@ -5,10 +5,10 @@ import type {
   ContactChargeTable,
   ContactChargeTableListParams,
   ContactChargeTablePayload,
-  PaginatedResponse,
+  ListContactsParams,
 } from "@/app/types/contact"
+import type { PaginatedResponse } from "@/app/types/pagination"
 import contacts from "@/app/services/contacts"
-import type { ListContactsParams } from "@/app/services/contacts/list"
 import { useContactTypeStore } from "@/app/stores/contact-type"
 
 export const useContactStore = defineStore("contact", () => {

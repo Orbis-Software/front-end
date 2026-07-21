@@ -3,65 +3,12 @@ import { useRoute, useRouter } from "vue-router"
 import { useToast } from "primevue/usetoast"
 import { useCompanyStore } from "@/app/stores/company"
 import { useTransportQuoteStore } from "@/app/stores/transportQuote"
-import type { TransportQuote } from "@/app/types/transportQuote"
-
-type QuoteAction = "sent" | "approve" | "decline" | "convert"
-
-type ChargeLine = {
-  id: number
-  type: string
-  description: string
-  quantity: number
-  uom: string
-  cost: number
-  unit_price: number
-  markup_percent: number
-  total_sell: number
-  currency: string
-  exchange_rate: number
-}
-
-type QuoteDetails = {
-  id: number
-  quote_number: string
-  customer_name: string
-  account_number: string
-  contact_name: string
-  contact_email: string
-  contact_phone: string
-  customer_reference: string
-  quote_type: string
-  mode_of_transport: string
-  status: string
-  quote_date: string | null
-  follow_up_date: string | null
-  validity: string
-  currency: string
-  incoterms: string
-  origin: string | null
-  destination: string | null
-  etd: string | null
-  eta: string | null
-  goods_description: string | null
-  is_hazardous: boolean
-  hazard_class: string
-  un_number: string
-  packing_group: string
-  terms_conditions: string | null
-  internal_notes: string | null
-  load_planner_enabled: boolean
-  customer_facing: boolean
-  charge_lines: ChargeLine[]
-  totals: {
-    sell: number
-    cost: number
-    tax: number
-    excl_tax: number
-    incl_tax: number
-    profit: number
-    profit_percentage: number
-  }
-}
+import type {
+  QuoteDetailsAction as QuoteAction,
+  QuoteDetailsChargeLine as ChargeLine,
+  QuoteDetailsView as QuoteDetails,
+  TransportQuote,
+} from "@/app/types/transportQuote"
 
 export function useQuoteDetailsPage() {
   const route = useRoute()

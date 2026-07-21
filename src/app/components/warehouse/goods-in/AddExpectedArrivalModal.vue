@@ -1,28 +1,9 @@
 <script setup lang="ts">
 import { computed, reactive, watch } from "vue"
-import Dialog from "primevue/dialog"
-import InputText from "primevue/inputtext"
-import InputNumber from "primevue/inputnumber"
-import Dropdown from "primevue/dropdown"
-import Calendar from "primevue/calendar"
-import Button from "primevue/button"
-import Textarea from "primevue/textarea"
-
-type Option = {
-  label: string
-  value: string
-}
-
-export type AddExpectedArrivalPayload = {
-  customer: string
-  supplier: string
-  description: string
-  expectedDate: Date | null
-  qty: number | null
-  reference: string
-  status: string
-  notes: string
-}
+import type {
+  AddExpectedArrivalPayload,
+  WarehouseGoodsOption,
+} from "@/app/types/warehouse-goods-in"
 
 const props = defineProps<{
   visible: boolean
@@ -34,7 +15,7 @@ const emit = defineEmits<{
   (e: "saved", payload: AddExpectedArrivalPayload): void
 }>()
 
-const statusOptions: Option[] = [
+const statusOptions: WarehouseGoodsOption[] = [
   { label: "Expected", value: "Expected" },
   { label: "Delayed", value: "Delayed" },
   { label: "Booked In", value: "Booked In" },

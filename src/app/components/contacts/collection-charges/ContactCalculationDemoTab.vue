@@ -4,49 +4,15 @@ import "./ContactCalculationDemoTab.css"
 import { computed, onMounted, ref, watch } from "vue"
 import { useRoute } from "vue-router"
 
-import Button from "primevue/button"
-import Card from "primevue/card"
-import Dropdown from "primevue/dropdown"
-import InputNumber from "primevue/inputnumber"
-import ProgressSpinner from "primevue/progressspinner"
-
 import { useContactStore } from "@/app/stores/contact"
-import type { ContactChargeTable } from "@/app/types/contact"
-
-type CurrencyCode = "GBP" | "USD" | "EUR" | "PHP" | string
-
-type NormalizedBreak = {
-  id: number
-  label: string
-  min: number
-  max: number | null
-  unit: string
-  sortOrder: number
-}
-
-type NormalizedRowValue = {
-  id: number
-  chargeBreakId: number
-  amount: number
-}
-
-type NormalizedRow = {
-  id: number
-  description: string
-  chargeBasis: string
-  sortOrder: number
-  values: NormalizedRowValue[]
-}
-
-type CalculationRow = {
-  description: string
-  weightBreak: string
-  rate: number
-  rateText: string
-  weightUnit: string
-  charge: number
-  basisText: string
-}
+import type {
+  ContactCalculationCurrency as CurrencyCode,
+  ContactChargeCalculationRow as CalculationRow,
+  ContactChargeTable,
+  ContactNormalizedChargeBreak as NormalizedBreak,
+  ContactNormalizedChargeRow as NormalizedRow,
+  ContactNormalizedChargeRowValue as NormalizedRowValue,
+} from "@/app/types/contact"
 
 const route = useRoute()
 const contactStore = useContactStore()

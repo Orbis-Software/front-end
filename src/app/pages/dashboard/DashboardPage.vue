@@ -498,7 +498,7 @@ import type {
   DashboardJobStatus,
   DashboardTransportSummary,
   DashboardUserFocus,
-} from "@/app/services/dashboard/transport"
+} from "@/app/types/dashboard"
 import type { TransportMode } from "@/app/types/transport-job"
 import "./DashboardPage.css"
 

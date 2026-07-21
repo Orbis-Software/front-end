@@ -1,7 +1,6 @@
-export type WmsColumn = {
-  key: string
-  label: string
-}
+import type { TableColumn } from "@/app/types/table"
+
+export type WmsColumn = TableColumn
 
 export type WmsRow = Record<string, string | number>
 
@@ -19,4 +18,26 @@ export type WmsAdminConfig = {
   columns: WmsColumn[]
   rows: WmsRow[]
   primaryKey: string
+}
+
+export type WmsDashboardTone = "default" | "warn" | "ok"
+
+export type WmsDashboardStatCard = {
+  label: string
+  value: string
+  subtext: string
+  tone?: WmsDashboardTone
+}
+
+export type WmsDashboardActivityItem = {
+  dot: string
+  text: string
+  time: string
+}
+
+export type WmsDashboardPendingAction = {
+  count: number
+  label: string
+  to: string
+  tone?: WmsDashboardTone
 }

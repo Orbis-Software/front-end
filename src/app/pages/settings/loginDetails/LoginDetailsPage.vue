@@ -470,20 +470,12 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from "vue"
 import QRCode from "qrcode"
-import Button from "primevue/button"
-import ConfirmDialog from "primevue/confirmdialog"
-import InputText from "primevue/inputtext"
-import Password from "primevue/password"
-import Toast from "primevue/toast"
 import { useConfirm } from "primevue/useconfirm"
 import { useToast } from "primevue/usetoast"
 import AuthService from "@/app/services/auth"
-import type { MfaSettings } from "@/app/services/auth/mfa"
+import type { LoginDetailsTab, MfaMethod, MfaSettings } from "@/app/types/auth"
 import { useAuthStore } from "@/app/stores/auth"
 import "./LoginDetailsPage.css"
-
-type MfaMethod = "email" | "authenticator" | "all"
-type LoginDetailsTab = "account" | "password" | "mfa"
 
 const auth = useAuthStore()
 const confirm = useConfirm()

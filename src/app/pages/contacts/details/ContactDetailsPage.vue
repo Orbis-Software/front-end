@@ -2,8 +2,6 @@
 import "./ContactDetailsPage.css"
 import { useContactDetailsPage } from "./useContactDetailsPage"
 
-import Button from "primevue/button"
-
 import ContactDetailsTabs from "@/app/components/contacts/ContactDetailsTabs.vue"
 import ContactOverviewTab from "@/app/components/contacts/overview/ContactOverviewTab.vue"
 import BranchesBillingTab from "@/app/components/contacts/BranchesBillingTab.vue"

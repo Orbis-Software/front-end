@@ -129,28 +129,10 @@
 
 <script setup lang="ts">
 import { computed, reactive, watch } from "vue"
-import Button from "primevue/button"
-import Dropdown from "primevue/dropdown"
-import InputText from "primevue/inputtext"
-import Textarea from "primevue/textarea"
-
-export type ChargeLine = {
-  description: string
-  qty: number
-  unit: string
-  cost: number
-  markup: number // %
-  sell: number
-  total: number
-}
-
-type ChargesInitial = {
-  currency: string
-  defaultTax: string // keep as string for now
-  discount: string // keep as string for now
-  addCharge: string
-  conditions: string
-}
+import type {
+  QuoteChargesCardInitial as ChargesInitial,
+  QuoteChargesCardLine as ChargeLine,
+} from "@/app/types/transportQuote"
 
 const props = defineProps<{
   lines: ChargeLine[]

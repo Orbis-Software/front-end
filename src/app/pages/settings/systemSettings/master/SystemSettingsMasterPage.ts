@@ -5,21 +5,11 @@ import { useSystemSettingsStore } from "@/app/stores/system-settings"
 import type {
   Company,
   CompanyAddress,
+  CompanyReferenceForm,
   CompanyReferenceType,
   CompanyUpdatePayload,
 } from "@/app/types/company"
 import { useToast } from "primevue/usetoast"
-
-type RefForm = {
-  type: CompanyReferenceType
-  title: string
-  prefix: string
-  year_digits: number | null
-
-  start_number: string
-  min_width: number
-  use_system: boolean
-}
 
 const refCatalog: Array<{ type: CompanyReferenceType; title: string; defaultPrefix: string }> = [
   { type: "job", title: "Job Number", defaultPrefix: "JOB" },
@@ -79,7 +69,7 @@ export function useMasterSettingsPage() {
 
     additional_currencies: [] as string[],
 
-    refs: [] as RefForm[],
+    refs: [] as CompanyReferenceForm[],
   })
 
   function setEditable(value: boolean) {
@@ -180,7 +170,7 @@ export function useMasterSettingsPage() {
     },
   })
 
-  function sampleFor(r: RefForm) {
+  function sampleFor(r: CompanyReferenceForm) {
     const prefix = (r.prefix ?? "").trim()
     const raw = digitsMax9(r.start_number || "")
     const width = Math.max(1, Number(r.min_width ?? raw.length ?? 1))
@@ -194,7 +184,7 @@ export function useMasterSettingsPage() {
     return `${prefix}${yy}-${num}`
   }
 
-  function onStartNumberInput(r: RefForm) {
+  function onStartNumberInput(r: CompanyReferenceForm) {
     r.start_number = digitsMax9(r.start_number || "")
     r.min_width = Math.max(1, r.start_number.length || 1)
   }

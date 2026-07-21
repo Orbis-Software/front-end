@@ -1,3 +1,5 @@
+import type { PaginatedSearchParams } from "@/app/types/pagination"
+
 export interface ContactType {
   id: number
   code: string
@@ -6,15 +8,4 @@ export interface ContactType {
   updated_at?: string
 }
 
-export interface PaginationMeta {
-  current_page: number
-  per_page: number
-  total: number
-  last_page: number
-}
-
-export interface PaginatedResponse<T> {
-  data: T[]
-  meta?: PaginationMeta
-  links?: any
-}
+export type ListContactTypesParams = PaginatedSearchParams

@@ -1,10 +1,6 @@
 <script setup lang="ts">
 import "./ArrivalLogTab.css"
 import { useArrivalLogTab } from "./ArrivalLogTab"
-import InputText from "primevue/inputtext"
-import Dropdown from "primevue/dropdown"
-import Button from "primevue/button"
-
 const {
   search,
   selectedCustomer,

@@ -153,12 +153,6 @@
 
 <script setup lang="ts">
 import "@/app/pages/jobs/JobPage.css"
-import AutoComplete from "primevue/autocomplete"
-import InputText from "primevue/inputtext"
-import Calendar from "primevue/calendar"
-import Textarea from "primevue/textarea"
-import Button from "primevue/button"
-
 import JobStepHeader from "@/app/components/jobs/JobStepHeader.vue"
 import JobTypeSelector from "@/app/components/jobs/JobTypeSelector.vue"
 import ModeSelector from "@/app/components/jobs/ModeSelector.vue"

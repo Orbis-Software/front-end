@@ -1,26 +1,15 @@
 import http from "@/api/http"
 import userTransformer from "@/app/transformers/user"
-import type { LoginResult, MfaChallengeResult } from "@/app/types/auth"
+import type {
+  AuthenticatorSetup,
+  LoginResult,
+  MfaChallengePayload,
+  MfaChallengeResult,
+  MfaMethod,
+  MfaSettings,
+} from "@/app/types/auth"
 
-export type MfaSettings = {
-  enabled: boolean
-  email_enabled: boolean
-  authenticator_enabled: boolean
-  confirmed_at: string | null
-  last_used_at: string | null
-  recovery_codes: string[]
-}
-
-export type AuthenticatorSetup = {
-  secret: string
-  otpauth_url: string
-}
-
-export async function verifyMfaChallenge(payload: {
-  challenge_id: string
-  method: "authenticator" | "email" | "recovery"
-  code: string
-}): Promise<LoginResult> {
+export async function verifyMfaChallenge(payload: MfaChallengePayload): Promise<LoginResult> {
   const response = await http.post("/auth/mfa/verify", payload)
 
   return {
@@ -63,7 +52,7 @@ export async function verifyEmailMfaSetup(code: string): Promise<MfaSettings> {
   return response.data
 }
 
-export async function disableMfa(method: "email" | "authenticator" | "all"): Promise<MfaSettings> {
+export async function disableMfa(method: MfaMethod): Promise<MfaSettings> {
   const response = await http.post("/auth/mfa/disable", { method })
 
   return response.data

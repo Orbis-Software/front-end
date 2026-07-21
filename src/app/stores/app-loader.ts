@@ -1,15 +1,7 @@
 import { defineStore } from "pinia"
+import type { AppLoaderOptions } from "@/app/types/app-loader"
 
 type LoaderPhase = "hidden" | "entering" | "visible" | "leaving"
-
-export type AppLoaderOptions = {
-  title?: string
-  message?: string
-  messages?: string[]
-  status?: string
-  footer?: string
-  iconClass?: string
-}
 
 const INTRO_MS = 1320
 const OUTRO_MS = 1080
