@@ -1,6 +1,59 @@
 <template>
-  <div class="quote-page">
+  <div class="quote-page" :aria-busy="initializingEdit">
     <Toast />
+
+    <div
+      v-if="initializingEdit"
+      class="quote-edit-skeleton"
+      role="status"
+      aria-live="polite"
+      aria-label="Loading quotation details"
+    >
+      <div class="quote-edit-skeleton__top">
+        <Skeleton width="15rem" height="1.4rem" border-radius="8px" />
+        <div class="quote-edit-skeleton__actions">
+          <Skeleton
+            v-for="index in 4"
+            :key="`action-${index}`"
+            width="7.5rem"
+            height="2.4rem"
+            border-radius="8px"
+          />
+        </div>
+      </div>
+
+      <section
+        v-for="section in 2"
+        :key="`selector-${section}`"
+        class="quote-edit-skeleton__card quote-edit-skeleton__card--compact"
+      >
+        <Skeleton width="11rem" height="1.25rem" border-radius="7px" />
+        <div class="quote-edit-skeleton__selector-grid">
+          <Skeleton
+            v-for="item in 5"
+            :key="`selector-${section}-${item}`"
+            height="3.3rem"
+            border-radius="10px"
+          />
+        </div>
+      </section>
+
+      <section v-for="section in 3" :key="`form-${section}`" class="quote-edit-skeleton__card">
+        <Skeleton width="14rem" height="1.3rem" border-radius="7px" />
+        <div class="quote-edit-skeleton__field-grid">
+          <div
+            v-for="field in 8"
+            :key="`field-${section}-${field}`"
+            class="quote-edit-skeleton__field"
+          >
+            <Skeleton width="42%" height="0.7rem" border-radius="5px" />
+            <Skeleton height="2.55rem" border-radius="8px" />
+          </div>
+        </div>
+      </section>
+
+      <span class="sr-only">Loading quotation details...</span>
+    </div>
 
     <div class="quote-top">
       <div class="quote-title">
@@ -1163,6 +1216,7 @@ import LoadPlannerPanel from "@/app/components/load-planner/LoadPlannerPanel.vue
 import QuoteStepHeader from "@/app/components/quotes/create/QuoteStepHeader.vue"
 import QuoteTypeSelector from "@/app/components/quotes/create/QuoteTypeSelector.vue"
 import DestinationAddressPickerModal from "@/app/components/jobs/details/DestinationAddressPickerModal.vue"
+import Skeleton from "primevue/skeleton"
 import { useQuoteCreatePage } from "./QuoteCreatePage"
 
 const {
@@ -1178,6 +1232,7 @@ const {
   previewing,
   saving,
   error,
+  initializingEdit,
 
   QUOTE_TYPES,
   availableModes,

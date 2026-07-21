@@ -13,6 +13,7 @@ const CustomerDefaultLayout = () => import("@/app/layouts/CustomerDefaultLayout.
 ========================= */
 const PlaceholderPage = () => import("@/app/pages/default/PlaceholderPage.vue")
 const NotFoundPage = () => import("@/app/pages/default/NotFoundPage.vue")
+const HomePage = () => import("@/app/pages/home/HomePage.vue")
 
 /* =========================
    Auth
@@ -132,6 +133,15 @@ const WmsAdminPage = () => import("@/app/pages/wms-admin/WmsAdminPage.vue")
 const WmsAdminListTab = () => import("@/app/pages/wms-admin/WmsAdminListTab.vue")
 
 export const routes: RouteRecordRaw[] = [
+  {
+    path: "/",
+    name: "home",
+    component: HomePage,
+    meta: {
+      title: "Freight & Logistics Management",
+    },
+  },
+
   {
     path: "/login",
     component: AuthLayout,
