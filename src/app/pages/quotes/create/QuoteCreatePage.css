@@ -18,10 +18,102 @@
   --quote-control-disabled-bg: #f7f7f7;
 
   padding: 18px 22px 40px;
+  position: relative;
   width: 100%;
   min-height: 100%;
   background: var(--quote-shell);
   color: var(--quote-text);
+}
+
+.quote-edit-skeleton {
+  position: absolute;
+  z-index: 50;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 100vh;
+  padding: 18px 22px 40px;
+  background: var(--quote-shell);
+}
+
+.quote-edit-skeleton__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 42px;
+}
+
+.quote-edit-skeleton__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.quote-edit-skeleton__card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+  border: 1px solid var(--quote-border);
+  border-radius: 12px;
+  background: var(--quote-surface);
+}
+
+.quote-edit-skeleton__card--compact {
+  gap: 10px;
+  padding: 12px;
+}
+
+.quote-edit-skeleton__selector-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.quote-edit-skeleton__field-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.quote-edit-skeleton__field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.quote-edit-skeleton .p-skeleton {
+  background: #e5e5e5;
+}
+
+.quote-edit-skeleton .p-skeleton::after {
+  background: linear-gradient(90deg, transparent, rgba(236, 105, 26, 0.08), transparent);
+}
+
+@media (max-width: 1100px) {
+  .quote-edit-skeleton__selector-grid,
+  .quote-edit-skeleton__field-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .quote-edit-skeleton__top {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .quote-edit-skeleton__actions {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  .quote-edit-skeleton__selector-grid,
+  .quote-edit-skeleton__field-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .quote-page .quote-top {

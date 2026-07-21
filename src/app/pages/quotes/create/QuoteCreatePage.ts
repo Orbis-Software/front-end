@@ -88,6 +88,7 @@ export function useQuoteCreatePage() {
   })
 
   const isEditMode = computed(() => Boolean(quoteId.value))
+  const initializingEdit = ref(isEditMode.value)
   const activeDraftId = ref<number | null>(quoteId.value)
   const hasUnsavedChanges = ref(false)
   const hasQuoteActivity = ref(false)
@@ -2197,56 +2198,60 @@ export function useQuoteCreatePage() {
   }
 
   onMounted(async () => {
-    companyStore.hydrateFromAuth()
+    try {
+      companyStore.hydrateFromAuth()
 
-    const hasSeq =
-      Array.isArray(companyStore.item?.reference_sequences) &&
-      companyStore.item.reference_sequences.length > 0
+      const hasSeq =
+        Array.isArray(companyStore.item?.reference_sequences) &&
+        companyStore.item.reference_sequences.length > 0
 
-    await Promise.allSettled([
-      fetchCustomers(),
-      fetchSuppliers(),
-      fetchGlobalReferenceOptions(),
-      referenceDataStore.categories.length ? Promise.resolve() : referenceDataStore.fetchAll(),
-      chargeCodeStore.fetchAll({ sort: "description", direction: "asc", perPage: 1000 }),
-      hasSeq ? Promise.resolve() : companyStore.fetch(),
-    ])
+      await Promise.allSettled([
+        fetchCustomers(),
+        fetchSuppliers(),
+        fetchGlobalReferenceOptions(),
+        referenceDataStore.categories.length ? Promise.resolve() : referenceDataStore.fetchAll(),
+        chargeCodeStore.fetchAll({ sort: "description", direction: "asc", perPage: 1000 }),
+        hasSeq ? Promise.resolve() : companyStore.fetch(),
+      ])
 
-    if (isEditMode.value && quoteId.value) {
-      const quote = await loadQuoteForEdit(quoteId.value)
-      activeDraftId.value = quote.id
-      lastDraftSavedAt.value = quote.updated_at ? new Date(quote.updated_at) : null
-    } else {
-      form.currency = baseCurrency.value
-      const defaultTerms = referenceDataStore
-        .getByKey("quote_terms_conditions")
-        ?.options.find(option => option.is_default)
-      if (defaultTerms) {
-        form.conditions_preset = defaultTerms.name
-        onConditionsPresetChange()
+      if (isEditMode.value && quoteId.value) {
+        const quote = await loadQuoteForEdit(quoteId.value)
+        activeDraftId.value = quote.id
+        lastDraftSavedAt.value = quote.updated_at ? new Date(quote.updated_at) : null
+      } else {
+        form.currency = baseCurrency.value
+        const defaultTerms = referenceDataStore
+          .getByKey("quote_terms_conditions")
+          ?.options.find(option => option.is_default)
+        if (defaultTerms) {
+          form.conditions_preset = defaultTerms.name
+          onConditionsPresetChange()
+        }
+        refreshQuoteRefPreview(true)
+        addDimensionRow()
+        addBuyCostLine("Freight Charge")
+        addSellChargeLine("Freight Charge")
       }
-      refreshQuoteRefPreview(true)
-      addDimensionRow()
-      addBuyCostLine("Freight Charge")
-      addSellChargeLine("Freight Charge")
-    }
 
-    const recovered = restoreLocalRecovery()
-    syncAutomaticQuoteDates(false)
-    await Promise.all([
-      ...buyCostLines.value.map(line => updateChargeExchangeRate(line, false)),
-      updateSellingCurrencyExchangeRate(false),
-    ])
-    formReady = true
-    window.addEventListener("beforeunload", handleBeforeUnload)
+      const recovered = restoreLocalRecovery()
+      syncAutomaticQuoteDates(false)
+      await Promise.all([
+        ...buyCostLines.value.map(line => updateChargeExchangeRate(line, false)),
+        updateSellingCurrencyExchangeRate(false),
+      ])
+      formReady = true
+      window.addEventListener("beforeunload", handleBeforeUnload)
 
-    if (recovered) {
-      toast.add({
-        severity: "info",
-        summary: "Unsaved Quote Restored",
-        detail: "Your browser-only recovery has been restored. Save it as a draft when ready.",
-        life: 4500,
-      })
+      if (recovered) {
+        toast.add({
+          severity: "info",
+          summary: "Unsaved Quote Restored",
+          detail: "Your browser-only recovery has been restored. Save it as a draft when ready.",
+          life: 4500,
+        })
+      }
+    } finally {
+      initializingEdit.value = false
     }
   })
 
@@ -2336,6 +2341,7 @@ export function useQuoteCreatePage() {
     previewing,
     saving,
     error,
+    initializingEdit,
 
     QUOTE_TYPES,
     availableModes,
