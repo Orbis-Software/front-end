@@ -1,12 +1,16 @@
 <script setup lang="ts">
-import { computed } from "vue"
+import { computed, onMounted, ref } from "vue"
 import { useRouter } from "vue-router"
 import { useAuthStore } from "@/app/stores/auth"
+import { useTransportQuoteStore } from "@/app/stores/transportQuote"
 import type { TransportJob, TransportMode } from "@/app/types/transport-job"
+import type { TransportQuote } from "@/app/types/transportQuote"
 import type { CustomerDashboardStat as DashboardStat } from "@/app/types/customer"
 
 const router = useRouter()
 const auth = useAuthStore()
+const quoteStore = useTransportQuoteStore()
+const quoteLoadError = ref("")
 
 const customerName = computed(() => {
   return auth.customer?.contact?.company_name ?? auth.customer?.name ?? "Customer"
@@ -37,6 +41,22 @@ function shortenCustomerName(name: string): string {
 const displayCustomerName = computed(() => shortenCustomerName(customerName.value))
 
 const jobs = computed(() => auth.customer?.transport_jobs ?? [])
+const quotes = computed(() => quoteStore.quotes)
+const quotesLoading = computed(() => quoteStore.loading)
+
+const pendingQuoteCount = computed(() => {
+  return quotes.value.filter(quote => normalizedStatus(quote.status) === "sent").length
+})
+
+const recentQuotes = computed(() => {
+  return [...quotes.value]
+    .sort(
+      (a, b) =>
+        dateValue(b.updated_at ?? b.created_at ?? b.quote_date) -
+        dateValue(a.updated_at ?? a.created_at ?? a.quote_date),
+    )
+    .slice(0, 4)
+})
 
 const activeJobs = computed(() => {
   return jobs.value.filter(job => !isDelivered(job.status))
@@ -78,9 +98,9 @@ const stats = computed<DashboardStat[]>(() => [
     tone: "gray",
   },
   {
-    label: "Open Quotes",
-    value: 0,
-    note: "No quote feed connected yet",
+    label: "Quotes",
+    value: quotes.value.length,
+    note: `${pendingQuoteCount.value} awaiting your response`,
     icon: "pi pi-file-edit",
     tone: "dark",
   },
@@ -128,6 +148,27 @@ function statusLabel(status: string | null | undefined): string {
   return status || "Draft"
 }
 
+function quoteStatusLabel(status: string | null | undefined): string {
+  const value = normalizedStatus(status)
+
+  if (value === "sent") return "Pending"
+  if (value === "accepted") return "Accepted"
+  if (value === "rejected") return "Declined"
+  if (value === "converted") return "Converted"
+
+  return statusLabel(status)
+}
+
+function quoteStatusClass(status: string | null | undefined): string {
+  const value = normalizedStatus(status)
+
+  if (["accepted", "converted"].includes(value)) return "badge--green"
+  if (value === "sent") return "badge--amber"
+  if (value === "rejected") return "badge--red"
+
+  return "badge--gray"
+}
+
 function modeLabel(mode: TransportMode | null): string {
   if (!mode) return "Not set"
   return mode.replace(/_/g, " ").replace(/\b\w/g, char => char.toUpperCase())
@@ -151,13 +192,57 @@ function activityText(job: TransportJob): string {
   return `${job.job_number} is ${statusLabel(job.status).toLowerCase()}`
 }
 
+function quoteReference(quote: TransportQuote): string {
+  return quote.quote_ref || `QUOTE-${quote.id}`
+}
+
+function quoteRoute(quote: TransportQuote): string {
+  return [quote.origin, quote.destination].filter(Boolean).join(" to ") || "Route pending"
+}
+
+function quoteAmount(quote: TransportQuote): string {
+  const value = Number(quote.totals?.total_incl_tax || 0)
+
+  return new Intl.NumberFormat("en-GB", {
+    style: "currency",
+    currency: quote.currency || "GBP",
+  }).format(value)
+}
+
+async function loadQuotes() {
+  quoteLoadError.value = ""
+
+  try {
+    await quoteStore.fetchQuotes({
+      page: 1,
+      per_page: 100,
+      q: null,
+      quote_type: null,
+      mode_of_transport: null,
+      status: null,
+    })
+  } catch {
+    quoteLoadError.value = "Quotes could not be loaded. Please try again shortly."
+  }
+}
+
 function goShipments() {
   router.push({ name: "customer.shipments" })
+}
+
+function goQuotes() {
+  router.push({ name: "customer.quotes" })
+}
+
+function openQuote(id: number) {
+  router.push({ name: "customer.quotes.show", params: { id } })
 }
 
 function openShipment(id: number) {
   router.push({ name: "customer.shipments", query: { job: id } })
 }
+
+onMounted(loadQuotes)
 </script>
 
 <template>
@@ -169,7 +254,12 @@ function openShipment(id: number) {
         <p class="welcome-subtitle">Here's your logistics overview.</p>
       </div>
 
-      <Button label="Request Quote" icon="pi pi-plus" class="btn btn--primary" />
+      <Button
+        label="View Quotes"
+        icon="pi pi-file-edit"
+        class="btn btn--primary"
+        @click="goQuotes"
+      />
     </section>
 
     <section class="stats-grid">
@@ -241,14 +331,60 @@ function openShipment(id: number) {
         <div class="mini-card">
           <div class="mini-header">
             <h3>Recent Quotes</h3>
+
+            <Button
+              label="View all"
+              icon="pi pi-arrow-right"
+              iconPos="right"
+              class="btn btn--ghost btn--small"
+              @click="goQuotes"
+            />
           </div>
 
-          <div class="mini-list">
-            <div class="empty-mini">
+          <div class="mini-list quote-list">
+            <button
+              v-for="quote in recentQuotes"
+              :key="quote.id"
+              class="quote-item"
+              type="button"
+              @click="openQuote(quote.id)"
+            >
+              <span class="quote-item__top">
+                <strong>{{ quoteReference(quote) }}</strong>
+                <span class="badge" :class="quoteStatusClass(quote.status)">
+                  {{ quoteStatusLabel(quote.status) }}
+                </span>
+              </span>
+
+              <span class="quote-item__route">{{ quoteRoute(quote) }}</span>
+
+              <span class="quote-item__meta">
+                <strong>{{ quoteAmount(quote) }}</strong>
+                <span>Valid until {{ formatDate(quote.valid_until) }}</span>
+              </span>
+            </button>
+
+            <div v-if="quotesLoading && !recentQuotes.length" class="empty-mini">
+              <i class="pi pi-spin pi-spinner" />
+              <div>
+                <strong>Loading quotes</strong>
+                <span>Getting your latest quotation details.</span>
+              </div>
+            </div>
+
+            <div v-else-if="quoteLoadError" class="empty-mini empty-mini--error">
+              <i class="pi pi-exclamation-circle" />
+              <div>
+                <strong>Quotes unavailable</strong>
+                <span>{{ quoteLoadError }}</span>
+              </div>
+            </div>
+
+            <div v-else-if="!recentQuotes.length" class="empty-mini">
               <i class="pi pi-file-edit" />
               <div>
                 <strong>No recent quotes</strong>
-                <span>Quote data is not connected yet.</span>
+                <span>Quotes sent to your company will appear here.</span>
               </div>
             </div>
           </div>

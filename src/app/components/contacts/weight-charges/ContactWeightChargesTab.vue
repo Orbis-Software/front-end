@@ -66,6 +66,7 @@ const activeTableId = ref<number | null>(null)
 const newTableName = ref("")
 const saving = ref(false)
 const isHydrating = ref(false)
+const customWeightBreaksExpanded = ref(true)
 const creating = ref(false)
 const deleting = ref(false)
 const loadError = ref<string | null>(null)
@@ -665,11 +666,15 @@ async function hydrateFromTable(table: ContactChargeTable | null) {
   }
 }
 
-function buildPayload(nameOverride?: string): ContactChargeTablePayload {
+function buildPayload(
+  nameOverride?: string,
+  sourceBreaks: WeightBreak[] = weightBreaks.value,
+  sourceCharges: ChargeRow[] = charges.value,
+): ContactChargeTablePayload {
   const finalName = (nameOverride ?? tableTitle.value).trim() || "Collection Charges"
   const unit = activeMeasurementUnit.value
 
-  const breaks: ContactChargeBreakPayload[] = weightBreaks.value.map((item, index) => ({
+  const breaks: ContactChargeBreakPayload[] = sourceBreaks.map((item, index) => ({
     label: item.label?.trim() || `Break ${index + 1}`,
     min_value: Number(item.min ?? 0),
     max_value: Number(item.max ?? 0),
@@ -677,13 +682,13 @@ function buildPayload(nameOverride?: string): ContactChargeTablePayload {
     sort_order: index + 1,
   }))
 
-  const rows: ContactChargeRowPayload[] = charges.value.map((row, rowIndex) => ({
+  const rows: ContactChargeRowPayload[] = sourceCharges.map((row, rowIndex) => ({
     description: row.description?.trim() || "New Charge",
     value_type: "money",
     charge_basis: "flat",
     is_required: false,
     sort_order: rowIndex + 1,
-    values: weightBreaks.value.map((_, breakIndex) => ({
+    values: sourceBreaks.map((_, breakIndex) => ({
       break_sort_order: breakIndex + 1,
       amount: Number(row.values[breakIndex] ?? 0),
     })),
@@ -743,11 +748,11 @@ async function ensureAtLeastOneTable() {
 
 async function selectTable(table: ChargeTableListItem) {
   if (!contactId.value) return
+  if (table.id === activeTableId.value) return
 
-  if (autosaveTimer) {
-    clearTimeout(autosaveTimer)
-    autosaveTimer = null
-  }
+  const saved = await flushPendingAutosave()
+  if (!saved) return
+
   isHydrating.value = true
   activeTableId.value = table.id
   const loaded = await contactStore.loadChargeTable(contactId.value, table.id)
@@ -767,7 +772,13 @@ async function createTable() {
       )
     }
 
-    const created = await contactStore.createChargeTable(contactId.value, buildPayload(name))
+    const saved = await flushPendingAutosave()
+    if (!saved) return
+
+    const created = await contactStore.createChargeTable(
+      contactId.value,
+      buildPayload(name, defaultWeightBreaks(), defaultCharges()),
+    )
     await fetchTables()
     activeTableId.value = created.id
     newTableName.value = ""
@@ -799,6 +810,12 @@ function deleteCurrentTable() {
     acceptClass: "p-button-danger",
     accept: async () => {
       deleting.value = true
+
+      if (autosaveTimer) {
+        clearTimeout(autosaveTimer)
+        autosaveTimer = null
+      }
+      pendingAutosaveChanges.clear()
 
       try {
         if (!contactId.value) {
@@ -834,8 +851,11 @@ function deleteCurrentTable() {
   })
 }
 
-async function saveCurrentTableSilently(tableId = activeTableId.value) {
-  if (!contactId.value || !tableId || isHydrating.value) return
+async function saveCurrentTableSilently(
+  tableId = activeTableId.value,
+  showSuccessToast = true,
+): Promise<boolean> {
+  if (!contactId.value || !tableId || isHydrating.value) return true
 
   saving.value = true
 
@@ -851,21 +871,37 @@ async function saveCurrentTableSilently(tableId = activeTableId.value) {
 
     await fetchTables()
 
-    toast.add({
-      severity: "success",
-      summary: "Saved changes",
-      detail: flushAutosaveChangeDetail(),
-      life: 3000,
-    })
+    if (showSuccessToast) {
+      toast.add({
+        severity: "success",
+        summary: "Saved changes",
+        detail: flushAutosaveChangeDetail(),
+        life: 3000,
+      })
+    } else {
+      pendingAutosaveChanges.clear()
+    }
+
+    return true
   } catch (error: any) {
     console.error("AUTOSAVE FAILED", error)
 
     showError("Auto-save failed", error, "Something went wrong.")
+    return false
   } finally {
     await nextTick()
     suppressCurrentTableHydrate = false
     saving.value = false
   }
+}
+
+async function flushPendingAutosave(): Promise<boolean> {
+  if (!autosaveTimer) return true
+
+  clearTimeout(autosaveTimer)
+  autosaveTimer = null
+
+  return saveCurrentTableSilently(activeTableId.value, false)
 }
 
 function queueAutosave() {
@@ -876,8 +912,13 @@ function queueAutosave() {
   }
 
   autosaveTimer = setTimeout(async () => {
+    autosaveTimer = null
     await saveCurrentTableSilently()
   }, 1200)
+}
+
+function toggleCustomWeightBreaks() {
+  customWeightBreaksExpanded.value = !customWeightBreaksExpanded.value
 }
 
 function addWeightBreak() {
@@ -899,14 +940,36 @@ function addWeightBreak() {
 }
 
 function removeWeightBreak(id: number) {
-  const index = weightBreaks.value.findIndex(item => item.id === id)
-  if (index === -1) return
-  if (weightBreaks.value.length <= 1) return
+  const weightBreak = weightBreaks.value.find(item => item.id === id)
+  if (!weightBreak) return
 
-  weightBreaks.value.splice(index, 1)
+  if (weightBreaks.value.length <= 1) {
+    toast.add({
+      severity: "warn",
+      summary: "Break required",
+      detail: "A weight charge sheet must keep at least one custom weight break.",
+      life: 3500,
+    })
+    return
+  }
 
-  charges.value.forEach(row => {
-    row.values.splice(index, 1)
+  confirm.require({
+    header: "Remove Weight Break",
+    message: `Are you sure you want to remove "${weightBreak.label}"? Its Charge Matrix column and all values in that column will also be removed from this sheet.`,
+    icon: "pi pi-exclamation-triangle",
+    acceptLabel: "Remove",
+    rejectLabel: "Cancel",
+    acceptClass: "p-button-danger",
+    accept: () => {
+      const index = weightBreaks.value.findIndex(item => item.id === id)
+      if (index === -1 || weightBreaks.value.length <= 1) return
+
+      weightBreaks.value.splice(index, 1)
+
+      charges.value.forEach(row => {
+        row.values.splice(index, 1)
+      })
+    },
   })
 }
 
@@ -1201,67 +1264,86 @@ onUnmounted(() => {
           </div>
         </section>
 
-        <div class="wcToolbar">
-          <Button
-            label="Add break"
-            icon="pi pi-plus"
-            class="btn btn--primary wcBtn"
-            :disabled="!activeTableId"
-            @click="addWeightBreak"
-          />
-        </div>
+        <section class="wcCard" :class="{ 'wcCard--collapsed': !customWeightBreaksExpanded }">
+          <div
+            class="wcPanelHead"
+            :class="{ 'wcPanelHead--collapsed': !customWeightBreaksExpanded }"
+          >
+            <button
+              type="button"
+              class="wcPanelToggle"
+              :aria-expanded="customWeightBreaksExpanded"
+              :aria-label="`${customWeightBreaksExpanded ? 'Hide' : 'Show'} custom weight breaks`"
+              @click="toggleCustomWeightBreaks"
+            >
+              <span class="wcSectionTitle wcSectionTitle--icon">
+                <i class="pi pi-briefcase"></i>
+                <span>Custom Weight Breaks</span>
+                <span class="wcPanelCount">{{ weightBreaks.length }}</span>
+              </span>
+              <span class="wcPanelToggle__label">
+                {{ customWeightBreaksExpanded ? "Hide" : "Show" }}
+              </span>
+              <i
+                class="pi pi-chevron-down wcChevron"
+                :class="{ 'wcChevron--collapsed': !customWeightBreaksExpanded }"
+              ></i>
+            </button>
 
-        <section class="wcCard">
-          <div class="wcPanelHead">
-            <div class="wcSectionTitle wcSectionTitle--icon">
-              <i class="pi pi-briefcase"></i>
-              <span>Custom Weight Breaks</span>
-              <i class="pi pi-chevron-down wcChevron"></i>
-            </div>
+            <Button
+              v-if="customWeightBreaksExpanded"
+              label="Add break"
+              icon="pi pi-plus"
+              class="btn btn--primary wcBtn"
+              :disabled="!activeTableId"
+              @click="addWeightBreak"
+            />
           </div>
 
-          <p class="wcHelpText">
-            Define custom weight or volume ranges for your collection charges. Each break will
-            create a column in the charges table.
-          </p>
+          <div v-show="customWeightBreaksExpanded" class="wcBreakEditor">
+            <p class="wcHelpText">
+              Define custom weight or volume ranges for this charge sheet. Each break creates a
+              column in this sheet's charge matrix only.
+            </p>
 
-          <div class="wcBreaks">
-            <div v-for="weightBreak in weightBreaks" :key="weightBreak.id" class="wcBreakCard">
-              <div class="wcBreakCard__head">
-                <span>{{ weightBreak.label }}</span>
-                <div class="wcBreakCard__icons">
-                  <i class="pi pi-pencil"></i>
-                  <i class="pi pi-times" @click="removeWeightBreak(weightBreak.id)"></i>
-                </div>
-              </div>
-
-              <div class="wcBreakCard__fields">
-                <div class="wcMiniField">
-                  <label>Min ({{ activeMeasurementUnit }})</label>
-                  <input
-                    :value="weightBreak.min"
-                    type="text"
-                    inputmode="numeric"
-                    pattern="[0-9]*"
-                    @input="updateWeightBreakValue(weightBreak, 'min', $event)"
-                  />
+            <div class="wcBreaks">
+              <div v-for="weightBreak in weightBreaks" :key="weightBreak.id" class="wcBreakCard">
+                <div class="wcBreakCard__head">
+                  <span>{{ weightBreak.label }}</span>
+                  <div class="wcBreakCard__icons">
+                    <i class="pi pi-pencil"></i>
+                    <i class="pi pi-times" @click="removeWeightBreak(weightBreak.id)"></i>
+                  </div>
                 </div>
 
-                <div class="wcMiniField">
-                  <label>Max ({{ activeMeasurementUnit }})</label>
-                  <input
-                    :value="weightBreak.max"
-                    type="text"
-                    inputmode="numeric"
-                    pattern="[0-9]*"
-                    @input="updateWeightBreakValue(weightBreak, 'max', $event)"
-                  />
-                </div>
-              </div>
+                <div class="wcBreakCard__fields">
+                  <div class="wcMiniField">
+                    <label>Min ({{ activeMeasurementUnit }})</label>
+                    <input
+                      :value="weightBreak.min"
+                      type="text"
+                      inputmode="numeric"
+                      pattern="[0-9]*"
+                      @input="updateWeightBreakValue(weightBreak, 'min', $event)"
+                    />
+                  </div>
 
-              <div class="wcBreakCard__foot">
-                {{ weightBreak.min }} {{ activeMeasurementUnit }} - {{ weightBreak.max }}
-                {{ activeMeasurementUnit }}
+                  <div class="wcMiniField">
+                    <label>Max ({{ activeMeasurementUnit }})</label>
+                    <input
+                      :value="weightBreak.max"
+                      type="text"
+                      inputmode="numeric"
+                      pattern="[0-9]*"
+                      @input="updateWeightBreakValue(weightBreak, 'max', $event)"
+                    />
+                  </div>
+                </div>
+
+                <div class="wcBreakCard__foot">
+                  {{ weightBreak.min }} {{ activeMeasurementUnit }} - {{ weightBreak.max }}
+                  {{ activeMeasurementUnit }}
+                </div>
               </div>
             </div>
           </div>
@@ -1278,6 +1360,22 @@ onUnmounted(() => {
         </section>
 
         <section class="wcCard wcCard--table">
+          <nav class="wcSheetTabs" role="tablist" aria-label="Weight Charge Sheets">
+            <button
+              v-for="table in tables"
+              :key="table.id"
+              type="button"
+              role="tab"
+              class="wcSheetTab"
+              :class="{ 'wcSheetTab--active': table.id === activeTableId }"
+              :aria-selected="table.id === activeTableId"
+              :disabled="loadingCurrentTable"
+              @click="selectTable(table)"
+            >
+              {{ table.name }}
+            </button>
+          </nav>
+
           <div class="wcTableToolbar">
             <div>
               <div class="wcTableToolbar__title">Charge Matrix</div>

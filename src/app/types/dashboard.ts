@@ -72,10 +72,12 @@ export interface DashboardQuoteReminder {
   ref: string
   customer: string
   owner: string
-  follow_up_date: string
+  follow_up_date: string | null
+  reminder_date: string
+  reminder_type: "accepted" | "customer_follow_up"
   valid_until: string | null
   status: string
-  urgency: "overdue" | "today" | "upcoming"
+  urgency: "accepted" | "overdue" | "today" | "upcoming"
 }
 
 export interface DashboardModeMetric {

@@ -1,11 +1,17 @@
 .customer-quote-details {
+  --customer-quote-accent: var(--customer-primary, #ec691a);
+  --customer-quote-accent-hover: var(--customer-primary-hover, #d85d14);
+  --customer-quote-accent-soft: var(--customer-primary-soft, #fff7ed);
+  --customer-quote-border: var(--customer-border, #b6b6b6);
+  --customer-quote-control-border: var(--customer-control-border, #bdbdbd);
   display: flex;
   flex-direction: column;
   gap: 16px;
   padding: 1rem;
   min-height: 100%;
-  background: var(--bg-page);
-  color: #22324a;
+  background: var(--customer-page-bg, #d3d3d3);
+  color: var(--customer-text, #1a1a18);
+  font-family: var(--font-body);
 }
 
 .customer-quote-details__header {
@@ -13,20 +19,38 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
+  padding: 14px 16px;
+  border: 1px solid var(--customer-quote-border);
+  border-radius: 10px;
+  background: var(--customer-section-head, #ececec);
 }
 
 .customer-quote-details__header h1 {
-  margin: 14px 0 0;
-  font-size: 1.7rem;
+  margin: 5px 0 0;
+  color: var(--customer-text, #1a1a18);
+  font-family: var(--font-accent);
+  font-size: 1.5rem;
+  font-weight: 800;
   line-height: 1.15;
+}
+
+.customer-quote-details__eyebrow {
+  display: block;
+  margin-top: 14px;
+  color: var(--customer-quote-accent-hover);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
 }
 
 .customer-quote-details__header small {
   display: block;
   margin-top: 5px;
-  color: #6b7280;
-  font-size: 0.95rem;
-  font-weight: 600;
+  color: var(--customer-muted, #737373);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
 }
 
 .customer-quote-details__actions {
@@ -43,8 +67,9 @@
   min-height: 32px;
   padding: 5px 13px;
   border-radius: 999px;
-  border: 1px solid #d9dee7;
-  background: #f8fafc;
+  border: 1px solid var(--customer-quote-border);
+  background: var(--customer-panel-soft, #eeeeee);
+  color: var(--customer-text, #1a1a18);
   font-size: 12px;
   font-weight: 800;
 }
@@ -70,9 +95,10 @@
 
 .customer-quote-details__hero,
 .customer-quote-details__card {
-  background: #fff;
-  border: 1px solid #dfe5ec;
-  border-radius: 18px;
+  background: var(--customer-surface, #f8f8f8);
+  border: 1px solid var(--customer-quote-border);
+  border-radius: 10px;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.85);
 }
 
 .customer-quote-details__hero {
@@ -80,6 +106,7 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 1px;
   overflow: hidden;
+  background: var(--customer-quote-border);
 }
 
 .customer-quote-details__hero div {
@@ -87,19 +114,21 @@
   flex-direction: column;
   gap: 6px;
   padding: 18px;
-  background: #fff;
+  background: var(--customer-quote-accent-soft);
 }
 
 .customer-quote-details__hero span,
 .customer-quote-details__info dt {
-  color: #6b7280;
-  font-size: 12px;
+  color: var(--customer-muted, #737373);
+  font-size: 10px;
   font-weight: 800;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
 .customer-quote-details__hero strong {
   font-size: 1.2rem;
+  color: var(--customer-quote-accent-hover);
 }
 
 .customer-quote-details__grid {
@@ -110,16 +139,22 @@
 
 .customer-quote-details__card {
   padding: 18px;
+  background: var(--customer-panel-body, #dedede);
 }
 
 .customer-quote-details__card h2 {
-  margin: 0 0 14px;
-  font-size: 1rem;
+  margin: -18px -18px 16px;
+  padding: 13px 16px;
+  border-bottom: 1px solid var(--customer-quote-border);
+  background: var(--customer-section-head, #ececec);
+  color: var(--customer-text, #1a1a18);
+  font-size: 14px;
+  font-weight: 800;
 }
 
 .customer-quote-details__card p {
   margin: 0;
-  color: #334155;
+  color: #525252;
   line-height: 1.5;
 }
 
@@ -132,11 +167,15 @@
 
 .customer-quote-details__info div {
   min-width: 0;
+  padding: 10px;
+  border: 1px solid var(--customer-quote-control-border);
+  border-radius: 8px;
+  background: var(--customer-control-bg, #fff);
 }
 
 .customer-quote-details__info dd {
   margin: 4px 0 0;
-  color: #22324a;
+  color: var(--customer-text, #1a1a18);
   font-weight: 700;
   overflow-wrap: anywhere;
 }
@@ -150,7 +189,7 @@
 .customer-quote-details pre {
   margin: 0;
   white-space: pre-wrap;
-  color: #334155;
+  color: #525252;
   font-family: inherit;
   line-height: 1.5;
 }
@@ -163,18 +202,129 @@
 
 .customer-quote-details__reference-modal p {
   margin: 0 0 4px;
-  color: #475569;
+  color: #525252;
   line-height: 1.5;
 }
 
 .customer-quote-details__reference-modal label {
-  color: #334155;
-  font-size: 13px;
+  color: var(--customer-muted, #737373);
+  font-size: 10px;
   font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
 .customer-quote-details__reference-input {
   width: 100%;
+  min-height: 38px;
+  border: 1px solid var(--customer-quote-control-border, #bdbdbd);
+  border-radius: 8px;
+  background: var(--customer-control-bg, #fff);
+  color: var(--customer-text, #1a1a18);
+}
+
+.customer-quote-details__reference-input:hover,
+.customer-quote-details__reference-input:focus {
+  border-color: var(--customer-quote-accent, #ec691a);
+  box-shadow: 0 0 0 2px rgba(236, 105, 26, 0.12);
+}
+
+.customer-quote-details__dialog {
+  --customer-quote-accent: #ec691a;
+  --customer-quote-accent-hover: #d85d14;
+  --customer-quote-accent-soft: #fff7ed;
+  --customer-quote-border: #b6b6b6;
+  --customer-quote-control-border: #bdbdbd;
+  overflow: hidden;
+  border: 1px solid var(--customer-quote-border);
+  border-radius: 12px;
+  background: #f8f8f8;
+}
+
+.customer-quote-details__dialog .p-dialog-header,
+.customer-quote-details__dialog .p-dialog-footer {
+  border-color: var(--customer-quote-border);
+  background: #ececec;
+  color: #1a1a18;
+}
+
+.customer-quote-details__dialog .p-dialog-content {
+  background: #dedede;
+  color: #1a1a18;
+}
+
+.customer-quote-details__dialog .p-button {
+  min-height: 38px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.customer-quote-details__dialog .p-button.btn--primary {
+  border-color: var(--customer-quote-accent) !important;
+  background: var(--customer-quote-accent) !important;
+  color: #fff !important;
+}
+
+.customer-quote-details__dialog .p-button.btn--ghost {
+  border-color: var(--customer-quote-control-border) !important;
+  background: #fff !important;
+  color: #1a1a18 !important;
+}
+
+.customer-quote-details .p-button {
+  min-height: 38px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.customer-quote-details .p-button.btn--primary {
+  border-color: var(--customer-quote-accent) !important;
+  background: var(--customer-quote-accent) !important;
+  color: #fff !important;
+}
+
+.customer-quote-details .p-button.btn--primary:hover:not(:disabled) {
+  border-color: var(--customer-quote-accent-hover) !important;
+  background: var(--customer-quote-accent-hover) !important;
+}
+
+.customer-quote-details .p-button.btn--ghost,
+.customer-quote-details__header .p-button.p-button-secondary.p-button-outlined {
+  border-color: var(--customer-quote-control-border) !important;
+  background: var(--customer-control-bg, #fff) !important;
+  color: var(--customer-text, #1a1a18) !important;
+}
+
+.customer-quote-details .p-button.btn--ghost:hover:not(:disabled),
+.customer-quote-details__header .p-button.p-button-secondary.p-button-outlined:hover {
+  border-color: var(--customer-quote-accent) !important;
+  background: var(--customer-quote-accent-soft) !important;
+  color: var(--customer-quote-accent-hover) !important;
+}
+
+.customer-quote-details__card .p-datatable-thead > tr > th {
+  padding: 11px 14px;
+  border-color: var(--customer-quote-border);
+  background: var(--customer-section-head, #ececec);
+  color: var(--customer-text, #1a1a18);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.customer-quote-details__card .p-datatable-tbody > tr > td {
+  padding: 11px 14px;
+  border-color: var(--customer-quote-border);
+  background: var(--customer-control-bg, #fff);
+  color: var(--customer-text, #1a1a18);
+  font-size: 12px;
+}
+
+.customer-quote-details__card .p-datatable-tbody > tr:nth-child(even) > td {
+  background: var(--customer-panel-soft, #eeeeee);
 }
 
 @media (max-width: 900px) {

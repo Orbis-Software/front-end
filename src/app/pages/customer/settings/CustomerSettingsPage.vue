@@ -219,7 +219,11 @@ watch(
   <section class="customer-list-page">
     <header class="customer-list-page__header">
       <div class="customer-list-page__title-wrap">
+        <span class="customer-list-page__eyebrow">Customer Portal</span>
         <h1 class="customer-list-page__title">Settings</h1>
+        <p class="customer-list-page__subtitle">
+          Manage your company profile, users, and portal preferences.
+        </p>
       </div>
     </header>
 
@@ -397,6 +401,7 @@ watch(
 
     <Dialog
       v-model:visible="showInviteDialog"
+      class="settings-invite-dialog"
       header="Invite Portal User"
       modal
       :style="{ width: '520px' }"

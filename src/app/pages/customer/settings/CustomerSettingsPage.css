@@ -1,25 +1,26 @@
 .settings-panel {
-  background: #fff;
-  border: 1px solid #dfe5ec;
-  border-radius: 18px;
+  background: var(--customer-surface, #f8f8f8);
+  border: 1px solid var(--customer-border, #b6b6b6);
+  border-radius: 10px;
   overflow: hidden;
 }
 
 .panel-head {
   padding: 16px 16px;
-  border-bottom: 1px solid #e5eaf1;
-  background: #f8fafc;
+  border-bottom: 1px solid var(--customer-border, #b6b6b6);
+  background: var(--customer-section-head, #ececec);
 }
 
 .panel-head h2 {
   margin: 0;
-  color: #22324a;
+  color: var(--customer-text, #1a1a18);
   font-size: 14px;
   font-weight: 800;
 }
 
 .panel-body {
   padding: 16px;
+  background: var(--customer-panel-body, #dedede);
 }
 
 .form-grid {
@@ -32,8 +33,11 @@ label {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  font-weight: 700;
-  color: #262626;
+  color: var(--customer-muted, #737373);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
 .settings-panel :deep(.p-inputtext),
@@ -41,11 +45,49 @@ label {
 .settings-panel :deep(.p-select),
 .settings-invite-form :deep(.p-select) {
   width: 100%;
+  min-height: 38px;
+  border: 1px solid var(--customer-control-border, #bdbdbd);
+  border-radius: 8px;
+  background: var(--customer-control-bg, #fff);
+  color: var(--customer-text, #1a1a18);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: normal;
+  text-transform: none;
 }
 
 .settings-panel :deep(.p-textarea) {
   width: 100%;
+  border: 1px solid var(--customer-control-border, #bdbdbd);
+  border-radius: 8px;
+  background: var(--customer-control-bg, #fff);
+  color: var(--customer-text, #1a1a18);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: normal;
+  text-transform: none;
   resize: vertical;
+}
+
+.settings-panel :deep(.p-inputtext:hover),
+.settings-invite-form :deep(.p-inputtext:hover),
+.settings-panel :deep(.p-select:hover),
+.settings-invite-form :deep(.p-select:hover),
+.settings-panel :deep(.p-textarea:hover),
+.settings-panel :deep(.p-inputtext:focus),
+.settings-invite-form :deep(.p-inputtext:focus),
+.settings-panel :deep(.p-select.p-focus),
+.settings-invite-form :deep(.p-select.p-focus),
+.settings-panel :deep(.p-textarea:focus) {
+  border-color: var(--customer-primary, #ec691a);
+  box-shadow: 0 0 0 2px rgba(236, 105, 26, 0.12);
+}
+
+.settings-panel :deep(.p-inputtext[readonly]),
+.settings-panel :deep(.p-inputtext:disabled),
+.settings-panel :deep(.p-select.p-disabled) {
+  background: var(--customer-panel-soft, #eeeeee);
+  color: #525252;
 }
 
 .settings-section {
@@ -54,7 +96,7 @@ label {
 
 .settings-section h3 {
   margin: 0 0 10px;
-  color: #737373;
+  color: var(--customer-muted, #737373);
   font-size: 12px;
   font-weight: 800;
   letter-spacing: 0.05em;
@@ -77,8 +119,8 @@ label {
 
 .settings-table-wrap {
   overflow-x: auto;
-  border: 1px solid #dfe5ec;
-  border-radius: 12px;
+  border: 1px solid var(--customer-control-border, #bdbdbd);
+  border-radius: 8px;
 }
 
 .settings-table {
@@ -90,13 +132,13 @@ label {
 .settings-table th,
 .settings-table td {
   padding: 12px 14px;
-  border-bottom: 1px solid #eef2f6;
+  border-bottom: 1px solid var(--customer-border, #b6b6b6);
   text-align: left;
   font-size: 13px;
 }
 
 .settings-table th {
-  background: #f8fafc;
+  background: var(--customer-section-head, #ececec);
   color: #737373;
   font-size: 11px;
   font-weight: 800;
@@ -111,6 +153,10 @@ label {
 .settings-table strong {
   display: block;
   color: #262626;
+}
+
+.settings-table tbody tr:hover td {
+  background: var(--customer-primary-soft, #fff7ed);
 }
 
 .settings-muted {
@@ -132,8 +178,9 @@ label {
 }
 
 .settings-badge--primary {
-  background: #dbeafe;
-  color: #2563eb;
+  border: 1px solid var(--customer-primary-border, #fdba74);
+  background: var(--customer-primary-soft, #fff7ed);
+  color: #9a3412;
 }
 
 .settings-badge--success {
@@ -164,6 +211,25 @@ label {
   gap: 16px;
 }
 
+:global(.settings-invite-dialog) {
+  overflow: hidden;
+  border: 1px solid #b6b6b6;
+  border-radius: 12px;
+  background: #f8f8f8;
+}
+
+:global(.settings-invite-dialog .p-dialog-header),
+:global(.settings-invite-dialog .p-dialog-footer) {
+  border-color: #b6b6b6;
+  background: #ececec;
+  color: #1a1a18;
+}
+
+:global(.settings-invite-dialog .p-dialog-content) {
+  background: #dedede;
+  color: #1a1a18;
+}
+
 .settings-error {
   margin: 0;
   border: 1px solid #fecaca;
@@ -186,8 +252,14 @@ label {
   display: flex;
   justify-content: space-between;
   gap: 18px;
-  padding: 16px 0;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--customer-border, #b6b6b6);
+  border-radius: 8px;
+  background: var(--customer-control-bg, #fff);
+  padding: 14px;
+}
+
+.toggle-row + .toggle-row {
+  margin-top: 10px;
 }
 
 .toggle-row p {
