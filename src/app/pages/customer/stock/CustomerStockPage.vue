@@ -15,7 +15,11 @@ const tabs = [
   <section class="customer-list-page">
     <header class="customer-list-page__header">
       <div class="customer-list-page__title-wrap">
+        <span class="customer-list-page__eyebrow">Customer Portal</span>
         <h1 class="customer-list-page__title">Stock & Inventory</h1>
+        <p class="customer-list-page__subtitle">
+          Monitor available stock and recent inventory movements.
+        </p>
       </div>
 
       <div class="customer-list-page__header-actions">

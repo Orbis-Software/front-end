@@ -22,7 +22,9 @@ const {
 
     <header class="customer-list-page__header">
       <div class="customer-list-page__title-wrap">
+        <span class="customer-list-page__eyebrow">Customer Portal</span>
         <h1 class="customer-list-page__title">Quotes</h1>
+        <p class="customer-list-page__subtitle">Review pricing, validity, and quote responses.</p>
       </div>
 
       <Button

@@ -242,6 +242,7 @@ onMounted(() => {
             @click="onBack"
           />
 
+          <span class="customer-quote-details__eyebrow">Customer Quote</span>
           <h1>
             {{ quote.quote_ref || `QUOTE-${quote.id}` }}
             <small>{{ prettify(quote.mode_of_transport) }} Freight</small>
@@ -416,6 +417,7 @@ onMounted(() => {
 
     <Dialog
       v-model:visible="showCustomerReferenceModal"
+      class="customer-quote-details__dialog"
       header="Customer Reference"
       modal
       :style="{ width: '420px' }"

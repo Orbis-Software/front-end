@@ -247,7 +247,11 @@ function openInvoice(invoice: JobInvoiceSummary) {
   <section class="customer-list-page">
     <header class="customer-list-page__header">
       <div class="customer-list-page__title-wrap">
+        <span class="customer-list-page__eyebrow">Customer Portal</span>
         <h1 class="customer-list-page__title">Shipments</h1>
+        <p class="customer-list-page__subtitle">
+          Track active movements, routes, and delivery progress.
+        </p>
       </div>
 
       <Button

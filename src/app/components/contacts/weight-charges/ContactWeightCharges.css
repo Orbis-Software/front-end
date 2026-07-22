@@ -77,6 +77,7 @@
 
 .wcCard--table {
   padding: 16px;
+  overflow: hidden;
 }
 
 /* TWO COLUMN TOP */
@@ -510,18 +511,76 @@
   gap: 8px;
 }
 
-/* TOOLBAR */
-.wcToolbar {
-  display: flex;
-  justify-content: flex-start;
-}
-
 /* BREAKS */
 .wcPanelHead {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
   margin-bottom: 14px;
+}
+
+.wcPanelHead--collapsed {
+  margin-bottom: 0;
+}
+
+.wcPanelToggle {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.wcPanelToggle .wcSectionTitle {
+  min-width: 0;
+  margin-bottom: 0;
+}
+
+.wcPanelToggle:hover .wcSectionTitle,
+.wcPanelToggle:focus-visible .wcSectionTitle {
+  color: #ec691a;
+}
+
+.wcPanelToggle:focus-visible {
+  outline: 2px solid rgba(236, 105, 26, 0.55);
+  outline-offset: 5px;
+  border-radius: 4px;
+}
+
+.wcPanelToggle__label {
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.wcPanelCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: #e5e7eb;
+  color: #475467;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.wcChevron {
+  transition: transform 0.18s ease;
+}
+
+.wcChevron--collapsed {
+  transform: rotate(-90deg);
 }
 
 .wcHelpText {
@@ -638,6 +697,72 @@
 }
 
 /* TABLE */
+.wcSheetTabs {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  margin: -16px -16px 16px;
+  padding: 0 14px;
+  background: #efefef;
+  border-top: 1px solid #ededed;
+  border-bottom: 1px solid #d9d9d9;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+}
+
+.wcSheetTab {
+  appearance: none;
+  -webkit-appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  min-height: 44px;
+  height: 44px;
+  padding: 0 16px;
+  margin-top: 8px;
+  border: 1px solid transparent;
+  border-bottom: none;
+  border-radius: 10px 10px 0 0;
+  outline: none;
+  box-shadow: none;
+  background: transparent;
+  color: #5c5c5c;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.wcSheetTab:hover:not(:disabled) {
+  color: #222;
+  background: rgba(255, 255, 255, 0.45);
+}
+
+.wcSheetTab--active {
+  position: relative;
+  top: 1px;
+  background: #fff;
+  color: #141414;
+  border-color: #d9d9d9;
+}
+
+.wcSheetTab:focus-visible {
+  outline: 2px solid rgba(236, 105, 26, 0.55);
+  outline-offset: -3px;
+}
+
+.wcSheetTab:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
 .wcTableToolbar {
   display: flex;
   align-items: center;
@@ -811,6 +936,18 @@
 }
 
 @media (max-width: 640px) {
+  .wcSheetTabs {
+    padding: 0 10px;
+  }
+
+  .wcSheetTab {
+    min-height: 40px;
+    height: 40px;
+    padding: 0 14px;
+    margin-top: 6px;
+    font-size: 12px;
+  }
+
   .wcBreaks {
     grid-template-columns: 1fr;
   }
@@ -820,11 +957,12 @@
     align-items: flex-start;
   }
 
-  .wcToolbar {
-    justify-content: stretch;
+  .wcPanelHead {
+    align-items: stretch;
+    flex-direction: column;
   }
 
-  .wcToolbar .p-button {
+  .wcPanelHead .p-button {
     width: 100%;
   }
 }

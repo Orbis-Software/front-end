@@ -34,11 +34,6 @@ export function useGeneralSettingsPage() {
       group: "Documentation",
     },
     {
-      label: "Contacts & Addresses",
-      name: "general-settings.contacts-addresses",
-      group: "Contacts & addresses",
-    },
-    {
       label: "Global Reference Data",
       name: "general-settings.global-reference-data",
       count: 3,

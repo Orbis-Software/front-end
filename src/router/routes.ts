@@ -68,8 +68,6 @@ const FreightCargoTab = () => import("@/app/pages/general-settings/tabs/FreightC
 const OperationsTab = () => import("@/app/pages/general-settings/tabs/OperationsTab.vue")
 const WarehouseTab = () => import("@/app/pages/general-settings/tabs/WarehouseTab.vue")
 const DocumentationTab = () => import("@/app/pages/general-settings/tabs/DocumentationTab.vue")
-const ContactsAddressesTab = () =>
-  import("@/app/pages/general-settings/tabs/ContactsAddressesTab.vue")
 
 /* =========================
    Management Pages
@@ -138,6 +136,7 @@ export const routes: RouteRecordRaw[] = [
     name: "home",
     component: HomePage,
     meta: {
+      guestOnly: true,
       title: "Freight & Logistics Management",
     },
   },
@@ -824,12 +823,6 @@ export const routes: RouteRecordRaw[] = [
             name: "general-settings.documentation",
             component: DocumentationTab,
             meta: { title: "Documentation" },
-          },
-          {
-            path: "contacts-addresses",
-            name: "general-settings.contacts-addresses",
-            component: ContactsAddressesTab,
-            meta: { title: "Contacts & Addresses" },
           },
           {
             path: "global-reference-data",

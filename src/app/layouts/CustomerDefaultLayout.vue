@@ -45,14 +45,27 @@ onBeforeUnmount(() => {
 <style scoped>
 .customer-shell {
   --customer-primary: #ec691a;
-  --customer-primary-hover: #d85f17;
-  --customer-page-bg: #d4d4d4;
-  --customer-card-bg: #ffffff;
-  --customer-border: #c7c7c7;
-  --customer-text: #262626;
+  --customer-primary-hover: #d85d14;
+  --customer-primary-soft: #fff7ed;
+  --customer-primary-border: #fdba74;
+  --customer-page-bg: #d3d3d3;
+  --customer-surface: #f8f8f8;
+  --customer-section-head: #ececec;
+  --customer-panel-body: #dedede;
+  --customer-panel-soft: #eeeeee;
+  --customer-control-bg: #ffffff;
+  --customer-card-bg: var(--customer-surface);
+  --customer-border: #b6b6b6;
+  --customer-control-border: #bdbdbd;
+  --customer-text: #1a1a18;
   --customer-muted: #737373;
   --customer-content-max: 1400px;
   --customer-side-padding: clamp(20px, 2.4vw, 32px);
+  --primary: var(--customer-primary);
+  --bg-page: var(--customer-page-bg);
+  --bg-card: var(--customer-surface);
+  --border: var(--customer-border);
+  --text: var(--customer-text);
 
   min-height: 100vh;
   background: var(--customer-page-bg);

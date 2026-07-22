@@ -413,6 +413,16 @@
   background: #fffaf6;
 }
 
+.quote-reminder--accepted {
+  border-left-color: #23915e;
+  background: #f5fcf8;
+}
+
+.quote-reminder--accepted .quote-reminder__status {
+  background: #dcf5e8;
+  color: #176d46;
+}
+
 .quote-reminder__top {
   display: flex;
   align-items: center;
@@ -440,10 +450,16 @@
 }
 
 .quote-reminder__date,
-.quote-reminder__owner {
+.quote-reminder__owner,
+.quote-reminder__notice {
   margin-top: 8px;
   color: #737373;
   font-size: 12px;
+}
+
+.quote-reminder__notice {
+  color: #176d46;
+  font-weight: 700;
 }
 
 .quote-reminder__owner {

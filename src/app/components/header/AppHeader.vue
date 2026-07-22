@@ -32,6 +32,8 @@ const notificationStore = useNotificationStore()
 const userDropdownOpen = ref(false)
 const notificationsOpen = ref(false)
 const notificationsEnabled = computed(() => props.area === "tms" || props.area === "wms")
+const notificationRefreshIntervalMs = 30_000
+let notificationRefreshTimer: ReturnType<typeof setInterval> | null = null
 
 const userName = computed(() => auth.user?.name ?? "User")
 const userRole = computed(() => {
@@ -111,6 +113,28 @@ function formatNotificationDate(value: string | null) {
   }).format(new Date(value))
 }
 
+function refreshNotifications() {
+  if (!notificationsEnabled.value || document.visibilityState !== "visible") return
+
+  notificationStore.fetchNotifications().catch(() => undefined)
+}
+
+function stopNotificationRefresh() {
+  if (!notificationRefreshTimer) return
+
+  clearInterval(notificationRefreshTimer)
+  notificationRefreshTimer = null
+}
+
+function startNotificationRefresh() {
+  stopNotificationRefresh()
+
+  if (!notificationsEnabled.value) return
+
+  refreshNotifications()
+  notificationRefreshTimer = setInterval(refreshNotifications, notificationRefreshIntervalMs)
+}
+
 function handleClickOutside(event: MouseEvent) {
   const userElement = document.querySelector(".user-profile-container")
   const notificationElement = document.querySelector(".app-notifications")
@@ -171,8 +195,9 @@ watch(
   () => props.area,
   area => {
     if (area === "tms" || area === "wms") {
-      notificationStore.fetchNotifications().catch(() => undefined)
+      startNotificationRefresh()
     } else {
+      stopNotificationRefresh()
       notificationsOpen.value = false
     }
   },
@@ -180,12 +205,14 @@ watch(
 
 onMounted(() => {
   document.addEventListener("click", handleClickOutside)
-
-  if (notificationsEnabled.value) {
-    notificationStore.fetchNotifications().catch(() => undefined)
-  }
+  document.addEventListener("visibilitychange", refreshNotifications)
+  startNotificationRefresh()
 })
-onBeforeUnmount(() => document.removeEventListener("click", handleClickOutside))
+onBeforeUnmount(() => {
+  stopNotificationRefresh()
+  document.removeEventListener("click", handleClickOutside)
+  document.removeEventListener("visibilitychange", refreshNotifications)
+})
 </script>
 
 <template>
